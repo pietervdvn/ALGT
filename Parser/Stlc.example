@@ -1,0 +1,10 @@
+# Some examples of Simply Typed Language Calculus expressions
+v	# Variable
+True
+False
+5
+5 + 6
+If True Then 0 Else 1
+(f 5)
+((f 5) 6)
+
