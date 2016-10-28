@@ -17,7 +17,7 @@ import Data.Char
 
 -- Entrance point
 
-parseExpr	:: String -> Maybe String -> Either ParseError Expr
+parseExpr	:: String -> Maybe String ->  Either ParseError Expr
 parseExpr input sourceFile = parse expr (fromMaybe "unknown source" sourceFile) input
 
 parseType	:: String -> Maybe String -> Either ParseError Type
