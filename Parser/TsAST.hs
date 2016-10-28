@@ -1,11 +1,11 @@
-module TsAST where
+module Parser.TsAST where
 
 {-
 This module defines the AST for TypeSystems
 -}
 
 import Utils
-import StlcAST
+import Parser.StlcAST
 
 data MetaType	= MType | MTArrow MetaType MetaType
 	deriving (Ord, Eq)
@@ -15,7 +15,7 @@ instance Show MetaType where
 	show (MTArrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
 data MetaExpression
-		= MFVariable Name
+		= MFVariable Name | MEApp MetaExpression MetaExpression | METype Type -- This is a 'normal' type - as defined in StlcAST!
 	deriving (Show, Ord, Eq)
 data MetaPattern
 	= MPAssign Name | MPDestructArrow MetaPattern MetaPattern

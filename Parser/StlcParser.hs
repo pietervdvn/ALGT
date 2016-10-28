@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
-module StlcParser where
+module Parser.StlcParser where
 
 {-
 This module parses a simple typed languate
 -}
 
 import Utils
-import ParsingUtils
+import Parser.ParsingUtils
 
-import StlcAST
+import Parser.StlcAST
 
 import Text.Parsec
 import Data.Maybe

@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module ParsingUtils where
+module Parser.ParsingUtils where
 
 import Utils
 import Text.Parsec

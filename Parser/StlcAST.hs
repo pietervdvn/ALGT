@@ -1,4 +1,4 @@
-module StlcAST where
+module Parser.StlcAST where
 
 {-
 This module defines the Syntax Tree

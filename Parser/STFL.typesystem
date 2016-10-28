@@ -10,8 +10,8 @@
 
 Contextsymbol is $
 
-Functions
-=========
+ Functions
+===========
 
 dom : Type -> Type
 dom(T1 -> T2) = T1
@@ -26,29 +26,5 @@ equate: Type -> Type -> Type
 equate(T, T) = T
 # undefined otherwise
 
-Rules
-=====
-
-	x: T in $
-(Tx)   ----------- 
-	$ |- x: T
-
-	
-(Tn)   ----------------
-	$ |- 0.. : Nat
-
-	
-(TbT)   ------------------
-	$ |- True : Bool
 
 
-	
-(TbF)  ------------------
-	$ |- False: Bool
-
-	$ |- t1 : T1	$ |- t2: T2	T2 == dom(T1)
-(Tapp) -----------------------------------------------
-	$ |- t1 t2 : cod(T1)
-	
-	
-	
