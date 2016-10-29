@@ -15,7 +15,10 @@ instance Show MetaType where
 	show (MTArrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
 data MetaExpression
-		= MFVariable Name | MEApp MetaExpression MetaExpression | METype Type -- This is a 'normal' type - as defined in StlcAST!
+	= MFVariable Name 
+	| MEApp MetaExpression [MetaExpression]
+	| MEFunction MetaFunction
+	| METype Type -- This is a 'normal' type - as defined in StlcAST!
 	deriving (Show, Ord, Eq)
 data MetaPattern
 	= MPAssign Name | MPDestructArrow MetaPattern MetaPattern

@@ -10,16 +10,40 @@ import Parser.StlcAST
 
 import Data.Map as M
 import Data.List as L
+import Data.Either
 
 import Control.Monad
 
 type Context	= Map Name MetaExpression
 
+-- Reduces an expression to normal form. Note: not context is given, as these are substituted
+reduceExpression	:: MetaExpression -> Either String MetaExpression
+reduceExpression (MFVariable name)	
+	= Left $ "Unknown variable: "++name
+reduceExpression (MEApp fExpr argExprs)
+	= do	argsRed	<- argExprs |+> reduceExpression
+		fRed	<- reduceExpression fExpr
+		case fRed of 
+			MEFunction mf	-> applyFunction argsRed mf
+			_		-> Left $ "Not a function ("++show fRed++"), but applied to "++show argsRed
+reduceExpression e
+	= return $ e -- function/concrete type are in normal form
 
 
 
-applyClause	:: MetaClause -> [MetaExpression] -> Either String MetaExpression
-applyClause (MFC pats expr) args
+
+applyFunction	:: [MetaExpression] -> MetaFunction -> Either String MetaExpression
+applyFunction args (MF name _ clauses)
+	= let	applied	= clauses |> applyClause args
+		results	= rights applied in
+		if L.null results then
+			Left $ "Could not apply function "++name++", all patterns failed:\n"++ (lefts applied|> ('\t':) & unlines)
+		else
+			return $ head results
+
+
+applyClause	:: [MetaExpression] -> MetaClause -> Either String MetaExpression
+applyClause args (MFC pats expr)
  | length pats /= length args	
 	= Left $ ("Length of the arguments and given patterns don't match"++
 			", expected "++show (length pats)++" arguments but got "++show (length args)++" instead")
@@ -56,8 +80,8 @@ applyPattern _ p expr	= Left $ "Could not match pattern with expression "++show 
 subs	:: Context -> MetaExpression -> MetaExpression
 subs ctx original@(MFVariable nm)
 	= findWithDefault original nm ctx
-subs ctx (MEApp e1 e2)
-	= MEApp (subs ctx e1) (subs ctx e2)
+subs ctx (MEApp e1 args)
+	= MEApp (subs ctx e1) (args |> subs ctx)
 
 
 --- testing examples ---
@@ -67,7 +91,10 @@ t2	= ArrowT t1 t1
 
 e	= METype 
 
-p1	= MPDestructArrow (MPAssign "T") (MPAssign "T")
+p1	= MPDestructArrow (MPAssign "T1") (MPAssign "T2")
 p2	= MPAssign "T"
 
 clause1	= MFC [p2, p2] $ MFVariable "T"
+clause2 = MFC [p1] $ MFVariable "T1"
+
+dom	= MEFunction $ MF "dom" (MTArrow MType MType) [clause2]
