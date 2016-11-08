@@ -26,5 +26,30 @@ equate: Type -> Type -> Type
 equate(T, T) = T
 # undefined otherwise
 
+ Rules
+=======
 
-# Rules will come here
+	x: T in $
+(Tx)   ----------- 
+	$ |- x: T
+
+
+	$ |- t1 : T1	$ |- t2: T2	T2 == dom(T1)
+(Tapp) -----------------------------------------------
+	$ |- (t1 t2) : cod(T1)
+
+
+(Tn)   ----------------
+	$ |- 0.. : Nat
+
+	
+(TbT)   ------------------
+	$ |- True : Bool
+
+
+	
+(TbF)  ------------------
+	$ |- False: Bool
+
+
+

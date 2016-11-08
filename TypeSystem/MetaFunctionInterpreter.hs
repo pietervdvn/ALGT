@@ -16,17 +16,20 @@ import Control.Monad
 
 type Context	= Map Name MetaExpression
 
--- Reduces an expression to normal form. Note: not context is given, as these are substituted
-reduceExpression	:: MetaExpression -> Either String MetaExpression
-reduceExpression (MFVariable name)	
+-- Reduces an expression to normal form. Note: the context are just the known functions
+reduceExpression	:: Map Name MetaFunction -> MetaExpression -> Either String MetaExpression
+reduceExpression _ (MFVariable name)	
 	= Left $ "Unknown variable: "++name
-reduceExpression (MEApp fExpr argExprs)
-	= do	argsRed	<- argExprs |+> reduceExpression
-		fRed	<- reduceExpression fExpr
+reduceExpression kf (MEApp fExpr argExprs)
+	= do	argsRed	<- argExprs |+> reduceExpression kf
+		fRed	<- reduceExpression kf fExpr
 		case fRed of 
 			MEFunction mf	-> applyFunction argsRed mf
 			_		-> Left $ "Not a function ("++show fRed++"), but applied to "++show argsRed
-reduceExpression e
+reduceExpression knownFunctions (MEFunctionName name)
+ 	| name `member` knownFunctions	= return $ MEFunction $ knownFunctions ! name
+ 	| otherwise			= Left $ "Function with name "++name++" is not known"
+reduceExpression _ e@(METype _)
 	= return $ e -- function/concrete type are in normal form
 
 

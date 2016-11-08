@@ -29,7 +29,17 @@ parens p = do	char '('
 		return val	
 
 identifier	:: Parser u String
-identifier  = many1 (oneOf lowers)
+identifier
+	= do	head <- oneOf lowers
+		tail <- many $ oneOf $ lowers ++ uppers ++ digits
+		return $ head:tail
+
+iDentifier	:: Parser u String
+iDentifier
+	= do	head <- oneOf uppers
+		tail <- many $ oneOf $ lowers ++ uppers ++ digits
+		return $ head:tail
+
 number	:: Parser u Int
 number 	= many1 (oneOf digits) |> read
 

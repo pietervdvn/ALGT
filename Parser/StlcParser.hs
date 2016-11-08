@@ -28,6 +28,7 @@ parseType input sourceFile = parse typ (fromMaybe "unknown source" sourceFile) i
 
 typ	=     prs "Bool" BoolT 
 	  <|> prs "Nat" NatT
+	  <|> (iDentifier |> VarT)
 	  <|> parens (do
 		t1 <- typ
 		ws
@@ -42,12 +43,12 @@ typ	=     prs "Bool" BoolT
 expr  	=      try app
 	   <|> try ifte
 	   <|> try plus
+	   <|> try (prs "0.." NatsE)
 	   <|> try (number |> NatE)
 	   <|> try bool 
 	   <|> try (identifier |> VarE) 
 	   <|> try lambda
 	   <|> try (parens expr)
-
 
 bool	=  do   bl	<- prs "True" True <|> prs "False" False
 		return $ BoolE bl
