@@ -28,7 +28,6 @@ parseType input sourceFile = parse typ (fromMaybe "unknown source" sourceFile) i
 
 typ	=     prs "Bool" BoolT 
 	  <|> prs "Nat" NatT
-	  <|> (iDentifier |> VarT)
 	  <|> parens (do
 		t1 <- typ
 		ws

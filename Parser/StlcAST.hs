@@ -6,8 +6,14 @@ import Utils
 This module defines the Syntax Tree
 -}
 
-data Type = BoolT | NatT | ArrowT Type Type | UnknownT | VarT Name
+data Type = BoolT | NatT | ArrowT Type Type | UnkownT
 	deriving (Ord, Eq)
+
+
+allType	= [BoolT, NatT] ++ [ArrowT x y | x <- allType, y <- allType]
+
+isArrow (ArrowT _ _)	= True
+isArrow _		= False
 
 inParens str	= "("++str++")"
 
@@ -16,8 +22,7 @@ instance Show Type where
 	show NatT	= "Nat"
 	show (ArrowT t1 t2)
 			= inParens (show t1 ++ " -> " ++ show t2)
-	show UnknownT	= "?"
-	show (VarT nme)	= nme
+	show (UnkownT)	= "?"
 
 
 data Expr 	= BoolE Bool
