@@ -20,7 +20,7 @@ import Data.Char
 parseExpr	:: String -> Maybe String ->  Either ParseError Expr
 parseExpr input sourceFile = parse expr (fromMaybe "unknown source" sourceFile) input
 
-parseType	:: String -> Maybe String -> Either ParseError Type
+parseType	:: String -> Maybe String -> Either ParseError StaticType
 parseType input sourceFile = parse typ (fromMaybe "unknown source" sourceFile) input
 
 

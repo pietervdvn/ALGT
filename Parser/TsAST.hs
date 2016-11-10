@@ -26,7 +26,7 @@ data MetaExpression
 	| MEApp MetaExpression [MetaExpression]
 	| MEFunction MetaFunction
 	| MEFunctionName Name
-	| METype Type -- This is a 'normal' type - as defined in StlcAST!
+	| METype StaticType -- This is a 'normal' type - as defined in StlcAST!
 	deriving (Show, Ord, Eq)
 data MetaPattern
 	= MPAssign Name | MPDestructArrow MetaPattern MetaPattern
