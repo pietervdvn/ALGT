@@ -1,28 +1,37 @@
 module Parser.StlcAST where
 
 import Utils 
+import Data.Set (Set, fromList, toList)
 
 {-
 This module defines the Syntax Tree
 -}
 
-data Type = BoolT | NatT | ArrowT Type Type | UnkownT
+data StaticType = BoolT | NatT | ArrowT StaticType StaticType
 	deriving (Ord, Eq)
-
-
-allType	= [BoolT, NatT] ++ [ArrowT x y | x <- allType, y <- allType]
 
 isArrow (ArrowT _ _)	= True
 isArrow _		= False
 
-inParens str	= "("++str++")"
+isBaseType NatT		= True
+isBaseType BoolT	= True
+isBaseType _		= False
 
-instance Show Type where
+allArrows	:: Set StaticType -> Bool
+allArrows ts	= ts & toList & all isArrow
+
+splitArrows	:: [StaticType] -> Maybe ([StaticType], [StaticType])
+splitArrows (ArrowT t1 t2:tail)
+		= do	(t1s, t2s)	<- splitArrows tail
+			return (t1:t1s, t2:t2s)
+splitArrows []	= Just ([], [])
+splitArrows _	= Nothing
+
+instance Show StaticType where
 	show BoolT	= "Bool"
 	show NatT	= "Nat"
 	show (ArrowT t1 t2)
 			= inParens (show t1 ++ " -> " ++ show t2)
-	show (UnkownT)	= "?"
 
 
 data Expr 	= BoolE Bool
@@ -32,7 +41,7 @@ data Expr 	= BoolE Bool
 		| IfThenElse Expr Expr Expr 
 		| VarE String
 		| AppE Expr Expr 
-		| LambdaE String Type Expr
+		| LambdaE String StaticType Expr
 	deriving (Ord, Eq)
 
 instance Show Expr where

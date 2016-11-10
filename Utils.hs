@@ -11,3 +11,6 @@ type Name = String
 
 
 (&)	= flip ($)
+
+inParens str	= "("++str++")"
+
