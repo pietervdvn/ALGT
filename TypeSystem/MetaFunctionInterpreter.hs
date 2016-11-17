@@ -100,4 +100,4 @@ p2	= MPAssign "T"
 clause1	= MFC [p2, p2] $ MFVariable "T"
 clause2 = MFC [p1] $ MFVariable "T1"
 
-dom	= MEFunction $ MF "dom" (MTArrow MType MType) [clause2]
+dom	= MEFunction $ MF "dom" (MTArrow MType MType) [ MFC [MPDestructArrow (MPAssign "T1") (MPAssign "T2")] $ MFVariable "T1"]

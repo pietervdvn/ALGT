@@ -21,19 +21,19 @@ instance GaloisConnection StaticType where
 	concretization (StaticType (ArrowT t1 t2))
 		= error "TODO" -- fromList (ArrowT <$> toList (concretization t1) <*> toList (concretization t2))
 	concretization t
-		= Set' $ singleton $ NatT
+		= Set' $ singleton NatT
 
 
 	abstraction (Set' t)
  	 | Set.null t		= Nothing	-- undefined
-	 | t == singleton NatT	= Just $ StaticType $ NatT
-	 | t == singleton BoolT	= Just $ StaticType $ BoolT
+	 | t == singleton NatT	= Just $ StaticType NatT
+	 | t == singleton BoolT	= Just $ StaticType BoolT
 	 | allArrows t		= do	(t1s, t2s)	<- toList t & splitArrows	-- all will be arrows here, as by the 'allArrows' guard
 					(StaticType t1)	<- abstraction $ fromList' t1s	-- TODO what if this is unknown???
 					(StaticType t2)	<- abstraction $ fromList' t2s
 					return $ StaticType $ ArrowT t1 t2
 	 | otherwise 		= Just UnkownT
-	abstraction (Universe)	= Just UnkownT
+	abstraction Universe	= Just UnkownT
 
 
 

@@ -28,17 +28,23 @@ parens p = do	char '('
 		char ')'
 		return val	
 
+-- starts with lower case
 identifier	:: Parser u String
 identifier
 	= do	head <- oneOf lowers
 		tail <- many $ oneOf $ lowers ++ uppers ++ digits
 		return $ head:tail
 
+-- starts with upper case
 iDentifier	:: Parser u String
 iDentifier
 	= do	head <- oneOf uppers
 		tail <- many $ oneOf $ lowers ++ uppers ++ digits
 		return $ head:tail
+
+-- either upper or lower case
+identifier'	:: Parser u String
+identifier'	= identifier <|> identifier'
 
 number	:: Parser u Int
 number 	= many1 (oneOf digits) |> read
@@ -47,4 +53,12 @@ ws	:: Parser u String
 ws	= many (oneOf whitespace)
 ws1	:: Parser u String
 ws1	= many1 (oneOf whitespace)
+
+
+choose' [] msgs	= fail ("Expected one of the following strings: "++ unwords msgs)
+choose' (s:strs) msgs
+		= try (string s) <|> choose strs 
+
+choose		:: [String] -> Parser u String
+choose strs	= choose' strs strs
 

@@ -1,0 +1,120 @@
+# Example of inference rule parsing
+
+# Types always start with a uppercase letter
+# Variables with a lowercase
+# expressions as defined in StlcParser
+
+# A file starts with 'Contextsymbol is ' followed by some non-whitespace chars, as no obvious context symbol came to mind
+# |- represents 'entails'
+# 0.. represent all natural numbers
+
+Contextsymbol is $
+
+
+ Syntax
+========
+
+Tlr	::= "Int" | "Bool"
+T	::= Tlr "->" T | Tlr
+
+var	::= identifier
+
+t	::= tlr t | tlr "+" t | tlr "::" T | tlr
+
+tlr	::= 0.. | "True" | "False" | var | "(" "\\" var ":" T "->" t ")" | "if" t "then" tlr "else" t
+
+
+
+ Functions
+===========
+
+dom : T -> T
+dom(T1 "->" T2) = T1
+# undefined otherwises
+
+cod : T -> T
+cod(T1 "->" T2) = T2
+# undefined otherwise
+
+# Currying syntax as in haskell
+equate: T -> T -> T
+equate(T1, T1) = T1
+# undefined otherwise
+
+
+
+
+
+# replaces variable x by expression in entire t
+subs: var -> t -> t -> t
+subs(x, y, x)	= y
+
+subs(x, y, "(" "\\" z ":" T "->" rest ")" )
+	= "(" "\\" z ":" T "->" subs(x, y, rest) ")" 
+subs(x, y, "if" cond "then" e1 "else" e2)
+	= "if" subs(x, y, cond) "then" subs(x, y, e1) "else" subs(x, y, e2)
+subs(x, y, z)
+	= z
+
+# subs(x, y, "(" "\\" x ":" T "->" rest ")" )	= ERROR "Conflicting environments"
+
+
+
+
+# reduces one step of the logic
+eval: t -> t
+eval("if" "True" "then" t1 "else" t2) = t1
+eval("if" "False" "then" t1 "else" t2) = t2
+eval("if" cond "then" t1 "else" t2) = eval("if" eval(cond) "then" t1 "else" t2)
+
+
+
+
+
+ Rules
+=======
+
+
+	x: T in $
+(Tx)   ----------- 
+	$ |- x: T
+
+(Tn)   ----------------
+	$ |- 0.. : Nat
+
+
+(TbT)   ------------------
+	$ |- "True" : Bool
+
+
+	
+(TbF)  ------------------
+	$ |- "False": Bool
+
+
+
+	$ |- t1 : T1	$ |- t2: T2	T2 == dom(T1)
+(Tapp) -----------------------------------------------
+	$ |- "(" t1 t2 ")" : cod(T1)
+
+
+	 $ |- t1 : T1 	$ |- t2 : T2	T1 == "Int"	T2 == "Int"
+(Tplus) ------------------------------------------------------------
+	 $ |- t1 "+" t2 : "Int"
+
+
+ 	$ |- t1 : T1 	$ |- t2 : T2	$ |- t3: T3	T1 == "Bool"
+(Tif) ---------------------------------------------------------------
+	$ |- "if" t1 "then" t2 "else" t3 : equate(t2, t3)
+
+
+	   $, x : T1 |- t : T2
+(TLambda) -----------------------------------------------------------
+	   $ |- "(" "\\" x ":" T1 "->" t ")" : T1 "->" T2
+
+
+
+	 $ |- t : T	T = T1
+(Tcast)	----------------------------------
+	 $ |- (t "::" T1) : T1
+

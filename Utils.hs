@@ -1,5 +1,7 @@
 module Utils where
 
+import Control.Monad
+
 type Name = String
 
 -- Utility functions --
@@ -7,7 +9,7 @@ type Name = String
 (|>) 	= flip fmap
 
 (|+>)	:: (Monad m, Traversable t) => t a -> (a -> m b) -> m (t b)
-(|+>)	= flip mapM
+(|+>)	= forM
 
 
 (&)	= flip ($)

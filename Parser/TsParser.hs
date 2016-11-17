@@ -8,10 +8,11 @@ import Utils
 import Parser.ParsingUtils
 
 import Control.Arrow ((&&&))
+import Control.Monad
 
-import Parser.StlcAST 
-import Parser.StlcParser as STLC
-import Parser.TsAST
+import TypeSystem
+import Parser.BNFParser
+import Parser.MetaParser
 
 import Text.Parsec
 import Data.Maybe
@@ -32,29 +33,31 @@ parseTypeSystem input file
 	= let 	nme	= fromMaybe "unknown source" file in
 	  	parse (typeSystemFile nme) nme input
 
-t 	= parseTypeSystemFile "Parser/STFL.typesystem"
+t rule 	= do	Right ts	<- parseTypeSystemFile "Examples/STFL.typesystem"
+		examples	<- readFile "Examples/STFL.example" |> lines
+		let parser	= parse $ parseRule (tsSyntax ts) rule
+		forM_ examples (\ex -> putStrLn "\n\n" >> putStrLn ex >> print (parser "interactive" ex))
+
 
 
 
 
 ------------------------ Metafunctions -------------------------
 
-metaType
-  = try (do	string "Type"
+metaType metaTypes
+  = try (do	tp	<- choose metaTypes |> MType
 		ws
 		string "->"
 		ws
-		tail	<- metaType
-		return $ MTArrow MType tail)
-	  <|> prs "Type" MType
+		tail	<- metaType metaTypes
+		return $ MTArrow tp tail)
+	  <|> (choose metaTypes |> MType)
 
 metaIdentifier	
-	= do	head	<- oneOf uppers
-		rest	<- many $ oneOf (uppers ++ digits)
- 		return (head:rest)
+	= identifier'
 
 metaExpr	
-   =     try (STLC.typ |> METype)
+   =     try (iDentifier >> return (Value $ Token "Hi"))	-- TODO this should become a meta-expression
      <|> try (metaIdentifier |> MFVariable)
      <|> try (parens metaExpr)
      <|> do	f	<- identifier
@@ -83,25 +86,25 @@ metaClause expectedName
 		ws
 		return $ MFC pats expr
 
-metaSignature
+metaSignature metaTypes
 	= do	name	<- identifier
 		ws
 		char ':'
 		ws
-		tp	<- metaType
+		tp	<- metaType metaTypes
 		ws
 		return (name, tp)
 
-metaFunc	
-	= do	(name, mtype)	<- metaSignature
+metaFunc metaTypes	
+	= do	(name, mtype)	<- metaSignature metaTypes
 		ws
 		clauses	<- many1 $ try (nl >> metaClause name)
 		return $ MF name mtype clauses
 
-
+{-
 ------------------------ Rules ---------------------------------
 
-typing		= do	var	<- STLC.expr	
+typing		= do	var	<- identifier -- TODO this should become bnf matching
 			ws
 			char ':'
 			ws
@@ -151,9 +154,11 @@ rule ctxS	= do	ws
 			ws
 			ctxE	<- contextEntails ctxS `sepBy` ws
 			return $ Rule nme pr ctxE
+-}
 
 
 ------------------------ full file -----------------------------
+
 
 
 commentLine	= ws >> char '#' >> many (noneOf "\n") 
@@ -162,14 +167,12 @@ nl		= char '\n' <|> (try commentLine >> ws >> char '\n')
 nls1		= many1 nl
 nls		= many nl
 
-many1SepWs p	= many1 (p `sepBy` ws)
 
 contextSymbol
 	= do	ws
 		string "Contextsymbol is "
 		ws
-		name	<- many1 (noneOf " \n\r\t")
-		return name
+		many1 (noneOf " \n\r\t")
 
 header hdr
 	= do	ws
@@ -183,12 +186,20 @@ typeSystemFile name
 	= do	nls
 		ctxS	<- contextSymbol
 		nls1
+		header "Syntax"
+		bnfs	<- many $ try (nls >> bnfRule)
+		let metaTypes	= bnfs |> fst	:: [Name]
+
+		nls1
 		header "Functions"
-		funcs' 	<- many $ try (nls1 >> metaFunc)
+ 		funcs' 	<- return []-- many $ try (nls1 >> metaFunc metaTypes)
+		{-
 		let funcs	= funcs' |> (mfName &&& id) & M.fromList
 		nls
 		header "Rules"
 		rules	<- many $ try (nls1 >> rule ctxS)
 		nls
 		eof
-		return $ TypeSystem name ctxS rules funcs
+-}
+		return $ TypeSystem name ctxS (M.fromList bnfs) M.empty []
+
