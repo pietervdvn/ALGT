@@ -13,6 +13,7 @@ import Control.Monad
 import TypeSystem
 import Parser.BNFParser
 import Parser.MetaParser
+import Parser.MetaFunctionParser
 
 import Text.Parsec
 import Data.Maybe
@@ -33,9 +34,10 @@ parseTypeSystem input file
 	= let 	nme	= fromMaybe "unknown source" file in
 	  	parse (typeSystemFile nme) nme input
 
-t rule 	= do	Right ts	<- parseTypeSystemFile "Examples/STFL.typesystem"
+t 	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
+		ts	<- either (error . show) return ts'
 		examples	<- readFile "Examples/STFL.example" |> lines
-		let parser	= parse $ parseRule (tsSyntax ts) rule
+		let parser	= parse $ parseRule (tsSyntax ts) "t"
 		forM_ examples (\ex -> putStrLn "\n\n" >> putStrLn ex >> print (parser "interactive" ex))
 
 
@@ -43,7 +45,7 @@ t rule 	= do	Right ts	<- parseTypeSystemFile "Examples/STFL.typesystem"
 
 
 ------------------------ Metafunctions -------------------------
-
+ {-
 metaType metaTypes
   = try (do	tp	<- choose metaTypes |> MType
 		ws
@@ -100,6 +102,7 @@ metaFunc metaTypes
 		ws
 		clauses	<- many1 $ try (nl >> metaClause name)
 		return $ MF name mtype clauses
+--}
 
 {-
 ------------------------ Rules ---------------------------------
@@ -161,13 +164,6 @@ rule ctxS	= do	ws
 
 
 
-commentLine	= ws >> char '#' >> many (noneOf "\n") 
-
-nl		= char '\n' <|> (try commentLine >> ws >> char '\n')
-nls1		= many1 nl
-nls		= many nl
-
-
 contextSymbol
 	= do	ws
 		string "Contextsymbol is "
@@ -187,12 +183,12 @@ typeSystemFile name
 		ctxS	<- contextSymbol
 		nls1
 		header "Syntax"
-		bnfs	<- many $ try (nls >> bnfRule)
-		let metaTypes	= bnfs |> fst	:: [Name]
+		bnfs	<- (many $ try (nls >> bnfRule)) |> M.fromList
 
 		nls1
 		header "Functions"
- 		funcs' 	<- return []-- many $ try (nls1 >> metaFunc metaTypes)
+ 		metaFuncs 	<- parseMetaFunctions bnfs
+		error $ show metaFuncs -- TODO
 		{-
 		let funcs	= funcs' |> (mfName &&& id) & M.fromList
 		nls
@@ -201,5 +197,5 @@ typeSystemFile name
 		nls
 		eof
 -}
-		return $ TypeSystem name ctxS (M.fromList bnfs) M.empty []
+		return $ TypeSystem name ctxS bnfs metaFuncs []
 

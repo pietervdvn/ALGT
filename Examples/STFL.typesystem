@@ -29,16 +29,16 @@ tlr	::= 0.. | "True" | "False" | var | "(" "\\" var ":" T "->" t ")" | "if" t "t
 ===========
 
 dom : T -> T
-dom(T1 "->" T2) = T1
+dom(t1 "->" t2) = t1
 # undefined otherwises
 
 cod : T -> T
-cod(T1 "->" T2) = T2
+cod(t1 "->" t2) = t2
 # undefined otherwise
 
 # Currying syntax as in haskell
 equate: T -> T -> T
-equate(T1, T1) = T1
+equate(t1, t1) = t1
 # undefined otherwise
 
 

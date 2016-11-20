@@ -9,6 +9,7 @@ import Utils
 import Data.List (intersperse)
 
 import Data.Map (Map)
+import qualified Data.Map as M
 
 ------------------------ Syntax -------------------------
 ------------------------ Syntax: BNF -------------------------
@@ -27,6 +28,8 @@ data BNFAST 	= Literal String	-- Literally parse 'String'
 {-Represents a syntax: the name of the rule + possible parseways -}
 type BNFRules	= Map Name [BNFAST]
 
+bnfNames	:: BNFRules -> [Name]
+bnfNames	=  M.keys
 
 ------------------------ Syntax: Actually parsed stuff -------------------------
 
@@ -43,30 +46,38 @@ data ParseTree	= Token String	-- Contents
 -- Metafunctions do transform syntax trees (by rewrite rules) and are often used in typechecking and evaluation
 
 
-data MetaType	= MType Name			-- This 'Name' refers to a BNF-rule, which declares a type
+type MetaTypeName	= Name
+data MetaType	= MType MetaTypeName			-- This 'Name' refers to a BNF-rule, which declares a type
 		| MTArrow MetaType MetaType
 	deriving (Ord, Eq)
 
--- expression of a meta function
+flatten	:: MetaType -> [MetaTypeName]
+flatten (MType t)	= [t]
+flatten (MTArrow head tail)
+			= flatten head ++ flatten tail
+
+-- A metaExpression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
 data MetaExpression
-	= MFVariable Name 
-	| MEApp MetaExpression [MetaExpression]
-	| MEFunction MetaFunction	-- Actual function, to be reduced
-	| MEFunctionName Name	-- Context function call
-	| Value ParseTree -- This is a syntactic value
+	= MVar Name MetaType
+	| MLiteral String
+	| MSeq [MetaExpression] MetaType
+	| MCall Name [MetaExpression] MetaType	-- not allowed in pattern matching
 	deriving (Show, Ord, Eq)
 
--- pattern matching of a meta function
-data MetaPattern
-	= MPAssign Name | MPDestructArrow MetaPattern MetaPattern
-	deriving (Ord, Eq)
+data MetaClause	= MClause {mecPatterns :: [MetaExpression], mecExpr :: MetaExpression}
+	deriving (Show, Ord, Eq)
 
-data MetaClause
-		= MFC [MetaPattern] MetaExpression
+data MetaFunction	= MFunction MetaType [MetaClause]
 	deriving (Show, Ord, Eq)
-data MetaFunction
-		= MF {mfName::Name, mfType :: MetaType, mfClauses :: [MetaClause]}
-	deriving (Show, Ord, Eq)
+
+type MetaFunctions	= Map Name MetaFunction
+
+
+
+
+
+
+
 
 ------------------------ Rules ---------------------------------
 
@@ -89,7 +100,7 @@ data Rule	= Rule Name [Predicate] [Predicate]
 data TypeSystem 	= TypeSystem {tsName :: Name, 	-- what is this typesystem's name?
 					tsContextSymbol :: String, -- how is the context printed?
 					tsSyntax	:: BNFRules,	-- synax of the language
-					tsFunctions 	:: Map Name MetaFunction,	-- syntax metafunctions of the TS 
+					tsFunctions 	:: MetaFunctions,	-- syntax metafunctions of the TS 
 					tsRules 	:: [Rule]	-- predicates and inference rules of the type system, most often used for typing rules
 					}
 	deriving (Show)
@@ -131,9 +142,4 @@ instance Show Rule where
 			line	= replicate lineL '-'
 			in
 			"\n"++indent ++ top ++ "\n" ++ nme ++ line ++ "\n" ++ indent ++ bottom
-
-
-instance Show MetaPattern where
-	show (MPAssign name) = name
-	show (MPDestructArrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
