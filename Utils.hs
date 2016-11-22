@@ -1,6 +1,7 @@
 module Utils where
 
 import Control.Monad
+import Data.List (intercalate)
 
 type Name = String
 
@@ -16,3 +17,6 @@ type Name = String
 
 inParens str	= "("++str++")"
 
+
+showComma	:: Show a => [a] -> String
+showComma as	= as |> show & intercalate ", "

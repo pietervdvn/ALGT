@@ -34,75 +34,9 @@ parseTypeSystem input file
 	= let 	nme	= fromMaybe "unknown source" file in
 	  	parse (typeSystemFile nme) nme input
 
-t 	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
-		ts	<- either (error . show) return ts'
-		examples	<- readFile "Examples/STFL.example" |> lines
-		let parser	= parse $ parseRule (tsSyntax ts) "t"
-		forM_ examples (\ex -> putStrLn "\n\n" >> putStrLn ex >> print (parser "interactive" ex))
 
 
 
-
-
------------------------- Metafunctions -------------------------
- {-
-metaType metaTypes
-  = try (do	tp	<- choose metaTypes |> MType
-		ws
-		string "->"
-		ws
-		tail	<- metaType metaTypes
-		return $ MTArrow tp tail)
-	  <|> (choose metaTypes |> MType)
-
-metaIdentifier	
-	= identifier'
-
-metaExpr	
-   =     try (iDentifier >> return (Value $ Token "Hi"))	-- TODO this should become a meta-expression
-     <|> try (metaIdentifier |> MFVariable)
-     <|> try (parens metaExpr)
-     <|> do	f	<- identifier
-		args	<- many1 (ws >> metaExpr)
-		return $ MEApp (MEFunctionName f) args
-
-metaPat
-   = try (do	expr1	<- metaIdentifier |> MPAssign
-		ws
-		string "->"
-		ws
-		rest	<- metaPat
-		return $ MPDestructArrow expr1 rest)
-	<|>	metaIdentifier |> MPAssign
-		
-
-metaClause expectedName
-	= do	ws
-		string expectedName
-		ws
-		pats	<- parens (metaPat `sepBy` (ws >> char ',' >> ws))
-		ws
-		char '='
-		ws
-		expr	<- metaExpr
-		ws
-		return $ MFC pats expr
-
-metaSignature metaTypes
-	= do	name	<- identifier
-		ws
-		char ':'
-		ws
-		tp	<- metaType metaTypes
-		ws
-		return (name, tp)
-
-metaFunc metaTypes	
-	= do	(name, mtype)	<- metaSignature metaTypes
-		ws
-		clauses	<- many1 $ try (nl >> metaClause name)
-		return $ MF name mtype clauses
---}
 
 {-
 ------------------------ Rules ---------------------------------
@@ -188,9 +122,7 @@ typeSystemFile name
 		nls1
 		header "Functions"
  		metaFuncs 	<- parseMetaFunctions bnfs
-		error $ show metaFuncs -- TODO
 		{-
-		let funcs	= funcs' |> (mfName &&& id) & M.fromList
 		nls
 		header "Rules"
 		rules	<- many $ try (nls1 >> rule ctxS)

@@ -6,7 +6,7 @@ This module defines the AST for TypeSystems
 
 import Utils
 
-import Data.List (intersperse)
+import Data.List (intersperse, intercalate)
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -41,6 +41,16 @@ data ParseTree	= Token String	-- Contents
 
 
 
+ptToMetaExpr	:: ParseTree -> MetaExpression
+ptToMetaExpr (Token s)
+		= MLiteral s
+ptToMetaExpr (PtNumber i)
+		= MInt i
+ptToMetaExpr (PtSeq pts)
+		= pts |> ptToMetaExpr & MSeq
+ptToMetaExpr (RuleParse _ _ pt)
+		= ptToMetaExpr pt
+
 ------------------------ Metafunctions -------------------------
 
 -- Metafunctions do transform syntax trees (by rewrite rules) and are often used in typechecking and evaluation
@@ -57,18 +67,36 @@ flatten (MTArrow head tail)
 			= flatten head ++ flatten tail
 
 -- A metaExpression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
+-- TODO add typing
+type Builtin	= Bool
 data MetaExpression
-	= MVar Name MetaType
+	= MVar Name
 	| MLiteral String
-	| MSeq [MetaExpression] MetaType
-	| MCall Name [MetaExpression] MetaType	-- not allowed in pattern matching
-	deriving (Show, Ord, Eq)
+	| MInt Int
+	| MSeq [MetaExpression]
+	| MCall Name Builtin [MetaExpression]	-- not allowed in pattern matching
+	| MError String
+	deriving (Ord, Eq)
+
+isMInt	:: MetaExpression -> Bool
+isMInt (MInt _)	= True
+isMInt _	= False
+
+
 
 data MetaClause	= MClause {mecPatterns :: [MetaExpression], mecExpr :: MetaExpression}
-	deriving (Show, Ord, Eq)
+	deriving (Ord, Eq)
+
 
 data MetaFunction	= MFunction MetaType [MetaClause]
-	deriving (Show, Ord, Eq)
+	deriving (Ord, Eq)
+
+
+instance Show MetaFunction where
+	show (MFunction tp clauses)
+		= let	sign	= ": "++show tp
+			clss	= clauses |> show in
+			(sign:clss) & intercalate "\n"
 
 type MetaFunctions	= Map Name MetaFunction
 
@@ -117,6 +145,22 @@ instance Show MetaType where
 	show (MType nm) = nm
 	show (MTArrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
+instance Show MetaExpression where
+	show (MVar n)		= n
+	show (MLiteral s)	= show s
+	show (MInt i)		= show i
+	show (MSeq exprs)	= exprs |> show & unwords & inParens
+	show (MCall nm builtin args)
+				= let args'	= args & showComma & inParens
+				  in
+					(if builtin then "!" else "") ++ nm++args'
+	show (MError msg)	= "ERROR "++msg
+
+instance Show MetaClause where
+	show (MClause pats expr)
+		= let 	args = pats & showComma & inParens
+			in
+			args ++ " = " ++ show expr
 
 instance Show Typing where
 	show (Typing e t)

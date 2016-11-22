@@ -18,15 +18,30 @@ Tlr	::= "Int" | "Bool"
 T	::= Tlr "->" T | Tlr
 
 var	::= identifier
-
-t	::= tlr t | tlr "+" t | tlr "::" T | tlr
-
-tlr	::= 0.. | "True" | "False" | var | "(" "\\" var ":" T "->" t ")" | "if" t "then" tlr "else" t
+t	::= tlr "+" t | tlr "::" T | tlr t | tlr
+tlr	::= 0.. | "True" | "False" | var | "(" "\\" var ":" T "-->" t ")" | "If" t "Then" tlr "Else" t
 
 
 
  Functions
 ===========
+
+
+# reduces one step of the logic
+eval: t -> t
+eval("If" "True" "Then" t1 "Else" t2) = t1
+eval("If" "False" "Then" t1 "Else" t2) = t2
+eval("If" cond "Then" t1 "Else" t2) = eval(helperIf(eval(cond), t1, t2))
+eval("(" "\\" var ":" type "-->" t ")" arg)
+	= eval( subs (var, arg, t) )
+eval(n1 "+" n2)
+	= !plus(eval(n1), eval(n2))
+# eval(t "::" type)
+#	= t
+eval(t)	= t
+
+
+
 
 dom : T -> T
 dom(t1 "->" t2) = t1
@@ -45,27 +60,26 @@ equate(t1, t1) = t1
 
 
 
-# replaces variable x by expression in entire t
+# replaces variable x by y in entire t
 subs: var -> t -> t -> t
 subs(x, y, x)	= y
-
-subs(x, y, "(" "\\" z ":" T "->" rest ")" )
-	= "(" "\\" z ":" T "->" subs(x, y, rest) ")" 
-subs(x, y, "if" cond "then" e1 "else" e2)
-	= "if" subs(x, y, cond) "then" subs(x, y, e1) "else" subs(x, y, e2)
 subs(x, y, z)
 	= z
+subs(x, y, "(" "\\" x ":" t "-->" rest ")" )	= ERROR "Conflicting environments"
+subs(x, y, "(" "\\" z ":" t "-->" rest ")" )
+	= "(" "\\" z ":" t "-->" subs(x,y,rest) ")"
+subs(x, y, "if" cond "then" e1 "else" e2)
+	= "if" subs(x, y, cond) "then" subs(x, y, e1) "else" subs(x, y, e2)
+subs(x, y, t1 "+" t2)
+	= subs(x, y, t1) "+" subs(x, y, t2)
+subs(x, y, t "::" type)
+	= subs(x, y, t) "::" type
+subs(x, y, f arg)
+	= subs(x, y, f) subs(x, y, arg)
 
-# subs(x, y, "(" "\\" x ":" T "->" rest ")" )	= ERROR "Conflicting environments"
-
-
-
-
-# reduces one step of the logic
-eval: t -> t
-eval("if" "True" "then" t1 "else" t2) = t1
-eval("if" "False" "then" t1 "else" t2) = t2
-eval("if" cond "then" t1 "else" t2) = eval("if" eval(cond) "then" t1 "else" t2)
+# while the parser is sucky, we need helper functions
+helperIf : t -> t -> t -> t
+helperIf(cond, t1, t2) = "if" eval(cond) "then" t1 "else" t2
 
 
 

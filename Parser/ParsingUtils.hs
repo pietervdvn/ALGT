@@ -64,8 +64,7 @@ choose strs	= choose' strs strs
 
 
 first		:: [Parser u a] -> Parser u a
-first []	= fail "None of the parsers in first matched"
-first (p:prs)	= try p <|> first prs
+first		= foldr ((<|>) . try) (fail "None of the parsers in first matched")
 
 commentLine	= ws >> char '#' >> many (noneOf "\n") 
 
@@ -74,3 +73,13 @@ nls1		= many1 nl
 nls		= many nl
 
 
+intersperseM	:: Monad m => m b -> [m a] -> m [a]
+intersperseM sep []
+		= return []
+intersperseM sep [ma]
+		= ma |> (:[])
+intersperseM sep (ma:mas)
+		= do	a	<- ma
+			sep
+			as	<- intersperseM sep mas
+			return (a:as)
