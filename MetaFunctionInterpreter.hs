@@ -13,19 +13,9 @@ import qualified Data.Map as M
 import Data.Map (Map)
 import Data.Maybe
 
-{-
-Evaluate an expression. For this, it has two contexts:
-- Map Name Metafunction contains all declared functions
-- Map Name MetaExpression contains all variables, obtained by pattern matching
--}
 
-evalFunc	:: TypeSystem -> Name -> [ParseTree] -> MetaExpression
-evalFunc ts funcName args
-		= evalFunc' ts funcName (args |> ptToMetaExpr)
-
-
-evalFunc'	:: TypeSystem -> Name -> [MetaExpression] -> MetaExpression
-evalFunc' ts funcName args	
+evalFunc	:: TypeSystem -> Name -> [MetaExpression] -> MetaExpression
+evalFunc ts funcName args	
  | funcName `M.member` tsFunctions ts
 	= let	func	= tsFunctions ts M.! funcName
 		ctx	= Ctx (tsFunctions ts) M.empty [] in
@@ -73,19 +63,20 @@ Disasembles an expression against a pattern
 patternMatch pattern value
 -}
 patternMatch	:: MetaExpression -> MetaExpression -> Maybe (Map Name MetaExpression)
-patternMatch (MVar v) expr	= Just $ M.singleton v expr
+patternMatch (MVar _ v) expr	= Just $ M.singleton v expr
 patternMatch (MLiteral s1) (MLiteral s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
 patternMatch (MInt s1) (MInt s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
-patternMatch (MSeq seq1) (MSeq seq2)
+patternMatch (MSeq _ seq1) (MSeq _ seq2)
 	= zip seq1 seq2 |+> uncurry patternMatch >>= foldM mergeVars M.empty
 	
 
-patternMatch (MCall nm _ _) _	= error $ "Using a function call in a pattern is not allowed"
-patternMatch (MError msg) _	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
+patternMatch (MCall _ nm _ _) _	= error $ "Using a function call in a pattern is not allowed"
+patternMatch (MCall _ "error" True _) _	
+				= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
 
 patternMatch pat expr		= Nothing
 
@@ -95,7 +86,7 @@ patternMatch pat expr		= Nothing
 
 
 evaluate	:: Ctx -> MetaExpression -> MetaExpression
-evaluate ctx (MCall "plus" True [e1, e2])
+evaluate ctx (MCall _ "plus" True [e1, e2])
 	= let	e1'	= evaluate ctx e1
 		e2'	= evaluate ctx e2 
 		MInt i1	= e1'
@@ -104,35 +95,35 @@ evaluate ctx (MCall "plus" True [e1, e2])
 			evalErr ctx $ "plus off a non-int element "++show e1'++", "++show e2'
 		else
 			MInt (i1 + i2)
+evaluate ctx (MCall _ "error" True exprs)
+	= let	msgs	= ["In evaluating a meta function:", showComma exprs]
+		stack	= ctx_stack ctx |> buildStackEl
+		in	error $ unlines $ stack ++ msgs
 			
-evaluate ctx (MCall nm True args)
+evaluate ctx (MCall _ nm True args)
 	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++showComma args
 
-evaluate ctx (MCall nm False args)
+evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctx_functions ctx
 	= let	func	= ctx_functions ctx M.! nm in
 		applyFunc ctx (nm, func) args
  | otherwise
 	= evalErr ctx $ "unknown function: "++nm	
 
-evaluate ctx (MVar nm)
+evaluate ctx (MVar _ nm)
  | nm `M.member` ctx_vars ctx	
 	= ctx_vars ctx M.! nm
  | otherwise			
 	= evalErr ctx $ "unkown variable "++nm
 
 
-evaluate ctx (MSeq vals)	= vals |> evaluate ctx & MSeq
+evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & MSeq tp
 evaluate _ (MLiteral l)		= MLiteral l
 evaluate _ (MInt i)		= MInt i
 
-evaluate ctx (MError msg)	
-	= let msgs	= ["In evaluating a meta function:", msg]++
-				(ctx_stack ctx |> buildStackEl)
-		in	error $ unlines msgs
 
+evalErr	ctx msg	= evaluate ctx $ MCall (MType "") "error" True [MLiteral ("Undefined behaviour: "++msg)]
 
-evalErr	ctx msg	= evaluate ctx (MError $ "Undefined behaviour: "++msg)
 
 
 buildStackEl	:: (Name, [MetaExpression]) -> String

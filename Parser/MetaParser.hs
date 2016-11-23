@@ -17,8 +17,33 @@ import Data.Char
 import qualified Data.Map as M
 
 
-parseRule	:: BNFRules -> Name -> Parser u ParseTree
+------------------------ Syntax: Actually parsed stuff -------------------------
+
+data ParseTree	= Token String	-- Contents
+		| PtNumber Int
+		| PtSeq [ParseTree]
+		| RuleParse Name Int ParseTree -- causing rule and choice index (thus which option caused) + actual contents
+	deriving (Eq, Ord, Show)
+
+
+
+ptToMetaExpr	:: (MetaType, Int) -> ParseTree -> MetaExpression
+ptToMetaExpr mt (Token s)
+		= MLiteral s
+ptToMetaExpr mt (PtNumber i)
+		= MInt i
+ptToMetaExpr mt (PtSeq pts)
+		= pts |> ptToMetaExpr mt & MSeq mt
+ptToMetaExpr _ (RuleParse mt i pt)
+		= ptToMetaExpr (MType mt, i) pt
+
+parseRule	:: BNFRules -> Name -> Parser u MetaExpression
 parseRule rules nm
+		= parseRule' rules nm |> ptToMetaExpr (error "Should not be used")
+
+
+parseRule'	:: BNFRules -> Name -> Parser u ParseTree
+parseRule' rules nm
  | nm `M.notMember` rules	= fail $ "The rule "++nm++" is not defined in the syntax of your typesystem"
  | otherwise	= do	let choices	= zip (rules M.! nm) [0..]
 			(i, pt)	<- parseChoice rules nm choices
@@ -51,5 +76,5 @@ parsePart _ Number
 parsePart rules (Seq bnfs)
 		= bnfs |+> parsePart' rules |> PtSeq 
 parsePart rules (BNFRuleCall nm)
-		= parseRule rules nm
+		= parseRule' rules nm
 

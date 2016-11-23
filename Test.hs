@@ -14,6 +14,7 @@ import Parser.TsParser
 import Parser.MetaParser
 import Parser.MetaExpressionParser
 import Parser.MetaFunctionParser
+import MetaFunctionInterpreter
 
 import Text.Parsec
 
@@ -27,20 +28,18 @@ handleExample ts str
 	= do	putStrLn ("INPUT: "++show str)
 		let parser	= parse $ parseRule (tsSyntax ts) "t"
 		let parsed	= parser "examples" str
-		parseTree	<- either (\str -> putStrLn (show str) >> return (PtNumber 0)) return parsed
-		-- evalStar ts (ptToMetaExpr parseTree)
+		parseTree	<- either (error . show) return parsed
+		evalStar ts parseTree
 		putStrLn "\n\n"
-{-
 
 evalStar	:: TypeSystem -> MetaExpression -> IO ()
 evalStar ts me	
-	= do	putStrLn $ "| " ++ show me
-		let me'	= evalFunc' ts "eval" [me]
+	= do	putStrLn $ "| " ++ show' me
+		let me'	= evalFunc ts "eval" [me]
 		if me' /= me then
 			evalStar ts me'
 		else
 			return ()
---}
 
 fromRight	= either (error . show) id
 
@@ -62,9 +61,9 @@ t	= tl
 tf	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
 		ts	<- either (error . show) return ts'
 		print ts
-		-- putStrLn "\n\n\nEXAMPLES\n========\n\n"
-		-- examples	<- readFile "Examples/STFL.example" |> lines |> filter (/= "") |> filter ((/= '#') . head)
-		-- forM_ examples $ handleExample ts
+		putStrLn "\n\n\nEXAMPLES\n========\n\n"
+		examples	<- readFile "Examples/STFL.example" |> lines |> filter (/= "") |> filter ((/= '#') . head)
+		forM_ examples $ handleExample ts
 		
 
 

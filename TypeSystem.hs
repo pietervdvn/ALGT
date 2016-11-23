@@ -75,26 +75,6 @@ equivalent	:: BNFRules -> Name -> Name -> Bool
 equivalent r x y
 		= alwaysIsA r x y || alwaysIsA r y x
 
------------------------- Syntax: Actually parsed stuff -------------------------
-
-data ParseTree	= Token String	-- Contents
-		| PtNumber Int
-		| PtSeq [ParseTree]
-		| RuleParse Name Int ParseTree -- causing rule and choice index (thus which option caused) + actual contents
-	deriving (Eq, Ord, Show)
-
-
-
-ptToMetaExpr	:: (MetaType, Int) -> ParseTree -> MetaExpression
-ptToMetaExpr mt (Token s)
-		= MLiteral s
-ptToMetaExpr mt (PtNumber i)
-		= MInt i
-ptToMetaExpr mt (PtSeq pts)
-		= pts |> ptToMetaExpr mt & MSeq mt
-ptToMetaExpr _ (RuleParse mt i pt)
-		= ptToMetaExpr (MType mt, i) pt
-
 ------------------------ Metafunctions -------------------------
 
 -- Metafunctions do transform syntax trees (by rewrite rules) and are often used in typechecking and evaluation
@@ -162,7 +142,7 @@ type MetaFunctions	= Map Name MetaFunction
 
 
 ------------------------ Rules ---------------------------------
-
+{-
 data Typing	= Typing ParseTree MetaExpression
 	deriving (Ord, Eq)
 data Predicate	= TypingInContext Typing
@@ -173,6 +153,7 @@ data Predicate	= TypingInContext Typing
 data Rule	= Rule Name [Predicate] [Predicate]
 	deriving (Ord, Eq)
 
+-}
 
 			
 
@@ -182,11 +163,10 @@ data Rule	= Rule Name [Predicate] [Predicate]
 data TypeSystem 	= TypeSystem {tsName :: Name, 	-- what is this typesystem's name?
 					tsContextSymbol :: String, -- how is the context printed?
 					tsSyntax	:: BNFRules,	-- synax of the language
-					tsFunctions 	:: MetaFunctions,	-- syntax metafunctions of the TS 
-					tsRules 	:: [Rule]	-- predicates and inference rules of the type system, most often used for typing rules
+					tsFunctions 	:: MetaFunctions	-- syntax metafunctions of the TS 
+					-- tsRules 	:: [Rule]	-- predicates and inference rules of the type system, most often used for typing rules
 					}
 	deriving (Show)
-
 
 
 
@@ -210,12 +190,22 @@ instance Show MetaExpression where
 
 showTI (mt, i)	= ": ("++show mt++"."++show i++")"
 
+show' (MVar mt n)	= "METAVAR: "++show n
+show' (MLiteral s)	= s
+show' (MInt i)		= show i
+show' (MSeq mt exprs)	= exprs |> show' & unwords & inParens
+show' (MCall mt nm builtin args)
+			= let args'	= args & showComma & inParens
+			  in "METACALL: " ++ (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
+
+
+
 instance Show MetaClause where
 	show (MClause pats expr)
 		= let 	args = pats & showComma & inParens
 			in
 			args ++ " = " ++ show expr
-
+{-
 instance Show Typing where
 	show (Typing e t)
 		= show e ++" : "++show t
@@ -240,4 +230,5 @@ instance Show Rule where
 			line	= replicate lineL '-'
 			in
 			"\n"++indent ++ top ++ "\n" ++ nme ++ line ++ "\n" ++ indent ++ bottom
+-}
 

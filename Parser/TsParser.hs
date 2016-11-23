@@ -130,5 +130,5 @@ typeSystemFile name
 		nls
 		eof
 -}
-		return $ TypeSystem name ctxS bnfs metaFuncs []
+		return $ TypeSystem name ctxS bnfs metaFuncs -- []
 
