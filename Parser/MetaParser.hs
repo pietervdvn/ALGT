@@ -48,7 +48,8 @@ parsePart _ Identifier
 		= identifier |> Token
 parsePart _ Number
 		= number |> PtNumber
-parsePart rules (BNFRuleCall nm)
-		= parseRule rules nm
 parsePart rules (Seq bnfs)
 		= bnfs |+> parsePart' rules |> PtSeq 
+parsePart rules (BNFRuleCall nm)
+		= parseRule rules nm
+

@@ -33,7 +33,7 @@ bnfNumber
 
 
 bnfRuleCall
-	= (iDentifier <|> identifier) |> BNFRuleCall
+	= identifier |> BNFRuleCall
 
 bnfExpr	= ws >> (bnfIdentifier <|> bnfLiteral <|> bnfNumber <|> bnfRuleCall) <* ws
 
@@ -47,7 +47,7 @@ bnfExpr'
 bnfLine	= bnfExpr' `sepBy` string "|" <* ws
 
 bnfRule
-	= do	name	<- iDentifier <|> identifier
+	= do	name	<- identifier
 		ws
 		string "::="
 		bnfs 	<- bnfLine

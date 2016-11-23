@@ -21,6 +21,8 @@ import qualified Data.Map as M
 import Data.Map (Map)
 import Data.List (intersperse)
 
+import Debug.Trace
+
 
 -- S from Simple, before typing
 data SClause = SClause [SExpression] SExpression
@@ -149,17 +151,19 @@ metaCall
 
 metaExpr	:: BNFRules -> MetaTypeName -> Parser u SExpression
 metaExpr bnfs rule
-	= do	let errMsg	= "MetaType (= BNF-rule) "++rule++" not known"
+	= trace ("Trying "++rule)
+	  (do	let errMsg	= "MetaType (= BNF-rule) "++rule++" not known"
 		guidances	<- M.lookup rule bnfs & maybe (fail errMsg) return
-		guidances |> metaExprPart' bnfs & first
+		guidances |> metaExprPart' bnfs & first)
 
 
 
 
 metaExprPart'	:: BNFRules -> BNFAST -> Parser u SExpression
 metaExprPart' rules guidance
-	= do	ws
-		try (metaExprPart rules guidance) <|> try metaCall <|> try metaVar
+	= trace ("   "++show guidance)
+	  (do	ws
+		try (metaExprPart rules guidance) <|> try metaCall <|> try metaVar)
 
 metaExprPart	:: BNFRules -> BNFAST -> Parser u SExpression
 metaExprPart _ (Literal string)
@@ -169,15 +173,17 @@ metaExprPart _ (Literal string)
 		else	
 			return $ SMELiteral string
 metaExprPart _ Identifier
-	= do	Literal val	<- bnfLiteral
-		return $ SMELiteral val
+	= do	char '"'
+		id	<- identifier
+		char '"'
+		return $ SMELiteral id
 metaExprPart _ Number
 	= do	char '"'
 		i	<- number
 		char '"'
 		return $ SMELiteralInt i
 metaExprPart rules (Seq bnfAsts)
-	= bnfAsts |+> metaExprPart' rules |> SMESeq
+	= trace (show bnfAsts) (bnfAsts |+> metaExprPart' rules |> SMESeq)
 metaExprPart rules (BNFRuleCall name)
 	= metaExpr rules name 
 				

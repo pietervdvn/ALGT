@@ -21,15 +21,18 @@ Evaluate an expression. For this, it has two contexts:
 
 evalFunc	:: TypeSystem -> Name -> [ParseTree] -> MetaExpression
 evalFunc ts funcName args
+		= evalFunc' ts funcName (args |> ptToMetaExpr)
+
+
+evalFunc'	:: TypeSystem -> Name -> [MetaExpression] -> MetaExpression
+evalFunc' ts funcName args	
  | funcName `M.member` tsFunctions ts
-	= let	args'	= args |> ptToMetaExpr
-		func	= tsFunctions ts M.! funcName
+	= let	func	= tsFunctions ts M.! funcName
 		ctx	= Ctx (tsFunctions ts) M.empty [] in
-		applyFunc ctx (funcName, func) args'
+		applyFunc ctx (funcName, func) args
  | otherwise
 	= evalErr (Ctx (tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
-		
 
 
 data Ctx	= Ctx {	ctx_functions 	:: Map Name MetaFunction,
@@ -78,7 +81,6 @@ patternMatch (MInt s1) (MInt s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
 patternMatch (MSeq seq1) (MSeq seq2)
-	-- = zip seq1 seq2 |+> uncurry patternMatch >>= foldM mergeVars M.empty
 	= zip seq1 seq2 |+> uncurry patternMatch >>= foldM mergeVars M.empty
 	
 
@@ -125,8 +127,8 @@ evaluate _ (MLiteral l)		= MLiteral l
 evaluate _ (MInt i)		= MInt i
 
 evaluate ctx (MError msg)	
-	= let msgs	= ["In evaluating a meta function:"]++
-				(ctx_stack ctx |> buildStackEl)++[" "++msg]
+	= let msgs	= ["In evaluating a meta function:", msg]++
+				(ctx_stack ctx |> buildStackEl)
 		in	error $ unlines msgs
 
 
