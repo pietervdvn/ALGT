@@ -30,3 +30,9 @@ firstJusts	:: [Maybe a] -> Maybe a
 firstJusts maybes
 	= let	as	= catMaybes maybes in
 		if null as then Nothing else Just $ head as
+
+
+inMsg		:: String -> Either String a -> Either String a
+inMsg msg (Left msg')
+		= Left (msg ++ ":\n"++msg')
+inMsg _ right	= right

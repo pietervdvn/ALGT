@@ -7,7 +7,7 @@ These have a different parse tree, as we can't parse that in one pass
 
 import Utils
 import Parser.ParsingUtils
-import Parser.BNFParser
+import Parser.MetaExpressionParser
 
 import Control.Arrow ((&&&))
 import Control.Monad
@@ -23,16 +23,9 @@ import Data.List (intersperse)
 
 
 -- S from Simple, before typing
-data SClause = SClause [SExpression] SExpression
+data SClause = SClause [MEParseTree] MEParseTree
 	deriving (Show, Ord, Eq)
 
-data SExpression = SVar Name 
-		| SMELiteral String 
-		| SMELiteralInt Int 
-		| SMESeq [SExpression] 
-		| SMECall Name Builtin [SExpression]
-		| SError String
-	deriving (Show, Ord, Eq)
 
 data SFunction = SFunction {sf_name :: Name, sf_type :: MetaType, sf_body :: [SClause]}
 	deriving (Show, Ord, Eq)
@@ -41,42 +34,50 @@ data SFunction = SFunction {sf_name :: Name, sf_type :: MetaType, sf_body :: [SC
 parseMetaFunctions	:: BNFRules -> Parser u MetaFunctions
 parseMetaFunctions bnfs
 	= do	funcs	<- many $ try (nls >> parseMetaFunction bnfs)
-		return $ M.fromList (funcs |> buildTypedFunction)
+		typeFunctions bnfs funcs & either fail return
 
 
 
-buildTypedFunction	:: SFunction -> (Name, MetaFunction)
-buildTypedFunction (SFunction nm tp body)
-	= (nm, MFunction tp ((body |> buildTypedClause) ++ [undefinedClause tp]) )
+typeFunctions	:: BNFRules -> [SFunction] -> Either String MetaFunctions
+typeFunctions bnfs funcs
+	= do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
+		funcs |+> typeFunction bnfs typings |> M.fromList
+
+
+
+typeFunction	:: BNFRules -> Map Name MetaType -> SFunction -> Either String (Name, MetaFunction)
+typeFunction bnfs typings (SFunction nm tp body)
+	= inMsg ("While typing the function "++nm) $ body |+> typeClause bnfs typings tp |> MFunction tp |> (,) nm
+
+
+typeClause	:: BNFRules -> Map Name MetaType -> MetaType -> SClause -> Either String MetaClause
+typeClause bnfs funcs tp sc@(SClause patterns expr)
+	= inMsg ("In clause "++show sc) $
+          do	let tps		= flatten tp
+		let argTps	= init tps
+		let rType	= last tps
+		if length argTps /= length patterns then fail "Number of patterns is incorrect, in comparison with the type" else return ()
+		patterns'	<- zip argTps patterns |+> uncurry (typeAs' funcs bnfs) 
+		expr'		<- typeAs' funcs bnfs rType expr
+
+		patternsDeclares	<- patterns' |+> expectedTyping bnfs 
+		patternsDeclare		<- inMsg "While checking for conflicting declarations" $ mergeContexts bnfs patternsDeclares
+		exprNeed		<- expectedTyping bnfs expr'
+		let unknown		= exprNeed `M.difference` patternsDeclare & M.keys
+		if not $ null unknown then fail ("Undeclared variable(s): "++show unknown) else return ()
+		inMsg "While checking for conflicting usage" $ mergeContext bnfs patternsDeclare exprNeed
+		return $ MClause patterns' expr'
+
+
 
 undefinedClause	:: MetaType -> MetaClause
 undefinedClause tp
 	= let	flat	= flatten tp
-		args	= [0 .. length flat - 2] |> show |> ("t"++) |> MVar
-		expr	= MError "Undefined behaviour: no pattern matched"
+		args	= zip flat [0 .. length flat - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (MType tp, -1) nm) 
+		expr	= MCall (MType "") "error" True [MLiteral "Undefined behaviour: no pattern matched"]
 		in
 		MClause args expr
 		
-
-
-buildTypedClause	:: SClause -> MetaClause
-buildTypedClause (SClause pats expr)
-	= MClause (pats |> buildTypedExpr) (expr & buildTypedExpr)
-
-
--- Given function typings, builds what variable is expected to have what type
-buildTypedExpr		:: SExpression -> MetaExpression
-buildTypedExpr (SVar name)	= MVar name
-buildTypedExpr (SMELiteral s)
-			= MLiteral s
-buildTypedExpr (SMELiteralInt i)
-			= MInt i
-buildTypedExpr (SMESeq exprs)
-			= exprs |> buildTypedExpr & MSeq
-buildTypedExpr (SMECall nm builtin args)
-			= MCall nm builtin (args |> buildTypedExpr)
-buildTypedExpr (SError msg)	
-			= MError msg
 
 
 
@@ -89,9 +90,8 @@ parseMetaFunction	:: BNFRules -> Parser u SFunction
 parseMetaFunction bnfs	
 	= do	(nm, tp)	<- metaSignature bnfs
 		let tps		= flatten tp
-		let prsClause	= metaClause bnfs nm (init tps) (last tps)
 		nls
-		clauses		<- many1 $ try (prsClause <* nls)
+		clauses		<- many1 $ try (metaClause nm (length tps - 1) <* nls)
 		return $ SFunction nm tp clauses
 
 metaType	:: [Name] -> Parser u MetaType
@@ -116,80 +116,20 @@ metaSignature bnfs
 		return (nm, tp)
 		
 
-metaClause	:: BNFRules -> Name -> [MetaTypeName] -> MetaTypeName -> Parser u SClause
-metaClause bnfs name argsTps returnTp
+metaClause	:: Name -> Int -> Parser u SClause
+metaClause name i
 	= (do	ws
 		string name
 		ws
 		string "("
 		ws
-		let argParsers	= argsTps |> metaExpr bnfs
-		args	<- intersperseM (ws >> char ',' >> ws) argParsers 
+		args	<- intersperseM (ws >> char ',' >> ws) (replicate i parseMetaExpression)
 		ws
 		string ")"
 		try (ws >> nl >> ws) <|> ws
 		string "="
 		ws
-		expr	<- (try metaError <|> metaExpr bnfs returnTp)
+		expr	<- parseMetaExpression
 		return $ SClause args expr)
 
-
-metaVar	= identifier |> SVar
-
-metaCall
-	= do	builtin	<- (try $ char '!' >> return True) <|> return False
-		nm	<- identifier
-		ws
-		char '('
-		vars	<- (ws >> (try metaCall <|> metaVar) <* ws) `sepBy` char ','	
-		char ')'
-		return $ SMECall nm builtin vars
-
-
-
-metaExpr	:: BNFRules -> MetaTypeName -> Parser u SExpression
-metaExpr bnfs rule
-	= do	let errMsg	= "MetaType (= BNF-rule) "++rule++" not known"
-		guidances	<- M.lookup rule bnfs & maybe (fail errMsg) return
-		guidances |> metaExprPart' bnfs & first
-
-
-
-
-metaExprPart'	:: BNFRules -> BNFAST -> Parser u SExpression
-metaExprPart' rules guidance
-	= do	ws
-		try (metaExprPart rules guidance) <|> try metaCall <|> try metaVar
-
-metaExprPart	:: BNFRules -> BNFAST -> Parser u SExpression
-metaExprPart _ (Literal string)
-	= do	val	<- bnfLiteral
-		if val /= string then
-			fail $ "Expected a literal "++string
-		else	
-			return $ SMELiteral string
-metaExprPart _ Identifier
-	= do	char '"'
-		id	<- identifier
-		char '"'
-		return $ SMELiteral id
-metaExprPart _ Number
-	= do	char '"'
-		i	<- number
-		char '"'
-		return $ SMELiteralInt i
-metaExprPart rules (Seq bnfAsts)
-	= bnfAsts |+> metaExprPart' rules |> SMESeq
-metaExprPart rules (BNFRuleCall name)
-	= metaExpr rules name 
-				
-					
-			
-metaError	:: Parser u SExpression
-metaError	= do	ws
-			string "ERROR"
-			ws
-			val	<- bnfLiteral
-			ws
-			return $ SError val
 

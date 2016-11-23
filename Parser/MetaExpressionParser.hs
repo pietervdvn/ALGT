@@ -26,6 +26,11 @@ data MEParseTree	= MePtToken String | MePtSeq [MEParseTree] | MePtVar Name | MeP
 
 
 
+typeAs'		:: Map Name MetaType -> BNFRules -> Name -> MEParseTree -> Either String MetaExpression
+typeAs' functions rules ruleName pt
+	= inMsg ("While typing "++show pt++" against "++ruleName) $ 
+		typeAs functions rules ruleName pt & maybe (Left "No typing found") Right
+
 {- Given a context (knwon function typings + bnf syntax), given a bnf rule (as type),
 the parsetree is interpreted/typed following the bnf syntax.
 -}
@@ -59,7 +64,7 @@ mergeContext bnfs ctx1 ctx2
 			-- for each common key, we see wether they are equivalent
 			let conflicts	= zip common (zip ctx1' ctx2')
 						||>> uncurry (equivalent bnfs)
-						& filter (not . snd) |> fst
+						& filter (not . snd)
 			if null conflicts then return (M.union ctx1 ctx2) else Left ("Conflicts for variables "++show conflicts)
 
 
@@ -132,6 +137,7 @@ mePtToken	= bnfLiteral |> MePtToken
 mePtVar		= identifier |> MePtVar
 mePtCall	= do	builtin	<- try (char '!' >> return True) <|> return False
 			nm	<- identifier
+			ws
 			char '('
 			args	<- (ws *> mePt <* ws) `sepBy` char ','
 			char ')'

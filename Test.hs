@@ -18,16 +18,17 @@ import Data.Maybe
 import Data.Map (Map, fromList)
 
 import Parser.MetaExpressionParser
+import Parser.MetaFunctionParser
 
-{-
 handleExample	:: TypeSystem -> String -> IO ()
 handleExample ts str
 	= do	putStrLn ("INPUT: "++show str)
 		let parser	= parse $ parseRule (tsSyntax ts) "t"
 		let parsed	= parser "examples" str
 		parseTree	<- either (\str -> putStrLn (show str) >> return (PtNumber 0)) return parsed
-		evalStar ts (ptToMetaExpr parseTree)
+		-- evalStar ts (ptToMetaExpr parseTree)
 		putStrLn "\n\n"
+{-
 
 evalStar	:: TypeSystem -> MetaExpression -> IO ()
 evalStar ts me	
@@ -51,11 +52,11 @@ testExpr expr rule
 t 	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
 		ts	<- either (error . show) return ts'
 		print ts
-		putStrLn "\n\n\nEXAMPLES\n========\n\n"
-		examples	<- readFile "Examples/STFL.example" |> lines |> filter (/= "") |> filter ((/= '#') . head)
+		-- putStrLn "\n\n\nEXAMPLES\n========\n\n"
+		-- examples	<- readFile "Examples/STFL.example" |> lines |> filter (/= "") |> filter ((/= '#') . head)
 		-- forM_ examples $ handleExample ts
-		forM_ [(" \"If\" cond \"Then\" t1 \"Else\" t2 ", "t"), ("x \"::\" y", "t"), ("\"5\" \"+\" \"5\"","t")
-			, ("\"If\" eval(cond) \"Then\" t1 \"Else\" t2", "t"), ("x \"::\" x", "t")] (uncurry testExpr)
+		--forM_ [(" \"If\" cond \"Then\" t1 \"Else\" t2 ", "t"), ("x \"::\" y", "t"), ("\"5\" \"+\" \"5\"","t")
+		--	, ("\"If\" eval(cond) \"Then\" t1 \"Else\" t2", "t"), ("x \"::\" x", "t"), ("!error(\"undefined behaviour\")", "t")] (uncurry testExpr)
 
 
 exFunctionTypings	= fromList [("eval", MTArrow (MType "t") (MType "t")) , ("cond", MType "t")]

@@ -32,7 +32,7 @@ eval("If" "True" "Then" t1 "Else" t2) = t1
 eval("If" "False" "Then" t1 "Else" t2) = t2
 eval("If" cond "Then" t1 "Else" t2) = "If" eval(cond) "Then" t1 "Else" t2
 eval("(" "\\" var ":" type "." t ")" arg)
-	= subs (var, arg, t)
+	= subs(var, arg, t)
 eval(n1 "+" n2)
 	= !plus(eval(n1), eval(n2))
 # eval(t "::" type)
@@ -40,17 +40,17 @@ eval(n1 "+" n2)
 eval(t)	= t
 
 
-
-dom : T -> T
+# TODO make type instead of t
+dom : t -> t
 dom(t1 "->" t2) = t1
 # undefined otherwises
 
-cod : T -> T
+cod : t -> t
 cod(t1 "->" t2) = t2
 # undefined otherwise
 
 # Currying syntax as in haskell
-equate: T -> T -> T
+equate: t -> t -> t
 equate(t1, t1) = t1
 # undefined otherwise
 
