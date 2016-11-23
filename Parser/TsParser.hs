@@ -13,7 +13,7 @@ import Control.Monad
 import TypeSystem
 import Parser.BNFParser
 import Parser.MetaParser
-import Parser.MetaFunctionParser
+-- import Parser.MetaFunctionParser
 
 import Text.Parsec
 import Data.Maybe
@@ -121,7 +121,8 @@ typeSystemFile name
 
 		nls1
 		header "Functions"
- 		metaFuncs 	<- parseMetaFunctions bnfs
+		let metaFuncs	= M.empty
+ 		--metaFuncs 	<- parseMetaFunctions bnfs
 		{-
 		nls
 		header "Rules"

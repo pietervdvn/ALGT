@@ -61,7 +61,7 @@ equate(t1, t1) = t1
 # replaces variable x by y in entire t
 subs: var -> t -> t -> t
 subs(x, y, x)	= y
-subs(x, y, "(" "\\" x ":" t "." rest ")" )	= ERROR "Conflicting environments"
+subs(x, y, "(" "\\" x ":" t "." rest ")" )	= !error("Conflicting environments")
 subs(x, y, "(" "\\" z ":" t "." rest ")" )
 	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
 subs(x, y, "if" cond "then" e1 "else" e2)

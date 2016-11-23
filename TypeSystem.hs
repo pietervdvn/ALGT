@@ -10,6 +10,7 @@ import Data.List (intersperse, intercalate)
 
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe
 
 ------------------------ Syntax -------------------------
 ------------------------ Syntax: BNF -------------------------
@@ -25,11 +26,50 @@ data BNFAST 	= Literal String	-- Literally parse 'String'
 	deriving (Show, Eq)
 
 
+fromSingle	:: BNFAST -> Maybe BNFAST
+fromSingle (Seq [bnf])	= Just bnf
+fromSingle (Seq _)	= Nothing
+fromSingle bnf		= Just bnf
+
+
+fromRuleCall	:: BNFAST -> Maybe Name
+fromRuleCall (BNFRuleCall nm)	= Just nm
+fromRuleCall _			= Nothing
+
 {-Represents a syntax: the name of the rule + possible parseways -}
 type BNFRules	= Map Name [BNFAST]
 
 bnfNames	:: BNFRules -> [Name]
 bnfNames	=  M.keys
+
+
+{-
+Consider following BNF:
+x ::= ... | y | ...
+y ::= ...
+
+This means that every 'y' also (and always) is an 'x'
+
+alwaysIsA searches these relations:
+
+alwaysIsA rules 'y' 'x'	--> True
+
+-}
+alwaysIsA	:: BNFRules -> Name -> Name -> Bool
+alwaysIsA rules sub super
+ | sub == super	= True
+ | otherwise	-- super-rule should contain a single occurence, sub or another rule
+	= let	superR	= (rules M.! super) |> fromSingle & catMaybes
+		-- this single element should be a BNFRuleCall
+		superR'	= superR |> fromRuleCall & catMaybes
+		-- either sub is an element from superR', or it has a rule which is a super for sub
+		-- we don't have to worry about loops; as that would block parsing
+		in sub `elem` superR' || or (superR' |> alwaysIsA rules sub)
+				
+-- Either X is a Y, or Y is a X
+equivalent	:: BNFRules -> Name -> Name -> Bool
+equivalent r x y
+		= alwaysIsA r x y || alwaysIsA r y x
 
 ------------------------ Syntax: Actually parsed stuff -------------------------
 
@@ -41,15 +81,15 @@ data ParseTree	= Token String	-- Contents
 
 
 
-ptToMetaExpr	:: ParseTree -> MetaExpression
-ptToMetaExpr (Token s)
+ptToMetaExpr	:: (MetaType, Int) -> ParseTree -> MetaExpression
+ptToMetaExpr mt (Token s)
 		= MLiteral s
-ptToMetaExpr (PtNumber i)
+ptToMetaExpr mt (PtNumber i)
 		= MInt i
-ptToMetaExpr (PtSeq pts)
-		= pts |> ptToMetaExpr & MSeq
-ptToMetaExpr (RuleParse _ _ pt)
-		= ptToMetaExpr pt
+ptToMetaExpr mt (PtSeq pts)
+		= pts |> ptToMetaExpr mt & MSeq mt
+ptToMetaExpr _ (RuleParse mt i pt)
+		= ptToMetaExpr (MType mt, i) pt
 
 ------------------------ Metafunctions -------------------------
 
@@ -66,16 +106,22 @@ flatten (MType t)	= [t]
 flatten (MTArrow head tail)
 			= flatten head ++ flatten tail
 
+toSimpleType	:: MetaType -> Maybe MetaTypeName
+toSimpleType (MType nm)	= Just nm
+toSimpleType _		= Nothing
+
+toSimpleType'	:: MetaType -> Either String MetaTypeName
+toSimpleType' tm	= maybe (Left ("Not a simple type: "++show tm)) Right (toSimpleType tm)
+
 -- A metaExpression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
 -- TODO add typing
 type Builtin	= Bool
 data MetaExpression
-	= MVar Name
+	= MVar (MetaType, Int) Name
 	| MLiteral String
 	| MInt Int
-	| MSeq [MetaExpression]
-	| MCall Name Builtin [MetaExpression]	-- not allowed in pattern matching
-	| MError String
+	| MSeq (MetaType, Int) [MetaExpression]	
+	| MCall MetaType Name Builtin [MetaExpression]	-- not allowed in pattern matching
 	deriving (Ord, Eq)
 
 isMInt	:: MetaExpression -> Bool
@@ -146,15 +192,15 @@ instance Show MetaType where
 	show (MTArrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
 instance Show MetaExpression where
-	show (MVar n)		= n
+	show (MVar mt n)	= n ++ showTI mt
 	show (MLiteral s)	= show s
 	show (MInt i)		= show i
-	show (MSeq exprs)	= exprs |> show & unwords & inParens
-	show (MCall nm builtin args)
+	show (MSeq mt exprs)	= exprs |> show & unwords & inParens & (++ showTI mt)
+	show (MCall mt nm builtin args)
 				= let args'	= args & showComma & inParens
-				  in
-					(if builtin then "!" else "") ++ nm++args'
-	show (MError msg)	= "ERROR "++msg
+				  in (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
+
+showTI (mt, i)	= ": ("++show mt++"."++show i++")"
 
 instance Show MetaClause where
 	show (MClause pats expr)

@@ -21,8 +21,6 @@ import qualified Data.Map as M
 import Data.Map (Map)
 import Data.List (intersperse)
 
-import Debug.Trace
-
 
 -- S from Simple, before typing
 data SClause = SClause [SExpression] SExpression
@@ -194,5 +192,4 @@ metaError	= do	ws
 			val	<- bnfLiteral
 			ws
 			return $ SError val
-
 
