@@ -11,6 +11,7 @@ import Data.List (intersperse, intercalate)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import Data.List
 
 ------------------------ Syntax -------------------------
 ------------------------ Syntax: BNF -------------------------
@@ -40,7 +41,7 @@ fromRuleCall _			= Nothing
 type BNFRules	= Map Name [BNFAST]
 
 bnfNames	:: BNFRules -> [Name]
-bnfNames	=  M.keys
+bnfNames r	=  M.keys r & sortOn length & reverse
 
 
 {-
@@ -106,6 +107,11 @@ flatten (MType t)	= [t]
 flatten (MTArrow head tail)
 			= flatten head ++ flatten tail
 
+-- ["t0", "t1", "t2"]  -->  t0 -> (t1 -> t2)
+unflatten	:: [MetaTypeName] -> MetaType
+unflatten [t]	= MType t
+unflatten (t:ts)= MTArrow (MType t) (unflatten ts)
+
 toSimpleType	:: MetaType -> Maybe MetaTypeName
 toSimpleType (MType nm)	= Just nm
 toSimpleType _		= Nothing
@@ -114,7 +120,6 @@ toSimpleType'	:: MetaType -> Either String MetaTypeName
 toSimpleType' tm	= maybe (Left ("Not a simple type: "++show tm)) Right (toSimpleType tm)
 
 -- A metaExpression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
--- TODO add typing
 type Builtin	= Bool
 data MetaExpression
 	= MVar (MetaType, Int) Name

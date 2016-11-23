@@ -33,8 +33,9 @@ data SFunction = SFunction {sf_name :: Name, sf_type :: MetaType, sf_body :: [SC
 
 parseMetaFunctions	:: BNFRules -> Parser u MetaFunctions
 parseMetaFunctions bnfs
-	= do	funcs	<- many $ try (nls >> parseMetaFunction bnfs)
-		typeFunctions bnfs funcs & either fail return
+	= do	nls
+		funcs	<- many $ try (parseMetaFunction bnfs)
+		typeFunctions bnfs funcs & either error return
 
 
 

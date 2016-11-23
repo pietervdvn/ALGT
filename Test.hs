@@ -9,16 +9,18 @@ import Utils
 import Control.Monad
 
 import TypeSystem
+
 import Parser.TsParser
 import Parser.MetaParser
-
-import Text.Parsec
-import Data.Maybe
-
-import Data.Map (Map, fromList)
-
 import Parser.MetaExpressionParser
 import Parser.MetaFunctionParser
+
+import Text.Parsec
+
+import Data.Maybe
+import Data.Either
+import Data.Map (Map, fromList)
+
 
 handleExample	:: TypeSystem -> String -> IO ()
 handleExample ts str
@@ -40,26 +42,51 @@ evalStar ts me
 			return ()
 --}
 
+fromRight	= either (error . show) id
+
 testExpr expr rule
-	= do	let pt	= parse mePt "<>" expr
-		pt'	<- either (error . show) return pt
-		print pt'
-		let tpd	= typeAs exFunctionTypings stflSyntax rule pt'
-		print tpd
-		print $ expectedTyping stflSyntax $ fromJust tpd		
+	= do	putStrLn "\n-----------------\n"
+		let pt	= parse mePt "<>" expr & fromRight
+		print pt
+		let tpd	= typeAs exFunctionTypings stflSyntax rule pt
+		case tpd of
+			Left msg	-> putStrLn msg
+			Right val	-> print val
+		{-let typing	= expectedTyping stflSyntax & fromRight
+		print typing
+		return typing	 --}
 		
 
-t 	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
+t	= tl
+
+tf	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
 		ts	<- either (error . show) return ts'
 		print ts
 		-- putStrLn "\n\n\nEXAMPLES\n========\n\n"
 		-- examples	<- readFile "Examples/STFL.example" |> lines |> filter (/= "") |> filter ((/= '#') . head)
 		-- forM_ examples $ handleExample ts
-		--forM_ [(" \"If\" cond \"Then\" t1 \"Else\" t2 ", "t"), ("x \"::\" y", "t"), ("\"5\" \"+\" \"5\"","t")
-		--	, ("\"If\" eval(cond) \"Then\" t1 \"Else\" t2", "t"), ("x \"::\" x", "t"), ("!error(\"undefined behaviour\")", "t")] (uncurry testExpr)
+		
 
 
-exFunctionTypings	= fromList [("eval", MTArrow (MType "t") (MType "t")) , ("cond", MType "t")]
+extraTests	:: [(String, Name)]
+extraTests = 	[ (" \"If\" cond \"Then\" t1 \"Else\" t2 ", "t")
+		, ("x \"::\" y", "t")
+		, ("\"5\" \"+\" \"5\"","t")
+		, ("\"If\" eval(cond) \"Then\" t1 \"Else\" t2", "t")
+		, ("x \"::\" y", "t")
+		, ("!error(\"undefined behaviour\")", "t")
+		, ("(\"(\" \"\\\\\" x \":\" type \".\"  e \")\") arg", "t")
+		, ("eval(z)", "t")
+		, ("subs(x,y,z)","t")
+		, ("eval(x) \"+\" x", "t")
+		]
+
+te	= extraTests |+> (uncurry testExpr)
+		
+ 
+tl	= last extraTests & uncurry testExpr
+
+exFunctionTypings	= fromList [("eval", MTArrow (MType "t") (MType "t")) , ("subs", unflatten ["var","t","t","t"])]
 
 		
 stflSyntax	= fromList [("t",[Seq [BNFRuleCall "tL",Literal "+",BNFRuleCall "t"],Seq [BNFRuleCall "tL",Literal "::",BNFRuleCall "type"],Seq [BNFRuleCall "tL",BNFRuleCall "t"],BNFRuleCall "tL"]),("tL",[Number,Literal "True",Literal "False",BNFRuleCall "var",Seq [Literal "(",Literal "\\",BNFRuleCall "var",Literal ":",BNFRuleCall "type",Literal ".",BNFRuleCall "t",Literal ")"],Seq [Literal "If",BNFRuleCall "t",Literal "Then",BNFRuleCall "t",Literal "Else",BNFRuleCall "t"]]),("type",[Seq [BNFRuleCall "typeL",Literal "->",BNFRuleCall "type"],BNFRuleCall "typeL"]),("typeL",[Literal "Int",Literal "Bool"]),("var",[Identifier])]
