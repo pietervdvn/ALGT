@@ -58,7 +58,10 @@ alwaysIsA rules 'y' 'x'	--> True
 -}
 alwaysIsA	:: BNFRules -> Name -> Name -> Bool
 alwaysIsA rules sub super
+ | super == ""	= True	-- The empty string is used in dynamic cases, thus are equivalent to everything
  | sub == super	= True
+ | super `M.notMember` rules
+	= error $ "Unknwown super name: "++show super
  | otherwise	-- super-rule should contain a single occurence, sub or another rule
 	= let	superR	= (rules M.! super) |> fromSingle & catMaybes
 		-- this single element should be a BNFRuleCall
