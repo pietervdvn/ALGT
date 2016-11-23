@@ -18,14 +18,8 @@ typeL	::= "Int" | "Bool"
 type	::= typeL "->" type | typeL
 
 var	::= identifier
-t	::= tL "::" type | tL "+" t | tL
-# | tL t | tL
-tL	::= 0..
-# | "True" | "False" | var | "(" "\\" var ":" type "-->" t ")" | "If" t "Then" t "Else" t
-
-
-x	::= y "::" type | y "+" x | y
-y	::= 0..
+t	::=  tL "+" t | tL "::" type | tL t | tL
+tL	::= 0.. | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
 
 
  Functions
@@ -37,14 +31,13 @@ eval: t -> t
 eval("If" "True" "Then" t1 "Else" t2) = t1
 eval("If" "False" "Then" t1 "Else" t2) = t2
 eval("If" cond "Then" t1 "Else" t2) = "If" eval(cond) "Then" t1 "Else" t2
-eval("(" "\\" var ":" type "-->" t ")" arg)
+eval("(" "\\" var ":" type "." t ")" arg)
 	= subs (var, arg, t)
 eval(n1 "+" n2)
 	= !plus(eval(n1), eval(n2))
 # eval(t "::" type)
 #	= t
 eval(t)	= t
-
 
 
 
@@ -68,9 +61,9 @@ equate(t1, t1) = t1
 # replaces variable x by y in entire t
 subs: var -> t -> t -> t
 subs(x, y, x)	= y
-subs(x, y, "(" "\\" x ":" t "-->" rest ")" )	= ERROR "Conflicting environments"
-subs(x, y, "(" "\\" z ":" t "-->" rest ")" )
-	= "(" "\\" z ":" t "-->" subs(x,y,rest) ")"
+subs(x, y, "(" "\\" x ":" t "." rest ")" )	= ERROR "Conflicting environments"
+subs(x, y, "(" "\\" z ":" t "." rest ")" )
+	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
 subs(x, y, "if" cond "then" e1 "else" e2)
 	= "if" subs(x, y, cond) "then" subs(x, y, e1) "else" subs(x, y, e2)
 subs(x, y, t1 "+" t2)
@@ -128,7 +121,7 @@ helperIf(cond, t1, t2) = "if" eval(cond) "then" t1 "else" t2
 
 	   $, x : T1 |- t : T2
 (TLambda) -----------------------------------------------------------
-	   $ |- "(" "\\" x ":" T1 "->" t ")" : T1 "->" T2
+	   $ |- "(" "\\" x ":" T1 "." t ")" : T1 "->" T2
 
 
 

@@ -151,23 +151,21 @@ metaCall
 
 metaExpr	:: BNFRules -> MetaTypeName -> Parser u SExpression
 metaExpr bnfs rule
-	= trace ("Trying "++rule)
-	  (do	let errMsg	= "MetaType (= BNF-rule) "++rule++" not known"
+	= do	let errMsg	= "MetaType (= BNF-rule) "++rule++" not known"
 		guidances	<- M.lookup rule bnfs & maybe (fail errMsg) return
-		guidances |> metaExprPart' bnfs & first)
+		guidances |> metaExprPart' bnfs & first
 
 
 
 
 metaExprPart'	:: BNFRules -> BNFAST -> Parser u SExpression
 metaExprPart' rules guidance
-	= trace ("   "++show guidance)
-	  (do	ws
-		try (metaExprPart rules guidance) <|> try metaCall <|> try metaVar)
+	= do	ws
+		try (metaExprPart rules guidance) <|> try metaCall <|> try metaVar
 
 metaExprPart	:: BNFRules -> BNFAST -> Parser u SExpression
 metaExprPart _ (Literal string)
-	= do	Literal val	<- bnfLiteral
+	= do	val	<- bnfLiteral
 		if val /= string then
 			fail $ "Expected a literal "++string
 		else	
@@ -183,7 +181,7 @@ metaExprPart _ Number
 		char '"'
 		return $ SMELiteralInt i
 metaExprPart rules (Seq bnfAsts)
-	= trace (show bnfAsts) (bnfAsts |+> metaExprPart' rules |> SMESeq)
+	= bnfAsts |+> metaExprPart' rules |> SMESeq
 metaExprPart rules (BNFRuleCall name)
 	= metaExpr rules name 
 				
@@ -193,7 +191,7 @@ metaError	:: Parser u SExpression
 metaError	= do	ws
 			string "ERROR"
 			ws
-			Literal val	<- bnfLiteral
+			val	<- bnfLiteral
 			ws
 			return $ SError val
 

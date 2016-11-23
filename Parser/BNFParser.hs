@@ -17,13 +17,13 @@ import Data.Maybe
 import Data.Char
 import qualified Data.Map as M
 
-bnfLiteral	:: Parser s BNFAST
+bnfLiteral	:: Parser s String
 bnfLiteral	
 	= do	char '"'
 		str <- many1 (noneOf "\\\"" <|> 
 					(char '\\' >> (char '\\' <|> char '\"')))
 		char '"'
-		return $ Literal str 
+		return str 
 
 bnfIdentifier
 	= string "identifier" >> return Identifier
@@ -35,7 +35,7 @@ bnfNumber
 bnfRuleCall
 	= identifier |> BNFRuleCall
 
-bnfExpr	= ws >> (bnfIdentifier <|> bnfLiteral <|> bnfNumber <|> bnfRuleCall) <* ws
+bnfExpr	= ws >> (bnfIdentifier <|> (bnfLiteral |> Literal) <|> bnfNumber <|> bnfRuleCall) <* ws
 
 bnfExpr'	
 	= do	e	<- many bnfExpr
