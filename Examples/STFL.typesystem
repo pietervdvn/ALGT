@@ -42,8 +42,14 @@ eval( ("(" "\\" var ":" type "." t ")") arg)
 	= subs(var, arg, t)
 eval(n1 "+" n2)
 	= plus(eval(n1), eval(n2))
-eval(t "::" type)
+eval((t:number) "::" "Int")
 	= t
+eval("True" "::" "Bool")
+	= "True"
+eval("False" "::" "Bool")
+	= "False"
+eval(t "::" type)
+	= !error("Invalid type: " t " is not a " type)
 eval(t)	= t
 
 

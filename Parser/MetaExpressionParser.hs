@@ -35,6 +35,7 @@ expectedTyping	:: BNFRules -> MetaExpression -> Either String (Map Name MetaType
 expectedTyping _ (MVar (mt, _) nm)	= return $ M.singleton nm mt
 expectedTyping r (MSeq _ mes)		= mes |+> expectedTyping r >>= mergeContexts r
 expectedTyping r (MCall _ _ _ mes)	= mes |+> expectedTyping r >>= mergeContexts r
+expectedTyping r (MCast _ e)		= expectedTyping r e
 expectedTyping _ _			= return M.empty
 
 
