@@ -18,14 +18,15 @@ evalFunc	:: TypeSystem -> Name -> [MetaExpression] -> MetaExpression
 evalFunc ts funcName args	
  | funcName `M.member` tsFunctions ts
 	= let	func	= tsFunctions ts M.! funcName
-		ctx	= Ctx (tsFunctions ts) M.empty [] in
+		ctx	= Ctx (tsSyntax ts) (tsFunctions ts) M.empty [] in
 		applyFunc ctx (funcName, func) args
  | otherwise
-	= evalErr (Ctx (tsFunctions ts) M.empty []) $
+	= evalErr (Ctx (tsSyntax ts) (tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
 
 
-data Ctx	= Ctx {	ctx_functions 	:: Map Name MetaFunction,
+data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
+			ctx_functions 	:: Map Name MetaFunction,
 			ctx_vars	:: Map Name MetaExpression,
 			ctx_stack	:: [(Name, [MetaExpression])] -- only used for errors
 			}
@@ -43,7 +44,7 @@ applyFunc ctx (nm, MFunction tp clauses) args
 
 evalClause	:: Ctx ->  [MetaExpression] -> MetaClause -> Maybe MetaExpression
 evalClause ctx args (MClause pats expr)
-	= do	variabless	<- zip pats args |+> uncurry patternMatch
+	= do	variabless	<- zip pats args |+> uncurry (patternMatch $ ctx_syntax ctx )
 		variables	<- foldM mergeVars M.empty variabless
 		let ctx'	= ctx {ctx_vars = variables}
 		return $ evaluate ctx' expr
@@ -62,26 +63,28 @@ mergeVars v1 v2
 Disasembles an expression against a pattern
 patternMatch pattern value
 -}
-patternMatch	:: MetaExpression -> MetaExpression -> Maybe (Map Name MetaExpression)
-patternMatch (MVar _ v) expr	= Just $ M.singleton v expr
-patternMatch (MLiteral s1) (MLiteral s2)
+patternMatch	:: BNFRules -> MetaExpression -> MetaExpression -> Maybe (Map Name MetaExpression)
+patternMatch _ (MVar _ v) expr	= Just $ M.singleton v expr
+patternMatch _ (MLiteral _ s1) (MLiteral _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
-patternMatch (MInt s1) (MInt s2)
+patternMatch _ (MInt _ s1) (MInt _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
-patternMatch (MSeq _ seq1) (MSeq _ seq2)
-	= zip seq1 seq2 |+> uncurry patternMatch >>= foldM mergeVars M.empty
-	
+patternMatch r (MSeq _ seq1) (MSeq _ seq2)
+	= zip seq1 seq2 |+> uncurry (patternMatch r) >>= foldM mergeVars M.empty
+patternMatch r (MCast as expr') expr
+ | alwaysIsA r (typeOf expr) as	
+	= patternMatch r expr' expr
+ | otherwise	
+	= Nothing
 
-patternMatch (MCall _ "error" True _) _	
-				= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
-patternMatch (MCall _ nm _ _) _	= error $ "Using a function call in a pattern is not allowed"
-
-patternMatch pat expr		= Nothing
-
-
-
+patternMatch _ (MCall _ "error" True _) _	
+	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
+patternMatch _ (MCall _ nm _ _) _	
+	= error $ "Using a function call in a pattern is not allowed"
+patternMatch _ pat expr		
+	= Nothing
 
 
 
@@ -89,12 +92,12 @@ evaluate	:: Ctx -> MetaExpression -> MetaExpression
 evaluate ctx (MCall _ "plus" True [e1, e2])
 	= let	e1'	= evaluate ctx e1
 		e2'	= evaluate ctx e2 
-		MInt i1	= e1'
-		MInt i2	= e2' in
+		MInt _ i1	= e1'
+		MInt _ i2	= e2' in
 		if not (isMInt e1' && isMInt e2') then
 			evalErr ctx $ "plus off a non-int element "++show e1'++", "++show e2'
 		else
-			MInt (i1 + i2)
+			MInt ("number", 0) (i1 + i2)
 evaluate ctx (MCall _ "error" True exprs)
 	= let	msgs	= ["In evaluating a meta function:", showComma exprs]
 		stack	= ctx_stack ctx |> buildStackEl
@@ -118,11 +121,11 @@ evaluate ctx (MVar _ nm)
 
 
 evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & MSeq tp
-evaluate _ (MLiteral l)		= MLiteral l
-evaluate _ (MInt i)		= MInt i
+evaluate _ (MLiteral ti l)	= MLiteral ti l
+evaluate _ (MInt ti i)		= MInt ti i
 
 
-evalErr	ctx msg	= evaluate ctx $ MCall (MType "") "error" True [MLiteral ("Undefined behaviour: "++msg)]
+evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
 
 

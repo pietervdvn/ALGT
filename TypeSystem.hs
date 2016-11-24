@@ -104,19 +104,29 @@ toSimpleType' tm	= maybe (Left ("Not a simple type: "++show tm)) Right (toSimple
 
 -- A metaExpression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
 type Builtin	= Bool
+type MInfo	= (MetaTypeName, Int)
 data MetaExpression
-	= MVar (MetaType, Int) Name
-	| MLiteral String
-	| MInt Int
-	| MSeq (MetaType, Int) [MetaExpression]	
-	| MCall MetaType Name Builtin [MetaExpression]	-- not allowed in pattern matching
+	= MVar MInfo Name
+	| MLiteral MInfo String
+	| MInt MInfo Int
+	| MSeq MInfo [MetaExpression]	
+	| MCall MetaTypeName Name Builtin [MetaExpression]	-- not allowed in pattern matching
+	| MCast MetaTypeName MetaExpression -- checks wether the expression is built by this smaller rule.
 	deriving (Ord, Eq)
 
 isMInt	:: MetaExpression -> Bool
-isMInt (MInt _)	= True
+isMInt (MInt _ _)	= True
 isMInt _	= False
 
 
+typeOf	:: MetaExpression -> MetaTypeName
+typeOf (MVar (tp, _) _)	= tp
+typeOf (MLiteral (tp, _) _)
+			= tp
+typeOf (MInt (tp, _) _) = tp
+typeOf (MSeq (tp, _) _)	= tp
+typeOf (MCall tp _ _ _)	= tp
+typeOf (MCast tp _)	= tp
 
 data MetaClause	= MClause {mecPatterns :: [MetaExpression], mecExpr :: MetaExpression}
 	deriving (Ord, Eq)
@@ -181,22 +191,26 @@ instance Show MetaType where
 
 instance Show MetaExpression where
 	show (MVar mt n)	= n ++ showTI mt
-	show (MLiteral s)	= show s
-	show (MInt i)		= show i
+	show (MLiteral mt s)	= show s ++ showTI mt
+	show (MInt mt i)	= show i ++ showTI mt
 	show (MSeq mt exprs)	= exprs |> show & unwords & inParens & (++ showTI mt)
 	show (MCall mt nm builtin args)
 				= let args'	= args & showComma & inParens
 				  in (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
+	show (MCast nm expr)	= (show expr ++ ":" ++ nm) & inParens
 
-showTI (mt, i)	= ": ("++show mt++"."++show i++")"
+showTI ("", _)	= ""
+showTI (mt, -1) = ": "++mt
+showTI (mt, i)	= ": "++mt++"."++show i
 
 show' (MVar mt n)	= "METAVAR: "++show n
-show' (MLiteral s)	= s
-show' (MInt i)		= show i
+show' (MLiteral _ s)	= s
+show' (MInt _ i)	= show i
 show' (MSeq mt exprs)	= exprs |> show' & unwords & inParens
 show' (MCall mt nm builtin args)
 			= let args'	= args & showComma & inParens
 			  in "METACALL: " ++ (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
+show' (MCast _ expr)	= show' expr & inParens
 
 
 

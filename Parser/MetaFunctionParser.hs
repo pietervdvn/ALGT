@@ -74,8 +74,8 @@ typeClause bnfs funcs tp sc@(SClause patterns expr)
 undefinedClause	:: MetaType -> MetaClause
 undefinedClause tp
 	= let	flat	= flatten tp
-		args	= zip flat [0 .. length flat - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (MType tp, -1) nm) 
-		expr	= MCall (MType "") "error" True [MLiteral "Undefined behaviour: no pattern matched"]
+		args	= zip flat [0 .. length flat - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (tp, -1) nm) 
+		expr	= MCall "" "error" True [MLiteral ("", -1) "Undefined behaviour: no pattern matched"]
 		in
 		MClause args expr
 		

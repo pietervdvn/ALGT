@@ -17,9 +17,12 @@ Contextsymbol is $
 typeL	::= "Int" | "Bool"
 type	::= typeL "->" type | typeL
 
+# builtin values
 var	::= identifier
+number	::= 0..
+
 t	::=  tL "+" t | tL "::" type | tL t | tL
-tL	::= 0.. | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
+tL	::= number | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
 
 
  Functions
@@ -28,8 +31,12 @@ tL	::= 0.. | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" t "
 
 # reduces one step of the logic
 eval: t -> t
+eval((t : var))
+ 	= !error("Unresolved variable")
 eval("If" "True" "Then" t1 "Else" t2) = t1
 eval("If" "False" "Then" t1 "Else" t2) = t2
+eval("If" (cond:number) "Then" t1 "Else" t2)
+	= !error("If with a number as condition")
 eval("If" cond "Then" t1 "Else" t2) = "If" eval(cond) "Then" t1 "Else" t2
 eval( ("(" "\\" var ":" type "." t ")") arg)
 	= subs(var, arg, t)

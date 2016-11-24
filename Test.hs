@@ -22,28 +22,12 @@ import Data.Maybe
 import Data.Either
 import Data.Map (Map, fromList)
 
+import Main
 
-handleExample	:: TypeSystem -> String -> IO ()
-handleExample ts str
-	= do	putStrLn ("INPUT: "++show str)
-		let parser	= parse $ parseRule (tsSyntax ts) "t"
-		let parsed	= parser "examples" str
-		parseTree	<- either (error . show) return parsed
-		evalStar ts parseTree
-		putStrLn "\n\n"
-
-evalStar	:: TypeSystem -> MetaExpression -> IO ()
-evalStar ts me	
-	= do	putStrLn $ "| " ++ show' me
-		let me'	= evalFunc ts "eval" [me]
-		if me' /= me then
-			evalStar ts me'
-		else
-			return ()
 
 fromRight	= either (error . show) id
 
-testExpr expr rule
+testExpr (expr, rule)
 	= do	putStrLn "\n-----------------\n"
 		let pt	= parse mePt "<>" expr & fromRight
 		print pt
@@ -51,20 +35,14 @@ testExpr expr rule
 		case tpd of
 			Left msg	-> putStrLn msg
 			Right val	-> print val
-		{-let typing	= expectedTyping stflSyntax & fromRight
+		let tpd' = tpd & either (error . show) id
+		let typing	= expectedTyping stflSyntax tpd' & either (error . show) id
 		print typing
-		return typing	 --}
-		
+		-- return typing	 --}
+	
+tf	= main' ["Examples/STFL.typesystem","Examples/STFL.example", "t","eval","--line-by-line","--step"]
 
-t	= tl
-
-tf	= do	ts'	<- parseTypeSystemFile "Examples/STFL.typesystem"
-		ts	<- either (error . show) return ts'
-		print ts
-		putStrLn "\n\n\nEXAMPLES\n========\n\n"
-		examples	<- readFile "Examples/STFL.example" |> lines |> filter (/= "") |> filter ((/= '#') . head)
-		forM_ examples $ handleExample ts
-		
+t	= tf
 
 
 extraTests	:: [(String, Name)]
@@ -72,18 +50,24 @@ extraTests = 	[ (" \"If\" cond \"Then\" t1 \"Else\" t2 ", "t")
 		, ("x \"::\" y", "t")
 		, ("\"5\" \"+\" \"5\"","t")
 		, ("\"If\" eval(cond) \"Then\" t1 \"Else\" t2", "t")
-		, ("x \"::\" y", "t")
 		, ("!error(\"undefined behaviour\")", "t")
 		, ("(\"(\" \"\\\\\" x \":\" type \".\"  e \")\") arg", "t")
 		, ("eval(z)", "t")
 		, ("subs(x,y,z)","t")
 		, ("eval(x) \"+\" x", "t")
+		, ("(\"x\" : var)", "t")
 		]
 
-te	= extraTests |+> (uncurry testExpr)
+
+failing	= 	[ ("x \"::\" x", "t")
+		, ("(\"5\" : var)", "t")
+		, ("x : var", "t")
+		]
+
+te	= extraTests |+> testExpr
 		
  
-tl	= last extraTests & uncurry testExpr
+tl	= last extraTests & testExpr
 
 exFunctionTypings	= fromList [("eval", MTArrow (MType "t") (MType "t")) , ("subs", unflatten ["var","t","t","t"])]
 

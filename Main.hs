@@ -20,13 +20,17 @@ import Data.Either
 import Data.Map (Map, fromList)
 
 main	:: IO ()
-main	
- = do	args	<- getArgs
-	putStrLn welcome
-	if length args < 3 then
-		putStrLn usage
-	else do
-		let (tsFile:exampleFile:bnfRuleName:evalFunc:options) = args
+main	= do	putStrLn welcome
+		args	<- getArgs
+		if length args < 3 then
+			putStrLn usage
+		else main' args
+
+
+
+main'	:: [String] -> IO ()
+main' args 
+	= do	let (tsFile:exampleFile:bnfRuleName:evalFunc:options) = args
 		let lineByLine	= "--line-by-line" `elem` options
 		let stepByStep	= "--step" `elem` options
 		ts'	<- parseTypeSystemFile tsFile
@@ -43,10 +47,11 @@ main
 
 handleExample	:: Name -> TypeSystem -> Bool -> Name -> Name -> String -> IO ()
 handleExample fileNm ts stepByStep bnfRuleName evalName str
-	= do	putStrLn ("INPUT: "++show str)
+	= do	putStrLn ("> Input\t"++show str)
 		let parser	= parse $ parseRule (tsSyntax ts) bnfRuleName
 		let parsed	= parser fileNm str
 		parseTree	<- either (error . show) return parsed
+		putStrLn $ "> Parse\t"++show parseTree
 		if stepByStep then evalStar ts evalName parseTree
 			else print $ evalFunc ts evalName [parseTree]
 

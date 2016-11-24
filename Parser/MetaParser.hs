@@ -27,15 +27,15 @@ data ParseTree	= Token String	-- Contents
 
 
 
-ptToMetaExpr	:: (MetaType, Int) -> ParseTree -> MetaExpression
+ptToMetaExpr	:: (MetaTypeName, Int) -> ParseTree -> MetaExpression
 ptToMetaExpr mt (Token s)
-		= MLiteral s
+		= MLiteral mt s
 ptToMetaExpr mt (PtNumber i)
-		= MInt i
+		= MInt mt i
 ptToMetaExpr mt (PtSeq pts)
 		= pts |> ptToMetaExpr mt & MSeq mt
 ptToMetaExpr _ (RuleParse mt i pt)
-		= ptToMetaExpr (MType mt, i) pt
+		= ptToMetaExpr (mt, i) pt
 
 parseRule	:: BNFRules -> Name -> Parser u MetaExpression
 parseRule rules nm
