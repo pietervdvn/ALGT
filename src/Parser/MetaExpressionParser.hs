@@ -18,6 +18,7 @@ import Data.Char
 import Text.Read (readMaybe)
 import qualified Data.Map as M
 import Data.Map (Map)
+import Data.List (intercalate)
 import Control.Monad
 import Control.Arrow ((&&&))
 
@@ -26,9 +27,16 @@ data MEParseTree	= MePtToken String
 			| MePtVar Name 
 			| MePtCall Name Builtin [MEParseTree]
 			| MePtCast Name MEParseTree
-	deriving (Show, Ord, Eq)
+	deriving (Ord, Eq)
 
 
+instance Show MEParseTree where
+	show (MePtToken s)	= show s
+	show (MePtSeq pts)	= pts |> show & unwords & inParens
+	show (MePtVar v)	= v
+	show (MePtCall n bi args)
+				= (if bi then "!" else "") ++ n ++ inParens (args |> show & intercalate ", ")
+	show (MePtCast n pt)	= inParens (show pt++" : "++n)
 
 -- walks a meta expression, gives which variables have what types
 expectedTyping	:: BNFRules -> MetaExpression -> Either String (Map Name MetaTypeName)
@@ -53,8 +61,9 @@ mergeContext bnfs ctx1 ctx2
 			-- for each common key, we see wether they are equivalent
 			let conflicts	= zip common (zip ctx1' ctx2')
 						||>> uncurry (equivalent bnfs)
-						& filter (not . snd)
-			if null conflicts then return (M.union ctx1 ctx2) else Left ("Conflicts for variables "++show conflicts)
+						& filter (not . snd) |> fst
+			let msg n	= n++" is typed as both "++(ctx1 M.! n)++" and "++(ctx2 M.! n)
+			if null conflicts then return (M.union ctx1 ctx2) else Left ("Conflicts for variables "++show conflicts++":\n"++unlines (conflicts |> msg))
 
 
 

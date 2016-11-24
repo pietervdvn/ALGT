@@ -136,11 +136,6 @@ data MetaFunction	= MFunction MetaType [MetaClause]
 	deriving (Ord, Eq)
 
 
-instance Show MetaFunction where
-	show (MFunction tp clauses)
-		= let	sign	= ": "++show tp
-			clss	= clauses |> show in
-			(sign:clss) & intercalate "\n"
 
 type MetaFunctions	= Map Name MetaFunction
 
@@ -203,22 +198,27 @@ showTI ("", _)	= ""
 showTI (mt, -1) = ": "++mt
 showTI (mt, i)	= ": "++mt++"."++show i
 
-show' (MVar mt n)	= "METAVAR: "++show n
+show' (MVar mt n)	= show n
 show' (MLiteral _ s)	= s
 show' (MInt _ i)	= show i
-show' (MSeq mt exprs)	= exprs |> show' & unwords & inParens
+show' (MSeq mt exprs)	= exprs |> show' & unwords
 show' (MCall mt nm builtin args)
 			= let args'	= args & showComma & inParens
-			  in "METACALL: " ++ (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
+			  in (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
 show' (MCast _ expr)	= show' expr & inParens
 
 
 
+instance Show MetaFunction where
+	show (MFunction tp clauses)
+		= let	sign	= ": "++show tp
+			clss	= clauses |> show in
+			(sign:clss) & intercalate "\n"
+
+
 instance Show MetaClause where
-	show (MClause pats expr)
-		= let 	args = pats & showComma & inParens
-			in
-			args ++ " = " ++ show expr
+	show (MClause patterns expr)
+		= (patterns |> show' & intercalate ", ") ++ " = "++show' expr
 {-
 instance Show Typing where
 	show (Typing e t)

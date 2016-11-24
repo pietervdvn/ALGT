@@ -21,15 +21,17 @@ bnfLiteral	:: Parser s String
 bnfLiteral	
 	= do	char '"'
 		str <- many1 (noneOf "\\\"" <|> 
-					(char '\\' >> (char '\\' <|> char '\"')))
+					(char '\\' >> (char '\\' <|> char '\"' <|> (char 'n' >> return '\n'))))
 		char '"'
 		return str 
 
+builtins	= ["identifier", "number"]
+
 bnfIdentifier
-	= string "identifier" >> return Identifier
+	= string "Identifier" >> return Identifier
 
 bnfNumber
-	= string "0.." >> return Number
+	= string "Number" >> return Number
 
 
 bnfRuleCall

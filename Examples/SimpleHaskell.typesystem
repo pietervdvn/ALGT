@@ -1,0 +1,71 @@
+
+Contextsymbol is $
+
+ Syntax
+========
+
+var 	::= Identifier
+func	::= "!" var
+number	::= Number
+
+expr	::= exprL "+" expr | exprL expr | exprL
+exprL	::= number | var | func "(" args ")" | "(" "\\" var "." expr ")"
+args	::= expr "," args | expr
+
+funct 	::= var "=" expr
+
+program	::= env expr
+env	::= funct "\n" env | ">"
+
+
+
+ Functions
+===========
+
+run		: program -> program
+run(env expr)	= env eval(env, expr)
+
+
+# reduces one step of the logic
+eval					: env -> expr -> expr
+eval(e, (n1:number) "+" (n2:number))	= plus(n1, n2)
+eval(e, (n1:number) "+" n2)		= n1 "+" eval(e, n2)
+eval(e, n1 "+" n2)			= eval(e, n1) "+" n2
+
+eval(e, ("(" "\\" var "." t ")") arg)	= subs(var, arg, t)
+eval(env, ("!" func) "(" args ")")	= unpackArgs(search(env, func), args)
+
+eval(e, f arg)				= eval(e, f) arg
+
+eval(e, (v : var))			= !error("Unknown variable" v)
+eval(e, (t : number))			= t
+
+
+unpackArgs		: expr -> args -> expr
+unpackArgs(f, e "," rest)
+			= unpackArgs( (f e), rest)
+unpackArgs(f, e)	= f e
+
+search						: env -> var -> expr
+search( (funcName "=" expr) "\n" rest, funcName)	= expr
+search( func "\n" env, funcName)			= search(env, funcName)
+search( ">", funcName)				= !error("Function not found in the environment" funcName)
+
+
+# replaces variable x by y in entire t
+subs					: var -> expr -> expr -> expr
+subs(x, y, x)				= y
+subs(x, y, "(" "\\" x "." rest ")" )	= !error("Conflicting environments")
+subs(x, y, "(" "\\" z "." rest ")" )	= "(" "\\" z "." subs(x,y,rest) ")"
+subs(x, y, func "(" args ")")		= func "(" subArgs(x, y, args) ")"
+subs(x, y, t1 "+" t2)			= subs(x, y, t1) "+" subs(x, y, t2)
+subs(x, y, f arg)			= subs(x, y, f) subs(x, y, arg)
+subs(x, y, z)				= z
+
+subArgs				: var -> expr -> args -> args
+subArgs(x, y, expr "," args)	= subs(x, y, expr) "," subArgs(x, y, args)
+subArgs(x, y, expr)		= subs(x, y, expr)
+
+plus	: expr -> expr -> expr
+plus(e1, e2)	= !plus(e1, e2)
+

@@ -41,15 +41,20 @@ parseMetaFunctions bnfs
 
 typeFunctions	:: BNFRules -> [SFunction] -> Either String MetaFunctions
 typeFunctions bnfs funcs
-	= do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
+	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
+	  do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
 		funcs |+> typeFunction bnfs typings |> M.fromList
 
-
+neatFuncs	:: [SFunction] -> String
+neatFuncs funcs	
+	= funcs |> (\f -> sf_name f ++ " : " ++ show (sf_type f))
+		|> ("    " ++) & unlines
 
 typeFunction	:: BNFRules -> Map Name MetaType -> SFunction -> Either String (Name, MetaFunction)
 typeFunction bnfs typings (SFunction nm tp body)
-	= inMsg ("While typing the function "++nm) $ body |+> typeClause bnfs typings tp |> MFunction tp |> (,) nm
-
+	= inMsg ("While typing the function "++nm) $ 
+	  do 	clauses	<- body |+> typeClause bnfs typings tp
+		return (nm, MFunction tp (clauses ++ [undefinedClause tp]))
 
 typeClause	:: BNFRules -> Map Name MetaType -> MetaType -> SClause -> Either String MetaClause
 typeClause bnfs funcs tp sc@(SClause patterns expr)

@@ -1,12 +1,4 @@
-# Example of inference rule parsing
-
-# Types always start with a uppercase letter
-# Variables with a lowercase
-# expressions as defined in StlcParser
-
-# A file starts with 'Contextsymbol is ' followed by some non-whitespace chars, as no obvious context symbol came to mind
-# |- represents 'entails'
-# 0.. represent all natural numbers
+# A simply typed functional language
 
 Contextsymbol is $
 
@@ -14,13 +6,14 @@ Contextsymbol is $
  Syntax
 ========
 
+# Types
 typeL	::= "Int" | "Bool"
 type	::= typeL "->" type | typeL
 
-# builtin values
-var	::= identifier
-number	::= 0..
 
+# builtins values
+var	::= Identifier
+number	::= Number
 t	::=  tL "+" t | tL "::" type | tL t | tL
 tL	::= number | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
 
@@ -30,64 +23,51 @@ tL	::= number | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" 
 
 
 # reduces one step of the logic
-eval: t -> t
-eval((t : var))
- 	= !error("Unresolved variable")
-eval("If" "True" "Then" t1 "Else" t2) = t1
-eval("If" "False" "Then" t1 "Else" t2) = t2
-eval("If" (cond:number) "Then" t1 "Else" t2)
-	= !error("If with a number as condition")
-eval("If" cond "Then" t1 "Else" t2) = "If" eval(cond) "Then" t1 "Else" t2
-eval( ("(" "\\" var ":" type "." t ")") arg)
-	= subs(var, arg, t)
-eval(n1 "+" n2)
-	= plus(eval(n1), eval(n2))
-eval((t:number) "::" "Int")
-	= t
-eval("True" "::" "Bool")
-	= "True"
-eval("False" "::" "Bool")
-	= "False"
-eval(t "::" type)
-	= !error("Invalid type: " t " is not a " type)
-eval(t)	= t
+eval						: t -> t
+eval("If" "True" "Then" t1 "Else" t2)		= t1
+eval("If" "False" "Then" t1 "Else" t2) 		= t2
+eval("If" (cond:number) "Then" t1 "Else" t2)	= !error("If with a number as condition")
+eval("If" cond "Then" t1 "Else" t2) 		= "If" eval(cond) "Then" t1 "Else" t2
+
+eval( ("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
+
+eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
+
+eval((t:number) "::" "Int")			= t
+eval("True" "::" "Bool")			= "True"
+eval("False" "::" "Bool")			= "False"
+eval(t "::" type)				= !error("Invalid type: " t " is not a " type)
+eval((t : var))			 		= !error("Unresolved variable")
+
+eval(t)						= t
 
 
 
 # replaces variable x by y in entire t
-subs: var -> t -> t -> t
-subs(x, y, x)	= y
+subs						: var -> t -> t -> t
+subs(x, y, x)					= y
 subs(x, y, "(" "\\" x ":" t "." rest ")" )	= !error("Conflicting environments")
-subs(x, y, "(" "\\" z ":" t "." rest ")" )
-	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
-subs(x, y, "If" cond "Then" e1 "Else" e2)
-	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
-subs(x, y, t1 "+" t2)
-	= subs(x, y, t1) "+" subs(x, y, t2)
-subs(x, y, t "::" type)
-	= subs(x, y, t) "::" type
-subs(x, y, f arg)
-	= subs(x, y, f) subs(x, y, arg)
-subs(x, y, z)	= z
+subs(x, y, "(" "\\" z ":" t "." rest ")" )	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
+subs(x, y, "If" cond "Then" e1 "Else" e2)	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
+subs(x, y, t1 "+" t2)				= subs(x, y, t1) "+" subs(x, y, t2)
+subs(x, y, t "::" type)				= subs(x, y, t) "::" type
+subs(x, y, f arg)				= subs(x, y, f) subs(x, y, arg)
+subs(x, y, z)					= z
 
 
 
 
-dom : type -> type
+dom 		: type -> type
 dom(t1 "->" t2) = t1
-# undefined otherwises
 
-cod : type -> type
+cod 		: type -> type
 cod(t1 "->" t2) = t2
-# undefined otherwise
 
-equate: type -> type -> type
+equate		: type -> type -> type
 equate(t1, t1) = t1
-# undefined otherwise
-
 
 # wrappers for builtin functions, as we can't type within a builtin
-plus	: t -> t -> t
+plus		: t -> t -> t
 plus(e1, e2)	= !plus(e1, e2)
 
  Rules

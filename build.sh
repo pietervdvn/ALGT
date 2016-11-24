@@ -1,8 +1,12 @@
 #! /bin/bash
 
+mkdir .bin &2>/dev/null
+
+cp -r src/* .bin
+
+cd .bin
 ghc Main.hs -fno-warn-tabs
+cd ..
+cp .bin/Main ALGT
 
-rm *.hi *.o
-rm */*.hi */*.o
-
-./Main Examples/STFL.typesystem Examples/STFL.example t eval --line-by-line --step 
+./ALGT Examples/STFL.typesystem Examples/STFL.example t eval --line-by-line --step 

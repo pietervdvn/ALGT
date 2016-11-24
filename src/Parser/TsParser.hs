@@ -128,7 +128,7 @@ typeSystemFile name
 		header "Rules"
 		rules	<- many $ try (nls1 >> rule ctxS)
 		nls
-		eof
 -}
+		eof
 		return $ TypeSystem name ctxS bnfs metaFuncs -- []
 

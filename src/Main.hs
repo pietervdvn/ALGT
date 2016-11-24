@@ -34,6 +34,7 @@ main' args
 		let lineByLine	= "--line-by-line" `elem` options
 		let stepByStep	= "--step" `elem` options
 		ts'	<- parseTypeSystemFile tsFile
+		print ts'
 		ts	<- either (error . show) return ts'
 		exampleContents	<- readFile exampleFile
 		let he	= handleExample exampleFile ts stepByStep bnfRuleName evalFunc	:: String -> IO () 
@@ -57,7 +58,7 @@ handleExample fileNm ts stepByStep bnfRuleName evalName str
 
 evalStar	:: TypeSystem -> Name -> MetaExpression -> IO ()
 evalStar ts funcName me	
-	= do	putStrLn $ "| " ++ show' me
+	= do	putStrLn $ "\n| " ++ show' me
 		let me'	= evalFunc ts funcName [me]
 		if me' /= me then
 			evalStar ts funcName me'

@@ -89,17 +89,15 @@ patternMatch _ pat expr
 
 
 evaluate	:: Ctx -> MetaExpression -> MetaExpression
-evaluate ctx (MCall _ "plus" True [e1, e2])
-	= let	e1'	= evaluate ctx e1
-		e2'	= evaluate ctx e2 
-		MInt _ i1	= e1'
-		MInt _ i2	= e2' in
-		if not (isMInt e1' && isMInt e2') then
-			evalErr ctx $ "plus off a non-int element "++show e1'++", "++show e2'
-		else
-			MInt ("number", 0) (i1 + i2)
+evaluate ctx (MCall _ "plus" True es)
+	= let	es'	= asInts ctx "plus" es in
+		MInt ("number", 0) (sum es')
+evaluate ctx (MCall _ "equal" True es)
+	= let	[e1, e2]	= asInts ctx "equal" es in
+		MInt ("number", 0) (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
-	= let	msgs	= ["In evaluating a meta function:", showComma exprs]
+	= let	exprs'	= exprs |> evaluate ctx & showComma
+		msgs	= ["In evaluating a meta function:", exprs']
 		stack	= ctx_stack ctx |> buildStackEl
 		in	error $ unlines $ stack ++ msgs
 			
@@ -127,7 +125,9 @@ evaluate _ (MInt ti i)		= MInt ti i
 
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
-
+asInts ctx bi exprs	= exprs |> evaluate ctx 
+				|> (\e -> if isMInt e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ show e)
+				|> (\(MInt _ i) -> i)
 
 buildStackEl	:: (Name, [MetaExpression]) -> String
 buildStackEl (func, args)
