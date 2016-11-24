@@ -60,9 +60,6 @@ subs(x, y, z)	= z
 
 
 
-
-
-# TODO make type instead of t
 dom : type -> type
 dom(t1 "->" t2) = t1
 # undefined otherwises
@@ -71,12 +68,9 @@ cod : type -> type
 cod(t1 "->" t2) = t2
 # undefined otherwise
 
-# Currying syntax as in haskell
 equate: type -> type -> type
 equate(t1, t1) = t1
 # undefined otherwise
-
-
 
 
 # wrappers for builtin functions, as we can't type within a builtin

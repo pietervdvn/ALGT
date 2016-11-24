@@ -74,9 +74,9 @@ patternMatch (MSeq _ seq1) (MSeq _ seq2)
 	= zip seq1 seq2 |+> uncurry patternMatch >>= foldM mergeVars M.empty
 	
 
-patternMatch (MCall _ nm _ _) _	= error $ "Using a function call in a pattern is not allowed"
 patternMatch (MCall _ "error" True _) _	
 				= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
+patternMatch (MCall _ nm _ _) _	= error $ "Using a function call in a pattern is not allowed"
 
 patternMatch pat expr		= Nothing
 
