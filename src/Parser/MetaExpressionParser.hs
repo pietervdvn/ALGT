@@ -128,7 +128,7 @@ Typechecks calls
 -}
 matchCall	:: Map Name MetaType -> BNFRules -> BNFAST -> MEParseTree -> Either String MetaExpression
 matchCall functions bnfRules _ (MePtCall fNm True args)
- = return $ MCall "" fNm True (args |> dynamicTranslate)
+ = return $ MCall "" fNm True (args |> dynamicTranslate "")
 
 matchCall functions bnfRules (BNFRuleCall bnfNm) (MePtCall fNm False args)
  | fNm `M.notMember` functions	= Left $ "Unknwown function: "++fNm
@@ -146,12 +146,12 @@ matchCall _ _ bnf pt 		= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show 
 
 
 -- only used for builtin functions
-dynamicTranslate	:: MEParseTree -> MetaExpression
-dynamicTranslate (MePtToken s)	= MLiteral ("", -1) s
-dynamicTranslate (MePtSeq pts)	= pts |> dynamicTranslate & MSeq ("", -1) 
-dynamicTranslate (MePtVar nm)	= MVar ("", -1) nm
-dynamicTranslate (MePtCast _ e)	= dynamicTranslate e
-dynamicTranslate (MePtCall _ _ _)
+dynamicTranslate	:: MetaTypeName -> MEParseTree -> MetaExpression
+dynamicTranslate tp (MePtToken s)	= MLiteral (tp, -1) s
+dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 
+dynamicTranslate tp (MePtVar nm)	= MVar (tp, -1) nm
+dynamicTranslate _ (MePtCast tp e)	= dynamicTranslate tp e
+dynamicTranslate tp (MePtCall _ _ _)
 				= error "For now, no calls within a builtin are allowed"
 
 

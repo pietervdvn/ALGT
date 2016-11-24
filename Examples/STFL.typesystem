@@ -70,6 +70,15 @@ equate(t1, t1) = t1
 plus		: t -> t -> t
 plus(e1, e2)	= !plus(e1, e2)
 
+
+
+ Predicates
+============
+
+(:)	: t , type
+
+
+
  Rules
 =======
 
@@ -79,17 +88,16 @@ plus(e1, e2)	= !plus(e1, e2)
 	$ |- x: T
 
 (Tn)   ----------------
-	$ |- 0.. : Nat
+	$ |- number : "Int"
 
 
 (TbT)   ------------------
-	$ |- "True" : Bool
+	$ |- "True" : "Bool"
 
 
 	
 (TbF)  ------------------
-	$ |- "False": Bool
-
+	$ |- "False": "Bool"
 
 
 	$ |- t1 : T1	$ |- t2: T2	T2 == dom(T1)

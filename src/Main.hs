@@ -58,7 +58,7 @@ handleExample fileNm ts stepByStep bnfRuleName evalName str
 
 evalStar	:: TypeSystem -> Name -> MetaExpression -> IO ()
 evalStar ts funcName me	
-	= do	putStrLn $ "\n| " ++ show' me
+	= do	putStrLn $ "\n " ++ show' me
 		let me'	= evalFunc ts funcName [me]
 		if me' /= me then
 			evalStar ts funcName me'
@@ -73,6 +73,9 @@ welcome	= 	"  Automated Language Generation Tool \n"++
 		"               Christophe Scholliers\n\n"
 
 
-usage	= "USAGE:\nAGLT typesystem-file example-file bnf-rule-name evaluator-function-name [--line-by-line] [--step]"
+usage	=	"USAGE:\n"++
+		"AGLT typesystem-file example-file bnf-rule-name evaluator-function-name [--line-by-line] [--step]\n"++
+		"Builtin for BNF-syntax: Number, Identifier\n"++
+		"Builtin functions: !error, !plus, !neg (negates a number)"
 
 

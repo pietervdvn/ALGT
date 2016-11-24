@@ -1,5 +1,7 @@
-plus = (\a . (\b . a + b) ) 
+plus = (\a . (\b . a + b) )
+neg = (\a . - a)
+min = (\a . (\b . a + neg(b)))
+mul = (\a . (\b . If b Then a + mul(a, min(b, 1)) Else 0 ) )
 id = (\x . x)
-> !plus(!id(5), 6)	 
-
-
+not = (\a . If a Then 0 Else 1)
+> mul(21,2)

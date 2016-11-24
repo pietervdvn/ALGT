@@ -90,11 +90,14 @@ patternMatch _ pat expr
 
 evaluate	:: Ctx -> MetaExpression -> MetaExpression
 evaluate ctx (MCall _ "plus" True es)
-	= let	es'	= asInts ctx "plus" es in
-		MInt ("number", 0) (sum es')
+	= let	(tp, es')	= asInts ctx "plus" es in
+		MInt tp (sum es')
+evaluate ctx (MCall _ "neg" True es)
+	= let	(tp, [e1])	= asInts ctx "min" es in
+		MInt tp (-e1)
 evaluate ctx (MCall _ "equal" True es)
-	= let	[e1, e2]	= asInts ctx "equal" es in
-		MInt ("number", 0) (if e1 == e2 then 1 else 0)
+	= let	(tp, [e1, e2])	= asInts ctx "equal" es in
+		MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
 	= let	exprs'	= exprs |> evaluate ctx & showComma
 		msgs	= ["In evaluating a meta function:", exprs']
@@ -125,9 +128,14 @@ evaluate _ (MInt ti i)		= MInt ti i
 
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
-asInts ctx bi exprs	= exprs |> evaluate ctx 
+asInts ctx bi exprs	
+	= let 	exprs'	= exprs |> evaluate ctx 
 				|> (\e -> if isMInt e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ show e)
 				|> (\(MInt _ i) -> i)
+		tp	= typeOf $ head exprs
+		tp'	= if tp == "" then error $ "Declare a return type, by annotating the first argument of a builtin" else tp
+		in
+		((tp', -1), exprs')
 
 buildStackEl	:: (Name, [MetaExpression]) -> String
 buildStackEl (func, args)
