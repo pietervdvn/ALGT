@@ -40,7 +40,7 @@ testExpr (expr, rule)
 		print typing
 		-- return typing	 --}
 	
-tf	= main' ["../Examples/SimpleHaskell.typesystem","../Examples/SimpleHaskell.example", "program","run","--step"]
+tf	= main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "t","eval","--step"]
 
 t	= tf
 
