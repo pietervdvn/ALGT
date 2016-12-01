@@ -1,0 +1,37 @@
+
+Contextsymbol is $
+
+ Syntax
+========
+
+var	::= Identifier
+number	::= Number
+
+expr	::= "(" exprs ")"
+exprs	::= exprP exprs | exprP
+exprP	::= var | number | "+" exprs | "-" exprs | expr
+
+ Functions
+===========
+
+
+evalE			: expr -> expr
+evalE( "(" (e:expr) ")")= e
+evalE( "(" expr ")")	= "(" eval(expr) ")"
+
+
+evalLR			: exprs -> exprs
+evalLR((eP:number) rest)
+			= eP (evalLR rest)
+evalLR(eP rest)		= eval(eP) rest
+evalLR(eP)		= eval(eP)		
+
+eval				: exprP -> exprP
+eval((n:number))		= n
+eval((v:var))			= !error("Unknown variable " v)
+
+
+
+inParens		: exprs -> expr
+inParens((e:expr))	= e
+inParens(es)		= "(" es ")"

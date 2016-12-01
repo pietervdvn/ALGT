@@ -1,4 +1,4 @@
-module Parser.MetaFunctionParser where
+module Parser.FunctionParser where
 
 {-
 This module parses metafunctions and then passes them through a type checker.
@@ -7,7 +7,7 @@ These have a different parse tree, as we can't parse that in one pass
 
 import Utils
 import Parser.ParsingUtils
-import Parser.MetaExpressionParser
+import Parser.ExpressionParser
 
 import Control.Arrow ((&&&))
 import Control.Monad
@@ -27,19 +27,19 @@ data SClause = SClause [MEParseTree] MEParseTree
 	deriving (Show, Ord, Eq)
 
 
-data SFunction = SFunction {sf_name :: Name, sf_type :: MetaType, sf_body :: [SClause]}
+data SFunction = SFunction {sf_name :: Name, sf_type :: Type, sf_body :: [SClause]}
 	deriving (Show, Ord, Eq)
 
 
-parseMetaFunctions	:: BNFRules -> Parser u MetaFunctions
-parseMetaFunctions bnfs
+parseFunctions	:: BNFRules -> Parser u Functions
+parseFunctions bnfs
 	= do	nls
-		funcs	<- many $ try (parseMetaFunction bnfs)
+		funcs	<- many $ try (parseFunction bnfs)
 		typeFunctions bnfs funcs & either error return
 
 
 
-typeFunctions	:: BNFRules -> [SFunction] -> Either String MetaFunctions
+typeFunctions	:: BNFRules -> [SFunction] -> Either String Functions
 typeFunctions bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
 	  do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
@@ -50,13 +50,13 @@ neatFuncs funcs
 	= funcs |> (\f -> sf_name f ++ " : " ++ show (sf_type f))
 		|> ("    " ++) & unlines
 
-typeFunction	:: BNFRules -> Map Name MetaType -> SFunction -> Either String (Name, MetaFunction)
+typeFunction	:: BNFRules -> Map Name Type -> SFunction -> Either String (Name, Function)
 typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
 	  do 	clauses	<- body |+> typeClause bnfs typings tp
 		return (nm, MFunction tp (clauses ++ [undefinedClause tp]))
 
-typeClause	:: BNFRules -> Map Name MetaType -> MetaType -> SClause -> Either String MetaClause
+typeClause	:: BNFRules -> Map Name Type -> Type -> SClause -> Either String Clause
 typeClause bnfs funcs tp sc@(SClause patterns expr)
 	= inMsg ("In clause "++show sc) $
           do	let tps		= flatten tp
@@ -76,7 +76,7 @@ typeClause bnfs funcs tp sc@(SClause patterns expr)
 
 
 
-undefinedClause	:: MetaType -> MetaClause
+undefinedClause	:: Type -> Clause
 undefinedClause tp
 	= let	flat	= flatten tp
 		args	= zip flat [0 .. length flat - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (tp, -1) nm) 
@@ -92,50 +92,50 @@ undefinedClause tp
 
 ---------------------------- PARSING OF A SINGLE FUNCTION ------------------------------
 
-parseMetaFunction	:: BNFRules -> Parser u SFunction
-parseMetaFunction bnfs	
+parseFunction	:: BNFRules -> Parser u SFunction
+parseFunction bnfs	
 	= do	(nm, tp)	<- metaSignature bnfs
 		let tps		= flatten tp
 		nls
-		clauses		<- many1 $ try (metaClause nm (length tps - 1) <* nls)
+		clauses		<- many1 $ try (parseClause nm (length tps - 1) <* nls)
 		return $ SFunction nm tp clauses
 
-metaType	:: [Name] -> Parser u MetaType
-metaType bnfTypes	
-	= try (do	t1 <- choose bnfTypes |> MType
+parseType	:: [Name] -> Parser u Type
+parseType bnfTypes	
+	= try (do	t1 <- choose bnfTypes |> Type
 			ws
 			string "->"
 			ws
-			tr <- metaType bnfTypes
-			return $ MTArrow t1 tr)
-		<|>	(choose bnfTypes |> MType)
+			tr <- parseType bnfTypes
+			return $ Arrow t1 tr)
+		<|>	(choose bnfTypes |> Type)
 				
 
-metaSignature	:: BNFRules -> Parser u (Name, MetaType)
+metaSignature	:: BNFRules -> Parser u (Name, Type)
 metaSignature bnfs
 	= do	ws
 		nm	<- identifier
 		ws
 		string	":"
 		ws
-		tp	<- metaType $ bnfNames bnfs
+		tp	<- parseType $ bnfNames bnfs
 		return (nm, tp)
 		
 
-metaClause	:: Name -> Int -> Parser u SClause
-metaClause name i
+parseClause	:: Name -> Int -> Parser u SClause
+parseClause name i
 	= (do	ws
 		string name
 		ws
 		string "("
 		ws
-		args	<- intersperseM (ws >> char ',' >> ws) (replicate i parseMetaExpression)
+		args	<- intersperseM (ws >> char ',' >> ws) (replicate i parseExpression)
 		ws
 		string ")"
 		try (ws >> nl >> ws) <|> ws
 		string "="
 		ws
-		expr	<- parseMetaExpression
+		expr	<- parseExpression
 		return $ SClause args expr)
 
 

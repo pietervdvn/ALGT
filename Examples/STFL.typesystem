@@ -14,8 +14,9 @@ type	::= typeL "->" type | typeL
 # builtins values
 var	::= Identifier
 number	::= Number
+bool	::= "True" | "False"
 t	::=  tL "+" t | tL "::" type | tL t | tL
-tL	::= number | "True" | "False" | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
+tL	::= number | bool | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
 
 
  Functions
@@ -72,15 +73,56 @@ plus(e1, e2)	= !plus(e1, e2)
 
 
 
- Predicates
-============
+ Relations
+===========
 
-(:)	: t , type
+# (:) is reserved, as predicate that a term is of a production rule
+# one can refer to rewrite rules/functions earlier on
+
+(-->)	: t (in), t (out)	Pronounced as "evaluation"	
+
 
 
 
  Rules
 =======
+
+
+ Evaluation
++----------+
+
+	    e0 --> e
+(EvalCtx) -----------------
+	    t[e0] --> t[e]
+
+(EvalIfTrue) ------------------------------------------
+              "If" "True" "Then" t1 "Else" t2 --> t1
+
+(EvalIfFalse) ------------------------------------------
+		"If" "False" "Then" t1 "Else" t2 --> t2
+
+
+	    (n1:number)	(n2:number)
+(EvalPlus) ---------------------------
+            n1 "+" n2 -> plus(n1, n2)
+
+		(b:Bool)
+(EvalCastBool) --------------------
+		b "::" "Bool" --> b
+
+		(i:number)
+(EvalCastInt) ------------------
+		i "::" "Int" --> i
+
+	
+(EvalLamApp) ------------------------------------------------
+		("(" "\\" var ":" type "." t ")") arg --> subs(var, arg, t)
+
+
+
+
+ Typing
++------+
 
 
 	x: T in $

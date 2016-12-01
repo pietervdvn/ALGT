@@ -75,51 +75,51 @@ equivalent	:: BNFRules -> Name -> Name -> Bool
 equivalent r x y
 		= alwaysIsA r x y || alwaysIsA r y x
 
------------------------- Metafunctions -------------------------
+------------------------ functions -------------------------
 
--- Metafunctions do transform syntax trees (by rewrite rules) and are often used in typechecking and evaluation
+-- functions do transform syntax trees (by rewrite rules) and are often used in typechecking and evaluation
 
 
-type MetaTypeName	= Name
-data MetaType	= MType MetaTypeName			-- This 'Name' refers to a BNF-rule, which declares a type
-		| MTArrow MetaType MetaType
+type TypeName	= Name
+data Type	= Type TypeName			-- This 'Name' refers to a BNF-rule, which declares a type
+		| Arrow Type Type
 	deriving (Ord, Eq)
 
-flatten	:: MetaType -> [MetaTypeName]
-flatten (MType t)	= [t]
-flatten (MTArrow head tail)
+flatten	:: Type -> [TypeName]
+flatten (Type t)	= [t]
+flatten (Arrow head tail)
 			= flatten head ++ flatten tail
 
 -- ["t0", "t1", "t2"]  -->  t0 -> (t1 -> t2)
-unflatten	:: [MetaTypeName] -> MetaType
-unflatten [t]	= MType t
-unflatten (t:ts)= MTArrow (MType t) (unflatten ts)
+unflatten	:: [TypeName] -> Type
+unflatten [t]	= Type t
+unflatten (t:ts)= Arrow (Type t) (unflatten ts)
 
-toSimpleType	:: MetaType -> Maybe MetaTypeName
-toSimpleType (MType nm)	= Just nm
+toSimpleType	:: Type -> Maybe TypeName
+toSimpleType (Type nm)	= Just nm
 toSimpleType _		= Nothing
 
-toSimpleType'	:: MetaType -> Either String MetaTypeName
+toSimpleType'	:: Type -> Either String TypeName
 toSimpleType' tm	= maybe (Left ("Not a simple type: "++show tm)) Right (toSimpleType tm)
 
--- A metaExpression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
+-- A Expression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
 type Builtin	= Bool
-type MInfo	= (MetaTypeName, Int)
-data MetaExpression
+type MInfo	= (TypeName, Int)
+data Expression
 	= MVar MInfo Name
 	| MLiteral MInfo String
 	| MInt MInfo Int
-	| MSeq MInfo [MetaExpression]	
-	| MCall MetaTypeName Name Builtin [MetaExpression]	-- not allowed in pattern matching
-	| MCast MetaTypeName MetaExpression -- checks wether the expression is built by this smaller rule.
+	| MSeq MInfo [Expression]	
+	| MCall TypeName Name Builtin [Expression]	-- not allowed in pattern matching
+	| MCast TypeName Expression -- checks wether the expression is built by this smaller rule.
 	deriving (Ord, Eq)
 
-isMInt	:: MetaExpression -> Bool
+isMInt	:: Expression -> Bool
 isMInt (MInt _ _)	= True
 isMInt _	= False
 
 
-typeOf	:: MetaExpression -> MetaTypeName
+typeOf	:: Expression -> TypeName
 typeOf (MVar (tp, _) _)	= tp
 typeOf (MLiteral (tp, _) _)
 			= tp
@@ -128,37 +128,34 @@ typeOf (MSeq (tp, _) _)	= tp
 typeOf (MCall tp _ _ _)	= tp
 typeOf (MCast tp _)	= tp
 
-data MetaClause	= MClause {mecPatterns :: [MetaExpression], mecExpr :: MetaExpression}
+data Clause	= MClause {mecPatterns :: [Expression], mecExpr :: Expression}
 	deriving (Ord, Eq)
 
 
-data MetaFunction	= MFunction MetaType [MetaClause]
+data Function	= MFunction Type [Clause]
 	deriving (Ord, Eq)
 
 
 
-type MetaFunctions	= Map Name MetaFunction
+type Functions	= Map Name Function
 
 
 
 
+----------------------- Proof Rules ------------------------
 
 
+type Symbol		= Name
+data Mode		= In | Out
+data Relation		= Relation Symbol [(TypeName, Mode)] (Maybe Name)
 
+data Conclusion		= RelationMet Relation [Expression]
 
------------------------- Rules ---------------------------------
-{-
-data Typing	= Typing ParseTree MetaExpression
-	deriving (Ord, Eq)
-data Predicate	= TypingInContext Typing
-		| ContextEntails Typing
-		| EqualExprs MetaExpression MetaExpression
-	deriving (Ord, Eq)
-		
-data Rule	= Rule Name [Predicate] [Predicate]
-	deriving (Ord, Eq)
+data Predicate		= TermIsA Expression TypeName
+			| Needed Conclusion
 
--}
+data Rule		= Rule Name [Predicate] Conclusion
+
 
 			
 
@@ -168,7 +165,7 @@ data Rule	= Rule Name [Predicate] [Predicate]
 data TypeSystem 	= TypeSystem {tsName :: Name, 	-- what is this typesystem's name?
 					tsContextSymbol :: String, -- how is the context printed?
 					tsSyntax	:: BNFRules,	-- synax of the language
-					tsFunctions 	:: MetaFunctions	-- syntax metafunctions of the TS 
+					tsFunctions 	:: Functions	-- syntax functions of the TS 
 					-- tsRules 	:: [Rule]	-- predicates and inference rules of the type system, most often used for typing rules
 					}
 	deriving (Show)
@@ -180,11 +177,11 @@ data TypeSystem 	= TypeSystem {tsName :: Name, 	-- what is this typesystem's nam
 ------------------------------ UTILITIES ----------------------------------
 ---------------------------------------------------------------------------
 
-instance Show MetaType where
-	show (MType nm) = nm
-	show (MTArrow t1 t2)	= show t1 ++ " -> " ++ show t2
+instance Show Type where
+	show (Type nm) = nm
+	show (Arrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
-instance Show MetaExpression where
+instance Show Expression where
 	show (MVar mt n)	= n ++ showTI mt
 	show (MLiteral mt s)	= show s ++ showTI mt
 	show (MInt mt i)	= show i ++ showTI mt
@@ -209,14 +206,14 @@ show' (MCast _ expr)	= show' expr & inParens
 
 
 
-instance Show MetaFunction where
+instance Show Function where
 	show (MFunction tp clauses)
 		= let	sign	= ": "++show tp
 			clss	= clauses |> show in
 			(sign:clss) & intercalate "\n"
 
 
-instance Show MetaClause where
+instance Show Clause where
 	show (MClause patterns expr)
 		= (patterns |> show' & intercalate ", ") ++ " = "++show' expr
 {-

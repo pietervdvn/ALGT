@@ -1,4 +1,4 @@
-module Parser.TsParser where
+module Parser.TypeSystemParser where
 
 {-
 This module parses typesystem-files
@@ -12,8 +12,8 @@ import Control.Monad
 
 import TypeSystem
 import Parser.BNFParser
-import Parser.MetaParser
-import Parser.MetaFunctionParser
+import Parser.TargetLanguageParser
+import Parser.FunctionParser
 
 import Text.Parsec
 import Data.Maybe
@@ -36,62 +36,37 @@ parseTypeSystem input file
 
 
 
+parseRelationDeclarations
+	= do	header "Relations"
+		nls
+		
 
 
-{-
------------------------- Rules ---------------------------------
+---------------------- Relation ---------------
 
-typing		= do	var	<- identifier -- TODO this should become bnf matching
+typeMode	:: BNFRules -> Parser u (TypeName, Mode)
+typeMode rules	= do	ws
+			t	<- choose $ bnfNames rules
+			ws
+			mode	<- prs "(in)" In <|> prs "(out)" Out
+			ws
+			return (t, mode)
+			
+
+
+relationDecl	:: BNFRules -> Parser u Relation
+relationDecl r	= do	char '('
+			symbol	<- many $ noneOf ")"
+			char ')'
+			if (symbol == ":") then fail ("Invalid relation symbol: "++symbol++", conflicts with builtin symbol") else return ()
 			ws
 			char ':'
 			ws
-			t	<- metaExpr
-			return $ Typing var t
-
-typingIn ctxS	= do	typingClause	<- typing
+			types <- typeMode r `sepBy` char ','
 			ws
-			string "in"
-			ws
-			string ctxS
-			return $ TypingInContext typingClause
-
-equivalence	= do	me1	<- metaExpr
-			ws
-			string "=="
-			ws
-			me2	<- metaExpr
-			return $ EqualExprs me1 me2
-
-
-ruleLine	= do	nme	<- parens (identifier <|> iDentifier)
-			ws
-			string "---"
-			many (char '-')
-			ws
-			return nme
-
-contextEntails ctxS
-		= do	string ctxS
-			ws
-			string "|-"
-			ws
-			tping	<- typing
-			return $ ContextEntails tping
-
-
-ruleTop	ctxS	=     try (typingIn ctxS)
-		  <|> try (contextEntails ctxS)
-		  <|> try equivalence
-
-rule ctxS	= do	ws
-			pr	<- try (ruleTop ctxS `sepBy` ws <* nl)
-				   <|> (return [])
-			nme	<- ruleLine
-			nl
-			ws
-			ctxE	<- contextEntails ctxS `sepBy` ws
-			return $ Rule nme pr ctxE
--}
+			pronounciation	<- try (string "Pronounced as" >> ws >> bnfLiteral |> Just) <|> return Nothing
+			return $ Relation symbol types pronounciation
+			
 
 
 ------------------------ full file -----------------------------
@@ -122,13 +97,13 @@ typeSystemFile name
 		nls1
 		header "Functions"
 		--let metaFuncs	= M.empty
- 		metaFuncs 	<- parseMetaFunctions bnfs
+ 		metaFuncs 	<- parseFunctions bnfs
 		{-
 		nls
 		header "Rules"
 		rules	<- many $ try (nls1 >> rule ctxS)
 		nls
 -}
-		eof
+		-- eof
 		return $ TypeSystem name ctxS bnfs metaFuncs -- []
 

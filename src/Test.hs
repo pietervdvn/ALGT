@@ -10,11 +10,11 @@ import Control.Monad
 
 import TypeSystem
 
-import Parser.TsParser
-import Parser.MetaParser
-import Parser.MetaExpressionParser
-import Parser.MetaFunctionParser
-import MetaFunctionInterpreter
+import Parser.TypeSystemParser
+import Parser.TargetLanguageParser
+import Parser.ExpressionParser
+import Parser.FunctionParser
+import FunctionInterpreter
 
 import Text.Parsec
 
@@ -69,7 +69,7 @@ te	= extraTests |+> testExpr
  
 tl	= last extraTests & testExpr
 
-exFunctionTypings	= fromList [("eval", MTArrow (MType "t") (MType "t")) , ("subs", unflatten ["var","t","t","t"])]
+exFunctionTypings	= fromList [("eval", Arrow (Type "t") (Type "t")) , ("subs", unflatten ["var","t","t","t"])]
 
 		
 stflSyntax	= fromList [("t",[Seq [BNFRuleCall "tL",Literal "+",BNFRuleCall "t"],Seq [BNFRuleCall "tL",Literal "::",BNFRuleCall "type"],Seq [BNFRuleCall "tL",BNFRuleCall "t"],BNFRuleCall "tL"]),("tL",[Number,Literal "True",Literal "False",BNFRuleCall "var",Seq [Literal "(",Literal "\\",BNFRuleCall "var",Literal ":",BNFRuleCall "type",Literal ".",BNFRuleCall "t",Literal ")"],Seq [Literal "If",BNFRuleCall "t",Literal "Then",BNFRuleCall "t",Literal "Else",BNFRuleCall "t"]]),("type",[Seq [BNFRuleCall "typeL",Literal "->",BNFRuleCall "type"],BNFRuleCall "typeL"]),("typeL",[Literal "Int",Literal "Bool"]),("var",[Identifier])]

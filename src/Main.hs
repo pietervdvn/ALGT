@@ -8,9 +8,9 @@ import Control.Monad
 
 import TypeSystem
 
-import Parser.MetaParser
-import Parser.TsParser
-import MetaFunctionInterpreter
+import Parser.TargetLanguageParser
+import Parser.TypeSystemParser
+import FunctionInterpreter
 
 
 import Text.Parsec
@@ -56,7 +56,7 @@ handleExample fileNm ts stepByStep bnfRuleName evalName str
 		if stepByStep then evalStar ts evalName parseTree
 			else print $ evalFunc ts evalName [parseTree]
 
-evalStar	:: TypeSystem -> Name -> MetaExpression -> IO ()
+evalStar	:: TypeSystem -> Name -> Expression -> IO ()
 evalStar ts funcName me	
 	= do	putStrLn $ "\n " ++ show' me
 		let me'	= evalFunc ts funcName [me]

@@ -1,7 +1,7 @@
-module MetaFunctionInterpreter where
+module FunctionInterpreter where
 
 {-
-This module defines an interpreter for metafunctions. Metafunctions are evaluated here
+This module defines an interpreter for functions. functions are evaluated here
 -}
 
 import Utils
@@ -14,7 +14,7 @@ import Data.Map (Map)
 import Data.Maybe
 
 
-evalFunc	:: TypeSystem -> Name -> [MetaExpression] -> MetaExpression
+evalFunc	:: TypeSystem -> Name -> [Expression] -> Expression
 evalFunc ts funcName args	
  | funcName `M.member` tsFunctions ts
 	= let	func	= tsFunctions ts M.! funcName
@@ -26,13 +26,13 @@ evalFunc ts funcName args
 
 
 data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
-			ctx_functions 	:: Map Name MetaFunction,
-			ctx_vars	:: Map Name MetaExpression,
-			ctx_stack	:: [(Name, [MetaExpression])] -- only used for errors
+			ctx_functions 	:: Map Name Function,
+			ctx_vars	:: Map Name Expression,
+			ctx_stack	:: [(Name, [Expression])] -- only used for errors
 			}
 
--- applies given argument to the meta function. Starts by evaluating the args
-applyFunc	:: Ctx -> (Name, MetaFunction) -> [MetaExpression] -> MetaExpression
+-- applies given argument to the  function. Starts by evaluating the args
+applyFunc	:: Ctx -> (Name, Function) -> [Expression] -> Expression
 applyFunc ctx (nm, MFunction tp clauses) args
 	= let	args'	= args |> evaluate ctx
 		stackEl	= (nm, args')
@@ -42,7 +42,7 @@ applyFunc ctx (nm, MFunction tp clauses) args
 			head clauseResults
 
 
-evalClause	:: Ctx ->  [MetaExpression] -> MetaClause -> Maybe MetaExpression
+evalClause	:: Ctx ->  [Expression] -> Clause -> Maybe Expression
 evalClause ctx args (MClause pats expr)
 	= do	variabless	<- zip pats args |+> uncurry (patternMatch $ ctx_syntax ctx )
 		variables	<- foldM mergeVars M.empty variabless
@@ -50,7 +50,7 @@ evalClause ctx args (MClause pats expr)
 		return $ evaluate ctx' expr
 
 
-mergeVars	:: Map Name MetaExpression -> Map Name MetaExpression -> Maybe (Map Name MetaExpression)
+mergeVars	:: Map Name Expression -> Map Name Expression -> Maybe (Map Name Expression)
 mergeVars v1 v2
 	= do	let common	= (v1 `M.intersection` v2) & M.keys
 		let cv1		= common |> (v1 M.!)
@@ -63,7 +63,7 @@ mergeVars v1 v2
 Disasembles an expression against a pattern
 patternMatch pattern value
 -}
-patternMatch	:: BNFRules -> MetaExpression -> MetaExpression -> Maybe (Map Name MetaExpression)
+patternMatch	:: BNFRules -> Expression -> Expression -> Maybe (Map Name Expression)
 patternMatch _ (MVar _ v) expr	= Just $ M.singleton v expr
 patternMatch _ (MLiteral _ s1) (MLiteral _ s2)
 	| s1 == s2		= Just M.empty
@@ -88,19 +88,22 @@ patternMatch _ pat expr
 
 
 
-evaluate	:: Ctx -> MetaExpression -> MetaExpression
+evaluate	:: Ctx -> Expression -> Expression
 evaluate ctx (MCall _ "plus" True es)
 	= let	(tp, es')	= asInts ctx "plus" es in
 		MInt tp (sum es')
+evaluate ctx (MCall _ "min" True es)
+	= let	(tp, [e1, e2])	= asInts ctx "min" es in
+		MInt tp (e1 - e2)
 evaluate ctx (MCall _ "neg" True es)
-	= let	(tp, [e1])	= asInts ctx "min" es in
+	= let	(tp, [e1])	= asInts ctx "neg" es in
 		MInt tp (-e1)
 evaluate ctx (MCall _ "equal" True es)
 	= let	(tp, [e1, e2])	= asInts ctx "equal" es in
 		MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
 	= let	exprs'	= exprs |> evaluate ctx & showComma
-		msgs	= ["In evaluating a meta function:", exprs']
+		msgs	= ["In evaluating a  function:", exprs']
 		stack	= ctx_stack ctx |> buildStackEl
 		in	error $ unlines $ stack ++ msgs
 			
@@ -137,6 +140,6 @@ asInts ctx bi exprs
 		in
 		((tp', -1), exprs')
 
-buildStackEl	:: (Name, [MetaExpression]) -> String
+buildStackEl	:: (Name, [Expression]) -> String
 buildStackEl (func, args)
 	= "   In "++func++ inParens (args & showComma)

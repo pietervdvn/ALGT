@@ -1,4 +1,4 @@
-module Parser.MetaParser where
+module Parser.TargetLanguageParser where
 
 {-
 This module interprets a BNF-AST datastructure to parse the target language to a Parsetree
@@ -27,19 +27,19 @@ data ParseTree	= Token String	-- Contents
 
 
 
-ptToMetaExpr	:: (MetaTypeName, Int) -> ParseTree -> MetaExpression
-ptToMetaExpr mt (Token s)
+ptToExpr	:: (TypeName, Int) -> ParseTree -> Expression
+ptToExpr mt (Token s)
 		= MLiteral mt s
-ptToMetaExpr mt (PtNumber i)
+ptToExpr mt (PtNumber i)
 		= MInt mt i
-ptToMetaExpr mt (PtSeq pts)
-		= pts |> ptToMetaExpr mt & MSeq mt
-ptToMetaExpr _ (RuleParse mt i pt)
-		= ptToMetaExpr (mt, i) pt
+ptToExpr mt (PtSeq pts)
+		= pts |> ptToExpr mt & MSeq mt
+ptToExpr _ (RuleParse mt i pt)
+		= ptToExpr (mt, i) pt
 
-parseRule	:: BNFRules -> Name -> Parser u MetaExpression
+parseRule	:: BNFRules -> Name -> Parser u Expression
 parseRule rules nm
-		= parseRule' rules nm |> ptToMetaExpr (error "Should not be used")
+		= parseRule' rules nm |> ptToExpr (error "Should not be used")
 
 
 parseRule'	:: BNFRules -> Name -> Parser u ParseTree

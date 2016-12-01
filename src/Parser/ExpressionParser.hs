@@ -1,7 +1,7 @@
-module Parser.MetaExpressionParser where
+module Parser.ExpressionParser where
 
 {-
-This module defines a parser for meta expressions, take 2
+This module defines a parser for  expressions, take 2
 
 In this approach, we tokenize first to a tree, and then try to match a rule with it
 
@@ -38,8 +38,8 @@ instance Show MEParseTree where
 				= (if bi then "!" else "") ++ n ++ inParens (args |> show & intercalate ", ")
 	show (MePtCast n pt)	= inParens (show pt++" : "++n)
 
--- walks a meta expression, gives which variables have what types
-expectedTyping	:: BNFRules -> MetaExpression -> Either String (Map Name MetaTypeName)
+-- walks a  expression, gives which variables have what types
+expectedTyping	:: BNFRules -> Expression -> Either String (Map Name TypeName)
 expectedTyping _ (MVar (mt, _) nm)	= return $ M.singleton nm mt
 expectedTyping r (MSeq _ mes)		= mes |+> expectedTyping r >>= mergeContexts r
 expectedTyping r (MCall _ _ _ mes)	= mes |+> expectedTyping r >>= mergeContexts r
@@ -48,12 +48,12 @@ expectedTyping _ _			= return M.empty
 
 
 
-mergeContexts	:: BNFRules -> [Map Name MetaTypeName] -> Either String (Map Name MetaTypeName)
+mergeContexts	:: BNFRules -> [Map Name TypeName] -> Either String (Map Name TypeName)
 mergeContexts bnfs ctxs
 		= foldM (mergeContext bnfs) M.empty ctxs
 
 
-mergeContext	:: BNFRules -> Map Name MetaTypeName -> Map Name MetaTypeName -> Either String (Map Name MetaTypeName)
+mergeContext	:: BNFRules -> Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
 mergeContext bnfs ctx1 ctx2
 		= do	let	common		= (ctx1 `M.intersection` ctx2) & M.keys	:: [Name]
 			let ctx1'	= common |> (ctx1 M.!)
@@ -67,7 +67,7 @@ mergeContext bnfs ctx1 ctx2
 
 
 
-typeAs'		:: Map Name MetaType -> BNFRules -> Name -> MEParseTree -> Either String MetaExpression
+typeAs'		:: Map Name Type -> BNFRules -> Name -> MEParseTree -> Either String Expression
 typeAs' functions rules ruleName pt
 	= inMsg ("While typing "++show pt++" against "++ruleName) $ 
 		typeAs functions rules ruleName pt
@@ -75,14 +75,14 @@ typeAs' functions rules ruleName pt
 {- Given a context (knwon function typings + bnf syntax), given a bnf rule (as type),
 the parsetree is interpreted/typed following the bnf syntax.
 -}
-typeAs		:: Map Name MetaType -> BNFRules -> Name -> MEParseTree -> Either String MetaExpression
+typeAs		:: Map Name Type -> BNFRules -> Name -> MEParseTree -> Either String Expression
 typeAs functions rules ruleName pt
 	= matchTyping functions rules (BNFRuleCall ruleName) (error "Should not be used", error "Should not be used") pt
  
 
 
 
-matchTyping	:: Map Name MetaType -> BNFRules -> BNFAST -> (MetaTypeName, Int) -> MEParseTree -> Either String MetaExpression
+matchTyping	:: Map Name Type -> BNFRules -> BNFAST -> (TypeName, Int) -> MEParseTree -> Either String Expression
 matchTyping f r (BNFRuleCall ruleCall) tp (MePtCast as expr)
  | not (alwaysIsA r as ruleCall)	
 			= Left $ "Invalid cast: "++as++" is not a "++ruleCall
@@ -126,7 +126,7 @@ isIdentifier (c:chrs)
 {-
 Typechecks calls
 -}
-matchCall	:: Map Name MetaType -> BNFRules -> BNFAST -> MEParseTree -> Either String MetaExpression
+matchCall	:: Map Name Type -> BNFRules -> BNFAST -> MEParseTree -> Either String Expression
 matchCall functions bnfRules _ (MePtCall fNm True args)
  = return $ MCall "" fNm True (args |> dynamicTranslate "")
 
@@ -146,7 +146,7 @@ matchCall _ _ bnf pt 		= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show 
 
 
 -- only used for builtin functions
-dynamicTranslate	:: MetaTypeName -> MEParseTree -> MetaExpression
+dynamicTranslate	:: TypeName -> MEParseTree -> Expression
 dynamicTranslate tp (MePtToken s)	= MLiteral (tp, -1) s
 dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 
 dynamicTranslate tp (MePtVar nm)	= MVar (tp, -1) nm
@@ -158,8 +158,8 @@ dynamicTranslate tp (MePtCall _ _ _)
 ---------------------- PARSING ---------------------------
 
 
-parseMetaExpression	:: Parser u MEParseTree
-parseMetaExpression	= mePt
+parseExpression	:: Parser u MEParseTree
+parseExpression	= mePt
 
 mePt	= many1 (ws *> mePtPart <* ws) |> mePtSeq
 		where 	mePtSeq [a]	= a
