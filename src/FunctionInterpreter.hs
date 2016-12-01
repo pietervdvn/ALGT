@@ -73,7 +73,7 @@ patternMatch _ (MInt _ s1) (MInt _ s2)
 	| otherwise		= Nothing
 patternMatch r (MSeq _ seq1) (MSeq _ seq2)
 	= zip seq1 seq2 |+> uncurry (patternMatch r) >>= foldM mergeVars M.empty
-patternMatch r (MCast as expr') expr
+patternMatch r (MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
 	= patternMatch r expr' expr
  | otherwise	

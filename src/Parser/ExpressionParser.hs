@@ -43,7 +43,7 @@ expectedTyping	:: BNFRules -> Expression -> Either String (Map Name TypeName)
 expectedTyping _ (MVar (mt, _) nm)	= return $ M.singleton nm mt
 expectedTyping r (MSeq _ mes)		= mes |+> expectedTyping r >>= mergeContexts r
 expectedTyping r (MCall _ _ _ mes)	= mes |+> expectedTyping r >>= mergeContexts r
-expectedTyping r (MCast _ e)		= expectedTyping r e
+expectedTyping r (MAscription _ e)		= expectedTyping r e
 expectedTyping _ _			= return M.empty
 
 
@@ -86,7 +86,7 @@ matchTyping	:: Map Name Type -> BNFRules -> BNFAST -> (TypeName, Int) -> MEParse
 matchTyping f r (BNFRuleCall ruleCall) tp (MePtCast as expr)
  | not (alwaysIsA r as ruleCall)	
 			= Left $ "Invalid cast: "++as++" is not a "++ruleCall
- | otherwise 		= typeAs f r as expr |> MCast as
+ | otherwise 		= typeAs f r as expr |> MAscription as
 matchTyping f r bnf tp c@(MePtCast as expr)
  | otherwise		= Left $ "Invalid cast: "++show c++" could not be matched with "++show bnf
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)

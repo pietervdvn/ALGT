@@ -111,7 +111,7 @@ data Expression
 	| MInt MInfo Int
 	| MSeq MInfo [Expression]	
 	| MCall TypeName Name Builtin [Expression]	-- not allowed in pattern matching
-	| MCast TypeName Expression -- checks wether the expression is built by this smaller rule.
+	| MAscription TypeName Expression -- checks wether the expression is built by this smaller rule.
 	deriving (Ord, Eq)
 
 isMInt	:: Expression -> Bool
@@ -126,7 +126,7 @@ typeOf (MLiteral (tp, _) _)
 typeOf (MInt (tp, _) _) = tp
 typeOf (MSeq (tp, _) _)	= tp
 typeOf (MCall tp _ _ _)	= tp
-typeOf (MCast tp _)	= tp
+typeOf (MAscription tp _)	= tp
 
 data Clause	= MClause {mecPatterns :: [Expression], mecExpr :: Expression}
 	deriving (Ord, Eq)
@@ -189,7 +189,7 @@ instance Show Expression where
 	show (MCall mt nm builtin args)
 				= let args'	= args & showComma & inParens
 				  in (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
-	show (MCast nm expr)	= (show expr ++ ":" ++ nm) & inParens
+	show (MAscription nm expr)	= (show expr ++ ":" ++ nm) & inParens
 
 showTI ("", _)	= ""
 showTI (mt, -1) = ": "++mt
@@ -202,7 +202,7 @@ show' (MSeq mt exprs)	= exprs |> show' & unwords
 show' (MCall mt nm builtin args)
 			= let args'	= args & showComma & inParens
 			  in (if builtin then "!" else "") ++ nm ++ args' ++ ": "++show mt
-show' (MCast _ expr)	= show' expr & inParens
+show' (MAscription _ expr)	= show' expr & inParens
 
 
 
