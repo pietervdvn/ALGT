@@ -1,8 +1,5 @@
 # A simply typed functional language
 
-Contextsymbol is $
-
-
  Syntax
 ========
 
@@ -79,7 +76,7 @@ plus(e1, e2)	= !plus(e1, e2)
 # (:) is reserved, as predicate that a term is of a production rule
 # one can refer to rewrite rules/functions earlier on
 
-(-->)	: t (in), t (out)	Pronounced as "evaluation"	
+(-->)	: t (in), t (out)	Pronounced as "evaluation"
 
 
 
@@ -88,31 +85,49 @@ plus(e1, e2)	= !plus(e1, e2)
 =======
 
 
- Evaluation
-+----------+
+# Evaluation 
+#------------
 
-	    e0 --> e
-(EvalCtx) -----------------
-	    t[e0] --> t[e]
+
+
+
+
+
+		cond0 --> cond
+(EvalIfCond) --------------------------------------------------------------------
+		"If" cond0 "Then" t1 "Else" t2 --> "If" cond "Then" t1 "Else" t2
+
+
+	    (n1:number)	(n2:number)
+(EvalPlus) ---------------------------
+            n1 "+" n2 --> plus(n1, n2)
+
+
+
+#	    e0 --> e
+# (EvalCtx) -----------------
+#	    t[e0] --> t[e]
+
+
+
 
 (EvalIfTrue) ------------------------------------------
               "If" "True" "Then" t1 "Else" t2 --> t1
+
 
 (EvalIfFalse) ------------------------------------------
 		"If" "False" "Then" t1 "Else" t2 --> t2
 
 
-	    (n1:number)	(n2:number)
-(EvalPlus) ---------------------------
-            n1 "+" n2 -> plus(n1, n2)
-
-		(b:Bool)
-(EvalCastBool) --------------------
+		(b:bool)
+(EvalAscrBool) --------------------
 		b "::" "Bool" --> b
 
+
 		(i:number)
-(EvalCastInt) ------------------
+(EvalCastInt) ---------------------
 		i "::" "Int" --> i
+
 
 	
 (EvalLamApp) ------------------------------------------------
@@ -120,9 +135,8 @@ plus(e1, e2)	= !plus(e1, e2)
 
 
 
-
- Typing
-+------+
+# Typing
+#--------
 
 
 	x: T in $

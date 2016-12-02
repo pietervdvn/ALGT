@@ -39,6 +39,7 @@ parseFunctions bnfs
 
 
 
+
 typeFunctions	:: BNFRules -> [SFunction] -> Either String Functions
 typeFunctions bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
@@ -63,8 +64,8 @@ typeClause bnfs funcs tp sc@(SClause patterns expr)
 		let argTps	= init tps
 		let rType	= last tps
 		if length argTps /= length patterns then fail "Number of patterns is incorrect, in comparison with the type" else return ()
-		patterns'	<- zip argTps patterns |+> uncurry (typeAs' funcs bnfs) 
-		expr'		<- typeAs' funcs bnfs rType expr
+		patterns'	<- zip argTps patterns |+> uncurry (typeAs funcs bnfs) 
+		expr'		<- typeAs funcs bnfs rType expr
 
 		patternsDeclares	<- patterns' |+> expectedTyping bnfs 
 		patternsDeclare		<- inMsg "While checking for conflicting declarations" $ mergeContexts bnfs patternsDeclares

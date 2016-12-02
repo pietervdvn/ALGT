@@ -26,7 +26,7 @@ data MEParseTree	= MePtToken String
 			| MePtSeq [MEParseTree] 
 			| MePtVar Name 
 			| MePtCall Name Builtin [MEParseTree]
-			| MePtCast Name MEParseTree
+			| MePtAscription Name MEParseTree
 	deriving (Ord, Eq)
 
 
@@ -36,7 +36,7 @@ instance Show MEParseTree where
 	show (MePtVar v)	= v
 	show (MePtCall n bi args)
 				= (if bi then "!" else "") ++ n ++ inParens (args |> show & intercalate ", ")
-	show (MePtCast n pt)	= inParens (show pt++" : "++n)
+	show (MePtAscription n pt)	= inParens (show pt++" : "++n)
 
 -- walks a  expression, gives which variables have what types
 expectedTyping	:: BNFRules -> Expression -> Either String (Map Name TypeName)
@@ -67,27 +67,23 @@ mergeContext bnfs ctx1 ctx2
 
 
 
-typeAs'		:: Map Name Type -> BNFRules -> Name -> MEParseTree -> Either String Expression
-typeAs' functions rules ruleName pt
-	= inMsg ("While typing "++show pt++" against "++ruleName) $ 
-		typeAs functions rules ruleName pt
-
 {- Given a context (knwon function typings + bnf syntax), given a bnf rule (as type),
 the parsetree is interpreted/typed following the bnf syntax.
 -}
-typeAs		:: Map Name Type -> BNFRules -> Name -> MEParseTree -> Either String Expression
+typeAs		:: Map Name Type -> BNFRules -> TypeName -> MEParseTree -> Either String Expression
 typeAs functions rules ruleName pt
-	= matchTyping functions rules (BNFRuleCall ruleName) (error "Should not be used", error "Should not be used") pt
+	= inMsg ("While typing "++show pt++" against "++ruleName) $ 
+		matchTyping functions rules (BNFRuleCall ruleName) (error "Should not be used", error "Should not be used") pt
  
 
 
 
 matchTyping	:: Map Name Type -> BNFRules -> BNFAST -> (TypeName, Int) -> MEParseTree -> Either String Expression
-matchTyping f r (BNFRuleCall ruleCall) tp (MePtCast as expr)
+matchTyping f r (BNFRuleCall ruleCall) tp (MePtAscription as expr)
  | not (alwaysIsA r as ruleCall)	
 			= Left $ "Invalid cast: "++as++" is not a "++ruleCall
  | otherwise 		= typeAs f r as expr |> MAscription as
-matchTyping f r bnf tp c@(MePtCast as expr)
+matchTyping f r bnf tp c@(MePtAscription as expr)
  | otherwise		= Left $ "Invalid cast: "++show c++" could not be matched with "++show bnf
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 						= return $ MVar (ruleCall, -1) nm
@@ -150,7 +146,7 @@ dynamicTranslate	:: TypeName -> MEParseTree -> Expression
 dynamicTranslate tp (MePtToken s)	= MLiteral (tp, -1) s
 dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 
 dynamicTranslate tp (MePtVar nm)	= MVar (tp, -1) nm
-dynamicTranslate _ (MePtCast tp e)	= dynamicTranslate tp e
+dynamicTranslate _ (MePtAscription tp e)	= dynamicTranslate tp e
 dynamicTranslate tp (MePtCall _ _ _)
 				= error "For now, no calls within a builtin are allowed"
 
@@ -165,7 +161,11 @@ mePt	= many1 (ws *> mePtPart <* ws) |> mePtSeq
 		where 	mePtSeq [a]	= a
 			mePtSeq as	= MePtSeq as
 
-mePtPart	= try mePtToken <|> try mePtCall <|> try meCast <|> try meNested <|> mePtVar
+mePtPart	= try mePtToken
+			<|> try mePtCall 
+			<|> try meAscription 
+			<|> try meNested 
+			<|> mePtVar
 
 meNested	= char '(' *> ws *> mePt <* ws <* char ')'
 mePtToken	= bnfLiteral |> MePtToken
@@ -176,7 +176,7 @@ mePtCall	= do	builtin	<- try (char '!' >> return True) <|> return False
 			args	<- (ws *> mePt <* ws) `sepBy` char ','
 			char ')'
 			return $ MePtCall nm builtin args
-meCast		= do	char '('
+meAscription	= do	char '('
 			ws
 			expr	<- mePt
 			ws
@@ -185,6 +185,6 @@ meCast		= do	char '('
 			nm	<- identifier
 			ws
 			char ')'
-			return $ MePtCast nm expr
+			return $ MePtAscription nm expr
 			
 

@@ -14,6 +14,7 @@ import TypeSystem
 import Parser.BNFParser
 import Parser.TargetLanguageParser
 import Parser.FunctionParser
+import Parser.RuleParser
 
 import Text.Parsec
 import Data.Maybe
@@ -35,11 +36,6 @@ parseTypeSystem input file
 	  	parse (typeSystemFile nme) nme input
 
 
-
-parseRelationDeclarations
-	= do	header "Relations"
-		nls
-		
 
 
 ---------------------- Relation ---------------
@@ -65,19 +61,13 @@ relationDecl r	= do	char '('
 			types <- typeMode r `sepBy` char ','
 			ws
 			pronounciation	<- try (string "Pronounced as" >> ws >> bnfLiteral |> Just) <|> return Nothing
+			ws
 			return $ Relation symbol types pronounciation
-			
-
-
+	
+		
 ------------------------ full file -----------------------------
 
 
-
-contextSymbol
-	= do	ws
-		string "Contextsymbol is "
-		ws
-		many1 (noneOf " \n\r\t")
 
 header hdr
 	= do	ws
@@ -87,23 +77,25 @@ header hdr
 		many1 $ char '='
 		char '\n'
 
+typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile name
 	= do	nls
-		ctxS	<- contextSymbol
-		nls1
 		header "Syntax"
 		bnfs	<- (many $ try (nls >> bnfRule)) |> M.fromList
 
 		nls1
 		header "Functions"
-		--let metaFuncs	= M.empty
  		metaFuncs 	<- parseFunctions bnfs
-		{-
+
 		nls
+		header "Relations"
+		nls1
+		rels	<- many $ try (nls *> relationDecl bnfs <* nls)
+		
 		header "Rules"
-		rules	<- many $ try (nls1 >> rule ctxS)
-		nls
--}
-		-- eof
-		return $ TypeSystem name ctxS bnfs metaFuncs -- []
+		nls1
+		rules	<- parseRules (bnfs, rels, metaFuncs)
+
+
+		return $ TypeSystem name bnfs metaFuncs rels rules
 

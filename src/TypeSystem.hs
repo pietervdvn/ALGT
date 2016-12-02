@@ -135,6 +135,8 @@ data Clause	= MClause {mecPatterns :: [Expression], mecExpr :: Expression}
 data Function	= MFunction Type [Clause]
 	deriving (Ord, Eq)
 
+typeOfF			:: Function -> Type
+typeOfF (MFunction t _)	= t
 
 
 type Functions	= Map Name Function
@@ -147,14 +149,22 @@ type Functions	= Map Name Function
 
 type Symbol		= Name
 data Mode		= In | Out
-data Relation		= Relation Symbol [(TypeName, Mode)] (Maybe Name)
+	deriving (Show, Ord, Eq)
+data Relation		= Relation {relSymbol :: Symbol, relTypesModes :: [(TypeName, Mode)], relPronounce :: (Maybe String) }
+	deriving (Ord, Eq)
+
+relType		:: Relation -> [TypeName]
+relType r	= r & relTypesModes |> fst
 
 data Conclusion		= RelationMet Relation [Expression]
+	deriving (Ord, Eq)
 
 data Predicate		= TermIsA Expression TypeName
 			| Needed Conclusion
+	deriving (Ord, Eq)
 
 data Rule		= Rule Name [Predicate] Conclusion
+	deriving (Ord, Eq)
 
 
 			
@@ -162,11 +172,11 @@ data Rule		= Rule Name [Predicate] Conclusion
 ------------------------ Typesystemfile ------------------------
 
 {-Represents a full typesystem file-}
-data TypeSystem 	= TypeSystem {tsName :: Name, 	-- what is this typesystem's name?
-					tsContextSymbol :: String, -- how is the context printed?
+data TypeSystem 	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's name?
 					tsSyntax	:: BNFRules,	-- synax of the language
-					tsFunctions 	:: Functions	-- syntax functions of the TS 
-					-- tsRules 	:: [Rule]	-- predicates and inference rules of the type system, most often used for typing rules
+					tsFunctions 	:: Functions,	-- syntax functions of the TS 
+					tsRelations	:: [Relation],
+					tsRules 	:: [Rule]	-- predicates and inference rules o=f the type system, most often used for typing rules
 					}
 	deriving (Show)
 
@@ -216,30 +226,35 @@ instance Show Function where
 instance Show Clause where
 	show (MClause patterns expr)
 		= (patterns |> show' & intercalate ", ") ++ " = "++show' expr
-{-
-instance Show Typing where
-	show (Typing e t)
-		= show e ++" : "++show t
 
 
-instance Show Predicate where
-	show (TypingInContext typing)
-		= show typing ++ " in $"
-	show (ContextEntails typing)
-		= "$ |- "++show typing
-	show (EqualExprs me1 me2)
-		= show me1 ++ " == "++show me2
+instance Show Relation where
+	show (Relation symbol tps pronounce)
+		= let	sign	= inParens symbol ++ " : "++ (show tps)	:: String
+			pron	= pronounce |> show |> ("\tPronounced as "++) & fromMaybe "" 	:: String in
+			sign ++ pron
+
+instance Show Conclusion where
+	show (RelationMet rel [arg1, arg2])
+			= inParens (show' arg1) ++ " " ++ relSymbol rel ++ " " ++ inParens (show' arg2)
+	show (RelationMet rel args)
+			= inParens (relSymbol rel) ++ inParens (args |> show' |> inParens & unwords)
+
+
+instance Show Predicate	where
+	show (TermIsA e typ)	= inParens (show e++": "++typ)
+	show (Needed concl)	= show concl
 
 instance Show Rule where
-	show (Rule name cond cons)
-		= let	nme	= " "++inParens name++" "
-			indentL	= 1 + length nme
-			indent	= replicate indentL ' '
-			top	= cond |> show & intersperse "    " & concat
-			bottom	= cons |> show & intersperse "    " & concat
-			lineL	= 2 + max (length top) (length bottom)
-			line	= replicate lineL '-'
+	show (Rule nm predicates conclusion)
+		= let	predicates'	= predicates |> show & intercalate "\t"
+			conclusion'	= show conclusion
+			nm'	= inParens nm
+			spacing	= replicate ( 2 + length nm') ' '
+			line	= replicate (max (length predicates') (length conclusion')) '-'
 			in
-			"\n"++indent ++ top ++ "\n" ++ nme ++ line ++ "\n" ++ indent ++ bottom
--}
+			[spacing ++ predicates', nm' ++ " " ++ line, spacing ++ conclusion'] & unlines
+
+
+
 
