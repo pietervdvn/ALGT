@@ -94,7 +94,7 @@ matchTyping _ _ (Literal s) tp (MePtToken s')
  | s == s'		= return $ MLiteral tp s
  | otherwise		= Left $ "Not the right literal: "++show s++" ~ "++show s'
 matchTyping _ _ Identifier tp (MePtToken s)
- | isIdentifier s	= return $ MLiteral tp s
+ | isIdentifier s	= return $ MIdentifier tp s
  | otherwise		= Left $ s ++ " is not an identifier"
 matchTyping _ _ Number tp (MePtToken s)
  | otherwise 		= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp
@@ -187,4 +187,3 @@ meAscription	= do	char '('
 			char ')'
 			return $ MePtAscription nm expr
 			
-

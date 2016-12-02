@@ -7,7 +7,5 @@ If False Then 23 Else 44
 (\x : Int . x + 1) 5
 (\f : Int -> Int . f 5) (\i : Int . i + 1)
 If If True Then False Else True Then 24 Else 42
-5 :: Bool
-If 5 + 6 Then 42 Else False
-v	
+
 

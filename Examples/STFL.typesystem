@@ -27,7 +27,7 @@ eval("If" "False" "Then" t1 "Else" t2) 		= t2
 eval("If" (cond:number) "Then" t1 "Else" t2)	= !error("If with a number as condition")
 eval("If" cond "Then" t1 "Else" t2) 		= "If" eval(cond) "Then" t1 "Else" t2
 
-eval( ("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
+eval(("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
 
 eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
 
@@ -40,16 +40,20 @@ eval((t : var))			 		= !error("Unresolved variable")
 eval(t)						= t
 
 
+# deduces a new name for the variable in an lambda abstraction
+rename		: var -> var -> type -> t -> t
+rename(x, newVar, type, body)
+		= "(" "\\" newVar ":" type "." subs(x, newVar, body ) ")"
 
 # replaces variable x by y in entire t
 subs						: var -> t -> t -> t
 subs(x, y, x)					= y
-subs(x, y, "(" "\\" x ":" t "." rest ")" )	= !error("Conflicting environments")
+subs(x, y, "(" "\\" x ":" t "." rest ")" )	= subs(x, y, rename(x, !newvar(x, rest), t, rest) )
 subs(x, y, "(" "\\" z ":" t "." rest ")" )	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
 subs(x, y, "If" cond "Then" e1 "Else" e2)	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
 subs(x, y, t1 "+" t2)				= subs(x, y, t1) "+" subs(x, y, t2)
 subs(x, y, t "::" type)				= subs(x, y, t) "::" type
-subs(x, y, f arg)				= subs(x, y, f) subs(x, y, arg)
+subs(x, y, f arg)				= subs(x, y, f) subs(x, y, arg) 
 subs(x, y, z)					= z
 
 
@@ -66,7 +70,7 @@ equate(t1, t1) = t1
 
 # wrappers for builtin functions, as we can't type within a builtin
 plus		: t -> t -> t
-plus(e1, e2)	= !plus(e1, e2)
+plus(e1, e2)	= !plus((e1:number), e2)
 
 
 
@@ -78,19 +82,11 @@ plus(e1, e2)	= !plus(e1, e2)
 
 (-->)	: t (in), t (out)	Pronounced as "evaluation"
 
-
+(~)	: t (in)		Pronounced as "canonical form"
 
 
  Rules
 =======
-
-
-# Evaluation 
-#------------
-
-
-
-
 
 
 		cond0 --> cond
@@ -134,9 +130,9 @@ plus(e1, e2)	= !plus(e1, e2)
 		("(" "\\" var ":" type "." t ")") arg --> subs(var, arg, t)
 
 
-
-# Typing
-#--------
+		e0 --> e1	e1 --> e2
+(EvalTrans) ------------------------------
+		e0 --> e2
 
 
 	x: T in $

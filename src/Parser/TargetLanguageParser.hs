@@ -21,6 +21,7 @@ import qualified Data.Map as M
 
 data ParseTree	= Token String	-- Contents
 		| PtNumber Int
+		| PtIdent Name
 		| PtSeq [ParseTree]
 		| RuleParse Name Int ParseTree -- causing rule and choice index (thus which option caused) + actual contents
 	deriving (Eq, Ord, Show)
@@ -32,6 +33,8 @@ ptToExpr mt (Token s)
 		= MLiteral mt s
 ptToExpr mt (PtNumber i)
 		= MInt mt i
+ptToExpr mt (PtIdent nm)
+		= MIdentifier mt nm
 ptToExpr mt (PtSeq pts)
 		= pts |> ptToExpr mt & MSeq mt
 ptToExpr _ (RuleParse mt i pt)
@@ -70,7 +73,7 @@ parsePart	:: BNFRules -> BNFAST -> Parser u ParseTree
 parsePart _ (Literal str)
 		= string str |> Token
 parsePart _ Identifier
-		= identifier |> Token
+		= identifier |> PtIdent
 parsePart _ Number
 		= number |> PtNumber
 parsePart rules (Seq bnfs)

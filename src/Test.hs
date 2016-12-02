@@ -15,12 +15,13 @@ import Parser.TargetLanguageParser
 import Parser.ExpressionParser
 import Parser.FunctionParser
 import FunctionInterpreter
+import RuleInterpreter
 
 import Text.Parsec
 
 import Data.Maybe
 import Data.Either
-import Data.Map (Map, fromList)
+import Data.Map (Map, fromList, (!))
 
 import Main
 
@@ -40,7 +41,11 @@ testExpr (expr, rule)
 		print typing
 		-- return typing	 --}
 	
-tf	= main' ["../Examples/STFL.typesystem","../Examples/STFL0.example", "t","eval","--step"]
+tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "t","eval","--step","--line-by-line"]
+		print ts
+		putStrLn "\n\n=====================================================================================\n\n"
+		let concls	= examples |> (:[]) |> proofThat' ts "-->"
+		forM_ concls (putStrLn . either id show)
 
 t	= tf
 

@@ -6,6 +6,8 @@ import Data.Maybe
 import Data.Either
 import Data.Foldable
 
+import Data.Tuple
+
 type Name = String
 
 -- Utility functions --
@@ -53,3 +55,40 @@ inMsg		:: String -> Either String a -> Either String a
 inMsg msg (Left msg')
 		= Left (msg ++ ":\n"++msg')
 inMsg _ right	= right
+
+
+
+merge		:: Eq a => [(a,b)] -> [(a,[b])]
+merge []	= []
+merge ((a,b):ls)
+		= let bs	= map snd $ filter ((==) a . fst) ls in
+			(a,b:bs): merge (filter ((/=) a . fst) ls)
+merge'		:: Eq b => [(a,b)] -> [([a],b)]
+merge'		= map swap . merge . map swap
+
+unmerge		:: [(a,[b])] -> [(a,b)]
+unmerge 	=  concatMap (\(a,bs) -> [(a,b) | b <- bs])
+
+
+assert :: Monad m => (String -> m ()) -> Bool -> String -> m ()
+assert c False msg	= c msg
+assert c True _ 	= cont
+
+equalizeLength	:: a -> [[a]] -> [[a]]
+equalizeLength a ass
+	= let	longest		= ass |> length & maximum
+		append as	= as ++ replicate (longest - length as) a
+		in
+		ass |> append
+
+stitch		:: [[a]] -> [[a]] -> [[a]]
+stitch a b	= let	la	= length a
+			lb	= length b
+			longest	= max la lb
+			a'	= replicate (longest - la) [] ++ a
+			b'	= replicate (longest - lb) [] ++ b in
+			zipWith (++) a' b'
+
+
+cont		:: Monad m => m ()
+cont		= return ()

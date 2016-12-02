@@ -97,5 +97,6 @@ typeSystemFile name
 		rules	<- parseRules (bnfs, rels, metaFuncs)
 
 
-		return $ TypeSystem name bnfs metaFuncs rels rules
+		let sortedRules = rules |> ((\r -> r & ruleConcl & conclusionRel & relSymbol) &&& id) & merge & M.fromList
+		return $ TypeSystem name bnfs metaFuncs rels sortedRules
 

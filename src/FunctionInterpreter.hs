@@ -17,12 +17,15 @@ import Data.Maybe
 evalFunc	:: TypeSystem -> Name -> [Expression] -> Expression
 evalFunc ts funcName args	
  | funcName `M.member` tsFunctions ts
-	= let	func	= tsFunctions ts M.! funcName
-		ctx	= Ctx (tsSyntax ts) (tsFunctions ts) M.empty [] in
-		applyFunc ctx (funcName, func) args
+	= let	func	= tsFunctions ts M.! funcName in
+		applyFunc (buildCtx' ts) (funcName, func) args
  | otherwise
 	= evalErr (Ctx (tsSyntax ts) (tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
+
+evalExpr	:: TypeSystem -> Map Name Expression -> Expression -> Expression
+evalExpr ts vars e	
+	= evaluate (buildCtx ts vars) e 
 
 
 data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
@@ -30,6 +33,10 @@ data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
 			ctx_vars	:: Map Name Expression,
 			ctx_stack	:: [(Name, [Expression])] -- only used for errors
 			}
+
+buildCtx ts vars 	= Ctx (tsSyntax ts) (tsFunctions ts) vars []
+buildCtx' ts		= buildCtx ts M.empty
+
 
 -- applies given argument to the  function. Starts by evaluating the args
 applyFunc	:: Ctx -> (Name, Function) -> [Expression] -> Expression
@@ -45,10 +52,13 @@ applyFunc ctx (nm, MFunction tp clauses) args
 evalClause	:: Ctx ->  [Expression] -> Clause -> Maybe Expression
 evalClause ctx args (MClause pats expr)
 	= do	variabless	<- zip pats args |+> uncurry (patternMatch $ ctx_syntax ctx )
-		variables	<- foldM mergeVars M.empty variabless
+		variables	<- mergeVarss variabless
 		let ctx'	= ctx {ctx_vars = variables}
 		return $ evaluate ctx' expr
 
+
+mergeVarss	:: [Map Name Expression] -> Maybe (Map Name Expression)
+mergeVarss	= foldM mergeVars M.empty
 
 mergeVars	:: Map Name Expression -> Map Name Expression -> Maybe (Map Name Expression)
 mergeVars v1 v2
@@ -71,8 +81,13 @@ patternMatch _ (MLiteral _ s1) (MLiteral _ s2)
 patternMatch _ (MInt _ s1) (MInt _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
+patternMatch _ (MIdentifier _ s1) (MIdentifier _ s2)
+	| s1 == s2		= Just M.empty
+	| otherwise		= Nothing
+
 patternMatch r (MSeq _ seq1) (MSeq _ seq2)
-	= zip seq1 seq2 |+> uncurry (patternMatch r) >>= foldM mergeVars M.empty
+ | length seq1 /= length seq2	= Nothing
+ | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r) >>= foldM mergeVars M.empty
 patternMatch r (MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
 	= patternMatch r expr' expr
@@ -106,6 +121,10 @@ evaluate ctx (MCall _ "error" True exprs)
 		msgs	= ["In evaluating a  function:", exprs']
 		stack	= ctx_stack ctx |> buildStackEl
 		in	error $ unlines $ stack ++ msgs
+evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
+	= case evaluate ctx identifier of
+		(MIdentifier (basetype, _) nm)	-> unusedIdentifier nonOverlap (Just nm) basetype
+		expr				-> unusedIdentifier nonOverlap Nothing (typeOf expr)
 			
 evaluate ctx (MCall _ nm True args)
 	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++showComma args
@@ -125,8 +144,7 @@ evaluate ctx (MVar _ nm)
 
 
 evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & MSeq tp
-evaluate _ (MLiteral ti l)	= MLiteral ti l
-evaluate _ (MInt ti i)		= MInt ti i
+evaluate _ e			= e
 
 
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MLiteral ("", -1) ("Undefined behaviour: "++msg)]
