@@ -44,8 +44,11 @@ testExpr (expr, rule)
 tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "t","eval","--step","--line-by-line"]
 		print ts
 		putStrLn "\n\n=====================================================================================\n\n"
-		let concls	= examples |> (:[]) |> proofThat' ts "-->"
-		forM_ concls (putStrLn . either id show)
+		let proofs	= examples |> (:[]) |> proofThat' ts "~~>"	:: [Either String Proof]
+		let shown	= proofs ||>> show |> either id id	:: [String]
+		let pretty	= zip examples shown >>= (\(ex, concl) ->"> " ++ show ex ++"\n\n"++concl++"\n\n\n")
+		writeFile "EvaluationTrees.txt" pretty
+
 
 t	= tf
 

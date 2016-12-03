@@ -157,7 +157,7 @@ dynamicTranslate tp (MePtCall _ _ _)
 parseExpression	:: Parser u MEParseTree
 parseExpression	= mePt
 
-mePt	= many1 (ws *> mePtPart <* ws) |> mePtSeq
+mePt	= many1 (ws' *> mePtPart <* ws') |> mePtSeq
 		where 	mePtSeq [a]	= a
 			mePtSeq as	= MePtSeq as
 

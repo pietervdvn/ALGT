@@ -29,7 +29,7 @@ eval("If" cond "Then" t1 "Else" t2) 		= "If" eval(cond) "Then" t1 "Else" t2
 
 eval(("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
 
-eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
+# eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
 
 eval((t:number) "::" "Int")			= t
 eval("True" "::" "Bool")			= "True"
@@ -81,12 +81,13 @@ plus(e1, e2)	= !plus((e1:number), e2)
 # one can refer to rewrite rules/functions earlier on
 
 (-->)	: t (in), t (out)	Pronounced as "evaluation"
-
-(~)	: t (in)		Pronounced as "canonical form"
+(~~>)	: t (in), t (out)	Pronounced as "big step"
+(~)	: t (in)		Pronounced as "is canonical"
 
 
  Rules
 =======
+
 
 
 		cond0 --> cond
@@ -98,6 +99,10 @@ plus(e1, e2)	= !plus((e1:number), e2)
 (EvalPlus) ---------------------------
             n1 "+" n2 --> plus(n1, n2)
 
+
+	     n1 --> n2
+(EvalPlusR) --------------------------
+             n "+" n1 --> n "+" n2
 
 
 #	    e0 --> e
@@ -129,10 +134,34 @@ plus(e1, e2)	= !plus((e1:number), e2)
 (EvalLamApp) ------------------------------------------------
 		("(" "\\" var ":" type "." t ")") arg --> subs(var, arg, t)
 
+		(b:bool)
+(CanonBool) -------------
+		(~) b
 
-		e0 --> e1	e1 --> e2
-(EvalTrans) ------------------------------
-		e0 --> e2
+		(n:number)
+(CanonNumber) -------------
+		(~) n
+
+
+          	e0 --> e1	e1 ~~> e2
+(BigStepRec) --------------------------------
+           	e0 ~~> e2
+
+	 	e0 --> e1	(~) e1
+(BigStepBase) -------------------------
+         	e0 ~~> e1
+
+
+	   	(~) e
+(BigStepCanon) -----------
+         	e ~~> e
+
+
+
+
+
+
+
 
 
 	x: T in $

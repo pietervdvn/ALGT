@@ -53,6 +53,8 @@ ws	:: Parser u String
 ws	= many (oneOf whitespace)
 ws1	:: Parser u String
 ws1	= many1 (oneOf whitespace)
+ws'	:: Parser u String
+ws'	= many (char ' ')
 
 
 choose' [] msgs	= fail ("Expected one of the following strings: "++ unwords msgs)

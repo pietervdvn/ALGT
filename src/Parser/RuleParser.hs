@@ -41,6 +41,7 @@ rule ctx
 		nm	<- line
 		ws
 		char '\n'
+		ws
 		con	<- conclusion ctx
 		return $ Rule nm preds con
 
@@ -89,7 +90,7 @@ typeAsRelation ctx symbol sExprs
 		
  
 
-predicate ctx	= predicateIsA ctx <|> predicateConcl ctx
+predicate ctx	= try (predicateIsA ctx) <|> predicateConcl ctx
 
 
 
@@ -103,8 +104,7 @@ predicateConcl ctx
 
 predicateIsA	:: Ctx -> Parser u Predicate
 predicateIsA ctx	
-	= do	ws
-		char '('
+	= do	char '('
 		ws
 		nm	<- identifier
 		ws

@@ -53,7 +53,8 @@ allRight eithers
 
 inMsg		:: String -> Either String a -> Either String a
 inMsg msg (Left msg')
-		= Left (msg ++ ":\n"++msg')
+		= let indMsg	= msg' & lines |> ("  "++) & unlines in
+		 	Left (msg ++ ":\n"++ indMsg)
 inMsg _ right	= right
 
 
@@ -81,13 +82,13 @@ equalizeLength a ass
 		in
 		ass |> append
 
-stitch		:: [[a]] -> [[a]] -> [[a]]
-stitch a b	= let	la	= length a
+stitch		:: a -> [[a]] -> [[a]] -> [[a]]
+stitch eq a b	= let	la	= length a
 			lb	= length b
 			longest	= max la lb
 			a'	= replicate (longest - la) [] ++ a
 			b'	= replicate (longest - lb) [] ++ b in
-			zipWith (++) a' b'
+			zipWith (++) (equalizeLength eq a') b'
 
 
 cont		:: Monad m => m ()

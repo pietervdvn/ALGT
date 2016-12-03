@@ -203,6 +203,15 @@ data Proof	= Proof { proofConcl	:: Conclusion
 		| ProofIsA Expression TypeName
 		 deriving (Ord, Eq)
 
+isProof (Proof {})	= True
+isProof _		= False
+
+depth	:: Proof -> Int
+depth (ProofIsA _ _)	= 1
+depth proof
+	= if null (proofPreds proof) then 1
+		else proofPreds proof |> depth & maximum & (+1)
+
 ------------------------ Typesystemfile ------------------------
 
 {-Represents a full typesystem file-}
@@ -313,11 +322,12 @@ showProof	:: Bool -> Proof -> [String]
 showProof _ (ProofIsA expr typ)	= [inParens (show expr ++ " : "++show typ)]
 showProof showName (Proof concl proverRule predicates)
 	= let	preds'	= predicates |> showProof showName
-		preds	= preds' & foldl stitch []	:: [String]
-		predsW	= if null preds then 0 else head preds & length		:: Int
+		preds''	= if null preds' then [] else init preds' ||>> (++"   ")  ++ [last preds']
+		preds	= preds'' & foldl (stitch ' ') []	:: [String]
+		predsW	= ("":preds) |> length & maximum	:: Int
 		concl'	= show concl
 		line	= replicate (max predsW (length concl')) '-'		:: String
-		line'	= line ++ " "++if showName then inParens (ruleName proverRule) ++ " " else ""
+		line'	= line ++ if showName then " " ++ inParens (ruleName proverRule) else ""
 		in
-		(preds ++ [line', concl']) & equalizeLength ' '
+		(preds ++ [line', concl'])
 

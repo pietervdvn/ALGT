@@ -96,7 +96,6 @@ typeSystemFile name
 		nls1
 		rules	<- parseRules (bnfs, rels, metaFuncs)
 
-
 		let sortedRules = rules |> ((\r -> r & ruleConcl & conclusionRel & relSymbol) &&& id) & merge & M.fromList
 		return $ TypeSystem name bnfs metaFuncs rels sortedRules
 

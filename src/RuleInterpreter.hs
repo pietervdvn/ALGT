@@ -12,22 +12,31 @@ import FunctionInterpreter
 
 import Data.Map (Map, empty, findWithDefault)
 import Data.Either
+import Data.List
 
 
 proofThat	:: TypeSystem -> Relation -> [Expression] -> Either String Proof
 proofThat ts rel args
 	= proofThat' ts (relSymbol rel) args
 
--- tries to deduce a proof for a given property and input expressions
-proofThat'	:: TypeSystem -> Symbol -> [Expression] -> Either String Proof
-proofThat' ts symbol args
+-- tries to deduce a proof for a given property, might return multiple (top level) proofs
+proofThats'	:: TypeSystem -> Symbol -> [Expression] -> Either String [Proof]
+proofThats' ts symbol args
 	= inMsg ("While trying to proof that "++show symbol++" is applicable to "++show args) $
 	  do	rules	<- ts & tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
 		let results	= rules |> flip (interpretRule ts) args
 		let successfull	= rights results
 		assert Left (not $ null successfull) $ "Not a single rule matched:\n"++unlines (lefts results)
-		assert Left (1 == length successfull) $ "Multiple rules provided a proof:\n"++show successfull
-		return $ head successfull
+		return successfull
+
+proofThat'	:: TypeSystem -> Symbol -> [Expression] -> Either String Proof
+proofThat' ts symbol args
+	= do	successfull	<- proofThats' ts symbol args
+		let conclusions	= successfull & filter isProof |> proofConcl & nub
+		assert Left (1 == length conclusions) $ "Multiple rules provided a proof with different conclusions:\n"++ 
+				(successfull |> show |> lines ||>> ("#  "++) |> unlines >>= (++"\n"))
+		let successfull'	= successfull & sortOn depth 
+		return $ head successfull'
 
 
 
@@ -38,10 +47,19 @@ interpretRule ts r args
 	= inMsg ("While trying to intepret the rule "++ruleName r++" with args "++show args) $
 	  do	let (RelationMet rel patterns)	= ruleConcl r
 		variables	<- patternMatchInputs ts (rel, patterns) args
-		(preds, vars')	<- rulePreds r |+> proofPredicate ts variables |> unzip
-		variables'	<- mergeVarss (variables:vars') & maybe (Left "Conflicting variable assignments") return
-		concl		<- proofRelationMet ts (rel, patterns) variables' args
+		(preds, vars')	<- proofPredicates ts variables (rulePreds r)
+		concl		<- proofRelationMet ts (rel, patterns) vars' args
 		return $ Proof concl r preds
+
+
+-- predicates are proven from left to right, as a left predicate might introduce variables used by a following predicate
+proofPredicates :: TypeSystem -> Map Name Expression -> [Predicate] -> Either String ([Proof], Map Name Expression)
+proofPredicates _ vars [] 	= return ([], vars)
+proofPredicates ts vars (pred:preds)
+	= do	(proof, vars')		<- proofPredicate ts vars pred
+		variables		<- mergeVars vars vars' & maybe (Left "Conflicting variable assignments") return
+		(proofs, variables')	<- proofPredicates ts variables preds
+		return (proof:proofs, variables')
 
 
 proofPredicate	:: TypeSystem -> Map Name Expression -> Predicate -> Either String (Proof, Map Name Expression)
@@ -85,8 +103,6 @@ matchAndMerge	:: TypeSystem -> [(Expression, Expression)] -> Either String (Map 
 matchAndMerge ts patsArgs
 	= do	matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts))  & maybe (Left "Pattern match failed") return
 		matches & mergeVarss & maybe (Left "Conflicting assignments") return
-
-
 
 
 zipModes	:: TypeSystem -> Map Name Expression -> [(Expression, Mode)] -> [Expression] -> Either String [(Expression, Mode)]
