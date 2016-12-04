@@ -130,7 +130,7 @@ matchCall functions bnfRules (BNFRuleCall bnfNm) (MePtCall fNm False args)
  | fNm `M.notMember` functions	= Left $ "Unknwown function: "++fNm
  | bnfNm `M.notMember` bnfRules	= Left $ "Unknwown type/bnfrule: "++bnfNm
  | otherwise		
-	= do	let fType		= flatten (functions M.! fNm)
+	= do	let fType		= functions M.! fNm
 		let argTypes		= init fType
 		let returnTyp		= last fType
 		if not (equivalent bnfRules returnTyp bnfNm)

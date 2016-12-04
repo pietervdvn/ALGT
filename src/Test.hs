@@ -45,12 +45,17 @@ tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL
 		print ts
 		putStrLn "\n\n=====================================================================================\n\n"
 		let proofs	= examples |> (:[]) |> proofThat' ts "~~>"	:: [Either String Proof]
-		let shown	= proofs ||>> show |> either id id	:: [String]
-		let pretty	= zip examples shown >>= (\(ex, concl) ->"> " ++ show ex ++"\n\n"++concl++"\n\n\n")
+		let shown	= proofs |> showProofWithDepth
+		let pretty	= zip examples shown >>= (\(ex, proof) -> "> " ++ show ex ++ "\n"++ proof)
 		writeFile "EvaluationTrees.txt" pretty
 
 
 t	= tf
+
+
+showProofWithDepth		:: Either String Proof -> String
+showProofWithDepth (Left str)	= str
+showProofWithDepth (Right proof)= "(Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++")\n\n"++show proof++"\n\n\n"
 
 
 extraTests	:: [(String, Name)]
@@ -77,7 +82,7 @@ te	= extraTests |+> testExpr
  
 tl	= last extraTests & testExpr
 
-exFunctionTypings	= fromList [("eval", Arrow (Type "t") (Type "t")) , ("subs", unflatten ["var","t","t","t"])]
+exFunctionTypings	= fromList [("eval", ["t", "t"]) , ("subs", ["var","t","t","t"])]
 
 		
 stflSyntax	= fromList [("t",[Seq [BNFRuleCall "tL",Literal "+",BNFRuleCall "t"],Seq [BNFRuleCall "tL",Literal "::",BNFRuleCall "type"],Seq [BNFRuleCall "tL",BNFRuleCall "t"],BNFRuleCall "tL"]),("tL",[Number,Literal "True",Literal "False",BNFRuleCall "var",Seq [Literal "(",Literal "\\",BNFRuleCall "var",Literal ":",BNFRuleCall "type",Literal ".",BNFRuleCall "t",Literal ")"],Seq [Literal "If",BNFRuleCall "t",Literal "Then",BNFRuleCall "t",Literal "Else",BNFRuleCall "t"]]),("type",[Seq [BNFRuleCall "typeL",Literal "->",BNFRuleCall "type"],BNFRuleCall "typeL"]),("typeL",[Literal "Int",Literal "Bool"]),("var",[Identifier])]

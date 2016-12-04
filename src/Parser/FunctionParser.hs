@@ -58,10 +58,9 @@ typeFunction bnfs typings (SFunction nm tp body)
 		return (nm, MFunction tp (clauses ++ [undefinedClause tp]))
 
 typeClause	:: BNFRules -> Map Name Type -> Type -> SClause -> Either String Clause
-typeClause bnfs funcs tp sc@(SClause patterns expr)
+typeClause bnfs funcs tps sc@(SClause patterns expr)
 	= inMsg ("In clause "++show sc) $
-          do	let tps		= flatten tp
-		let argTps	= init tps
+          do	let argTps	= init tps
 		let rType	= last tps
 		if length argTps /= length patterns then fail "Number of patterns is incorrect, in comparison with the type" else return ()
 		patterns'	<- zip argTps patterns |+> uncurry (typeAs funcs bnfs) 
@@ -79,8 +78,7 @@ typeClause bnfs funcs tp sc@(SClause patterns expr)
 
 undefinedClause	:: Type -> Clause
 undefinedClause tp
-	= let	flat	= flatten tp
-		args	= zip flat [0 .. length flat - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (tp, -1) nm) 
+	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (tp, -1) nm) 
 		expr	= MCall "" "error" True [MLiteral ("", -1) "Undefined behaviour: no pattern matched"]
 		in
 		MClause args expr
@@ -95,21 +93,20 @@ undefinedClause tp
 
 parseFunction	:: BNFRules -> Parser u SFunction
 parseFunction bnfs	
-	= do	(nm, tp)	<- metaSignature bnfs
-		let tps		= flatten tp
+	= do	(nm, tps)	<- metaSignature bnfs
 		nls
 		clauses		<- many1 $ try (parseClause nm (length tps - 1) <* nls)
-		return $ SFunction nm tp clauses
+		return $ SFunction nm tps clauses
 
 parseType	:: [Name] -> Parser u Type
 parseType bnfTypes	
-	= try (do	t1 <- choose bnfTypes |> Type
+	= try (do	t1 <- choose bnfTypes
 			ws
 			string "->"
 			ws
 			tr <- parseType bnfTypes
-			return $ Arrow t1 tr)
-		<|>	(choose bnfTypes |> Type)
+			return (t1:tr))
+		<|>	(choose bnfTypes |> (:[]))
 				
 
 metaSignature	:: BNFRules -> Parser u (Name, Type)

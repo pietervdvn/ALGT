@@ -39,7 +39,7 @@ fromRuleCall (BNFRuleCall nm)	= Just nm
 fromRuleCall _			= Nothing
 
 {-Represents a syntax: the name of the rule + possible parseways -}
-type BNFRules	= Map Name [BNFAST]
+type BNFRules	= Map TypeName [BNFAST]
 
 bnfNames	:: BNFRules -> [Name]
 bnfNames r	=  M.keys r & sortOn length & reverse
@@ -82,26 +82,8 @@ equivalent r x y
 
 
 type TypeName	= Name
-data Type	= Type TypeName			-- This 'Name' refers to a BNF-rule, which declares a type
-		| Arrow Type Type
-	deriving (Ord, Eq)
+type Type	= [TypeName]	
 
-flatten	:: Type -> [TypeName]
-flatten (Type t)	= [t]
-flatten (Arrow head tail)
-			= flatten head ++ flatten tail
-
--- ["t0", "t1", "t2"]  -->  t0 -> (t1 -> t2)
-unflatten	:: [TypeName] -> Type
-unflatten [t]	= Type t
-unflatten (t:ts)= Arrow (Type t) (unflatten ts)
-
-toSimpleType	:: Type -> Maybe TypeName
-toSimpleType (Type nm)	= Just nm
-toSimpleType _		= Nothing
-
-toSimpleType'	:: Type -> Either String TypeName
-toSimpleType' tm	= maybe (Left ("Not a simple type: "++show tm)) Right (toSimpleType tm)
 
 -- A Expression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
 type Builtin	= Bool
@@ -186,6 +168,8 @@ data Conclusion		= RelationMet 	{ conclusionRel 	:: Relation
 					}
 	deriving (Ord, Eq)
 
+
+
 data Predicate		= TermIsA Expression TypeName
 			| Needed Conclusion
 	deriving (Ord, Eq)
@@ -212,6 +196,11 @@ depth proof
 	= if null (proofPreds proof) then 1
 		else proofPreds proof |> depth & maximum & (+1)
 
+weight	:: Proof -> Int
+weight (ProofIsA _ _)	= 1
+weight proof	= 1 + (proof & proofPreds |> weight & sum)
+
+
 ------------------------ Typesystemfile ------------------------
 
 {-Represents a full typesystem file-}
@@ -228,10 +217,6 @@ data TypeSystem 	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's na
 ---------------------------------------------------------------------------
 ------------------------------ UTILITIES ----------------------------------
 ---------------------------------------------------------------------------
-
-instance Show Type where
-	show (Type nm) = nm
-	show (Arrow t1 t2)	= show t1 ++ " -> " ++ show t2
 
 instance Show Expression where
 	show (MVar mt n)	= n
