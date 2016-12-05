@@ -74,7 +74,7 @@ conclusionPre ctx
 
 typeAsRelation ctx symbol sExprs
 	= do	let relation	= relTypes ctx M.! symbol
-		let funcTps	= funcs ctx |> typeOfF
+		let funcTps	= funcs ctx |> typesOf
 		let bnfs	= bnfRules ctx
 		let types 	= relation & relType
 		if length types /= length sExprs then 
@@ -113,7 +113,7 @@ predicateIsA ctx
 		t	<- choose $ bnfNames' ctx
 		ws
 		char ')'
-		return $ TermIsA (MVar (t, -1) nm) t
+		return $ TermIsA (MVar t nm) t
 
 line	:: Parser u String
 line	= do	ws

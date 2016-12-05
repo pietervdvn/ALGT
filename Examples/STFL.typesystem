@@ -29,14 +29,14 @@ eval("If" cond "Then" t1 "Else" t2) 		= "If" eval(cond) "Then" t1 "Else" t2
 
 eval(("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
 
-# eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
+eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
 
 eval((t:number) "::" "Int")			= t
 eval("True" "::" "Bool")			= "True"
 eval("False" "::" "Bool")			= "False"
 eval(t "::" type)				= !error("Invalid type: " t " is not a " type)
 eval((t : var))			 		= !error("Unresolved variable")
-
+eval(t[e:t])					= t[eval(e):t]
 eval(t)						= t
 
 
@@ -134,6 +134,8 @@ plus(e1, e2)	= !plus((e1:number), e2)
 (EvalLamApp) ------------------------------------------------
 		("(" "\\" var ":" type "." t ")") arg --> subs(var, arg, t)
 
+
+
 		(b:bool)
 (CanonBool) -------------
 		(~) b
@@ -141,6 +143,8 @@ plus(e1, e2)	= !plus((e1:number), e2)
 		(n:number)
 (CanonNumber) -------------
 		(~) n
+
+
 
 
           	e0 --> e1	e1 ~~> e2

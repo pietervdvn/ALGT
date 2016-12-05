@@ -23,14 +23,15 @@ evalFunc ts funcName args
 	= evalErr (Ctx (tsSyntax ts) (tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
 
-evalExpr	:: TypeSystem -> Map Name Expression -> Expression -> Expression
+evalExpr	:: TypeSystem -> VariableAssignemnts -> Expression -> Expression
 evalExpr ts vars e	
-	= evaluate (buildCtx ts vars) e 
+	= evaluate (buildCtx ts vars) e
 
-
+type VariableAssignemnts
+		= Map Name (Expression, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
 data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
 			ctx_functions 	:: Map Name Function,
-			ctx_vars	:: Map Name Expression,
+			ctx_vars	:: VariableAssignemnts,
 			ctx_stack	:: [(Name, [Expression])] -- only used for errors
 			}
 
@@ -57,10 +58,10 @@ evalClause ctx args (MClause pats expr)
 		return $ evaluate ctx' expr
 
 
-mergeVarss	:: [Map Name Expression] -> Maybe (Map Name Expression)
+mergeVarss	:: [VariableAssignemnts] -> Maybe VariableAssignemnts
 mergeVarss	= foldM mergeVars M.empty
 
-mergeVars	:: Map Name Expression -> Map Name Expression -> Maybe (Map Name Expression)
+mergeVars	:: VariableAssignemnts -> VariableAssignemnts -> Maybe VariableAssignemnts
 mergeVars v1 v2
 	= do	let common	= (v1 `M.intersection` v2) & M.keys
 		let cv1		= common |> (v1 M.!)
@@ -73,8 +74,8 @@ mergeVars v1 v2
 Disasembles an expression against a pattern
 patternMatch pattern value
 -}
-patternMatch	:: BNFRules -> Expression -> Expression -> Maybe (Map Name Expression)
-patternMatch _ (MVar _ v) expr	= Just $ M.singleton v expr
+patternMatch	:: BNFRules -> Expression -> Expression -> Maybe (Map Name (Expression, Maybe [Int]))
+patternMatch _ (MVar _ v) expr	= Just $ M.singleton v (expr, Nothing)
 patternMatch _ (MLiteral _ s1) (MLiteral _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
@@ -93,6 +94,9 @@ patternMatch r (MAscription as expr') expr
 	= patternMatch r expr' expr
  | otherwise	
 	= Nothing
+
+patternMatch _ ctx@(MEvalContext tp name hole) value
+	= error $ "TODO: "++show ctx++" with input "++show value
 
 patternMatch _ (MCall _ "error" True _) _	
 	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
@@ -138,7 +142,7 @@ evaluate ctx (MCall _ nm False args)
 
 evaluate ctx (MVar _ nm)
  | nm `M.member` ctx_vars ctx	
-	= ctx_vars ctx M.! nm
+	= fst $ ctx_vars ctx M.! nm
  | otherwise			
 	= evalErr ctx $ "unkown variable "++nm
 

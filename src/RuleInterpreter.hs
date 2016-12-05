@@ -53,7 +53,7 @@ interpretRule ts r args
 
 
 -- predicates are proven from left to right, as a left predicate might introduce variables used by a following predicate
-proofPredicates :: TypeSystem -> Map Name Expression -> [Predicate] -> Either String ([Proof], Map Name Expression)
+proofPredicates :: TypeSystem -> VariableAssignemnts -> [Predicate] -> Either String ([Proof], VariableAssignemnts)
 proofPredicates _ vars [] 	= return ([], vars)
 proofPredicates ts vars (pred:preds)
 	= do	(proof, vars')		<- proofPredicate ts vars pred
@@ -62,7 +62,7 @@ proofPredicates ts vars (pred:preds)
 		return (proof:proofs, variables')
 
 
-proofPredicate	:: TypeSystem -> Map Name Expression -> Predicate -> Either String (Proof, Map Name Expression)
+proofPredicate	:: TypeSystem -> VariableAssignemnts -> Predicate -> Either String (Proof, VariableAssignemnts)
 proofPredicate ts vars (TermIsA expr typ)
 	= let	expr'	= evalExpr ts vars expr in
 		if alwaysIsA (tsSyntax ts) (typeOf expr') typ then
@@ -81,31 +81,31 @@ proofPredicate ts vars (Needed (RelationMet relation args))
 
 
 
-patternMatchInputs	:: TypeSystem -> (Relation, [Expression]) -> [Expression] -> Either String (Map Name Expression)
+patternMatchInputs	:: TypeSystem -> (Relation, [Expression]) -> [Expression] -> Either String VariableAssignemnts
 patternMatchInputs ts (rel, relationArgs) args
 	= do	let inputTypes	= filterMode In rel (relType rel)
 		assert  Left(length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
 		let typesMatch arg expected	= assert Left (equivalent (tsSyntax ts) (typeOf arg) expected) 
-							("Expected type "++expected++" for "++showT arg)
+							("Expected type "++expected++" for "++show arg++" of type "++typeOf arg)
 		zip args inputTypes |> uncurry typesMatch & allRight
 		let patterns = filterMode In rel relationArgs
 		matchAndMerge ts $ zip patterns args 
 		
 		
 
-proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> Map Name Expression -> [Expression] -> Either String Conclusion
+proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignemnts -> [Expression] -> Either String Conclusion
 proofRelationMet ts (rel, relationArgs) vars args
 	= do	resultExprs	<- zipModes ts vars (zip relationArgs $ relModes rel) args
 		return $ RelationMet rel (resultExprs |> fst)
 		
 		
-matchAndMerge	:: TypeSystem -> [(Expression, Expression)] -> Either String (Map Name Expression)
+matchAndMerge	:: TypeSystem -> [(Expression, Expression)] -> Either String VariableAssignemnts
 matchAndMerge ts patsArgs
 	= do	matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts))  & maybe (Left "Pattern match failed") return
 		matches & mergeVarss & maybe (Left "Conflicting assignments") return
 
 
-zipModes	:: TypeSystem -> Map Name Expression -> [(Expression, Mode)] -> [Expression] -> Either String [(Expression, Mode)]
+zipModes	:: TypeSystem -> VariableAssignemnts -> [(Expression, Mode)] -> [Expression] -> Either String [(Expression, Mode)]
 zipModes ts assignments ((_, In):relationArgs) (arg:args)
 		= do	tail	<- zipModes ts assignments relationArgs args
 			return ((arg, In):tail)

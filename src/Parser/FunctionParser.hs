@@ -24,7 +24,10 @@ import Data.List (intersperse)
 
 -- S from Simple, before typing
 data SClause = SClause [MEParseTree] MEParseTree
-	deriving (Show, Ord, Eq)
+	deriving (Ord, Eq)
+
+instance Show SClause where
+	show (SClause pats e)	= (pats & showComma & inParens)++" --> "++show e
 
 
 data SFunction = SFunction {sf_name :: Name, sf_type :: Type, sf_body :: [SClause]}
@@ -55,6 +58,7 @@ typeFunction	:: BNFRules -> Map Name Type -> SFunction -> Either String (Name, F
 typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
 	  do 	clauses	<- body |+> typeClause bnfs typings tp
+		clauses |+> (\cl -> assert Left (equivalents bnfs (typesOf cl) tp) $ "Clause of type "++show (typesOf cl)++" does not match the expected type of "++show tp++"\n"++show cl)
 		return (nm, MFunction tp (clauses ++ [undefinedClause tp]))
 
 typeClause	:: BNFRules -> Map Name Type -> Type -> SClause -> Either String Clause
@@ -78,7 +82,7 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 
 undefinedClause	:: Type -> Clause
 undefinedClause tp
-	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar (tp, -1) nm) 
+	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar tp nm) 
 		expr	= MCall "" "error" True [MLiteral ("", -1) "Undefined behaviour: no pattern matched"]
 		in
 		MClause args expr
