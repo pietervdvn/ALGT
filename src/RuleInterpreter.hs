@@ -46,50 +46,51 @@ interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
 	= inMsg ("While trying to intepret the rule "++ruleName r++" with args "++show args) $
 	  do	let (RelationMet rel patterns _)	= ruleConcl r
-		variables	<- patternMatchInputs ts (rel, patterns) args
-		(preds, vars')	<- proofPredicates ts variables (rulePreds r)
+		variables	<- patternMatchInputs ts (rulePreds r) (rel, patterns) args
+		(predicateProofs, vars')
+				<- proofPredicates ts variables (rulePreds r)
 		concl		<- proofRelationMet ts (rel, patterns) vars' args
-		return $ Proof concl r preds
+		return $ Proof concl r predicateProofs
 
 
 -- predicates are proven from left to right, as a left predicate might introduce variables used by a following predicate
 proofPredicates :: TypeSystem -> VariableAssignments -> [Predicate] -> Either String ([Proof], VariableAssignments)
 proofPredicates _ vars [] 	= return ([], vars)
 proofPredicates ts vars (pred:preds)
-	= do	(proof, vars')		<- proofPredicate ts vars pred
-		variables		<- mergeVars vars vars' & maybe (Left "Conflicting variable assignments") return
+	= do	(proof, vars')		<- proofPredicate ts vars preds pred
+		variables		<- mergeVars vars vars'
 		(proofs, variables')	<- proofPredicates ts variables preds
 		return (proof:proofs, variables')
 
 
-proofPredicate	:: TypeSystem -> VariableAssignments -> Predicate -> Either String (Proof, VariableAssignments)
-proofPredicate ts vars (TermIsA expr typ)
+proofPredicate	:: TypeSystem -> VariableAssignments -> [Predicate] -> Predicate -> Either String (Proof, VariableAssignments)
+proofPredicate ts vars _ (TermIsA expr typ)
 	= let	expr'	= evalExpr ts vars expr in
 		if alwaysIsA (tsSyntax ts) (typeOf expr') typ then
 			return (ProofIsA expr' typ, empty)
-			else Left (show expr ++ " is not a "++show typ)
-proofPredicate ts vars (Needed (RelationMet relation args _))
+			else Left (show expr ++ " = "++ show expr' ++ " is not a "++show typ)
+proofPredicate ts vars restingPreds (Needed (RelationMet relation args _))
 	= do	let inputArgs	= zip args (relModes relation) & filter ((==) In . snd) |> fst	:: [Expression]
 		let args'	= inputArgs |> evalExpr ts vars
 		proof		<- proofThat ts relation args'
 		let concl	= proofConcl proof
 		-- now, we take the 'out'-expresssions from the conclusion and pattern match those into the out of the needed
 		let toMatch	= filterMode Out relation (zip args (conclusionArgs concl))	:: [(Expression, ParseTree)]
-		matched		<- matchAndMerge ts toMatch
+		matched		<- matchAndMerge ts restingPreds toMatch	-- this predicate might contain a context evaluation
 		return (proof, matched)
 
 
 
 
-patternMatchInputs	:: TypeSystem -> (Relation, [Expression]) -> [ParseTree] -> Either String VariableAssignments
-patternMatchInputs ts (rel, relationArgs) args
+patternMatchInputs	:: TypeSystem -> [Predicate] -> (Relation, [Expression]) -> [ParseTree] -> Either String VariableAssignments
+patternMatchInputs ts predicates (rel, relationArgs) args
 	= do	let inputTypes	= filterMode In rel (relType rel)
 		assert  Left(length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
 		let typesMatch arg expected	= assert Left (equivalent (tsSyntax ts) (typeOf arg) expected) 
-							("Expected type "++expected++" for "++show arg++" of type "++typeOf arg)
+							("Expected type "++show expected++" for "++showPt' arg++" which has the type "++show (typeOf arg))
 		zip args inputTypes |> uncurry typesMatch & allRight
 		let patterns = filterMode In rel relationArgs
-		matchAndMerge ts $ zip patterns args 
+		matchAndMerge ts predicates $ zip patterns args 
 		
 		
 
@@ -99,11 +100,11 @@ proofRelationMet ts (rel, relationArgs) vars args
 		return $ relationMet' rel (resultExprs |> fst)
 		
 		
--- TODO add predicate injection
-matchAndMerge	:: TypeSystem -> [(Expression, ParseTree)] -> Either String VariableAssignments
-matchAndMerge ts patsArgs
-	= do	matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts) (const True)) & maybe (Left "Pattern match failed") return
-		matches & mergeVarss & maybe (Left "Conflicting assignments") return
+matchAndMerge	:: TypeSystem -> [Predicate] -> [(Expression, ParseTree)] -> Either String VariableAssignments
+matchAndMerge ts predicates patsArgs
+	= do	let evalContextMatches assngs	= proofPredicates ts assngs predicates & isRight
+		matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts) evalContextMatches)
+		matches & mergeVarss
 
 
 zipModes	:: TypeSystem -> VariableAssignments -> [(Expression, Mode)] -> [ParseTree] -> Either String [(ParseTree, Mode)]

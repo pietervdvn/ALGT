@@ -53,22 +53,24 @@ applyFunc ctx (nm, MFunction tp clauses) args
 evalClause	:: Ctx ->  [ParseTree] -> Clause -> Maybe ParseTree
 evalClause ctx args (MClause pats expr)
 	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctx_syntax ctx) (const True))
-		variables	<- mergeVarss variabless
+					& either (const Nothing) Just
+		variables	<- mergeVarss variabless & either (const Nothing) Just
 		let ctx'	= ctx {ctx_vars = variables}
 		return $ evaluate ctx' expr
 
 
-mergeVarss	:: [VariableAssignments] -> Maybe VariableAssignments
+mergeVarss	:: [VariableAssignments] -> Either String VariableAssignments
 mergeVarss	= foldM mergeVars M.empty
 
-mergeVars	:: VariableAssignments -> VariableAssignments -> Maybe VariableAssignments
+mergeVars	:: VariableAssignments -> VariableAssignments -> Either String VariableAssignments
 mergeVars v1 v2
 	= do	let common	= (v1 `M.intersection` v2) & M.keys
 		let cv1		= common |> (v1 M.!)
 		let cv2		= common |> (v2 M.!)
+		let different	= zip common (zip cv1 cv2) & filter (uncurry (/=) . snd)
 		if cv1 == cv2 
 			then return (v1 `M.union` v2)
-			else Nothing
+			else Left $ "Merging contexts failed: some variables are assigned different values: "++show different
 
 {-
 Disasembles an expression against a pattern
@@ -76,29 +78,29 @@ patternMatch pattern value
 
 The extra function (VariableAssignments -> Bool) injects a test, to test different evaluation contexts
 -}
-patternMatch	:: BNFRules -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Maybe VariableAssignments
+patternMatch	:: BNFRules -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Either String VariableAssignments
 patternMatch _ _ (MVar _ v) expr
-	= Just $ M.singleton v (expr, Nothing)
+	= return $ M.singleton v (expr, Nothing)
 patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
-	| s1 == s2		= Just M.empty
-	| otherwise		= Nothing
+	| s1 == s2		= return M.empty
+	| otherwise		= Left $ "Not the same literal: "++s1++ " /= " ++ s2
 patternMatch _ _ (MParseTree (MInt _ s1)) (MInt _ s2)
-	| s1 == s2		= Just M.empty
-	| otherwise		= Nothing
+	| s1 == s2		= return M.empty
+	| otherwise		=  Left $ "Not the same int: "++show s1++ " /= " ++ show s2
 patternMatch _ _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
-	| s1 == s2		= Just M.empty
-	| otherwise		= Nothing
+	| s1 == s2		= return M.empty
+	| otherwise		= Left $ "Not the same identifier: "++s1++ " /= " ++ s2
 patternMatch r f (MParseTree (PtSeq mi pts)) pt
 	= patternMatch r f (MSeq mi (pts |> MParseTree)) pt
-patternMatch r f (MSeq _ seq1) (PtSeq _ seq2)
- | length seq1 /= length seq2	= Nothing
+patternMatch r f s1@(MSeq _ seq1) s2@(PtSeq _ seq2)
+ | length seq1 /= length seq2	= Left $ "Sequence lengths are not the same: "++show s1 ++ " <~ "++showPt' s2
  | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r f) >>= foldM mergeVars M.empty
 
 patternMatch r f (MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
 	= patternMatch r f expr' expr
  | otherwise	
-	= Nothing
+	= Left $ showPt' expr ++" is not a "++show as
 
 patternMatch r extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
 	= patternMatchContxt r extraCheck (tp, name, hole) value
@@ -109,36 +111,35 @@ patternMatch _ _ (MCall _ "error" True _) _
 patternMatch _ _ (MCall _ nm _ _) _	
 	= error $ "Using a function call in a pattern is not allowed"
 patternMatch _ _ pat expr		
-	= Nothing
+	= Left $ "Could not match "++show pat++" <~ "++showPt' expr
 
 
-patternMatchContxt	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Maybe VariableAssignments
+patternMatchContxt	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
 patternMatchContxt r extraCheck evalCtx fullContext@(PtSeq _ values)
-	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, [Int]) -> Maybe VariableAssignments
+	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, [Int]) -> Either String VariableAssignments
 		depthFirstSearch' matchMaker [] values
 
 
-makeMatch	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, [Int]) -> Maybe VariableAssignments
+makeMatch	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, [Int]) -> Either String VariableAssignments
 makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
 		holeAssgn	<- patternMatch r extraCheck holePattern holeFiller
 		assgn'		<- mergeVars baseAssign holeAssgn
-		guard $ extraCheck assgn'
+		assert Left (extraCheck assgn') $ "Extra patterns (for the rule) failed"
 		return assgn'
 
 -- depth first search, excluding self match
-depthFirstSearch'	:: ((ParseTree, [Int]) -> Maybe VariableAssignments) -> [Int] -> [ParseTree] -> Maybe VariableAssignments
+depthFirstSearch'	:: ((ParseTree, [Int]) -> Either String VariableAssignments) -> [Int] -> [ParseTree] -> Either String VariableAssignments
 depthFirstSearch' matchMaker path values
 	= do	let deeper	= zip [0..] values |> (\(i, pt) -> depthFirstSearch matchMaker (path++[i]) pt)
-		firstJusts deeper
+		firstRight deeper
 
-depthFirstSearch	:: ((ParseTree, [Int]) -> Maybe VariableAssignments) -> [Int] -> ParseTree -> Maybe VariableAssignments
+depthFirstSearch	:: ((ParseTree, [Int]) -> Either String VariableAssignments) -> [Int] -> ParseTree -> Either String VariableAssignments
 depthFirstSearch matchMaker path pt@(PtSeq _ values)
 	= do	let deeper	= depthFirstSearch' matchMaker path values
 		let self	= matchMaker (pt, path)
-		firstJusts [deeper, self]
-depthFirstSearch _ _ _	= Nothing		
-
+		firstRight [deeper, self]
+depthFirstSearch matchMaker path pt	= matchMaker (pt, path)
 
 
 

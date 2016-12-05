@@ -1,0 +1,214 @@
+> 42
+(Proof weight: 2, proof depth: 2)
+
+(42 : "number")
+--------------- (Number)
+42 !! 42
+
+
+
+> (1 + 2)
+(Proof weight: 3, proof depth: 3)
+
+(1 : "number")
+-------------- (Number)
+1 !! 1
+----------------------- (NumberBase)
+(1 + 2) !! 1
+
+
+
+> ((( (If True Then True Else True) )) :: Bool)
+While trying to proof that "!!" is applicable to [((( (If True Then True Else True) )) :: Bool)]:
+  Not a single rule matched:
+  While trying to intepret the rule NumberBase with args [((( (If True Then True Else True) )) :: Bool)]:
+          Extra patterns (for the rule) failed
+        
+              Extra patterns (for the rule) failed
+            
+              Extra patterns (for the rule) failed
+            
+              Extra patterns (for the rule) failed
+            
+              Extra patterns (for the rule) failed
+            
+              Extra patterns (for the rule) failed
+            
+              Extra patterns (for the rule) failed
+            
+          
+            Extra patterns (for the rule) failed
+          
+        
+          Extra patterns (for the rule) failed
+        
+      
+        Extra patterns (for the rule) failed
+      
+    
+      Extra patterns (for the rule) failed
+    
+      Extra patterns (for the rule) failed
+    
+  
+  While trying to intepret the rule Number with args [((( (If True Then True Else True) )) :: Bool)]:
+    n is not a "number"
+  
+> True
+While trying to proof that "!!" is applicable to [True]:
+  Not a single rule matched:
+  While trying to intepret the rule NumberBase with args [True]:
+    Could not match t[n : t] <~ "True"
+  
+  While trying to intepret the rule Number with args [True]:
+    n is not a "number"
+  
+> (( False ))
+While trying to proof that "!!" is applicable to [(( False ))]:
+  Not a single rule matched:
+  While trying to intepret the rule NumberBase with args [(( False ))]:
+      Extra patterns (for the rule) failed
+    
+      Extra patterns (for the rule) failed
+    
+      Extra patterns (for the rule) failed
+    
+  
+  While trying to intepret the rule Number with args [(( False ))]:
+    n is not a "number"
+  
+> (True :: Bool)
+While trying to proof that "!!" is applicable to [(True :: Bool)]:
+  Not a single rule matched:
+  While trying to intepret the rule NumberBase with args [(True :: Bool)]:
+      Extra patterns (for the rule) failed
+    
+      Extra patterns (for the rule) failed
+    
+      Extra patterns (for the rule) failed
+    
+  
+  While trying to intepret the rule Number with args [(True :: Bool)]:
+    n is not a "number"
+  
+> (If True Then 42 Else 43)
+(Proof weight: 3, proof depth: 3)
+
+(42 : "number")
+--------------- (Number)
+42 !! 42
+------------------------------- (NumberBase)
+(If True Then 42 Else 43) !! 42
+
+
+
+> (If False Then 23 Else 44)
+(Proof weight: 3, proof depth: 3)
+
+(23 : "number")
+--------------- (Number)
+23 !! 23
+-------------------------------- (NumberBase)
+(If False Then 23 Else 44) !! 23
+
+
+
+> (5 + 6)
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+----------------------- (NumberBase)
+(5 + 6) !! 5
+
+
+
+> (5 + (6 + 7))
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+----------------------- (NumberBase)
+(5 + (6 + 7)) !! 5
+
+
+
+> ((( \ x : Int . (x + 1) )) 5)
+(Proof weight: 3, proof depth: 3)
+
+(1 : "number")
+-------------- (Number)
+1 !! 1
+---------------------------------- (NumberBase)
+((( \ x : Int . (x + 1) )) 5) !! 1
+
+
+
+> ((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+----------------------------------------------------------------- (NumberBase)
+((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) ))) !! 5
+
+
+
+> (If (If True Then False Else True) Then 123456 Else 42)
+(Proof weight: 3, proof depth: 3)
+
+(123456 : "number")
+------------------- (Number)
+123456 !! 123456
+----------------------------------------------------------------- (NumberBase)
+(If (If True Then False Else True) Then 123456 Else 42) !! 123456
+
+
+
+> (5 + (6 + 7))
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+----------------------- (NumberBase)
+(5 + (6 + 7)) !! 5
+
+
+
+> (5 + (( (6 + 7) )))
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+------------------------ (NumberBase)
+(5 + (( (6 + 7) ))) !! 5
+
+
+
+> ((( (5 + 6) )) + (( (7 + 8) )))
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+------------------------------------ (NumberBase)
+((( (5 + 6) )) + (( (7 + 8) ))) !! 5
+
+
+
+> (5 + (( (6 + (( (7 + 8) ))) )))
+(Proof weight: 3, proof depth: 3)
+
+(5 : "number")
+-------------- (Number)
+5 !! 5
+------------------------------------ (NumberBase)
+(5 + (( (6 + (( (7 + 8) ))) ))) !! 5
+
+
+

@@ -1,5 +1,9 @@
-(If True Then True Else True) :: Bool
 42
+1 + 2
+
+
+
+(If True Then True Else True) :: Bool
 True
 (False)
 True :: Bool
@@ -13,3 +17,6 @@ If If True Then False Else True Then 123456 Else 42
 5 + 6 + 7
 5 + (6 + 7)
 (5 + 6) + (7 + 8)
+5 + (6 + (7 + 8))
+
+

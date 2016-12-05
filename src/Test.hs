@@ -30,15 +30,14 @@ import Main
 tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "t","eval","--step","--line-by-line"]
 		print ts
 		putStrLn "\n\n=====================================================================================\n\n"
-		proofExamples ts examples "~~>" "EvaluationTrees.txt"
-		proofExamples ts examples "::" "TypingTrees.txt"
-		proofExamples ts examples "!!" "NumberTrees.txt"
+		proofExamples ts examples [] "~~>" "EvaluationTrees.txt"
+		proofExamples ts examples [MLiteral ("typingContext", 1) ";"] "::" "TypingTrees.txt"
 
-proofExamples ts examples symbol file
-	= do	let proofs	= examples |> (:[]) |> proofThat' ts symbol	:: [Either String Proof]
+proofExamples ts examples args symbol file
+	= do	let proofs	= examples |> (:[]) |> (args++) |> proofThat' ts symbol	:: [Either String Proof]
 		let shown	= proofs |> showProofWithDepth
 		let pretty	= zip examples shown >>= (\(ex, proof) -> "> " ++ show ex ++ "\n"++ proof)
-		writeFile file pretty
+		writeFile ("../Output/"++file) pretty
 
 
 t	= tf

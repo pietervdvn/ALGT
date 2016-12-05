@@ -35,7 +35,7 @@ parseRules (bnfs, rels, funcs)
 rule	:: Ctx -> Parser u Rule
 rule ctx
 	= do	ws
-		preds	<- try (predicate ctx `sepBy` char '\t' <* (ws >> char '\n')) 
+		preds	<- try (predicate ctx `sepBy` (many $ char '\t') <* (ws >> char '\n')) 
 				<|> (ws >> return [])
 		ws
 		nm	<- line
@@ -68,8 +68,8 @@ conclusionPre ctx
 		char ')'
 		ws
 		let types 	= (relTypes ctx M.! relationSymb) & relType
-		sExprs		<- replicate (length types) (ws *> parseExpression <* ws)
-					& intersperseM (char ',')
+		sExprs		<- replicate (length types) (ws *> parseExpression)
+					& intersperseM (ws *> char ',')
 
 		typeAsRelation ctx relationSymb sExprs
 
