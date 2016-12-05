@@ -83,7 +83,7 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 undefinedClause	:: Type -> Clause
 undefinedClause tp
 	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar tp nm) 
-		expr	= MCall "" "error" True [MLiteral ("", -1) "Undefined behaviour: no pattern matched"]
+		expr	= MCall "" "error" True [MParseTree $ MLiteral ("", -1) "Undefined behaviour: no pattern matched"]
 		in
 		MClause args expr
 		

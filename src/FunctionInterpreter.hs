@@ -12,9 +12,10 @@ import Control.Monad
 import qualified Data.Map as M
 import Data.Map (Map)
 import Data.Maybe
+import Data.List (intercalate, intersperse)
 
 
-evalFunc	:: TypeSystem -> Name -> [Expression] -> Expression
+evalFunc	:: TypeSystem -> Name -> [ParseTree] -> ParseTree
 evalFunc ts funcName args	
  | funcName `M.member` tsFunctions ts
 	= let	func	= tsFunctions ts M.! funcName in
@@ -23,16 +24,16 @@ evalFunc ts funcName args
 	= evalErr (Ctx (tsSyntax ts) (tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
 
-evalExpr	:: TypeSystem -> VariableAssignemnts -> Expression -> Expression
+evalExpr	:: TypeSystem -> VariableAssignemnts -> Expression -> ParseTree
 evalExpr ts vars e	
 	= evaluate (buildCtx ts vars) e
 
 type VariableAssignemnts
-		= Map Name (Expression, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
+		= Map Name (ParseTree, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
 data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
 			ctx_functions 	:: Map Name Function,
 			ctx_vars	:: VariableAssignemnts,
-			ctx_stack	:: [(Name, [Expression])] -- only used for errors
+			ctx_stack	:: [(Name, [ParseTree])] -- only used for errors
 			}
 
 buildCtx ts vars 	= Ctx (tsSyntax ts) (tsFunctions ts) vars []
@@ -40,17 +41,16 @@ buildCtx' ts		= buildCtx ts M.empty
 
 
 -- applies given argument to the  function. Starts by evaluating the args
-applyFunc	:: Ctx -> (Name, Function) -> [Expression] -> Expression
+applyFunc	:: Ctx -> (Name, Function) -> [ParseTree] -> ParseTree
 applyFunc ctx (nm, MFunction tp clauses) args
-	= let	args'	= args |> evaluate ctx
-		stackEl	= (nm, args')
+	= let	stackEl	= (nm, args)
 		ctx'	= ctx {ctx_stack = stackEl:ctx_stack ctx}
-		clauseResults	= clauses |> evalClause ctx' args' & catMaybes
+		clauseResults	= clauses |> evalClause ctx' args & catMaybes
 		in if null clauseResults then error $ "Not a single clause matched, even with error injection. This is a bug!" else
 			head clauseResults
 
 
-evalClause	:: Ctx ->  [Expression] -> Clause -> Maybe Expression
+evalClause	:: Ctx ->  [ParseTree] -> Clause -> Maybe ParseTree
 evalClause ctx args (MClause pats expr)
 	= do	variabless	<- zip pats args |+> uncurry (patternMatch $ ctx_syntax ctx )
 		variables	<- mergeVarss variabless
@@ -74,21 +74,24 @@ mergeVars v1 v2
 Disasembles an expression against a pattern
 patternMatch pattern value
 -}
-patternMatch	:: BNFRules -> Expression -> Expression -> Maybe (Map Name (Expression, Maybe [Int]))
-patternMatch _ (MVar _ v) expr	= Just $ M.singleton v (expr, Nothing)
-patternMatch _ (MLiteral _ s1) (MLiteral _ s2)
+patternMatch	:: BNFRules -> Expression -> ParseTree -> Maybe VariableAssignemnts
+patternMatch _ (MVar _ v) expr
+	= Just $ M.singleton v (expr, Nothing)
+patternMatch _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
-patternMatch _ (MInt _ s1) (MInt _ s2)
+patternMatch _ (MParseTree (MInt _ s1)) (MInt _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
-patternMatch _ (MIdentifier _ s1) (MIdentifier _ s2)
+patternMatch _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
 	| s1 == s2		= Just M.empty
 	| otherwise		= Nothing
-
-patternMatch r (MSeq _ seq1) (MSeq _ seq2)
+patternMatch r (MParseTree (PtSeq mi pts)) pt
+	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
+patternMatch r (MSeq _ seq1) (PtSeq _ seq2)
  | length seq1 /= length seq2	= Nothing
  | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r) >>= foldM mergeVars M.empty
+
 patternMatch r (MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
 	= patternMatch r expr' expr
@@ -107,7 +110,7 @@ patternMatch _ pat expr
 
 
 
-evaluate	:: Ctx -> Expression -> Expression
+evaluate	:: Ctx -> Expression -> ParseTree
 evaluate ctx (MCall _ "plus" True es)
 	= let	(tp, es')	= asInts ctx "plus" es in
 		MInt tp (sum es')
@@ -121,22 +124,24 @@ evaluate ctx (MCall _ "equal" True es)
 	= let	(tp, [e1, e2])	= asInts ctx "equal" es in
 		MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
-	= let	exprs'	= exprs |> evaluate ctx & showComma
-		msgs	= ["In evaluating a  function:", exprs']
+	= let	exprs'	= exprs |> evaluate ctx & show
+		msgs	= ["In evaluating a function:", exprs']
 		stack	= ctx_stack ctx |> buildStackEl
 		in	error $ unlines $ stack ++ msgs
 evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
 	= case evaluate ctx identifier of
-		(MIdentifier (basetype, _) nm)	-> unusedIdentifier nonOverlap (Just nm) basetype
-		expr				-> unusedIdentifier nonOverlap Nothing (typeOf expr)
+		(MIdentifier (basetype, _) nm)
+			-> unusedIdentifier nonOverlap (Just nm) basetype
+		expr	-> unusedIdentifier nonOverlap Nothing (typeOf expr)
 			
 evaluate ctx (MCall _ nm True args)
 	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++showComma args
 
 evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctx_functions ctx
-	= let	func	= ctx_functions ctx M.! nm in
-		applyFunc ctx (nm, func) args
+	= let	func	= ctx_functions ctx M.! nm
+		args'	= args |> evaluate ctx in
+		applyFunc ctx (nm, func) args'
  | otherwise
 	= evalErr ctx $ "unknown function: "++nm	
 
@@ -147,21 +152,22 @@ evaluate ctx (MVar _ nm)
 	= evalErr ctx $ "unkown variable "++nm
 
 
-evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & MSeq tp
-evaluate _ e			= e
+evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & PtSeq tp
+evaluate ctx (MParseTree pt)	= pt
+evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++show e
 
 
-evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MLiteral ("", -1) ("Undefined behaviour: "++msg)]
+evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
 asInts ctx bi exprs	
 	= let 	exprs'	= exprs |> evaluate ctx 
-				|> (\e -> if isMInt e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ show e)
+				|> (\e -> if isMInt' e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ show e)
 				|> (\(MInt _ i) -> i)
 		tp	= typeOf $ head exprs
 		tp'	= if tp == "" then error $ "Declare a return type, by annotating the first argument of a builtin" else tp
 		in
 		((tp', -1), exprs')
 
-buildStackEl	:: (Name, [Expression]) -> String
+buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)
 	= "   In "++func++ inParens (args & showComma)

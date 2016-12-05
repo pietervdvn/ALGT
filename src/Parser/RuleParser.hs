@@ -45,6 +45,8 @@ rule ctx
 		con	<- conclusion ctx
 		return $ Rule nm preds con
 
+
+conclusion 	:: Ctx -> Parser u Conclusion
 conclusion ctx	= try (conclusionPre ctx) <|> conclusionIn ctx
 
 conclusionIn	:: Ctx -> Parser u Conclusion
@@ -71,7 +73,7 @@ conclusionPre ctx
 
 		typeAsRelation ctx relationSymb sExprs
 
-
+typeAsRelation	:: Ctx -> String -> [MEParseTree] -> Parser u Conclusion
 typeAsRelation ctx symbol sExprs
 	= do	let relation	= relTypes ctx M.! symbol
 		let funcTps	= funcs ctx |> typesOf
@@ -86,10 +88,10 @@ typeAsRelation ctx symbol sExprs
 					& allRight
 					& either fail return
 
-		return $ RelationMet relation exprs
+		return $ relationMet relation exprs
 		
  
-
+predicate	:: Ctx -> Parser u Predicate
 predicate ctx	= try (predicateIsA ctx) <|> predicateConcl ctx
 
 

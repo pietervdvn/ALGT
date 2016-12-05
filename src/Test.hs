@@ -26,20 +26,6 @@ import Data.Map (Map, fromList, (!))
 import Main
 
 
-fromRight	= either (error . show) id
-
-testExpr (expr, rule)
-	= do	putStrLn "\n-----------------\n"
-		let pt	= parse mePt "<>" expr & fromRight
-		print pt
-		let tpd	= typeAs exFunctionTypings stflSyntax rule pt
-		case tpd of
-			Left msg	-> putStrLn msg
-			Right val	-> print val
-		let tpd' = tpd & either (error . show) id
-		let typing	= expectedTyping stflSyntax tpd' & either (error . show) id
-		print typing
-		-- return typing	 --}
 	
 tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "t","eval","--step","--line-by-line"]
 		print ts
@@ -58,31 +44,4 @@ showProofWithDepth (Left str)	= str
 showProofWithDepth (Right proof)= "(Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++")\n\n"++show proof++"\n\n\n"
 
 
-extraTests	:: [(String, Name)]
-extraTests = 	[ (" \"If\" cond \"Then\" t1 \"Else\" t2 ", "t")
-		, ("x \"::\" y", "t")
-		, ("\"5\" \"+\" \"5\"","t")
-		, ("\"If\" eval(cond) \"Then\" t1 \"Else\" t2", "t")
-		, ("!error(\"undefined behaviour\")", "t")
-		, ("(\"(\" \"\\\\\" x \":\" type \".\"  e \")\") arg", "t")
-		, ("eval(z)", "t")
-		, ("subs(x,y,z)","t")
-		, ("eval(x) \"+\" x", "t")
-		, ("(\"x\" : var)", "t")
-		]
 
-
-failing	= 	[ ("x \"::\" x", "t")
-		, ("(\"5\" : var)", "t")
-		, ("x : var", "t")
-		]
-
-te	= extraTests |+> testExpr
-		
- 
-tl	= last extraTests & testExpr
-
-exFunctionTypings	= fromList [("eval", ["t", "t"]) , ("subs", ["var","t","t","t"])]
-
-		
-stflSyntax	= fromList [("t",[Seq [BNFRuleCall "tL",Literal "+",BNFRuleCall "t"],Seq [BNFRuleCall "tL",Literal "::",BNFRuleCall "type"],Seq [BNFRuleCall "tL",BNFRuleCall "t"],BNFRuleCall "tL"]),("tL",[Number,Literal "True",Literal "False",BNFRuleCall "var",Seq [Literal "(",Literal "\\",BNFRuleCall "var",Literal ":",BNFRuleCall "type",Literal ".",BNFRuleCall "t",Literal ")"],Seq [Literal "If",BNFRuleCall "t",Literal "Then",BNFRuleCall "t",Literal "Else",BNFRuleCall "t"]]),("type",[Seq [BNFRuleCall "typeL",Literal "->",BNFRuleCall "type"],BNFRuleCall "typeL"]),("typeL",[Literal "Int",Literal "Bool"]),("var",[Identifier])]

@@ -43,7 +43,7 @@ bnfExpr'
 	= do	e	<- many bnfExpr
 		return $ case e of
 			[expr]	-> expr
-			_	-> Seq e
+			_	-> BNFSeq e
 
 
 bnfLine	= bnfExpr' `sepBy` string "|" <* ws

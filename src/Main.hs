@@ -28,7 +28,7 @@ main	= do	putStrLn welcome
 
 
 
-main'	:: [String] -> IO (TypeSystem, [Expression])
+main'	:: [String] -> IO (TypeSystem, [ParseTree])
 main' args 
 	= do	let (tsFile:exampleFile:bnfRuleName:evalFunc:options) = args
 		let lineByLine	= "--line-by-line" `elem` options
@@ -36,7 +36,7 @@ main' args
 		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		exampleContents	<- readFile exampleFile
-		let he	= handleExample exampleFile ts stepByStep bnfRuleName evalFunc	:: String -> IO Expression
+		let he	= handleExample exampleFile ts stepByStep bnfRuleName evalFunc	:: String -> IO ParseTree
 		exprs	<- if lineByLine then do
 		 		let examples	= exampleContents & lines 
 							& filter (/= "") 
@@ -46,7 +46,7 @@ main' args
 		return (ts, exprs)
 
 
-handleExample	:: Name -> TypeSystem -> Bool -> Name -> Name -> String -> IO Expression
+handleExample	:: Name -> TypeSystem -> Bool -> Name -> Name -> String -> IO ParseTree
 handleExample fileNm ts stepByStep bnfRuleName evalName str
 	= do	putStrLn ("> Input\t"++show str)
 		let parser	= parse $ parseRule (tsSyntax ts) bnfRuleName
@@ -57,9 +57,9 @@ handleExample fileNm ts stepByStep bnfRuleName evalName str
 			else print $ evalFunc ts evalName [parseTree]
 		return parseTree
 
-evalStar	:: TypeSystem -> Name -> Expression -> IO ()
+evalStar	:: TypeSystem -> Name -> ParseTree -> IO ()
 evalStar ts funcName me	
-	= do	putStrLn $ "\n " ++ show' me
+	= do	putStrLn $ "\n " ++ show me
 		let me'	= evalFunc ts funcName [me]
 		if me' /= me then
 			evalStar ts funcName me'

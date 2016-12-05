@@ -96,16 +96,16 @@ matchTyping _ _ bnf _ pt@(MePtCall _ _ _)
 
 
 matchTyping _ _ (Literal s) tp (MePtToken s')
- | s == s'		= return $ MLiteral tp s
+ | s == s'		= MLiteral tp s & MParseTree & return
  | otherwise		= Left $ "Not the right literal: "++show s++" ~ "++show s'
 matchTyping _ _ Identifier tp (MePtToken s)
- | isIdentifier s	= return $ MIdentifier tp s
+ | isIdentifier s	= MIdentifier tp s & MParseTree & return
  | otherwise		= Left $ s ++ " is not an identifier"
 matchTyping _ _ Number tp (MePtToken s)
- | otherwise 		= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp
+ | otherwise 		= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
 
 
-matchTyping f r (Seq bnfs) tp (MePtSeq pts)
+matchTyping f r (BNFSeq bnfs) tp (MePtSeq pts)
  | length bnfs == length pts
 			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f r bnf tp pt) 
 				joined & allRight |> MSeq tp
@@ -134,7 +134,7 @@ isIdentifier (c:chrs)
 
 -- only used for builtin functions
 dynamicTranslate	:: TypeName -> MEParseTree -> Expression
-dynamicTranslate tp (MePtToken s)	= MLiteral (tp, -1) s
+dynamicTranslate tp (MePtToken s)	= MParseTree $ MLiteral (tp, -1) s
 dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 
 dynamicTranslate tp (MePtVar nm)	= MVar tp nm
 dynamicTranslate _ (MePtAscription tp e)	= dynamicTranslate tp e

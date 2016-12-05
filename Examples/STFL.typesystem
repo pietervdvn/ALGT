@@ -36,7 +36,7 @@ eval("True" "::" "Bool")			= "True"
 eval("False" "::" "Bool")			= "False"
 eval(t "::" type)				= !error("Invalid type: " t " is not a " type)
 eval((t : var))			 		= !error("Unresolved variable")
-eval(t[e:t])					= t[eval(e):t]
+# eval(t[e:t])					= t[eval(e):t]
 eval(t)						= t
 
 
