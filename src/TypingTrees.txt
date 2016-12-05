@@ -1,0 +1,199 @@
+> ((( (If True Then True Else True) )) :: Bool)
+(Proof weight: 9, proof depth: 5)
+
+("True" : "bool")           ("True" : "bool")           ("True" : "bool")
+----------------- (Tbool)   ----------------- (Tbool)   ----------------- (Tbool)
+True :: Bool                True :: Bool                True :: Bool
+--------------------------------------------------------------------------------- (TIf)
+(If True Then True Else True) :: Bool
+--------------------------------------------------------------------------------------- (TParens)
+(( (If True Then True Else True) )) :: Bool
+------------------------------------------------------------------------------------------------- (TAscr)
+((( (If True Then True Else True) )) :: Bool) :: Bool
+
+
+
+> 42
+(Proof weight: 2, proof depth: 2)
+
+(42 : "number")
+--------------- (Tnumber)
+42 :: Int
+
+
+
+> True
+(Proof weight: 2, proof depth: 2)
+
+("True" : "bool")
+----------------- (Tbool)
+True :: Bool
+
+
+
+> (( False ))
+(Proof weight: 3, proof depth: 3)
+
+("False" : "bool")
+------------------ (Tbool)
+False :: Bool
+-------------------------- (TParens)
+(( False )) :: Bool
+
+
+
+> (True :: Bool)
+(Proof weight: 3, proof depth: 3)
+
+("True" : "bool")
+----------------- (Tbool)
+True :: Bool
+------------------------- (TAscr)
+(True :: Bool) :: Bool
+
+
+
+> (If True Then 42 Else 43)
+(Proof weight: 7, proof depth: 3)
+
+("True" : "bool")           (42 : "number")             (43 : "number")
+----------------- (Tbool)   --------------- (Tnumber)   --------------- (Tnumber)
+True :: Bool                42 :: Int                   43 :: Int
+--------------------------------------------------------------------------------- (TIf)
+(If True Then 42 Else 43) :: Int
+
+
+
+> (If False Then 23 Else 44)
+(Proof weight: 7, proof depth: 3)
+
+("False" : "bool")           (23 : "number")             (44 : "number")
+------------------ (Tbool)   --------------- (Tnumber)   --------------- (Tnumber)
+False :: Bool                23 :: Int                   44 :: Int
+---------------------------------------------------------------------------------- (TIf)
+(If False Then 23 Else 44) :: Int
+
+
+
+> (5 + 6)
+(Proof weight: 5, proof depth: 3)
+
+(5 : "number")             (6 : "number")
+-------------- (Tnumber)   -------------- (Tnumber)
+5 :: Int                   6 :: Int
+--------------------------------------------------- (TPlus)
+(5 + 6) :: Int
+
+
+
+> (5 + (6 + 7))
+(Proof weight: 8, proof depth: 4)
+
+                           (6 : "number")             (7 : "number")
+                           -------------- (Tnumber)   -------------- (Tnumber)
+(5 : "number")             6 :: Int                   7 :: Int
+-------------- (Tnumber)   --------------------------------------------------- (TPlus)
+5 :: Int                   (6 + 7) :: Int
+-------------------------------------------------------------------------------------- (TPlus)
+(5 + (6 + 7)) :: Int
+
+
+
+> ((( \ x : Int . (x + 1) )) 5)
+While trying to proof that "::" is applicable to [((( \ x : Int . (x + 1) )) 5)]:
+  Not a single rule matched:
+  While trying to intepret the rule Tnumber with args [((( \ x : Int . (x + 1) )) 5)]:
+    n is not a "number"
+  
+  While trying to intepret the rule Tbool with args [((( \ x : Int . (x + 1) )) 5)]:
+    b is not a "bool"
+  
+  While trying to intepret the rule TParens with args [((( \ x : Int . (x + 1) )) 5)]:
+    Pattern match failed
+  
+  While trying to intepret the rule TIf with args [((( \ x : Int . (x + 1) )) 5)]:
+    Pattern match failed
+  
+  While trying to intepret the rule TPlus with args [((( \ x : Int . (x + 1) )) 5)]:
+    Pattern match failed
+  
+  While trying to intepret the rule TAscr with args [((( \ x : Int . (x + 1) )) 5)]:
+    Pattern match failed
+  
+> ((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))
+While trying to proof that "::" is applicable to [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+  Not a single rule matched:
+  While trying to intepret the rule Tnumber with args [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+    n is not a "number"
+  
+  While trying to intepret the rule Tbool with args [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+    b is not a "bool"
+  
+  While trying to intepret the rule TParens with args [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+    Pattern match failed
+  
+  While trying to intepret the rule TIf with args [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+    Pattern match failed
+  
+  While trying to intepret the rule TPlus with args [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+    Pattern match failed
+  
+  While trying to intepret the rule TAscr with args [((( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )))]:
+    Pattern match failed
+  
+> (If (If True Then False Else True) Then 123456 Else 42)
+(Proof weight: 12, proof depth: 4)
+
+("True" : "bool")           ("False" : "bool")           ("True" : "bool")                                                 
+----------------- (Tbool)   ------------------ (Tbool)   ----------------- (Tbool)                                         
+True :: Bool                False :: Bool                True :: Bool                      (123456 : "number")             (42 : "number")
+---------------------------------------------------------------------------------- (TIf)   ------------------- (Tnumber)   --------------- (Tnumber)
+(If True Then False Else True) :: Bool                                                     123456 :: Int                   42 :: Int
+---------------------------------------------------------------------------------------------------------------------------------------------------- (TIf)
+(If (If True Then False Else True) Then 123456 Else 42) :: Int
+
+
+
+> (5 + (6 + 7))
+(Proof weight: 8, proof depth: 4)
+
+                           (6 : "number")             (7 : "number")
+                           -------------- (Tnumber)   -------------- (Tnumber)
+(5 : "number")             6 :: Int                   7 :: Int
+-------------- (Tnumber)   --------------------------------------------------- (TPlus)
+5 :: Int                   (6 + 7) :: Int
+-------------------------------------------------------------------------------------- (TPlus)
+(5 + (6 + 7)) :: Int
+
+
+
+> (5 + (( (6 + 7) )))
+(Proof weight: 9, proof depth: 5)
+
+                           (6 : "number")             (7 : "number")
+                           -------------- (Tnumber)   -------------- (Tnumber)
+                           6 :: Int                   7 :: Int
+                           --------------------------------------------------- (TPlus)
+(5 : "number")             (6 + 7) :: Int
+-------------- (Tnumber)   ----------------------------------------------------------- (TParens)
+5 :: Int                   (( (6 + 7) )) :: Int
+------------------------------------------------------------------------------------------------ (TPlus)
+(5 + (( (6 + 7) ))) :: Int
+
+
+
+> ((( (5 + 6) )) + (( (7 + 8) )))
+(Proof weight: 13, proof depth: 5)
+
+(5 : "number")             (6 : "number")                               (7 : "number")             (8 : "number")
+-------------- (Tnumber)   -------------- (Tnumber)                     -------------- (Tnumber)   -------------- (Tnumber)
+5 :: Int                   6 :: Int                                     7 :: Int                   8 :: Int
+--------------------------------------------------- (TPlus)             --------------------------------------------------- (TPlus)
+(5 + 6) :: Int                                                          (7 + 8) :: Int
+----------------------------------------------------------- (TParens)   ----------------------------------------------------------- (TParens)
+(( (5 + 6) )) :: Int                                                    (( (7 + 8) )) :: Int
+--------------------------------------------------------------------------------------------------------------------------------------------- (TPlus)
+((( (5 + 6) )) + (( (7 + 8) ))) :: Int
+
+
+

@@ -13,7 +13,7 @@ import qualified Data.Map as M
 import Data.Map (Map)
 import Data.Maybe
 import Data.List (intercalate, intersperse)
-
+import Data.Bifunctor (first)
 
 evalFunc	:: TypeSystem -> Name -> [ParseTree] -> ParseTree
 evalFunc ts funcName args	
@@ -24,15 +24,15 @@ evalFunc ts funcName args
 	= evalErr (Ctx (tsSyntax ts) (tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
 
-evalExpr	:: TypeSystem -> VariableAssignemnts -> Expression -> ParseTree
+evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> ParseTree
 evalExpr ts vars e	
 	= evaluate (buildCtx ts vars) e
 
-type VariableAssignemnts
+type VariableAssignments
 		= Map Name (ParseTree, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
 data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
 			ctx_functions 	:: Map Name Function,
-			ctx_vars	:: VariableAssignemnts,
+			ctx_vars	:: VariableAssignments,
 			ctx_stack	:: [(Name, [ParseTree])] -- only used for errors
 			}
 
@@ -52,16 +52,16 @@ applyFunc ctx (nm, MFunction tp clauses) args
 
 evalClause	:: Ctx ->  [ParseTree] -> Clause -> Maybe ParseTree
 evalClause ctx args (MClause pats expr)
-	= do	variabless	<- zip pats args |+> uncurry (patternMatch $ ctx_syntax ctx )
+	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctx_syntax ctx) (const True))
 		variables	<- mergeVarss variabless
 		let ctx'	= ctx {ctx_vars = variables}
 		return $ evaluate ctx' expr
 
 
-mergeVarss	:: [VariableAssignemnts] -> Maybe VariableAssignemnts
+mergeVarss	:: [VariableAssignments] -> Maybe VariableAssignments
 mergeVarss	= foldM mergeVars M.empty
 
-mergeVars	:: VariableAssignemnts -> VariableAssignemnts -> Maybe VariableAssignemnts
+mergeVars	:: VariableAssignments -> VariableAssignments -> Maybe VariableAssignments
 mergeVars v1 v2
 	= do	let common	= (v1 `M.intersection` v2) & M.keys
 		let cv1		= common |> (v1 M.!)
@@ -73,40 +73,73 @@ mergeVars v1 v2
 {-
 Disasembles an expression against a pattern
 patternMatch pattern value
--}
-patternMatch	:: BNFRules -> Expression -> ParseTree -> Maybe VariableAssignemnts
-patternMatch _ (MVar _ v) expr
-	= Just $ M.singleton v (expr, Nothing)
-patternMatch _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
-	| s1 == s2		= Just M.empty
-	| otherwise		= Nothing
-patternMatch _ (MParseTree (MInt _ s1)) (MInt _ s2)
-	| s1 == s2		= Just M.empty
-	| otherwise		= Nothing
-patternMatch _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
-	| s1 == s2		= Just M.empty
-	| otherwise		= Nothing
-patternMatch r (MParseTree (PtSeq mi pts)) pt
-	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
-patternMatch r (MSeq _ seq1) (PtSeq _ seq2)
- | length seq1 /= length seq2	= Nothing
- | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r) >>= foldM mergeVars M.empty
 
-patternMatch r (MAscription as expr') expr
+The extra function (VariableAssignments -> Bool) injects a test, to test different evaluation contexts
+-}
+patternMatch	:: BNFRules -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Maybe VariableAssignments
+patternMatch _ _ (MVar _ v) expr
+	= Just $ M.singleton v (expr, Nothing)
+patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
+	| s1 == s2		= Just M.empty
+	| otherwise		= Nothing
+patternMatch _ _ (MParseTree (MInt _ s1)) (MInt _ s2)
+	| s1 == s2		= Just M.empty
+	| otherwise		= Nothing
+patternMatch _ _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
+	| s1 == s2		= Just M.empty
+	| otherwise		= Nothing
+patternMatch r f (MParseTree (PtSeq mi pts)) pt
+	= patternMatch r f (MSeq mi (pts |> MParseTree)) pt
+patternMatch r f (MSeq _ seq1) (PtSeq _ seq2)
+ | length seq1 /= length seq2	= Nothing
+ | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r f) >>= foldM mergeVars M.empty
+
+patternMatch r f (MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
-	= patternMatch r expr' expr
+	= patternMatch r f expr' expr
  | otherwise	
 	= Nothing
 
-patternMatch _ ctx@(MEvalContext tp name hole) value
-	= error $ "TODO: "++show ctx++" with input "++show value
+patternMatch r extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
+	= patternMatchContxt r extraCheck (tp, name, hole) value
+		
 
-patternMatch _ (MCall _ "error" True _) _	
+patternMatch _ _ (MCall _ "error" True _) _	
 	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
-patternMatch _ (MCall _ nm _ _) _	
+patternMatch _ _ (MCall _ nm _ _) _	
 	= error $ "Using a function call in a pattern is not allowed"
-patternMatch _ pat expr		
+patternMatch _ _ pat expr		
 	= Nothing
+
+
+patternMatchContxt	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Maybe VariableAssignments
+patternMatchContxt r extraCheck evalCtx fullContext@(PtSeq _ values)
+	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, [Int]) -> Maybe VariableAssignments
+		depthFirstSearch' matchMaker [] values
+
+
+makeMatch	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, [Int]) -> Maybe VariableAssignments
+makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
+	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
+		holeAssgn	<- patternMatch r extraCheck holePattern holeFiller
+		assgn'		<- mergeVars baseAssign holeAssgn
+		guard $ extraCheck assgn'
+		return assgn'
+
+-- depth first search, excluding self match
+depthFirstSearch'	:: ((ParseTree, [Int]) -> Maybe VariableAssignments) -> [Int] -> [ParseTree] -> Maybe VariableAssignments
+depthFirstSearch' matchMaker path values
+	= do	let deeper	= zip [0..] values |> (\(i, pt) -> depthFirstSearch matchMaker (path++[i]) pt)
+		firstJusts deeper
+
+depthFirstSearch	:: ((ParseTree, [Int]) -> Maybe VariableAssignments) -> [Int] -> ParseTree -> Maybe VariableAssignments
+depthFirstSearch matchMaker path pt@(PtSeq _ values)
+	= do	let deeper	= depthFirstSearch' matchMaker path values
+		let self	= matchMaker (pt, path)
+		firstJusts [deeper, self]
+depthFirstSearch _ _ _	= Nothing		
+
+
 
 
 
@@ -151,10 +184,20 @@ evaluate ctx (MVar _ nm)
  | otherwise			
 	= evalErr ctx $ "unkown variable "++nm
 
+evaluate ctx (MEvalContext _ nm hole)
+ | nm `M.member` ctx_vars ctx	
+	= let	hole'	= evaluate ctx hole
+		(context, path)	= ctx_vars ctx M.! nm
+		path'	= fromMaybe (error $ nm++" was not captured using an evaluation context") path
+		in
+		replace context path' hole'
+ | otherwise			
+	= evalErr ctx $ "unkown variable (for evaluation context) "++nm
+
 
 evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & PtSeq tp
 evaluate ctx (MParseTree pt)	= pt
-evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++show e
+evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++show e++" within context "++show (ctx_vars ctx)
 
 
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]

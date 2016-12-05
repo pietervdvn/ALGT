@@ -35,7 +35,7 @@ proofThat' ts symbol args
 		let conclusions	= successfull & filter isProof |> proofConcl & nub
 		assert Left (1 == length conclusions) $ "Multiple rules provided a proof with different conclusions:\n"++ 
 				(successfull |> show |> lines ||>> ("#  "++) |> unlines >>= (++"\n"))
-		let successfull'	= successfull & sortOn depth 
+		let successfull'	= successfull & sortOn weight 
 		return $ head successfull'
 
 
@@ -53,7 +53,7 @@ interpretRule ts r args
 
 
 -- predicates are proven from left to right, as a left predicate might introduce variables used by a following predicate
-proofPredicates :: TypeSystem -> VariableAssignemnts -> [Predicate] -> Either String ([Proof], VariableAssignemnts)
+proofPredicates :: TypeSystem -> VariableAssignments -> [Predicate] -> Either String ([Proof], VariableAssignments)
 proofPredicates _ vars [] 	= return ([], vars)
 proofPredicates ts vars (pred:preds)
 	= do	(proof, vars')		<- proofPredicate ts vars pred
@@ -62,7 +62,7 @@ proofPredicates ts vars (pred:preds)
 		return (proof:proofs, variables')
 
 
-proofPredicate	:: TypeSystem -> VariableAssignemnts -> Predicate -> Either String (Proof, VariableAssignemnts)
+proofPredicate	:: TypeSystem -> VariableAssignments -> Predicate -> Either String (Proof, VariableAssignments)
 proofPredicate ts vars (TermIsA expr typ)
 	= let	expr'	= evalExpr ts vars expr in
 		if alwaysIsA (tsSyntax ts) (typeOf expr') typ then
@@ -81,7 +81,7 @@ proofPredicate ts vars (Needed (RelationMet relation args _))
 
 
 
-patternMatchInputs	:: TypeSystem -> (Relation, [Expression]) -> [ParseTree] -> Either String VariableAssignemnts
+patternMatchInputs	:: TypeSystem -> (Relation, [Expression]) -> [ParseTree] -> Either String VariableAssignments
 patternMatchInputs ts (rel, relationArgs) args
 	= do	let inputTypes	= filterMode In rel (relType rel)
 		assert  Left(length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
@@ -93,19 +93,20 @@ patternMatchInputs ts (rel, relationArgs) args
 		
 		
 
-proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignemnts -> [ParseTree] -> Either String Conclusion'
+proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignments -> [ParseTree] -> Either String Conclusion'
 proofRelationMet ts (rel, relationArgs) vars args
 	= do	resultExprs	<- zipModes ts vars (zip relationArgs $ relModes rel) args
 		return $ relationMet' rel (resultExprs |> fst)
 		
 		
-matchAndMerge	:: TypeSystem -> [(Expression, ParseTree)] -> Either String VariableAssignemnts
+-- TODO add predicate injection
+matchAndMerge	:: TypeSystem -> [(Expression, ParseTree)] -> Either String VariableAssignments
 matchAndMerge ts patsArgs
-	= do	matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts))  & maybe (Left "Pattern match failed") return
+	= do	matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts) (const True)) & maybe (Left "Pattern match failed") return
 		matches & mergeVarss & maybe (Left "Conflicting assignments") return
 
 
-zipModes	:: TypeSystem -> VariableAssignemnts -> [(Expression, Mode)] -> [ParseTree] -> Either String [(ParseTree, Mode)]
+zipModes	:: TypeSystem -> VariableAssignments -> [(Expression, Mode)] -> [ParseTree] -> Either String [(ParseTree, Mode)]
 zipModes ts assignments ((_, In):relationArgs) (arg:args)
 		= do	tail	<- zipModes ts assignments relationArgs args
 			return ((arg, In):tail)

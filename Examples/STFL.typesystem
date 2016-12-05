@@ -13,7 +13,7 @@ var	::= Identifier
 number	::= Number
 bool	::= "True" | "False"
 t	::=  tL "+" t | tL "::" type | tL t | tL
-tL	::= number | bool | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t
+tL	::= number | bool | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t | "(" t ")"
 
 
  Functions
@@ -25,18 +25,18 @@ eval						: t -> t
 eval("If" "True" "Then" t1 "Else" t2)		= t1
 eval("If" "False" "Then" t1 "Else" t2) 		= t2
 eval("If" (cond:number) "Then" t1 "Else" t2)	= !error("If with a number as condition")
-eval("If" cond "Then" t1 "Else" t2) 		= "If" eval(cond) "Then" t1 "Else" t2
 
 eval(("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
+eval("(" t ")")					= t
 
-eval(n1 "+" n2)					= plus(eval(n1), eval(n2))
+eval((n1:number) "+" (n2:number))		= plus(n1, n2)
 
 eval((t:number) "::" "Int")			= t
-eval("True" "::" "Bool")			= "True"
-eval("False" "::" "Bool")			= "False"
-eval(t "::" type)				= !error("Invalid type: " t " is not a " type)
+eval((b:bool) "::" "Bool")			= b
+eval(t[e:t])					= t[eval(e):t]
+
+eval(t "::" type)				= !error("Invalid cast: " t " is not a " type)
 eval((t : var))			 		= !error("Unresolved variable")
-# eval(t[e:t])					= t[eval(e):t]
 eval(t)						= t
 
 
@@ -84,55 +84,60 @@ plus(e1, e2)	= !plus((e1:number), e2)
 (~~>)	: t (in), t (out)	Pronounced as "big step"
 (~)	: t (in)		Pronounced as "is canonical"
 
+(::)	: t (in), type (out)	Pronounced as "has type"
+
+
+# used for testing
+(!!)	: t (in), t (out)	Pronounced as "first found number"
 
  Rules
 =======
 
 
+	 	(n:number)
+(NumberBase) 	----------------
+		t[n:number] !! n
 
-		cond0 --> cond
-(EvalIfCond) --------------------------------------------------------------------
-		"If" cond0 "Then" t1 "Else" t2 --> "If" cond "Then" t1 "Else" t2
-
-
-	    (n1:number)	(n2:number)
-(EvalPlus) ---------------------------
-            n1 "+" n2 --> plus(n1, n2)
-
-
-	     n1 --> n2
-(EvalPlusR) --------------------------
-             n "+" n1 --> n "+" n2
-
-
-#	    e0 --> e
-# (EvalCtx) -----------------
-#	    t[e0] --> t[e]
+		(n:number)
+(Number) 	----------
+		n !! n
 
 
 
+	   	(n1:number)	(n2:number)
+(EvalPlus) 	---------------------------
+           	n1 "+" n2 --> plus(n1, n2)
 
-(EvalIfTrue) ------------------------------------------
-              "If" "True" "Then" t1 "Else" t2 --> t1
 
 
-(EvalIfFalse) ------------------------------------------
+(EvalIfTrue) 	--------------------------------------
+              	"If" "True" "Then" t1 "Else" t2 --> t1
+
+
+(EvalIfFalse) 	---------------------------------------
 		"If" "False" "Then" t1 "Else" t2 --> t2
 
 
 		(b:bool)
-(EvalAscrBool) --------------------
+(EvalAscrBool) 	-------------------
 		b "::" "Bool" --> b
 
 
 		(i:number)
-(EvalCastInt) ---------------------
+(EvalCastInt) 	------------------
 		i "::" "Int" --> i
 
 
+(EvalParens) 	---------------
+		"(" t ")" --> t
+
 	
-(EvalLamApp) ------------------------------------------------
+(EvalLamApp) 	-----------------------------------------------------------
 		("(" "\\" var ":" type "." t ")") arg --> subs(var, arg, t)
+
+	   	e0 --> e
+(EvalCtx) 	--------------
+	    	t[e0] --> t[e]
 
 
 
@@ -165,6 +170,35 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 
 
+	   (n:number)
+(Tnumber) ----------------
+	   n :: "Int"
+
+
+	 (b:bool)
+(Tbool) ------------
+	 b :: "Bool"
+
+
+	    e :: t
+(TParens) ---------------
+	   "(" e ")" :: t
+
+
+        c :: "Bool"	t1 :: t	     t2 :: t
+(TIf) ---------------------------------------
+	"If" c "Then" t1 "Else" t2 :: t
+
+
+	 n1 :: "Int"	n2 :: "Int"
+(TPlus) ---------------------------
+	 n1 "+" n2 :: "Int"
+
+
+	 e :: "Bool"
+(TAscr) --------------------------------
+	 e "::" "Bool" :: "Bool"
+
 
 
 
@@ -172,18 +206,9 @@ plus(e1, e2)	= !plus((e1:number), e2)
 (Tx)   ----------- 
 	$ |- x: T
 
-(Tn)   ----------------
-	$ |- number : "Int"
-
-
-(TbT)   ------------------
-	$ |- "True" : "Bool"
 
 
 	
-(TbF)  ------------------
-	$ |- "False": "Bool"
-
 
 	$ |- t1 : T1	$ |- t2: T2	T2 == dom(T1)
 (Tapp) -----------------------------------------------

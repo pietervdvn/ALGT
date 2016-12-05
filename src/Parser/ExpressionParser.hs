@@ -73,6 +73,7 @@ matchTyping _ _ exp tp (MePtVar nm)
 
 matchTyping f r bnf (tp, _) (MePtEvalContext nm hole holeT)
 			= do	hole'	<- typeAs f r holeT hole
+				let holeAsc	= MAscription holeT hole'
 				return $ MEvalContext tp nm hole'
 
 

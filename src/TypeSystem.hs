@@ -178,6 +178,18 @@ data ParseTree
 instance SimplyTyped ParseTree where
 	typeOf pt	= typeInfoOf' pt & either id fst
 
+replace	:: ParseTree -> [Int] -> ParseTree -> ParseTree
+replace _ [] toPlace	= toPlace
+replace (PtSeq tp orig) (i:rest) toPlace
+ | length orig <= i
+	= error $ "Invalid substitution path: index "++show i++" to big for "++show orig
+ | otherwise
+	= let	(init, head:tail)	= splitAt i orig
+		head'		= replace head rest toPlace in
+		(init ++ (head':tail)) & PtSeq tp
+replace rest path toReplace
+	= error $ "Invalid substitution path: not a sequence, but trying to execute the path "++show path++" on "++showPt' rest
+
 data Expression
 	= MParseTree ParseTree
 	| MVar TypeName Name
@@ -192,6 +204,10 @@ data Expression
 isMInt'	:: ParseTree -> Bool
 isMInt' (MInt _ _)	= True
 isMInt' _		= False
+
+isPtSeq	:: ParseTree -> Bool
+isPtSeq (PtSeq _ _)	= True
+isPtSeq _		= False
 
 isMInt	:: Expression -> Bool
 isMInt (MParseTree pt)	= isMInt' pt

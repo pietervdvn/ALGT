@@ -93,3 +93,9 @@ stitch eq a b	= let	la	= length a
 
 cont		:: Monad m => m ()
 cont		= return ()
+
+
+sndEffect	:: Monad m => (a, m b) -> m (a, b)
+sndEffect (a, mb)
+		= do	b <- mb
+			return (a, b)
