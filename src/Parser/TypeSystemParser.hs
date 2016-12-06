@@ -47,14 +47,17 @@ typeMode rules	= do	ws
 			mode	<- prs "(in)" In <|> prs "(out)" Out
 			ws
 			return (t, mode)
-			
+	
+builtinRelations	= [(":", "parsetree generated with"), ("=", "equals"), ("=>", "implies"), (",","argument separation")]		
 
 
 relationDecl	:: BNFRules -> Parser u Relation
 relationDecl r	= do	char '('
 			symbol	<- many $ noneOf ")"
 			char ')'
-			if (symbol == ":") then fail ("Invalid relation symbol: "++symbol++", conflicts with builtin symbol") else return ()
+			case lookup symbol builtinRelations of
+				Just expl	-> fail ("Invalid relation symbol: "++symbol++", conflicts with builtin symbol for "++ expl)
+				Nothing		-> return ()
 			ws
 			char ':'
 			ws
@@ -66,8 +69,6 @@ relationDecl r	= do	char '('
 	
 		
 ------------------------ full file -----------------------------
-
-
 
 header hdr
 	= do	ws

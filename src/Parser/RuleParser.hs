@@ -35,7 +35,7 @@ parseRules (bnfs, rels, funcs)
 rule	:: Ctx -> Parser u Rule
 rule ctx
 	= do	ws
-		preds	<- try (predicate ctx `sepBy` (many $ char '\t') <* (ws >> char '\n')) 
+		preds	<- try (predicate ctx `sepBy` (many1 $ char '\t') <* (ws >> char '\n')) 
 				<|> (ws >> return [])
 		ws
 		nm	<- line
@@ -55,8 +55,10 @@ conclusionIn ctx
 		ws
 		relation	<- choose (relSymbols ctx) 
 		ws
-		expr2	<- parseExpression
-		typeAsRelation ctx relation [expr1, expr2]
+		let types	= (relTypes ctx M.! relation) & relType
+		exprs	<- replicate (length types - 1) (ws *> parseExpression)
+				& intersperseM (ws *> char ',')
+		typeAsRelation ctx relation (expr1:exprs)
 		
 		
 		
@@ -92,7 +94,7 @@ typeAsRelation ctx symbol sExprs
 		
  
 predicate	:: Ctx -> Parser u Predicate
-predicate ctx	= try (predicateIsA ctx) <|> predicateConcl ctx
+predicate ctx	= try (predicateIsA ctx) <|> try (predicateSame ctx) <|> predicateConcl ctx
 
 
 
@@ -106,16 +108,37 @@ predicateConcl ctx
 
 predicateIsA	:: Ctx -> Parser u Predicate
 predicateIsA ctx	
-	= do	char '('
-		ws
-		nm	<- identifier
+	= do	ws
+		nm	<- identifier'
 		ws
 		char ':'
 		ws
 		t	<- choose $ bnfNames' ctx
-		ws
-		char ')'
 		return $ TermIsA (MVar t nm) t
+
+
+predicateSame	:: Ctx -> Parser u Predicate
+predicateSame ctx
+	= do	ws
+		e1	<- parseExpression
+		ws
+		char '='
+		ws
+		e2	<- parseExpression
+		ws
+		char ':'
+		ws
+		t	<- choose $ bnfNames' ctx
+
+		let funcTps	= funcs ctx |> typesOf
+		let bnfs	= bnfRules ctx
+		let typeExpr e	= typeAs funcTps bnfs t e & either fail return
+		e1'	<- typeExpr e1
+		e2'	<- typeExpr e2
+		
+		return $ Same e1' e2'
+
+
 
 line	:: Parser u String
 line	= do	ws

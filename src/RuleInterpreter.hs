@@ -69,6 +69,12 @@ proofPredicate ts vars _ (TermIsA expr typ)
 		if alwaysIsA (tsSyntax ts) (typeOf expr') typ then
 			return (ProofIsA expr' typ, empty)
 			else Left (show expr ++ " = "++ show expr' ++ " is not a "++show typ)
+proofPredicate ts vars _ (Same e1 e2)
+	= do	let e1'	= evalExpr ts vars e1
+		let e2' = evalExpr ts vars e2
+		if e1' == e2' then  return (ProofSame e1' e1 e2, vars)
+			else Left $ ("Equality predicate not met: "++show e1 ++ "=" ++ showPt' e1' ++ " /= " ++ showPt' e2' ++"="++show e2)
+
 proofPredicate ts vars restingPreds (Needed (RelationMet relation args _))
 	= do	let inputArgs	= zip args (relModes relation) & filter ((==) In . snd) |> fst	:: [Expression]
 		let args'	= inputArgs |> evalExpr ts vars

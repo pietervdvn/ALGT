@@ -343,6 +343,7 @@ instance Ord a => Ord (ConclusionA a) where
 		= (r, as) <= (r', as')
 
 data Predicate		= TermIsA Expression TypeName
+			| Same Expression Expression
 			| Needed Conclusion
 	deriving (Ord, Eq)
 
@@ -357,20 +358,22 @@ data Proof	= Proof { proofConcl	:: Conclusion'
 			, proofPreds	:: [Proof]	-- predicates for the rule
 			}
 		| ProofIsA ParseTree TypeName
+		| ProofSame ParseTree Expression Expression
 		 deriving (Ord, Eq)
 
 isProof (Proof {})	= True
 isProof _		= False
 
 depth	:: Proof -> Int
-depth (ProofIsA _ _)	= 1
-depth proof
+depth proof@(Proof _ _ _)
 	= if null (proofPreds proof) then 1
 		else proofPreds proof |> depth & maximum & (+1)
+depth _	= 1
 
 weight	:: Proof -> Int
-weight (ProofIsA _ _)	= 1
-weight proof		= 1 + (proof & proofPreds |> weight & sum)
+weight proof@(Proof _ _ _)
+	 = 1 + (proof & proofPreds |> weight & sum)
+weight _ = 1
 
 
 
@@ -469,21 +472,22 @@ instance Show Relation where
 			sign ++ pron
 
 instance Show (ConclusionA a) where
-	show (RelationMet rel [arg1, arg2] showArg)	
-		= showArg arg1 ++ " " ++ relSymbol rel ++ " " ++ showArg arg2
-	show (RelationMet rel args showArg)
-		= inParens (relSymbol rel) ++ inParens (args |> showArg |> inParens & unwords)
+	show (RelationMet rel [arg] showArg)
+		= inParens (relSymbol rel) ++ " " ++ showArg arg
+	show (RelationMet rel (arg1:args) showArg)	
+		= showArg arg1 ++ " " ++ relSymbol rel ++ " " ++ (args |> showArg & intercalate ", ")
 
 
 
 
 instance Show Predicate	where
-	show (TermIsA e typ)	= inParens (show e++": "++typ)
+	show (TermIsA e typ)	= show e  ++ ": "  ++ typ
+	show (Same e1 e2)	= show e1 ++ " = " ++ show e2
 	show (Needed concl)	= show concl
 
 instance Show Rule where
 	show (Rule nm predicates conclusion)
-		= let	predicates'	= predicates |> show & intercalate "\t"
+		= let	predicates'	= predicates |> show & intercalate "    "
 			conclusion'	= show conclusion
 			nm'	= inParens nm
 			spacing	= replicate ( 1 + length nm') ' ' ++ "\t"
@@ -498,7 +502,8 @@ instance Show Proof where
 
 
 showProof	:: Bool -> Proof -> [String]
-showProof _ (ProofIsA expr typ)	= [inParens (showPt' expr ++ " : "++show typ)]
+showProof _ (ProofIsA expr typ)	= [showPt' expr ++ " : "++show typ]
+showProof _ (ProofSame pt e1 e2)= [showPt' pt ++ " satisfies "++show e1 ++" = "++show e2]
 showProof showName (Proof concl proverRule predicates)
 	= let	preds'	= predicates |> showProof showName
 		preds''	= if null preds' then [] else init preds' ||>> (++"   ")  ++ [last preds']

@@ -163,7 +163,7 @@ mePtPart	= try mePtToken
 
 meNested	= char '(' *> ws *> mePt <* ws <* char ')'
 mePtToken	= bnfLiteral |> MePtToken
-mePtVar		= identifier |> MePtVar
+mePtVar		= identifier' |> MePtVar
 mePtCall	= do	builtin	<- try (char '!' >> return True) <|> return False
 			nm	<- identifier
 			char '('

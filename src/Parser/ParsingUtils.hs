@@ -44,7 +44,7 @@ iDentifier
 
 -- either upper or lower case
 identifier'	:: Parser u String
-identifier'	= identifier <|> identifier'
+identifier'	= identifier <|> iDentifier
 
 number	:: Parser u Int
 number 	= many1 (oneOf digits) |> read
