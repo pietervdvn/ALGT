@@ -12,8 +12,8 @@ type	::= typeL "->" type | typeL
 var	::= Identifier
 number	::= Number
 bool	::= "True" | "False"
-t	::=  tL "+" t | tL "::" type | tL t | tL
-tL	::= number | bool | var | "(" "\\" var ":" type "." t ")" | "If" t "Then" t "Else" t | "(" t ")"
+e	::= eL "+" e | eL "::" type | eL e | eL
+eL	::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
 
 
 typing		::= var "::" type
@@ -25,38 +25,38 @@ typingContext	::= typing "," typingContext | ";"
 
 
 # reduces one step of the logic
-eval						: t -> t
-eval("If" "True" "Then" t1 "Else" t2)		= t1
-eval("If" "False" "Then" t1 "Else" t2) 		= t2
-eval("If" (cond:number) "Then" t1 "Else" t2)	= !error("If with a number as condition")
+eval						: e -> e
+eval("If" "True" "Then" e1 "Else" e2)		= e1
+eval("If" "False" "Then" e1 "Else" e2) 		= e2
+eval("If" (cond:number) "Then" e1 "Else" e2)	= !error("If with a number as condition")
 
-eval(("(" "\\" var ":" type "." t ")") arg)	= subs(var, arg, t)
-eval("(" t ")")					= t
+eval(("(" "\\" var ":" type "." e ")") arg)	= subs(var, arg, e)
+eval("(" e ")")					= e
 
 eval((n1:number) "+" (n2:number))		= plus(n1, n2)
 
-eval((t:number) "::" "Int")			= t
+eval((n:number) "::" "Int")			= n
 eval((b:bool) "::" "Bool")			= b
-eval(t[e:t])					= t[eval(e):t]
+eval(expr[e])					= expr[eval(e):e]
 
-eval(t "::" type)				= !error("Invalid cast: " t " is not a " type)
-eval((t : var))			 		= !error("Unresolved variable")
-eval(t)						= t
+eval(e "::" type)				= !error("Invalid cast: " e " is not a " type)
+eval((e : var))			 		= !error("Unresolved variable")
+eval(e)						= e
 
 
 # deduces a new name for the variable in an lambda abstraction
-rename		: var -> var -> type -> t -> t
+rename		: var -> var -> type -> e -> e
 rename(x, newVar, type, body)
 		= "(" "\\" newVar ":" type "." subs(x, newVar, body ) ")"
 
-# replaces variable x by y in entire t
-subs						: var -> t -> t -> t
+# replaces variable x by y in entire expression
+subs						: var -> e -> e -> e
 subs(x, y, x)					= y
 subs(x, y, "(" "\\" x ":" t "." rest ")" )	= subs(x, y, rename(x, !newvar(x, rest), t, rest) )
 subs(x, y, "(" "\\" z ":" t "." rest ")" )	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
 subs(x, y, "If" cond "Then" e1 "Else" e2)	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
-subs(x, y, t1 "+" t2)				= subs(x, y, t1) "+" subs(x, y, t2)
-subs(x, y, t "::" type)				= subs(x, y, t) "::" type
+subs(x, y, e1 "+" e2)				= subs(x, y, e1) "+" subs(x, y, e2)
+subs(x, y, e "::" type)				= subs(x, y, e) "::" type
 subs(x, y, f arg)				= subs(x, y, f) subs(x, y, arg) 
 subs(x, y, z)					= z
 
@@ -64,16 +64,16 @@ subs(x, y, z)					= z
 
 
 dom 		: type -> type
-dom(t1 "->" t2) = t1
+dom(T1 "->" T2) = T1
 
 cod 		: type -> type
-cod(t1 "->" t2) = t2
+cod(T1 "->" T2) = T2
 
 equate		: type -> type -> type
-equate(t1, t1) = t1
+equate(T, T) 	= T
 
 # wrappers for builtin functions, as we can't type within a builtin
-plus		: t -> t -> t
+plus		: e -> e -> e
 plus(e1, e2)	= !plus((e1:number), e2)
 
 
@@ -84,47 +84,47 @@ plus(e1, e2)	= !plus((e1:number), e2)
 # (:) is reserved, as predicate that a term is of a production rule
 # one can refer to rewrite rules/functions earlier on
 
-(-->)	: t (in), t (out)	Pronounced as "evaluation"
-(~~>)	: t (in), t (out)	Pronounced as "big step"
-(~)	: t (in)		Pronounced as "is canonical"
+(-->)	: e (in), e (out)	Pronounced as "evaluation"
+(~~>)	: e (in), e (out)	Pronounced as "big step"
+(~)	: e (in)		Pronounced as "is canonical"
 
-(::)	: typingContext (in), t (in), type (out)	Pronounced as "has type"
+(|-)	: typingContext (in), e (in), type (out)	Pronounced as "context entails typing"
 
 
  Rules
 =======
 
 
-	   	(n1:number)	(n2:number)
+	   	n1:number	n2:number
 (EvalPlus) 	---------------------------
            	n1 "+" n2 --> plus(n1, n2)
 
 
 
 (EvalIfTrue) 	--------------------------------------
-              	"If" "True" "Then" t1 "Else" t2 --> t1
+              	"If" "True" "Then" e1 "Else" e2 --> e1
 
 
 (EvalIfFalse) 	---------------------------------------
-		"If" "False" "Then" t1 "Else" t2 --> t2
+		"If" "False" "Then" e1 "Else" e2 --> e2
 
 
-		(b:bool)
+		b:bool
 (EvalAscrBool) 	-------------------
 		b "::" "Bool" --> b
 
 
-		(i:number)
+		i:number
 (EvalCastInt) 	------------------
 		i "::" "Int" --> i
 
 
 (EvalParens) 	---------------
-		"(" t ")" --> t
+		"(" e ")" --> e
 
 	
 (EvalLamApp) 	-----------------------------------------------------------
-		("(" "\\" var ":" type "." t ")") arg --> subs(var, arg, t)
+		("(" "\\" var ":" type "." e ")") arg --> subs(var, arg, e)
 
 	   	e0 --> e
 (EvalCtx) 	--------------
@@ -132,11 +132,11 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 
 
-		(b:bool)
+		b:bool
 (CanonBool) -------------
 		(~) b
 
-		(n:number)
+		n:number
 (CanonNumber) -------------
 		(~) n
 
@@ -161,60 +161,60 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 
 
-	   (n:number)
-(Tnumber) ----------------
-	   (::) ctx, n, "Int"
+	   	n:number
+(Tnumber) 	------------------
+	  	ctx |- n, "Int"
 
 
-	 (b:bool)
-(Tbool) ------------
-	 (::) ctx, b, "Bool"
+	 	b:bool
+(Tbool) 	-------------------
+	 	ctx |- b, "Bool"
 
 
-	    (::) ctx, e, t
-(TParens) ---------------
-	   (::) ctx, "(" e ")", t
+	    	ctx |- e, T
+(TParens)	----------------------
+	  	ctx |- "(" e ")", T
 
 
-	 (::) ctx, n1, "Int"	(::) ctx, n2, "Int"
-(TPlus) ---------------------------
-	 (::) ctx, n1 "+" n2, "Int"
+	 	ctx |- n1, "Int"	ctx |- n2, "Int"
+(TPlus) 	-------------------------------------------
+	 	ctx |- n1 "+" n2, "Int"
 
 
-	(::) ctx, e, t
-(TAscr) --------------------------------
-	(::) ctx, e "::" t, t
+		ctx |- e, T
+(TAscr) 	---------------------
+		ctx |- e "::" T, T
 
 
-        (::) ctx, c, "Bool"	(::) ctx, t1, t		(::) ctx, t2, t
-(TIf) ---------------------------------------------------------------
-	(::) ctx, "If" c "Then" t1 "Else" t2, t
-
-
-
-	 
-(Tx)	--------------------------
-	 (::) typingContext[x "::" t:typing] , x, t
-
-	   (::) ((x "::" t1) "," ctx), t, t2
-(TLambda) -----------------------------------------------------------
-	   (::) ctx, "(" "\\" x ":" t1 "." t ")", t1 "->" t2
-
-
-	(::) ctx, e1, t1
-(Tapp) -----------------------------------------------
-	(::) ctx, e1 e2, cod(t1)
-
-
-	x: T in $
-(Tx)   ----------- 
-	$ |- x: T
+       		ctx |- c, "Bool"	ctx |- e1, T		ctx |- e2, T
+(TIf) 		----------------------------------------------------------------
+		ctx |- "If" c "Then" e1 "Else" e2, T
 
 
 
-	
+(Tx)		--------------------------------------------
+		typingContext[x "::" T:typing] |- x, T
+
+	  	((x "::" T1) "," ctx) |- e, T2
+(TLambda) 	-------------------------------------------------
+	   	ctx |- "(" "\\" x ":" T1 "." e ")", T1 "->" T2
 
 
+
+		ctx |- e1, Tfunc	ctx |- e2, Targ		Targ = dom(Tfunc) : type
+(Tapp) 		-------------------------------------------------------------------------
+		ctx |- e1 e2, cod(Tfunc)
+
+
+
+
+
+ Properties
+============
+
+		ctx |- e0 , T	e0 --> e1
+(Preservation) ---------------------------
+		ctx |- e1 , T
 
 
 
