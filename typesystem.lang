@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+ 
+ Place this file into ~/.local/share/gtksourceview-3.0/language-specs
 
- This file is part of GtkSourceView
-
- Authors: Duncan Coutts, Anders Carlsson
- Copyright (C) 2004, 2007 Duncan Coutts <duncan@haskell.org>
- Copyright (C) 2004 Anders Carlsson <andersca@gnome.org>
+ Author: Pieter Vander Vennet; pietervdvn@gmail.com
+ 
 
  GtkSourceView is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
