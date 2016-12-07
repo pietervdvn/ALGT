@@ -113,7 +113,7 @@
     </context>
 
     <context id="func-clause" end-at-line-end="true">
-    <start>(^\s*\%{id}\s*\()</start>
+    <start>(^\s*\%{id}\s*(?'parO'\())</start>
 	<end>(\)\s*=)</end>
     <include>
       <context sub-pattern="0" where="start" style-ref="noise"/>

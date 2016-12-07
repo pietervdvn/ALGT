@@ -1,4 +1,4 @@
-module RuleInterpreter where
+module ParseTreeInterpreter.RuleInterpreter where
 
 {-
 This module defines an evaluator for rules
@@ -8,7 +8,7 @@ This module defines an evaluator for rules
 import Utils
 import TypeSystem
 
-import FunctionInterpreter
+import ParseTreeInterpreter.FunctionInterpreter
 
 import Data.Map (Map, empty, findWithDefault)
 import Data.Either

@@ -14,8 +14,10 @@ import Parser.TypeSystemParser
 import Parser.TargetLanguageParser
 import Parser.ExpressionParser
 import Parser.FunctionParser
-import FunctionInterpreter
-import RuleInterpreter
+import ParseTreeInterpreter.FunctionInterpreter
+import ParseTreeInterpreter.RuleInterpreter
+
+import AbstractInterpreter.Test
 
 import Text.Parsec
 
@@ -29,9 +31,10 @@ import Main
 	
 tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "e","eval","--step","--line-by-line"]
 		print ts
-		putStrLn "\n\n=====================================================================================\n\n"
+		testAS (tsSyntax ts)
 		proofExamples ts examples [] "~~>" "EvaluationTrees.txt"
 		proofExamples ts examples [MLiteral ("typingContext", 1) ";"] "|-" "TypingTrees.txt"
+		
 
 proofExamples ts examples args symbol file
 	= do	let proofs	= examples |> (:[]) |> (args++) |> proofThat' ts symbol	:: [Either String Proof]

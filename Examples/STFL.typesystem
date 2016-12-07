@@ -212,10 +212,11 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Properties
 ============
 
-		ctx |- e0 , T	e0 --> e1
+		";" |- e0 , T	e0 --> e1
 (Preservation) ---------------------------
-		ctx |- e1 , T
+		";" |- e1 , T
 
 
-
-
+            e0:T
+(Progress) ------------------
+            e0 --> e1 | (~) e0

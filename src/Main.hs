@@ -10,7 +10,7 @@ import TypeSystem
 
 import Parser.TargetLanguageParser
 import Parser.TypeSystemParser
-import FunctionInterpreter
+import ParseTreeInterpreter.FunctionInterpreter
 
 
 import Text.Parsec

@@ -1,4 +1,4 @@
-module FunctionInterpreter where
+module ParseTreeInterpreter.FunctionInterpreter where
 
 {-
 This module defines an interpreter for functions. functions are evaluated here
