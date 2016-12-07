@@ -43,6 +43,9 @@ buildCtx' ts		= buildCtx ts M.empty
 -- applies given argument to the  function. Starts by evaluating the args
 applyFunc	:: Ctx -> (Name, Function) -> [ParseTree] -> ParseTree
 applyFunc ctx (nm, MFunction tp clauses) args
+ | length args /= length tp - 1
+	= evalErr ctx $ "Number of arguments does not match. Expected "++show (length tp - 1)++" variables, but got "++show (length args)++" arguments instead"
+ | otherwise
 	= let	stackEl	= (nm, args)
 		ctx'	= ctx {ctx_stack = stackEl:ctx_stack ctx}
 		clauseResults	= clauses |> evalClause ctx' args & catMaybes
@@ -151,9 +154,22 @@ evaluate ctx (MCall _ "plus" True es)
 evaluate ctx (MCall _ "min" True es)
 	= let	(tp, [e1, e2])	= asInts ctx "min" es in
 		MInt tp (e1 - e2)
+evaluate ctx (MCall _ "mul" True es)
+	= let	(tp, es')	= asInts ctx "mul" es in
+		MInt tp (mul es')
+evaluate ctx (MCall _ "div" True es)
+	= let	(tp, [e1, e2])	= asInts ctx "min" es in
+		MInt tp (e1 `div` e2)
+evaluate ctx (MCall _ "mod" True es)
+	= let	(tp, [e1, e2])	= asInts ctx "min" es in
+		MInt tp (e1 `mod` e2)
+
 evaluate ctx (MCall _ "neg" True es)
 	= let	(tp, [e1])	= asInts ctx "neg" es in
 		MInt tp (-e1)
+
+
+
 evaluate ctx (MCall _ "equal" True es)
 	= let	(tp, [e1, e2])	= asInts ctx "equal" es in
 		MInt tp (if e1 == e2 then 1 else 0)

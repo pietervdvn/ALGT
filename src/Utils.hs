@@ -99,3 +99,12 @@ sndEffect	:: Monad m => (a, m b) -> m (a, b)
 sndEffect (a, mb)
 		= do	b <- mb
 			return (a, b)
+
+mapi	:: [a] -> [(Int, a)]
+mapi	= zip [0..]
+
+
+mul	:: [Int] -> Int
+mul []	= 1
+mul (i:is)
+	= i * mul is

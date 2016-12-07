@@ -49,6 +49,11 @@ identifier'	= identifier <|> iDentifier
 number	:: Parser u Int
 number 	= many1 (oneOf digits) |> read
 
+negNumber	:: Parser u Int
+negNumber	= do	sign	<- try ((char '-' <* ws) >> return (0-1)) <|> return (1)
+			i	<- number
+			return $ sign * i
+
 ws	:: Parser u String
 ws	= many (oneOf whitespace)
 ws1	:: Parser u String

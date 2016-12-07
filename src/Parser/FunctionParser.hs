@@ -59,7 +59,7 @@ typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
 	  do 	clauses	<- body |+> typeClause bnfs typings tp
 		clauses |+> (\cl -> assert Left (equivalents bnfs (typesOf cl) tp) $ "Clause of type "++show (typesOf cl)++" does not match the expected type of "++show tp++"\n"++show cl)
-		return (nm, MFunction tp (clauses ++ [undefinedClause tp]))
+		return (nm, MFunction tp (clauses ++ [undefinedClause tp nm]))
 
 typeClause	:: BNFRules -> Map Name Type -> Type -> SClause -> Either String Clause
 typeClause bnfs funcs tps sc@(SClause patterns expr)
@@ -80,10 +80,10 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 
 
 
-undefinedClause	:: Type -> Clause
-undefinedClause tp
+undefinedClause	:: Type -> Name -> Clause
+undefinedClause tp nm
 	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar tp nm) 
-		expr	= MCall "" "error" True [MParseTree $ MLiteral ("", -1) "Undefined behaviour: no pattern matched"]
+		expr	= MCall "" "error" True [MParseTree $ MLiteral ("", -1) $ "Undefined behaviour: non exhaustive patterns in function "++ nm]
 		in
 		MClause args expr
 		

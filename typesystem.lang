@@ -60,7 +60,7 @@
     </context>
 
     <context id="token" style-ref="def:string">
-      <match>("([^"\\]|\\\\|\\")*")</match>
+      <match>("([^"\\]|\\\\|\\"|\\n)*")</match>
     </context>
 
     <context id="bnf-bar" style-ref="def:operator">
@@ -82,7 +82,7 @@
 
 
     <context id="bnf-decl">
-      <match>((?'id'\%{id})\t*(?'assgn'::=))</match>
+      <match>((?'id'\%{id})\s*(?'assgn'::=))</match>
       <include>
         <context sub-pattern="id" style-ref="def:type"/>
         <context sub-pattern="assgn" style-ref="noise"/>
@@ -114,7 +114,7 @@
 
     <context id="func-clause" end-at-line-end="true">
     <start>(^\s*\%{id}\s*(?'parO'\())</start>
-	<end>(\)\s*=)</end>
+    <end>(\)\s*=)</end>
     <include>
       <context sub-pattern="0" where="start" style-ref="noise"/>
       <context sub-pattern="0" where="end" style-ref="noise"/>

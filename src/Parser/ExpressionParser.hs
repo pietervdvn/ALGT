@@ -25,6 +25,7 @@ import Control.Arrow ((&&&))
 data MEParseTree	= MePtToken String 
 			| MePtSeq [MEParseTree] 
 			| MePtVar Name 
+			| MePtInt Int
 			| MePtCall Name Builtin [MEParseTree]
 			| MePtAscription Name MEParseTree
 			| MePtEvalContext Name MEParseTree TypeName	-- The type of the EvaluationContext is derived... from, well the context :p
@@ -35,6 +36,7 @@ instance Show MEParseTree where
 	show (MePtToken s)	= show s
 	show (MePtSeq pts)	= pts |> show & unwords & inParens
 	show (MePtVar v)	= v
+	show (MePtInt i)	= show i
 	show (MePtCall n bi args)
 				= (if bi then "!" else "") ++ n ++ inParens (args |> show & intercalate ", ")
 	show (MePtAscription n pt)	= inParens (show pt++" : "++n)
@@ -104,7 +106,8 @@ matchTyping _ _ Identifier tp (MePtToken s)
  | otherwise		= Left $ s ++ " is not an identifier"
 matchTyping _ _ Number tp (MePtToken s)
  | otherwise 		= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
-
+matchTyping _ _ Number tp (MePtInt i)
+			= return $ MParseTree $ MInt tp i
 
 matchTyping f r (BNFSeq bnfs) tp (MePtSeq pts)
  | length bnfs == length pts
@@ -138,7 +141,8 @@ dynamicTranslate	:: TypeName -> MEParseTree -> Expression
 dynamicTranslate tp (MePtToken s)	= MParseTree $ MLiteral (tp, -1) s
 dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 
 dynamicTranslate tp (MePtVar nm)	= MVar tp nm
-dynamicTranslate _ (MePtAscription tp e)	= dynamicTranslate tp e
+dynamicTranslate tp (MePtInt i)	= MParseTree $ MInt (tp, -1) i
+dynamicTranslate _  (MePtAscription tp e)	= dynamicTranslate tp e
 dynamicTranslate tp (MePtCall _ _ _)
 				= error "For now, no calls within a builtin are allowed"
 dynamicTranslate tp (MePtEvalContext name hole mType)
@@ -159,11 +163,13 @@ mePtPart	= try mePtToken
 			<|> try mePtCall 
 			<|> try meAscription 
 			<|> try meNested 
+			<|> try mePtInt
 			<|> mePtVar
 
 meNested	= char '(' *> ws *> mePt <* ws <* char ')'
-mePtToken	= bnfLiteral |> MePtToken
-mePtVar		= identifier' |> MePtVar
+mePtToken	= bnfLiteral	|> MePtToken
+mePtVar		= identifier'	|> MePtVar
+mePtInt		= negNumber	|> MePtInt
 mePtCall	= do	builtin	<- try (char '!' >> return True) <|> return False
 			nm	<- identifier
 			char '('

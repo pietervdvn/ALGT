@@ -45,7 +45,7 @@ other		::= "You" | "Thou" | "Thouself" | "Thyself" | "Thy" | "you" | "thou" | "t
 person		::= character | other | personal
 verb		::= "am" | "art" | "are" | "is"
 specifier	::= person verb
-action		::= specifier expression | "Remember" person | person "recall" | person "recalls"
+action		::= specifier expression | "Remember" person | person "recall" | person "recalls" | goto "act" numeral | goto "scene" numeral
 statement	::= character ":" action
 statements	::= statement dot nls statements | statement
 
@@ -71,12 +71,12 @@ declaredVars	::= character ":" stack declaredVars  | "$"
 
 runPlay	: play -> declaredVars
 runPlay(title nls varDecls nls0 scenes dot)
-	= runScenes(scenes, runVarDecls(varDecls))
+	= runScenes(scenes, scenes, runVarDecls(varDecls))
 
-runScenes : scenes -> declaredVars -> declaredVars
-runScenes((scene:scene), vars)
+runScenes : scenes -> scenes -> declaredVars -> declaredVars
+runScenes((scene:scene), scenes0, vars)
 	= runScene(scene, vars)
-runScenes(scene dot nls scenes, vars)
+runScenes(scene dot nls scenes, scenes0, vars)
 	= runScene(scenes, runScene(scene, vars))
 
 runScene : scene -> declaredVars -> declaredVars
