@@ -1,0 +1,57 @@
+
+ Syntax
+========
+
+lower	::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+upper	::= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+
+letter	::= lower | upper
+poetic ::= letter | " "
+
+title	::= poetic title | "."
+
+character	::= "Page" | "Pinch"
+
+val	::= Number
+
+posNoun	::= "flower"
+posAdj	::= "nice"
+
+negNoun	::= "thug"
+negAdj		::= "ugly"
+
+noun		::= posNoun | negNoun
+adj		::= posAdj | negAdj
+
+expression	::= adj expression | noun
+
+
+varDecl		::= character "," expression "."
+
+
+# Runtime below
+
+
+declaredVars	::= character " " | ";"
+
+
+
+ Functions
+===========
+
+evalExpr	: expression -> val
+evalExpr((n:posNoun))	= 1
+evalExpr((n:negNoun))	= -1
+evalExpr((adj:negAdj) e)= mul(evalExpr(e), -2)
+evalExpr((adj:posAdj) e)= mul(evalExpr(e), 2)
+
+mul		: val -> val -> val
+mul(v0, v1)	= !mul(v0, v1)
+
+ Relations
+===========
+
+ Rules
+=======
+
+
