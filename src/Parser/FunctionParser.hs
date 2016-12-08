@@ -66,7 +66,7 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 	= inMsg ("In clause "++show sc) $
           do	let argTps	= init tps
 		let rType	= last tps
-		if length argTps /= length patterns then fail "Number of patterns is incorrect, in comparison with the type" else return ()
+		assert Left (length argTps == length patterns) $ "Expected "++show (length argTps)++" patterns, but only got "++show (length patterns)
 		patterns'	<- zip argTps patterns |+> uncurry (typeAs funcs bnfs) 
 		expr'		<- typeAs funcs bnfs rType expr
 
@@ -74,7 +74,7 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 		patternsDeclare		<- inMsg "While checking for conflicting declarations" $ mergeContexts bnfs patternsDeclares
 		exprNeed		<- expectedTyping bnfs expr'
 		let unknown		= exprNeed `M.difference` patternsDeclare & M.keys
-		if not $ null unknown then fail ("Undeclared variable(s): "++show unknown) else return ()
+		assert Left (null unknown) ("Undeclared variable(s): "++show unknown)
 		inMsg "While checking for conflicting usage" $ mergeContext bnfs patternsDeclare exprNeed
 		return $ MClause patterns' expr'
 
