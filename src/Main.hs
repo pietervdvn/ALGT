@@ -73,6 +73,10 @@ evalStar ts funcName me
 
 
 
+
+
+
+
 welcome	= 	"  Automated Language Generation Tool \n"++
 		" ====================================\n"++
 		"             by Pieter Vander Vennet\n"++

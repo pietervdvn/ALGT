@@ -20,6 +20,9 @@ type Parser u r	= ParsecT String u Identity r
 prs		:: String -> r -> Parser u r
 prs str val	= try (string str) >> return val
 
+
+
+
 parens		:: Parser u r -> Parser u r
 parens p = do	char '('
 		ws
@@ -27,6 +30,54 @@ parens p = do	char '('
 		ws
 		char ')'
 		return val	
+
+
+
+ws	:: Parser u String
+ws	= many (oneOf whitespace)
+ws1	:: Parser u String
+ws1	= many1 (oneOf whitespace)
+ws'	:: Parser u String
+ws'	= many (char ' ')
+
+
+nl		= char '\n' <|> (try commentLine >> ws >> char '\n')
+nls1		= many1 nl
+nls		= many nl
+
+commentLine	= ws >> char '#' >> many (noneOf "\n") 
+
+
+----------------------- Combinators --------------------------------------
+
+
+choose' [] msgs	= fail ("Expected one of the following strings: "++ unwords msgs)
+choose' (s:strs) msgs
+		= try (string s) <|> choose strs 
+
+choose		:: [String] -> Parser u String
+choose strs	= choose' strs strs
+
+
+
+
+
+first		:: [Parser u a] -> Parser u a
+first		= foldr ((<|>) . try) (fail "None of the parsers in first matched")
+
+
+intersperseM	:: Monad m => m b -> [m a] -> m [a]
+intersperseM sep []
+		= return []
+intersperseM sep [ma]
+		= ma |> (:[])
+intersperseM sep (ma:mas)
+		= do	a	<- ma
+			sep
+			as	<- intersperseM sep mas
+			return (a:as)
+
+----------------- Identifiers and numbers ---------------------
 
 -- starts with lower case
 identifier	:: Parser u String
@@ -54,39 +105,3 @@ negNumber	= do	sign	<- try ((char '-' <* ws) >> return (0-1)) <|> return (1)
 			i	<- number
 			return $ sign * i
 
-ws	:: Parser u String
-ws	= many (oneOf whitespace)
-ws1	:: Parser u String
-ws1	= many1 (oneOf whitespace)
-ws'	:: Parser u String
-ws'	= many (char ' ')
-
-
-choose' [] msgs	= fail ("Expected one of the following strings: "++ unwords msgs)
-choose' (s:strs) msgs
-		= try (string s) <|> choose strs 
-
-choose		:: [String] -> Parser u String
-choose strs	= choose' strs strs
-
-
-first		:: [Parser u a] -> Parser u a
-first		= foldr ((<|>) . try) (fail "None of the parsers in first matched")
-
-commentLine	= ws >> char '#' >> many (noneOf "\n") 
-
-nl		= char '\n' <|> (try commentLine >> ws >> char '\n')
-nls1		= many1 nl
-nls		= many nl
-
-
-intersperseM	:: Monad m => m b -> [m a] -> m [a]
-intersperseM sep []
-		= return []
-intersperseM sep [ma]
-		= ma |> (:[])
-intersperseM sep (ma:mas)
-		= do	a	<- ma
-			sep
-			as	<- intersperseM sep mas
-			return (a:as)

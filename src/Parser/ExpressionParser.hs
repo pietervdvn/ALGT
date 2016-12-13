@@ -1,10 +1,8 @@
 module Parser.ExpressionParser where
 
 {-
-This module defines a parser for  expressions, take 2
-
-In this approach, we tokenize first to a tree, and then try to match a rule with it
-
+This module defines a parser for expressions.
+In this approach, we tokenize first to a tree, and then try to match a rule with it by typing the rule.
 -}
 
 import Parser.ParsingUtils
@@ -22,6 +20,7 @@ import Data.List (intercalate)
 import Control.Monad
 import Control.Arrow ((&&&))
 
+-- Simple parsetree, only knowing of tokens. Mirrors 'expressions' from typesystem, but with less metainfo
 data MEParseTree	= MePtToken String 
 			| MePtSeq [MEParseTree] 
 			| MePtVar Name 
@@ -67,7 +66,6 @@ matchTyping f r (BNFRuleCall ruleCall) tp (MePtAscription as expr)
 matchTyping f r bnf tp c@(MePtAscription as expr)
  | otherwise		= Left $ "Invalid cast: "++show c++" could not be matched with "++show bnf
 
-
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 			= return $ MVar ruleCall nm
 matchTyping _ _ exp tp (MePtVar nm)		
@@ -77,8 +75,6 @@ matchTyping f r bnf (tp, _) (MePtEvalContext nm hole holeT)
 			= do	hole'	<- typeAs f r holeT hole
 				let holeAsc	= MAscription holeT hole'
 				return $ MEvalContext tp nm hole'
-
-
 
 matchTyping _ _ _ _ (MePtCall fNm True args)
  = return $ MCall "" fNm True (args |> dynamicTranslate "")
@@ -96,7 +92,6 @@ matchTyping functions bnfRules (BNFRuleCall bnfNm) _ (MePtCall fNm False args)
 				return $ MCall returnTyp fNm False args'
 matchTyping _ _ bnf _ pt@(MePtCall _ _ _) 
 			= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show pt
-
 
 matchTyping _ _ (Literal s) tp (MePtToken s')
  | s == s'		= MLiteral tp s & MParseTree & return
@@ -136,7 +131,7 @@ isIdentifier (c:chrs)
 		= isLower c && all isAlphaNum chrs
 
 
--- only used for builtin functions
+-- only used for builtin functions, as it's arguments do not have a typing. (If this were so, we wouldn't be ably to handle arbitrary syntaxes)
 dynamicTranslate	:: TypeName -> MEParseTree -> Expression
 dynamicTranslate tp (MePtToken s)	= MParseTree $ MLiteral (tp, -1) s
 dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 

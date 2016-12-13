@@ -1,7 +1,7 @@
 module ParseTreeInterpreter.FunctionInterpreter where
 
 {-
-This module defines an interpreter for functions. functions are evaluated here
+This module defines an interpreter for functions. 
 -}
 
 import Utils

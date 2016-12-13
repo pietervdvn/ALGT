@@ -1,5 +1,9 @@
 module Utils where
 
+{-
+Some utility functions, often used to program 'left to right'
+-}
+
 import Control.Monad
 import Data.List (intercalate)
 import Data.Maybe
@@ -8,9 +12,17 @@ import Data.Foldable
 
 import Data.Tuple
 
+
+-------------------- usefull types -------------------------------------------------------
+
+
 type Name = String
 
--- Utility functions --
+
+------------------- Left to Right programming helpers -----------------------------------
+
+(&)	= flip ($)
+
 (|>)	:: Functor f => f a -> (a -> b) -> f b
 (|>) 	= flip fmap
 
@@ -22,7 +34,6 @@ type Name = String
 (|+>)	= forM
 
 
-(&)	= flip ($)
 
 inParens str	= "("++str++")"
 
@@ -30,12 +41,25 @@ inParens str	= "("++str++")"
 showComma	:: Show a => [a] -> String
 showComma as	= as |> show & intercalate ", "
 
+------------------- Maybe, Either and other Monad helpers ------------------------------------
+
+cont		:: Monad m => m ()
+cont		= return ()
+
+
+sndEffect	:: Monad m => (a, m b) -> m (a, b)
+sndEffect (a, mb)
+		= do	b <- mb
+			return (a, b)
+
+
+
 firstJusts	:: [Maybe a] -> Maybe a
 firstJusts maybes
 	= let	as	= catMaybes maybes in
 		if null as then Nothing else Just $ head as
 
-
+-- Gives the first right value. If none of the values is Right, concats the 'error messages' (with newlines and indentation)
 firstRight	:: [Either String b] -> Either String b
 firstRight vals	= let r	= rights vals in
 			if null r then 
@@ -51,6 +75,7 @@ allRight eithers
  | otherwise	= eithers |> either id ((++) "Successfull: " . show) & unlines & Left
 
 
+-- Stack message for Either Monad
 inMsg		:: String -> Either String a -> Either String a
 inMsg msg (Left msg')
 		= let indMsg	= msg' & lines |> ("  "++) & unlines in
@@ -58,6 +83,11 @@ inMsg msg (Left msg')
 inMsg _ right	= right
 
 
+assert :: Monad m => (String -> m ()) -> Bool -> String -> m ()
+assert c False msg	= c msg
+assert c True _ 	= cont
+
+----------------------- List tools --------------------
 
 merge		:: Eq a => [(a,b)] -> [(a,[b])]
 merge []	= []
@@ -70,10 +100,6 @@ merge'		= map swap . merge . map swap
 unmerge		:: [(a,[b])] -> [(a,b)]
 unmerge 	=  concatMap (\(a,bs) -> [(a,b) | b <- bs])
 
-
-assert :: Monad m => (String -> m ()) -> Bool -> String -> m ()
-assert c False msg	= c msg
-assert c True _ 	= cont
 
 equalizeLength	:: a -> [[a]] -> [[a]]
 equalizeLength a ass
@@ -91,14 +117,6 @@ stitch eq a b	= let	la	= length a
 			zipWith (++) (equalizeLength eq a') b'
 
 
-cont		:: Monad m => m ()
-cont		= return ()
-
-
-sndEffect	:: Monad m => (a, m b) -> m (a, b)
-sndEffect (a, mb)
-		= do	b <- mb
-			return (a, b)
 
 mapi	:: [a] -> [(Int, a)]
 mapi	= zip [0..]
