@@ -27,13 +27,12 @@ import Data.Map (Map, fromList, (!))
 
 import Main
 
-
 	
 tf	= do	(ts, examples)	<- main' ["../Examples/STFL.typesystem","../Examples/STFL.example", "e","eval","--step","--line-by-line"]
 		print ts
-		testAS (tsSyntax ts)
 		proofExamples ts examples [] "~~>" "EvaluationTrees.txt"
 		proofExamples ts examples [MLiteral ("typingContext", 1) ";"] "|-" "TypingTrees.txt"
+		-- testAS (tsSyntax ts)
 		
 
 proofExamples ts examples args symbol file

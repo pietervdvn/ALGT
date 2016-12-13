@@ -9,9 +9,9 @@ tp	= "type"
 mi	= (tp, -1)
 
 testPattern	:: Expression
-testPattern	= MSeq mi [MVar tp "t1"
+testPattern	= MSeq mi [MVar tp "T"
 			, MParseTree $ MLiteral mi "->"
-			, MVar tp "t2"]  
+			, MVar tp "T"]  
 
 testAS	:: BNFRules -> IO ()	
 testAS r	

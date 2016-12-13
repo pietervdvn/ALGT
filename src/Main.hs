@@ -9,7 +9,7 @@ import Control.Monad
 import TypeSystem
 
 import Parser.TargetLanguageParser
-import Parser.TypeSystemParser
+import Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
 
 
@@ -18,13 +18,18 @@ import Text.Parsec
 import Data.Maybe
 import Data.Either
 import Data.Map (Map, fromList)
+import Data.List (intercalate)
+
+import Options.Applicative
+import Data.Monoid ((<>))
+import Data.Maybe (fromJust, isJust)
+
 
 main	:: IO ()
-main	= do	putStrLn welcome
-		args	<- getArgs
-		if length args < 3 then
-			putStrLn usage
-		else main' args & void
+main	= do	args	<- getArgs
+		main' args
+		return ()
+
 
 
 
@@ -73,6 +78,8 @@ welcome	= 	"  Automated Language Generation Tool \n"++
 		"             by Pieter Vander Vennet\n"++
 		"               Christophe Scholliers\n\n"
 
+version	= [0,0,1]
+versionS	= version |> show & intercalate "." 
 
 usage	=	"USAGE:\n"++
 		"AGLT typesystem-file example-file bnf-rule-name evaluator-function-name [--line-by-line] [--step]\n"++

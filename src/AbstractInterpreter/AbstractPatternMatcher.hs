@@ -91,10 +91,10 @@ mergeAssgns (assgs0, assumpsInt0, assumpsStr0) (assgs1, assumpsInt1, assumpsStr1
 
 
 
-mergeAssumptions	:: Map Name (Assumption a) -> Map Name (Assumption a) -> [Map Name (Assumption a)]
+mergeAssumptions	:: Show a => Map Name (Assumption a) -> Map Name (Assumption a) -> [Map Name (Assumption a)]
 mergeAssumptions ass0 ass1
-	= do	let common	= ass0 `intersection` ass1 & keys
-		if not $ null common then error $ "TODO: merge assumptions" else cont
+	= do	let common	= ass0 `intersection` ass1
+		assert error (M.null common) $ "TODO: merge assumptions: "++show common
 		return (ass0 `union` ass1)
 
 
