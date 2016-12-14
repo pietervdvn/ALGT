@@ -22,7 +22,7 @@ import qualified Data.Map as M
 parseRule	:: BNFRules -> Name -> Parser u ParseTree
 parseRule rules nm
  | nm `M.notMember` rules	
-		= fail $ "The rule "++nm++" is not defined in the syntax of your typesystem"
+		= fail $ "The BNF-syntax-rule "++nm++" is not defined in the syntax of your typesystem. Try one of "++show (bnfNames rules)
  | otherwise	= do	let choices	= zip (rules M.! nm) [0..]
 			parseChoice rules nm choices
 			

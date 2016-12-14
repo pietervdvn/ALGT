@@ -79,7 +79,7 @@ runRule ts symbol (input, pt)
 
 showProofWithDepth		:: String -> Symbol -> Either String Proof -> String
 showProofWithDepth input relation (Left str)	
-	= "# Could not apply "++str++" to relation "++relation++", because: "++str
+	= "# Could not apply relation "++relation++" to relation the input "++input++", because: \n"++str
 showProofWithDepth input relation (Right proof)
 	= "# "++input++" applied to "++relation++
 		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++show proof++"\n\n\n"
