@@ -11,6 +11,7 @@ import TypeSystem
 import Parser.TargetLanguageParser
 import Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
+import ParseTreeInterpreter.RuleInterpreter
 
 
 import Text.Parsec
@@ -24,6 +25,10 @@ import Options.Applicative
 import Data.Monoid ((<>))
 import Data.Maybe (fromJust, isJust)
 
+import ArgumentParser
+
+version	= [0,0,2]
+
 
 main	:: IO ()
 main	= do	args	<- getArgs
@@ -31,63 +36,74 @@ main	= do	args	<- getArgs
 		return ()
 
 
-
-
-main'	:: [String] -> IO (TypeSystem, [ParseTree])
+main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
 main' args 
-	= do	let (tsFile:exampleFile:bnfRuleName:evalFunc:options) = args
-		let lineByLine	= "--line-by-line" `elem` options
-		let stepByStep	= "--step" `elem` options
-		ts'	<- parseTypeSystemFile tsFile
+	= do	parsedArgs	<- parseArgs version args
+		mainArgs parsedArgs
+
+
+mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
+mainArgs args	
+	= do	ts'	<- parseTypeSystemFile (ts_file args)
 		ts	<- either (error . show) return ts'
-		exampleContents	<- readFile exampleFile
-		let he	= handleExample exampleFile ts stepByStep bnfRuleName evalFunc	:: String -> IO ParseTree
-		exprs	<- if lineByLine then do
-		 		let examples	= exampleContents & lines 
-							& filter (/= "") 
-							& filter ((/= '#') . head)
-				forM examples (\e -> putStrLn "\n\n" >> he e)
-			else he exampleContents |> (:[])
-		return (ts, exprs)
+
+		let targetFile	= example_file args
+		targetContents'	<- readFile targetFile
+		let targets	= (if line_by_line args then lines else (:[])) targetContents'
+
+		parseTrees		<- (targets |+> parseWith targetFile ts (parser args)) |> zip targets
+
+		parseTrees |+> ifJust (runRule ts) (symbol args)
+		parseTrees |+> ifJust (runFunc ts) (function args)
+		parseTrees |+> ifJust (runStepByStep ts) (stepByStep args)
+	
+		return (ts, parseTrees)
 
 
-handleExample	:: Name -> TypeSystem -> Bool -> Name -> Name -> String -> IO ParseTree
-handleExample fileNm ts stepByStep bnfRuleName evalName str
-	= do	putStrLn ("> Input\t"++show str)
-		let parser	= parse $ parseRule (tsSyntax ts) bnfRuleName
-		let parsed	= parser fileNm str
-		parseTree	<- either (error . show) return parsed
-		putStrLn $ "> Parse\t"++show parseTree
-		if stepByStep then evalStar ts evalName parseTree
-			else print $ evalFunc ts evalName [parseTree]
-		return parseTree
+parseWith	:: FilePath -> TypeSystem -> Name -> String -> IO ParseTree
+parseWith file ts bnfRuleName str
+	= do	let parser	= parse $ parseRule (tsSyntax ts) bnfRuleName
+		let parsed	= parser file str
+		either (error . show) return parsed
+
+
+ifJust		:: (a -> b -> IO ()) -> Maybe a -> b -> IO ()
+ifJust f Nothing b	= return ()
+ifJust f (Just a) b	= f a b
+
+runRule		:: TypeSystem -> Symbol -> (String, ParseTree) -> IO ()
+runRule ts symbol (input, pt)
+	= do	let proof	= [pt] & proofThat' ts symbol	:: Either String Proof
+		let shown	= proof & showProofWithDepth input symbol
+		putStrLn shown
+
+showProofWithDepth		:: String -> Symbol -> Either String Proof -> String
+showProofWithDepth input relation (Left str)	
+	= "# Could not apply "++str++" to relation "++relation++", because: "++str
+showProofWithDepth input relation (Right proof)
+	= "# "++input++" applied to "++relation++
+		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++show proof++"\n\n\n"
+
+
+
+		
+runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
+runFunc ts func (inp, pt)
+ 	= do	let pt'	= evalFunc ts func [pt]
+		putStrLn $ "# "++show inp++" applied to "++func
+		print pt'
+
+runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
+runStepByStep ts func (inp, pt)
+	= do	putStrLn $ "# "++show inp++" applied repeatedly to "++func
+		evalStar ts func pt 
 
 evalStar	:: TypeSystem -> Name -> ParseTree -> IO ()
-evalStar ts funcName me	
-	= do	putStrLn $ "\n " ++ show me
-		let me'	= evalFunc ts funcName [me]
-		if me' /= me then
-			evalStar ts funcName me'
+evalStar ts funcName pt	
+	= do	putStrLn $ "\n " ++ show pt
+		let pt'	= evalFunc ts funcName [pt]
+		if pt' /= pt then
+			evalStar ts funcName pt'
 		else
 			return ()
-
-
-
-
-
-
-
-welcome	= 	"  Automated Language Generation Tool \n"++
-		" ====================================\n"++
-		"             by Pieter Vander Vennet\n"++
-		"               Christophe Scholliers\n\n"
-
-version	= [0,0,1]
-versionS	= version |> show & intercalate "." 
-
-usage	=	"USAGE:\n"++
-		"AGLT typesystem-file example-file bnf-rule-name evaluator-function-name [--line-by-line] [--step]\n"++
-		"Builtin for BNF-syntax: Number, Identifier\n"++
-		"Builtin functions: !error, !plus, !neg (negates a number)"
-
 
