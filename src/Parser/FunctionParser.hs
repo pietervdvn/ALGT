@@ -75,7 +75,7 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 		exprNeed		<- expectedTyping bnfs expr'
 		let unknown		= exprNeed `M.difference` patternsDeclare & M.keys
 		assert Left (null unknown) ("Undeclared variable(s): "++show unknown)
-		inMsg "While checking for conflicting usage" $ mergeContext bnfs patternsDeclare exprNeed
+		inMsg "While checking for conflicting usage" $ checkPatterns bnfs patternsDeclare exprNeed
 		return $ MClause patterns' expr'
 
 

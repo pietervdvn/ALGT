@@ -43,11 +43,14 @@ rule ctx
 		char '\n'
 		ws
 		con	<- conclusion ctx
-		return $ Rule nm preds con
+		let rule	= Rule nm preds con
+		typeCheckRule (bnfRules ctx) rule & either error return
+		return rule
 
 
 conclusion 	:: Ctx -> Parser u Conclusion
-conclusion ctx	= try (conclusionPre ctx) <|> conclusionIn ctx
+conclusion ctx
+		= try (conclusionPre ctx) <|> conclusionIn ctx
 
 conclusionIn	:: Ctx -> Parser u Conclusion
 conclusionIn ctx
@@ -77,19 +80,14 @@ conclusionPre ctx
 
 typeAsRelation	:: Ctx -> String -> [MEParseTree] -> Parser u Conclusion
 typeAsRelation ctx symbol sExprs
-	= do	let relation	= relTypes ctx M.! symbol
+	= do	let relation	= relTypes ctx M.! symbol	-- possible relation symbols
 		let funcTps	= funcs ctx |> typesOf
 		let bnfs	= bnfRules ctx
-		let types 	= relation & relType
-		if length types /= length sExprs then 
-			fail ("Expected "++show (length types)++" expressions as arguments to the relation "++show (relSymbol relation)++" : "++show types) 
-			else return ()
 		
-		exprs		<- zip types sExprs
+		exprs		<- zip (relType relation) sExprs
 					|> uncurry (typeAs funcTps bnfs) 
 					& allRight
-					& either fail return
-
+					& either error return
 		return $ relationMet relation exprs
 		
  

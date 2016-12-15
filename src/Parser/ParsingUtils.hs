@@ -5,6 +5,11 @@ import Utils
 import Text.Parsec
 
 import Data.Functor.Identity
+
+
+
+
+
 -- Constants --
 
 digits	= ['0'..'9']
@@ -16,6 +21,8 @@ whitespace = [' ','\t']
 
 type Parser u r	= ParsecT String u Identity r
 
+sourcePos	:: Parser u SourcePos
+sourcePos	= getParserState |> statePos
 
 prs		:: String -> r -> Parser u r
 prs str val	= try (string str) >> return val

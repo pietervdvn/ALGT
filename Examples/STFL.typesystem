@@ -4,7 +4,7 @@
 ========
 
 # Types
-typeL	::= "Int" | "Bool"
+typeL	::= "Int" | "Bool" | "(" type ")"
 type	::= typeL "->" type | typeL
 
 
@@ -64,16 +64,18 @@ subs(x, y, z)					= z
 
 
 dom 		: type -> type
+dom("(" T ")")	= dom(T) 
 dom(T1 "->" T2) = T1
 
 cod 		: type -> type
+cod("(" T ")")	= T
 cod(T1 "->" T2) = T2
 
 equate		: type -> type -> type
 equate(T, T) 	= T
 
 # wrappers for builtin functions, as we can't type within a builtin
-plus		: e -> e -> e
+plus		: number -> e -> e
 plus(e1, e2)	= !plus((e1:number), e2)
 
 
@@ -97,10 +99,10 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 	   	n1:number	n2:number
 (EvalPlus) 	---------------------------
-           	n1 "+" n2 --> plus(n1, n2)
+           	(n1:number) "+" n2 --> plus(n1, n2)
 
 
-
+		
 (EvalIfTrue) 	--------------------------------------
               	"If" "True" "Then" e1 "Else" e2 --> e1
 
@@ -128,7 +130,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 	   	e0 --> e
 (EvalCtx) 	--------------
-	    	t[e0] --> t[e]
+	    	t[e0:e] --> t[e]
 
 
 
@@ -197,7 +199,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 	  	((x "::" T1) "," ctx) |- e, T2
 (TLambda) 	-------------------------------------------------
-	   	ctx |- "(" "\\" x ":" T1 "." e ")", T1 "->" T2
+	   	ctx |- "(" "\\" x ":" T1 "." e ")",  ( "(" T1 ")") "->" T2
 
 
 
