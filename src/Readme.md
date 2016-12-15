@@ -21,3 +21,9 @@ Module overview
 `Parser/TargetLanguageParser` will hapilly parse any file you give it, according to a given BNF.
 
 `ParseTreeInterpreter` handles interpretation of functions and rules, with 'simple' parsetrees
+
+Cabal dependencies
+------------------
+
+parsec
+optparse-applicative

@@ -7,7 +7,9 @@ import Utils
 import TypeSystem
 
 import Data.Map
-import Data.List (intercalate, intersperse)
+import qualified Data.Set as S
+import Data.Set (Set)
+import Data.List (intercalate, intersperse, nub)
 
 import Control.Arrow ((&&&))
 
@@ -17,8 +19,7 @@ data AbstractSet'
 	| ConcreteLiteral MInfo String
 	| ConcreteIdentifier MInfo Name
 	| ConcreteInt MInfo Name
-	| AsSeq MInfo [AbstractSet']
-	| Choice TypeName [AbstractSet']
+	| AsSeq MInfo [AbstractSet']		-- Sequence
 	deriving (Ord, Eq)
 
 instance SimplyTyped AbstractSet' where
@@ -29,7 +30,6 @@ _typeOf (ConcreteLiteral mi _)		= Right mi
 _typeOf (ConcreteIdentifier mi _)	= Right mi
 _typeOf (ConcreteInt mi _)		= Right mi
 _typeOf (AsSeq mi _)			= Right mi
-_typeOf (Choice tp _)			= Left tp
 
 type AbstractSet	= (BNFRules, AbstractSet')
 
@@ -54,19 +54,16 @@ _generateAbstractSet' r mi n (BNFSeq bnfs)
 			= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet' r mi (n++":"++show i) bnf) & AsSeq mi
 
 
-unfold			:: AbstractSet -> AbstractSet
-unfold (r, EveryPossible _ n e)
+unfold		:: AbstractSet -> [AbstractSet]
+unfold (r, as)	= zip (repeat r) (unfold' r as)
+
+unfold'		:: BNFRules -> AbstractSet' ->  [AbstractSet']
+unfold' r (EveryPossible _ n e)
 		= let	bnfs	= r ! e
 		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet' r (e, i) (n++"/"++show i) bnf)
-		  in (r, Choice e choices)
-unfold (r, AsSeq mi ass)
-		= (r, ass |> unfold' r & AsSeq mi)
-unfold (r, Choice mi ass)
-		= (r, ass |> unfold' r & Choice mi)
-unfold as	= as
+		  in choices & nub
+unfold' r as	= [as]
 
-unfold'		:: BNFRules -> AbstractSet' -> AbstractSet'
-unfold' r as	= unfold (r, as) & snd
 
 instance Show AbstractSet' where
 	show (EveryPossible _ _ name)	= name 
@@ -74,4 +71,3 @@ instance Show AbstractSet' where
 	show (ConcreteIdentifier _ nm)	= "Identifier:"++nm
 	show (ConcreteInt _ nm)		= "Number:"++nm
 	show (AsSeq _ ass)		= ass |> show & unwords
-	show (Choice _ ass)		= ass |> show & intercalate " | " & (\s -> "{"++s++"}")

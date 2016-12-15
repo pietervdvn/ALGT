@@ -46,6 +46,8 @@ mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
 mainArgs args	
 	= do	ts'	<- parseTypeSystemFile (ts_file args)
 		ts	<- either (error . show) return ts'
+		checkTypeSystem ts & either error return
+
 
 		let targetFile	= example_file args
 		targetContents'	<- readFile targetFile

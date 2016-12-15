@@ -19,13 +19,19 @@ import Data.List (intersperse, intercalate)
 
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Maybe
 import Data.List
+import Data.Either
 
 import Control.Arrow ((&&&))
 import Control.Monad (foldM)
 
+import Graphs.SearchCycles
+
 ------------------------ Syntax -------------------------
+
 
 
 {- Syntax is described in a Backus-Naur format, a simple naive parser is constructed from it. -}
@@ -55,6 +61,7 @@ type BNFRules	= Map TypeName [BNFAST]
 -- The sort is added to make sure the parser first tries "abc", before trying "a". Otherwise, "a" is parsed with an "abc" resting
 bnfNames	:: BNFRules -> [Name]
 bnfNames r	=  M.keys r & sortOn length & reverse
+
 
 
 {- Deduces wether a certain value can be parsed as subtree of the given rule
@@ -90,6 +97,26 @@ calledRules	:: BNFAST -> [TypeName]
 calledRules (BNFRuleCall nm)	= [nm]
 calledRules (BNFSeq bnfs)	= bnfs >>= calledRules
 
+
+-- First call, without consumption of a character
+firstCall	:: BNFAST -> Maybe TypeName
+firstCall (BNFRuleCall nm)	= Just nm
+firstCall (BNFSeq (ast:_))	= firstCall ast
+firstCall _			= Nothing
+
+firstCalls	:: BNFRules -> Map TypeName (Set TypeName)
+firstCalls rules
+	= rules ||>> firstCall |> catMaybes |> S.fromList
+
+leftRecursions	:: BNFRules -> [[TypeName]]
+leftRecursions	= cleanCycles . firstCalls
+
+checkLeftRecursion	:: BNFRules -> Either String ()
+checkLeftRecursion bnfs
+	= do	let cycles	= leftRecursions bnfs
+		let msg cycle	= cycle & intercalate " -> "
+		let msgs	= cycles |> msg |> ("    "++) & unlines
+		assert Left (null cycles) ("Potential infinite left recursion detected in the syntax. Left cycles are:\n"++msgs)
 
 {-
 Consider following BNF:
@@ -130,6 +157,9 @@ alwaysAreA rules sub super
 		params		= init together |> uncurry (flip (alwaysIsA rules)) & and	-- contravariance
 		result		= last together &  uncurry       (alwaysIsA rules)		-- covariance
 		in		params && result
+
+
+
 
 
 -- same as mergeContext, but on a list
@@ -483,8 +513,11 @@ data TypeSystem 	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's na
 
 
 
-
-
+checkTypeSystem	:: TypeSystem -> Either String ()
+checkTypeSystem ts
+	= do	let	checks	= [checkLeftRecursion $ tsSyntax ts] ++ (tsRules ts & M.elems & concat |> typeCheckRule (tsSyntax ts))
+		checks & filter isLeft & allRight
+		return ()
 
 
 

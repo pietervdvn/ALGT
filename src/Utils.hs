@@ -9,6 +9,10 @@ import Data.List (intercalate)
 import Data.Maybe
 import Data.Either
 import Data.Foldable
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 
 import Data.Tuple
 
@@ -126,3 +130,11 @@ mul	:: [Int] -> Int
 mul []	= 1
 mul (i:is)
 	= i * mul is
+
+
+
+invertDict	:: (Eq b, Ord b, Ord a) => Map a (Set b) -> Map b (Set a)
+invertDict	= fmap Set.fromList . Map.fromList . merge . map swap . unmerge . Map.toList . fmap Set.toList
+
+invertDict'	:: (Ord a, Ord b, Eq b) => Map a b -> Map b [a]
+invertDict'	=  Map.fromList .  merge . map swap . Map.toList

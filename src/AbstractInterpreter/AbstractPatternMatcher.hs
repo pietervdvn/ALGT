@@ -17,6 +17,7 @@ import Debug.Trace
 data Assumption	a 
 	= HasValue a
 	| SameValueAs Name
+	| Not (Assumption a)
 	deriving (Show)
 type Assumptions a	= Map Name (Assumption a)
 
@@ -59,16 +60,10 @@ patternMatch r (MAscription as expr') expr
 
 patternMatch r (MEvalContext tp name hole) value@(AsSeq _ _)
 	= error $ "TODO/HELP how do I work with evaluation context in abstract interpretation?"
-		
-
-
-
-
-patternMatch r pat (Choice _ sets)
-	= sets >>= patternMatch r pat
 
 patternMatch r pat as@(EveryPossible _ _ _)
-	= patternMatch r pat $ unfold' r as
+	= do	choice		<- unfold' r as
+		patternMatch r pat choice
 patternMatch _ pat as
 	= trace ("Failing match "++show pat++" ~ "++show as) []
 
