@@ -1,6 +1,4 @@
 
-Contextsymbol is $
-
  Syntax
 ========
 
@@ -42,7 +40,7 @@ eval(e, "If" cond "Then" e1 "Else" e2)	= "If" eval(e, cond) "Then" e1 "Else" e2
 
 eval(e, ("(" "\\" var "." t ")") (arg:number))
 					= subs(var, arg, t)
-eval(env, func "(" args ")")	= unpackArgs(search(env, func), args)
+eval(env, (func:var) "(" args ")")	= unpackArgs(search(env, func), args)
 
 eval(e, f (arg:number))			= eval(e, f) arg
 eval(e, f arg)				= f eval(e, arg)

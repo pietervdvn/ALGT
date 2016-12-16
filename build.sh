@@ -1,6 +1,8 @@
 #! /bin/bash
 
-mkdir .bin &2>/dev/null
+git pull
+
+mkdir .bin >/dev/null
 
 cp -r src/* .bin
 
