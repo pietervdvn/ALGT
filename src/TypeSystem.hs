@@ -676,8 +676,11 @@ showProof showName (Proof concl proverRule predicates)
 		preds	= preds'' & foldl (stitch ' ') []	:: [String]
 		predsW	= ("":preds) |> length & maximum	:: Int
 		concl'	= show concl
-		line	= replicate (max predsW (length concl')) '-'		:: String
-		line'	= line ++ if showName then " " ++ inParens (ruleName proverRule) else ""
+		lineL	= max predsW (length concl')
+		name	= if showName then " " ++ "["++ ruleName proverRule ++"]" else ""
+		lineL'	= lineL - if 3 * length name <= lineL && predsW == lineL then length name else 0
+		line	= replicate (lineL') '-'		:: String
+		line'	= line ++ name
 		in
 		(preds ++ [line', concl'])
 

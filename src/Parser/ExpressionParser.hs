@@ -16,7 +16,7 @@ import Data.Char
 import Text.Read (readMaybe)
 import qualified Data.Map as M
 import Data.Map (Map)
-import Data.List (intercalate, isPrefixOf)
+import Data.List (intercalate, isPrefixOf, nub)
 import Data.Either
 import Control.Monad
 import Control.Arrow ((&&&))
@@ -89,10 +89,12 @@ matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
 			= inMsg ("While typing the evaluation context (which has an expression as hole)"++show ctx) $
 			  do	let possibleTypes	= bnf & calledRules >>= reachableVia r		:: [TypeName]
 				let possibleTypings	= possibleTypes |> flip (typeAs f r) expr	:: [Either String Expression]
-				let successfull		= zip possibleTypes possibleTypings & filter (isRight . snd ) |> fst
-				when ((<) 1 $ length $ rights possibleTypings) $ Left $ 
+				let successfull		= zip possibleTypes possibleTypings & filter (isRight . snd ) |> fst & nub
+				when ((<) 1 $ length successfull) $ Left $ 
 					"Trying a possible typing for the expression "++show expr++" is ambiguous, as it can be typed as "++showComma successfull
-				firstRight possibleTypings
+					++"\nAdd a type annotation to resolve this: "++nm++"[ ("++show expr ++" : someType) ]"
+				expr'	<- firstRight possibleTypings
+				return $ MEvalContext tp nm expr'
 
 
 matchTyping _ _ _ _ (MePtCall fNm True args)

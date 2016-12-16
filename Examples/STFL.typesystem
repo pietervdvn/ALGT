@@ -16,8 +16,8 @@ e	::= eL "+" e | eL "::" type | eL e | eL
 eL	::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
 
 
-typing		::= var ":" type
-typingEnvironment	::= typing "," typingEnvironment | ";"
+typing			::= var ":" type
+typingEnvironment	::= typing "," typingEnvironment | "{}"
 
 
  Functions
@@ -65,7 +65,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
 # one can refer to rewrite rules/functions earlier on
 
 (→)	: e (in), e (out)	Pronounced as "evaluation"
-(~~>)	: e (in), e (out)	Pronounced as "big step"
+(→*)	: e (in), e (out)	Pronounced as "big step"
 (✓)	: e (in)		Pronounced as "is canonical"
 
 (⊢)	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
@@ -78,9 +78,9 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Rules
 =======
 
-e0 → e
+e0 → e1
 -----------------			[EvalCtx]
-t[e0] → t[e]
+e[e0] → e[e1]
 
 
 n1:number	n2:number
@@ -130,21 +130,21 @@ n:number
 
 (✓) e
 --------			[BigStepCanon]
-e ~~> e
+e →* e
 
-e0 → e1	e1 ~~> e2
---------------------------	[BigStepRec]
-e0 ~~> e2
+e0 → e1	e1 →* e2
+-------------------------	[BigStepRec]
+e0 →* e2
 
 e0 → e1	(✓) e1
------------------------		[BigStepBase]
-e0 ~~> e1
+------------------------	[BigStepBase]
+e0 →* e1
 
 
 
 
 
-";" ⊢ e, T  
+"{}" ⊢ e, T  
 -----------	[TEmptyCtx]
 e :: T
 
@@ -159,6 +159,7 @@ n:number
 b:bool
 ----------------	[Tbool]
 Γ ⊢ b, "Bool"
+
 
 
 Γ ⊢ e, T
@@ -221,9 +222,9 @@ Ta1 "->" Tb1   ==   Ta2 "->" Tb2
 # Properties
 #============
 #
-#";" ⊢ e0 , T	e0 → e1
+# e0 :: T	e0 → e1
 # --------------------------	[Preservation]
-#";" ⊢ e1 , T
+# e1 :: T
 #
 #
 #           e0:T

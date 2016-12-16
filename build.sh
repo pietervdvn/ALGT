@@ -9,4 +9,5 @@ ghc Main.hs -fno-warn-tabs
 cd ..
 cp .bin/Main ALGT
 
-./ALGT -h
+echo "Running default examples"
+./ALGT Examples/STFL.typesystem Examples/STFL.example e -l -r "::" > Output/typings.txt 

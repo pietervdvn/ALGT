@@ -97,8 +97,10 @@ typeAsRelation ctx symbol sExprs
 		let funcTps	= funcs ctx |> typesOf
 		let bnfs	= bnfRules ctx
 		
+		pos		<- sourcePos
 		exprs		<- zip (relType relation) sExprs
 					|> uncurry (typeAs funcTps bnfs) 
+					|> inMsg ("While typing a predicate/conclusion about "++symbol++", somewhere around "++show pos)
 					& allRight
 					& either error return
 		return $ relationMet relation exprs
