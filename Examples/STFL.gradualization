@@ -1,0 +1,14 @@
+
+Gradualize rule "type", add "?"
+
+ Overridden functions
+======================
+
+dom		: type -> type
+dom(T1 -> T2)	= T1
+dom("?")	= "?"
+
+cod		: type -> type
+cod(T1 -> T2)	= T2
+cod("?")	= "?"
+
