@@ -26,7 +26,7 @@ import Data.List
 import Data.Either
 
 import Control.Arrow ((&&&))
-import Control.Monad (foldM)
+import Control.Monad (foldM, when)
 
 import Graphs.SearchCycles
 
@@ -96,6 +96,7 @@ _reachableVia r alreadyVisited root
 calledRules	:: BNFAST -> [TypeName]
 calledRules (BNFRuleCall nm)	= [nm]
 calledRules (BNFSeq bnfs)	= bnfs >>= calledRules
+calledRules _			= []
 
 
 -- First call, without consumption of a character
@@ -110,6 +111,31 @@ firstCalls rules
 
 leftRecursions	:: BNFRules -> [[TypeName]]
 leftRecursions	= cleanCycles . firstCalls
+
+
+makeBNFRules	:: [(Name, [BNFAST])] -> Either String BNFRules
+makeBNFRules vals
+	= do	let bnfr	= M.fromList vals
+	
+		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
+			checkBNF bnfr] & allRight_
+		return bnfr
+
+
+checkBNF	:: BNFRules -> Either String ()
+checkBNF bnfs	= inMsg ("While checking the syntax:") $
+		  	allRight_ (checkLeftRecursion bnfs:(bnfs & M.toList |> checkUnknownRuleCall bnfs))
+
+checkUnknownRuleCall	:: BNFRules -> (Name, [BNFAST]) -> Either String ()
+checkUnknownRuleCall bnfs (n, asts)
+	= inMsg ("While checking rule "++n++" for unknowns") $
+	  mapi asts |> (\(i, ast) ->
+		inMsg ("While checking choice "++show i++", namely "++show ast) $
+		do	let unknowns = calledRules ast & filter (flip M.notMember bnfs) 
+			assert Left (null unknowns) $ "Unknown type "++showComma unknowns
+		) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs)) >> return ()
+		
+			
 
 checkLeftRecursion	:: BNFRules -> Either String ()
 checkLeftRecursion bnfs
@@ -132,17 +158,26 @@ alwaysIsA rules 'y' 'x'	--> True
 -}
 alwaysIsA	:: BNFRules -> TypeName -> TypeName -> Bool
 alwaysIsA rules sub super
- | super == ""	= True	-- The empty string is used in dynamic cases, thus are equivalent to everything
+ | super == "" || sub == ""
+		= True	-- The empty string is used in dynamic cases, thus is equivalent to everything
  | sub == super	= True
  | super `M.notMember` rules
 	= error $ "Unknwown super name: "++show super
+ | sub `M.notMember` rules
+	= error $ "Unknwown sub name: "++show sub
  | otherwise	-- super-rule should contain a single occurence, sub or another rule
 	= let	superR	= (rules M.! super) |> fromSingle & catMaybes
 		-- this single element should be a BNFRuleCall
 		superR'	= superR |> fromRuleCall & catMaybes
 		-- either sub is an element from superR', or it has a rule which is a super for sub
-		-- we don't have to worry about loops; as that would block parsing
-		in sub `elem` superR' || or (superR' |> alwaysIsA rules sub)
+		-- we don't have to worry about loops; this is left recursion and is checked against
+
+		-- in one special case, " sub ::= super ", they are equals too
+		-- we lookup the subRule, check if it has one call...
+		subR	= (rules M.! sub)
+		-- and has exactly one choice
+		equalRules	= length subR == 1 && head subR == BNFRuleCall super
+		in equalRules || sub `elem` superR' || or (superR' |> alwaysIsA rules sub)
 				
 -- Either X is a Y, or Y is a X
 equivalent	:: BNFRules -> TypeName -> TypeName -> Bool
@@ -183,7 +218,8 @@ checkPatterns bnfs pats usages
 
 
 -- Merges two contexts, according to valid combination. 
-mergeContextWith	:: (Name -> TypeName -> TypeName -> String) -> (TypeName -> TypeName -> Bool) -> Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
+mergeContextWith	:: (Name -> TypeName -> TypeName -> String) -> (TypeName -> TypeName -> Bool) -> 
+				Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
 mergeContextWith msg' validCombo ctx1 ctx2
 		= do	let	common		= (ctx1 `M.intersection` ctx2) & M.keys	:: [Name]
 			let ctx1'	= common |> (ctx1 M.!)
@@ -214,7 +250,9 @@ class FunctionlyTyped a where
 	typesOf	:: a -> Type
 
 
--- A Expression is always based on a corresponding syntacic rule. It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
+{- A Expression is always based on a corresponding syntacic rule.
+ It can be both for deconstructing a parsetree or constructing one (depending wether it is used as a pattern or not)
+-}
 type Builtin	= Bool
 -- info about which BNF-rule was used constructing the ParseTree
 type MInfo	= (TypeName, Int)
@@ -504,20 +542,21 @@ typeCheckConclusion bnfs (RelationMet relation exprs _)
 ------------------------ Typesystemfile ------------------------
 
 {-Represents a full typesystem file-}
-data TypeSystem 	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's name?
-					tsSyntax	:: BNFRules,	-- synax of the language
-					tsFunctions 	:: Functions,	-- syntax functions of the TS 
-					tsRelations	:: [Relation],
-					tsRules 	:: Map Symbol [Rule]	-- predicates and inference rules of the type system, most often used for evaluation and/or typing rules; sorted by conclusion relation
-					} deriving (Show)
+data TypeSystem 	
+	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's name?
+			tsSyntax	:: BNFRules,	-- synax of the language
+			tsFunctions 	:: Functions,	-- syntax functions of the TS 
+			tsRelations	:: [Relation],
+			-- predicates and inference rules of the type system, most often used for evaluation and/or typing rules; sorted by conclusion relation
+			tsRules 	:: Map Symbol [Rule]	
+			} deriving (Show)
 
 
 
 checkTypeSystem	:: TypeSystem -> Either String ()
 checkTypeSystem ts
-	= do	let	checks	= [checkLeftRecursion $ tsSyntax ts] ++ (tsRules ts & M.elems & concat |> typeCheckRule (tsSyntax ts))
-		checks & filter isLeft & allRight
-		return ()
+	= do	let	checks	= checkBNF (tsSyntax ts) : (tsRules ts & M.elems & concat |> typeCheckRule (tsSyntax ts))
+		checks & allRight_
 
 
 
@@ -617,11 +656,10 @@ instance Show Rule where
 	show (Rule nm predicates conclusion)
 		= let	predicates'	= predicates |> show & intercalate "    "
 			conclusion'	= show conclusion
-			nm'	= inParens nm
-			spacing	= replicate ( 1 + length nm') ' ' ++ "\t"
-			line	= replicate (max (length predicates') (length conclusion')) '-'
+			nm'	= "[" ++ nm ++ "]"
+			line	= replicate (2 + max (length predicates') (length conclusion')) '-'
 			in
-			["", spacing ++ predicates', nm' ++ "\t" ++ line, spacing ++ conclusion'] & unlines
+			["", " " ++ predicates', line ++ " " ++ nm', " "++ conclusion'] & unlines
 
 
 instance Show Proof where

@@ -47,7 +47,9 @@ typeFunctions	:: BNFRules -> [SFunction] -> Either String Functions
 typeFunctions bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
 	  do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
-		funcs |+> typeFunction bnfs typings |> M.fromList
+		typedFuncs	<- funcs |+> typeFunction bnfs typings 
+		checkNoDuplicates (typedFuncs |> fst) (\dups -> "The function "++showComma dups++" was declared multiple times")
+		return $ M.fromList typedFuncs
 
 neatFuncs	:: [SFunction] -> String
 neatFuncs funcs	

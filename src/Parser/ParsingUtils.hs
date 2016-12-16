@@ -17,6 +17,18 @@ lowers	= ['a'..'z']
 uppers	= ['A'..'Z']
 whitespace = [' ','\t']
 
+builtinRelations	
+	= [(":", "parsetree generated with"), ("=", "equals")
+	  , ("=>", "implies")
+	  , (",","argument separation")
+	  , ("[", "Context open")
+	  , ("]", "Context close")
+	  , ("(", "Parenthese open")
+	  , (")", "Parenthese close")
+
+	  ]
+
+
 -- Parsing tools --
 
 type Parser u r	= ParsecT String u Identity r
@@ -100,9 +112,12 @@ iDentifier
 		tail <- many $ oneOf $ lowers ++ uppers ++ digits
 		return $ head:tail
 
--- either upper or lower case
-identifier'	:: Parser u String
-identifier'	= identifier <|> iDentifier
+-- Allows everything (except whitespace) as identifier, to accept unicode stuff
+identifier'	:: [String] -> Parser u String
+identifier' notSymbols
+		= (do	try (choose notSymbols)
+			fail ("Trying not to parse "++showComma notSymbols))
+		  <|> many1 (noneOf $ whitespace ++ "\n" ++ (builtinRelations >>= fst))
 
 number	:: Parser u Int
 number 	= many1 (oneOf digits) |> read

@@ -147,51 +147,57 @@ dynamicTranslate tp (MePtEvalContext name hole mType)
 
 
 parseExpression	:: Parser u MEParseTree
-parseExpression	= mePt
+parseExpression	= parseExpression' (identifier <|> iDentifier)
 
-mePt	= many1 (ws' *> mePtPart <* ws') |> mePtSeq
+-- we allow expression with some injected 'identifier' parser
+parseExpression'	:: Parser u String -> Parser u MEParseTree
+parseExpression' ident	= mePt ident
+
+mePt ident
+	= many1 (ws' *> (mePtPart ident) <* ws') |> mePtSeq
 		where 	mePtSeq [a]	= a
 			mePtSeq as	= MePtSeq as
 
-mePtPart	= try mePtToken
-			<|> meContext
-			<|> try mePtCall 
-			<|> try meAscription 
-			<|> try meNested 
+mePtPart ident	= try mePtToken
+			<|> meContext ident
+			<|> try (mePtCall ident)
+			<|> try (meAscription ident)
+			<|> try (meNested ident)
 			<|> try mePtInt
-			<|> mePtVar
+			<|> mePtVar ident
 
-meNested	= char '(' *> ws *> mePt <* ws <* char ')'
+meNested ident	= char '(' *> ws *> mePt ident <* ws <* char ')'
 mePtToken	= bnfLiteral	|> MePtToken
-mePtVar		= identifier'	|> MePtVar
+mePtVar ident	= try ident 	|> MePtVar
 mePtInt		= negNumber	|> MePtInt
-mePtCall	= do	builtin	<- try (char '!' >> return True) <|> return False
-			nm	<- identifier
+mePtCall ident	= do	builtin	<- try (char '!' >> return True) <|> return False
+			nm	<- identifier	-- here we use the normal identifier, not the injected one
 			char '('
-			args	<- (ws *> mePt <* ws) `sepBy` char ','
+			args	<- (ws *> mePt ident <* ws) `sepBy` char ','
 			char ')'
 			return $ MePtCall nm builtin args
-meAscription	= do	char '('
+meAscription ident
+		= do	char '('
 			ws
-			expr	<- mePt
+			expr	<- mePt ident
 			ws
 			char ':'
 			ws
-			nm	<- identifier
+			nm	<- identifier	-- this is a bnf-syntax rule; the normal identifier too
 			ws
 			char ')'
 			return $ MePtAscription nm expr
 
 
-meContext	= do	name <- 	try (identifier <* char '[')
+meContext ident	= do	name <- 	try (identifier <* char '[')	-- again, bnf-identifier
 			-- char '[' ---------------------------- ^
 			ws
-			(hole, holeT)	<- try (do	hole	<- parseExpression
+			(hole, holeT)	<- try (do	hole	<- parseExpression' ident
 							ws
 							char ':'
-							holeT	<- identifier
+							holeT	<- identifier	-- bnf-identifier
 							return (hole, holeT))
-					   <|> (identifier |> (MePtVar &&& id))
+					   <|> (ident |> (MePtVar &&& id))
 			ws			
 			char ']'
 			return $ MePtEvalContext name hole holeT

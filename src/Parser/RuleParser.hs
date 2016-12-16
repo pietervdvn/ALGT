@@ -2,7 +2,10 @@ module Parser.RuleParser where
 
 import Utils
 import Parser.ParsingUtils
-import Parser.ExpressionParser
+import qualified Parser.ExpressionParser as EP
+import Parser.ExpressionParser (MEParseTree, typeAs)
+
+
 
 import Control.Monad
 
@@ -32,6 +35,10 @@ parseRules (bnfs, rels, funcs)
 
 
 
+-- expressions in rules can also use unicode and other weird stuff as identifier
+
+
+
 rule	:: Ctx -> Parser u Rule
 rule ctx
 	= do	ws
@@ -48,18 +55,24 @@ rule ctx
 		return rule
 
 
+parseExpr	:: Ctx -> Parser u MEParseTree
+parseExpr ctx	= do	let notSymbols	= relSymbols ctx
+			EP.parseExpression' $ identifier' notSymbols
+
+
+
 conclusion 	:: Ctx -> Parser u Conclusion
 conclusion ctx
 		= try (conclusionPre ctx) <|> conclusionIn ctx
 
 conclusionIn	:: Ctx -> Parser u Conclusion
 conclusionIn ctx
-	= do	expr1	<- parseExpression
+	= do	expr1	<- parseExpr ctx
 		ws
 		relation	<- choose (relSymbols ctx) 
 		ws
 		let types	= (relTypes ctx M.! relation) & relType
-		exprs	<- replicate (length types - 1) (ws *> parseExpression)
+		exprs	<- replicate (length types - 1) (ws *> parseExpr ctx)
 				& intersperseM (ws *> char ',')
 		typeAsRelation ctx relation (expr1:exprs)
 		
@@ -73,7 +86,7 @@ conclusionPre ctx
 		char ')'
 		ws
 		let types 	= (relTypes ctx M.! relationSymb) & relType
-		sExprs		<- replicate (length types) (ws *> parseExpression)
+		sExprs		<- replicate (length types) (ws *> parseExpr ctx)
 					& intersperseM (ws *> char ',')
 
 		typeAsRelation ctx relationSymb sExprs
@@ -92,7 +105,10 @@ typeAsRelation ctx symbol sExprs
 		
  
 predicate	:: Ctx -> Parser u Predicate
-predicate ctx	= try (predicateIsA ctx) <|> try (predicateSame ctx) <|> predicateConcl ctx
+predicate ctx	= try (predicateIsA ctx) 
+			<|> try (predicateSame ctx)
+			<|> try (predicateConcl ctx)
+			<|> (char '(' *> ws *> predicate ctx <* ws <* char ')')
 
 
 
@@ -107,7 +123,7 @@ predicateConcl ctx
 predicateIsA	:: Ctx -> Parser u Predicate
 predicateIsA ctx	
 	= do	ws
-		nm	<- identifier'
+		nm	<- identifier' (relSymbols ctx)
 		ws
 		char ':'
 		ws
@@ -118,11 +134,11 @@ predicateIsA ctx
 predicateSame	:: Ctx -> Parser u Predicate
 predicateSame ctx
 	= do	ws
-		e1	<- parseExpression
+		e1	<- parseExpr ctx
 		ws
 		char '='
 		ws
-		e2	<- parseExpression
+		e2	<- parseExpr ctx
 		ws
 		char ':'
 		ws
@@ -130,7 +146,8 @@ predicateSame ctx
 
 		let funcTps	= funcs ctx |> typesOf
 		let bnfs	= bnfRules ctx
-		let typeExpr e	= typeAs funcTps bnfs t e & either fail return
+		pos	<- sourcePos
+		let typeExpr e	= typeAs funcTps bnfs t e & inMsg ("While typing the predicate around " ++ show pos) & either fail return
 		e1'	<- typeExpr e1
 		e2'	<- typeExpr e2
 		

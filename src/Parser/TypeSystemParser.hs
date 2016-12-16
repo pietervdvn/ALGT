@@ -19,6 +19,7 @@ import Parser.RuleParser
 import Text.Parsec
 import Data.Maybe
 import Data.Char
+import Data.List (intercalate)
 import qualified Data.Map as M
 
 
@@ -48,7 +49,6 @@ typeMode rules	= do	ws
 			ws
 			return (t, mode)
 	
-builtinRelations	= [(":", "parsetree generated with"), ("=", "equals"), ("=>", "implies"), (",","argument separation")]		
 
 
 relationDecl	:: BNFRules -> Parser u Relation
@@ -82,7 +82,9 @@ typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile name
 	= do	nls
 		header "Syntax"
-		bnfs	<- (many $ try (nls >> bnfRule)) |> M.fromList
+		bnfs'	<- (many $ try (nls >> bnfRule)) 
+
+		bnfs	<- makeBNFRules bnfs' & either error return
 
 		nls1
 		header "Functions"
@@ -92,11 +94,17 @@ typeSystemFile name
 		header "Relations"
 		nls1
 		rels	<- many $ try (nls *> relationDecl bnfs <* nls)
+
+		checkNoDuplicates (rels |> relSymbol) (\dups -> "Multiple relations declared with the symbol "++intercalate ", " dups)
+			& either error return
 		
 		header "Rules"
 		nls1
 		rules	<- parseRules (bnfs, rels, metaFuncs)
 		eof
+		checkNoDuplicates (rules |> ruleName) (\dups -> "Multiple rules have the name "++showComma dups)
+			& either error return
+
 		let sortedRules = rules |> ((\r -> r & ruleConcl & conclusionRel & relSymbol) &&& id) & merge & M.fromList
 		return $ TypeSystem name bnfs metaFuncs rels sortedRules
 

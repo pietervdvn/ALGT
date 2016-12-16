@@ -13,6 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Either
 
 import Data.Tuple
 
@@ -79,12 +80,23 @@ allRight eithers
  | otherwise	= eithers |> either id ((++) "Successfull: " . show) & unlines & Left
 
 
+allRight_	:: [Either String ()] -> Either String ()
+allRight_ eithers
+		= eithers & filter isLeft & allRight >> return ()
+
+
 -- Stack message for Either Monad
 inMsg		:: String -> Either String a -> Either String a
 inMsg msg (Left msg')
 		= let indMsg	= msg' & lines |> ("  "++) & unlines in
 		 	Left (msg ++ ":\n"++ indMsg)
 inMsg _ right	= right
+
+
+ammendMsg	:: (e -> e) -> Either e a -> Either e a
+ammendMsg f (Left e)
+		= Left $ f e
+ammendMsg _ a	= a
 
 
 assert :: Monad m => (String -> m ()) -> Bool -> String -> m ()
@@ -104,6 +116,15 @@ merge'		= map swap . merge . map swap
 unmerge		:: [(a,[b])] -> [(a,b)]
 unmerge 	=  concatMap (\(a,bs) -> [(a,b) | b <- bs])
 
+dubbles		:: Eq a => [a] -> [a]
+dubbles []	=  []
+dubbles (a:as)	=  (if a `elem` as then (a:) else id) $ dubbles as
+
+
+checkNoDuplicates	:: (Eq a) => [a] -> ([a] -> String) -> Either String ()
+checkNoDuplicates as msg
+	= do	let dups	= dubbles as
+		when (not $ null dups) $ Left $ msg dups 
 
 equalizeLength	:: a -> [[a]] -> [[a]]
 equalizeLength a ass
