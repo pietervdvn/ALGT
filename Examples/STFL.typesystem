@@ -80,7 +80,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 e0 --> e
 -----------------			[EvalCtx]
-t[e0:e] --> t[e]
+t[e0] --> t[e]
 
 
 n1:number	n2:number
@@ -173,7 +173,7 @@ b:bool
 
 
 --------------------------------------		[Tx]
-Γ[x ":" T:typing] ⊢ x, T
+Γ[ x ":" T ] ⊢ x, T
 
 
 Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"

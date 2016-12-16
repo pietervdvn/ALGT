@@ -17,6 +17,7 @@ import Text.Read (readMaybe)
 import qualified Data.Map as M
 import Data.Map (Map)
 import Data.List (intercalate, isPrefixOf)
+import Data.Either
 import Control.Monad
 import Control.Arrow ((&&&))
 
@@ -27,7 +28,7 @@ data MEParseTree	= MePtToken String
 			| MePtInt Int
 			| MePtCall Name Builtin [MEParseTree]
 			| MePtAscription Name MEParseTree
-			| MePtEvalContext Name MEParseTree TypeName	-- The type of the EvaluationContext is derived... from, well the context :p
+			| MePtEvalContext Name MEParseTree	-- The type of the EvaluationContext is derived... from, well the context :p
 	deriving (Ord, Eq)
 
 
@@ -39,7 +40,7 @@ instance Show MEParseTree where
 	show (MePtCall n bi args)
 				= (if bi then "!" else "") ++ n ++ inParens (args |> show & intercalate ", ")
 	show (MePtAscription n pt)	= inParens (show pt++" : "++n)
-	show (MePtEvalContext n e t)	= n++"["++show e++":"++t ++"]"
+	show (MePtEvalContext n expr)	= n++"["++ show expr ++"]"
 
 
 
@@ -71,19 +72,28 @@ matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 matchTyping _ _ exp tp (MePtVar nm)		
 			= Left $ "Non-rulecall (expected: "++show exp++") with a var "++ nm-- return $ MVar tp nm -- TODO
 
-matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm hole holeT)
-			= inMsg ("While typing the evalution context "++ show ctx) $
+matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm hole@(MePtVar someName))
+			= inMsg ("While typing the evalution context (with only an identifier as hole)"++ show ctx) $
 			  do	let types	= bnfNames r
-				let options	= types & filter (`isPrefixOf` holeT)
+				let options	= types & filter (`isPrefixOf` someName)
 				let actualType	= head options
 
-				when (null options) $ Left ("The type of the lifted-out expression is not found: "++holeT
-					++"\nAn identifier should start with its type, to handily type it."
+				when (null options) $ Left ("The type of the lifted-out expression is not found: "++someName
+					++"\nAn identifier should start with its type(or BNF-rulename)."
 					++"\nAvailable types are: "++showComma types)
 
 				hole'	<- typeAs f r actualType hole
 				let holeAsc	= MAscription actualType hole'
 				return $ MEvalContext tp nm hole'
+matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
+			= inMsg ("While typing the evaluation context (which has an expression as hole)"++show ctx) $
+			  do	let possibleTypes	= bnf & calledRules >>= reachableVia r		:: [TypeName]
+				let possibleTypings	= possibleTypes |> flip (typeAs f r) expr	:: [Either String Expression]
+				let successfull		= zip possibleTypes possibleTypings & filter (isRight . snd ) |> fst
+				when ((<) 1 $ length $ rights possibleTypings) $ Left $ 
+					"Trying a possible typing for the expression "++show expr++" is ambiguous, as it can be typed as "++showComma successfull
+				firstRight possibleTypings
+
 
 matchTyping _ _ _ _ (MePtCall fNm True args)
  = return $ MCall "" fNm True (args |> dynamicTranslate "")
@@ -149,7 +159,7 @@ dynamicTranslate tp (MePtInt i)	= MParseTree $ MInt (tp, -1) i
 dynamicTranslate _  (MePtAscription tp e)	= dynamicTranslate tp e
 dynamicTranslate tp (MePtCall _ _ _)
 				= error "For now, no calls within a builtin are allowed"
-dynamicTranslate tp (MePtEvalContext name hole mType)
+dynamicTranslate tp (MePtEvalContext name hole)
 				= error "For now, no contexts within a builtin are allowed"
 
 ---------------------- PARSING ---------------------------
@@ -201,15 +211,10 @@ meAscription ident
 meContext ident	= do	name <- 	try (ident <* char '[')	
 			-- char '[' ---------------------------- ^
 			ws
-			(hole, holeT)	<- try (do	hole	<- parseExpression' ident
-							ws
-							char ':'
-							holeT	<- identifier	-- bnf-identifier
-							return (hole, holeT))
-					   <|> (ident |> (MePtVar &&& id))
+			hole	<- parseExpression' ident
 			ws			
 			char ']'
-			return $ MePtEvalContext name hole holeT
+			return $ MePtEvalContext name hole
 			
 
 
