@@ -22,7 +22,7 @@ proofThat ts rel args
 -- tries to deduce a proof for a given property, might return multiple (top level) proofs
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
 proofThats' ts symbol args
-	= inMsg ("While trying to proof that "++show symbol++" is applicable to "++show args) $
+	= inMsg ("While trying to proof that ("++symbol++") is applicable to "++show args) $
 	  do	rules	<- ts & tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
 		let results	= rules |> flip (interpretRule ts) args
 		let successfull	= rights results
