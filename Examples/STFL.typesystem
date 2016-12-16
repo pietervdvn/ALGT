@@ -90,135 +90,145 @@ plus(e1, e2)	= !plus((e1:number), e2)
 (~~>)	: e (in), e (out)	Pronounced as "big step"
 (~)	: e (in)		Pronounced as "is canonical"
 
-(|-)	: typingContext (in), e (in), type (out)	Pronounced as "context entails typing"
+(⊢)	: typingContext (in), e (in), type (out)	Pronounced as "context entails typing"
+
+(::)	: e (in), type (out)	Pronounced as "type in empty context"
 
 
  Rules
 =======
 
-
-	   	n1:number	n2:number
-(EvalPlus) 	---------------------------
-           	(n1:number) "+" n2 --> plus(n1, n2)
-
-
-		
-(EvalIfTrue) 	--------------------------------------
-              	"If" "True" "Then" e1 "Else" e2 --> e1
+e0 --> e
+-----------------			[EvalCtx]
+t[e0:e] --> t[e]
 
 
-(EvalIfFalse) 	---------------------------------------
-		"If" "False" "Then" e1 "Else" e2 --> e2
-
-
-		b:bool
-(EvalAscrBool) 	-------------------
-		b "::" "Bool" --> b
-
-
-		i:number
-(EvalCastInt) 	------------------
-		i "::" "Int" --> i
-
-
-(EvalParens) 	---------------
-		"(" e ")" --> e
-
-	
-(EvalLamApp) 	-----------------------------------------------------------
-		("(" "\\" var ":" type "." e ")") arg --> subs(var, arg, e)
-
-	   	e0 --> e
-(EvalCtx) 	--------------
-	    	t[e0:e] --> t[e]
+n1:number	n2:number
+------------------------------------	[EvalPlus]
+(n1:number) "+" n2 --> plus(n1, n2)
 
 
 
-		b:bool
-(CanonBool) -------------
-		(~) b
+b:bool
+--------------------			[EvalAscrBool]
+b "::" "Bool" --> b
 
-		n:number
-(CanonNumber) -------------
-		(~) n
-
-
+i:number	
+-------------------			[EvalCastInt]
+i "::" "Int" --> i
 
 
-          	e0 --> e1	e1 ~~> e2
-(BigStepRec) --------------------------------
-           	e0 ~~> e2
-
-	 	e0 --> e1	(~) e1
-(BigStepBase) -------------------------
-         	e0 ~~> e1
+----------------			[EvalParens]
+"(" e ")" --> e
 
 
-	   	(~) e
-(BigStepCanon) -----------
-         	e ~~> e
+---------------------------------------		[EvalIfTrue]
+"If" "True" "Then" e1 "Else" e2 --> e1
+
+
+----------------------------------------	[EvalIfFalse]
+"If" "False" "Then" e1 "Else" e2 --> e2
+
+
+------------------------------------------------------------	[EvalLamApp]
+("(" "\\" var ":" type "." e ")") arg --> subs(var, arg, e)
 
 
 
 
 
 
-	   	n:number
-(Tnumber) 	------------------
-	  	ctx |- n, "Int"
+b:bool
+-------			[CanonBool]
+(~) b
 
-
-	 	b:bool
-(Tbool) 	-------------------
-	 	ctx |- b, "Bool"
-
-
-	    	ctx |- e, T
-(TParens)	----------------------
-	  	ctx |- "(" e ")", T
-
-
-	 	ctx |- n1, "Int"	ctx |- n2, "Int"
-(TPlus) 	-------------------------------------------
-	 	ctx |- n1 "+" n2, "Int"
-
-
-		ctx |- e, T
-(TAscr) 	---------------------
-		ctx |- e "::" T, T
-
-
-       		ctx |- c, "Bool"	ctx |- e1, T		ctx |- e2, T
-(TIf) 		----------------------------------------------------------------
-		ctx |- "If" c "Then" e1 "Else" e2, T
+n:number
+---------		[CanonNumber]
+(~) n
 
 
 
-(Tx)		--------------------------------------------
-		typingContext[x "::" T:typing] |- x, T
+(~) e
+--------			[BigStepCanon]
+e ~~> e
 
-	  	((x "::" T1) "," ctx) |- e, T2
-(TLambda) 	-------------------------------------------------
-	   	ctx |- "(" "\\" x ":" T1 "." e ")",  ( "(" T1 ")") "->" T2
+e0 --> e1	e1 ~~> e2
+--------------------------	[BigStepRec]
+e0 ~~> e2
 
-
-
-		ctx |- e1, Tfunc	ctx |- e2, Targ		Targ = dom(Tfunc) : type
-(Tapp) 		-------------------------------------------------------------------------
-		ctx |- e1 e2, cod(Tfunc)
+e0 --> e1	(~) e1
+-----------------------		[BigStepBase]
+e0 ~~> e1
 
 
 
 
 
- Properties
-============
-
-		";" |- e0 , T	e0 --> e1
-(Preservation) ---------------------------
-		";" |- e1 , T
+";" ⊢ e, T  
+-----------	[TEmptyCtx]
+e :: T
 
 
-            e0:T
-(Progress) ------------------
-            e0 --> e1 | (~) e0
+
+
+n:number
+---------------		[Tnumber] 
+ctx ⊢ n, "Int"
+
+
+b:bool
+----------------	[Tbool]
+ctx ⊢ b, "Bool"
+
+
+ctx ⊢ e, T
+-------------------	[TParens]
+ctx ⊢ "(" e ")", T
+
+
+ctx ⊢ e, T
+------------------	[TAscr]
+ctx ⊢ e "::" T, T
+
+
+
+--------------------------------------		[Tx]
+typingContext[x "::" T:typing] ⊢ x, T
+
+
+ctx ⊢ n1, "Int"	ctx ⊢ n2, "Int"
+----------------------------------------	[TPlus]
+ctx ⊢ n1 "+" n2, "Int"
+
+
+ctx ⊢ c, "Bool"	ctx ⊢ e1, T		ctx ⊢ e2, T
+------------------------------------------------------------	[TIf]
+ctx ⊢ "If" c "Then" e1 "Else" e2, T
+
+
+
+((x "::" T1) "," ctx) ⊢ e, T2
+----------------------------------------------------------	[TLambda]
+ctx ⊢ "(" "\\" x ":" T1 "." e ")",  ( "(" T1 ")") "->" T2
+
+
+
+ctx ⊢ e1, Tfunc	ctx ⊢ e2, Targ		Targ = dom(Tfunc) : type
+-------------------------------------------------------------------------	[Tapp]
+ctx ⊢ e1 e2, cod(Tfunc)
+
+
+
+
+
+# Properties
+#============
+#
+#";" ⊢ e0 , T	e0 --> e1
+--------------------------	[#Preservation]
+#";" ⊢ e1 , T
+#
+#
+#           e0:T
+#(Progress) ------------------
+#           e0 --> e1 | (~) e0

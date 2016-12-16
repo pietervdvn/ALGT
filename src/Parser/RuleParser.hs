@@ -140,11 +140,11 @@ predicateSame ctx
 
 line	:: Parser u String
 line	= do	ws
-		char '('
-		ws
-		nm	<- many $ noneOf ")"
-		char ')'
-		ws
 		many $ char '-'
+		ws
+		char '['
+		ws
+		nm	<- many $ noneOf "]"
+		char ']'
 		ws
 		return nm

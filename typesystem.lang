@@ -176,7 +176,7 @@
     </context>
 
     <context id="line">
-    <match>(^\s*(?'parO'\()(?'name'[^)]*)(?'parC'\)\s*(?'line'-+)))</match>
+    <match>(^\s*(?'line'-+)\s*\s*(?'parO'\[)(?'name'[^\]]*)(?'parC'\]))</match>
     <include>
        <context sub-pattern="parO" style-ref="noise"/>
        <context sub-pattern="parC" style-ref="noise"/>

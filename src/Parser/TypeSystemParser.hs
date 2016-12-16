@@ -96,7 +96,7 @@ typeSystemFile name
 		header "Rules"
 		nls1
 		rules	<- parseRules (bnfs, rels, metaFuncs)
-
+		eof
 		let sortedRules = rules |> ((\r -> r & ruleConcl & conclusionRel & relSymbol) &&& id) & merge & M.fromList
 		return $ TypeSystem name bnfs metaFuncs rels sortedRules
 
