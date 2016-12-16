@@ -48,6 +48,9 @@ mainArgs args
 		ts	<- either (error . show) return ts'
 		checkTypeSystem ts & either error return
 
+		let noRules	= not ( dumbTS args) && all isNothing [symbol args, function args, stepByStep args]
+
+		when (dumbTS args) $ print ts
 
 		let targetFile	= example_file args
 		targetContents'	<- readFile targetFile
@@ -58,6 +61,8 @@ mainArgs args
 		parseTrees |+> ifJust (runRule ts) (symbol args)
 		parseTrees |+> ifJust (runFunc ts) (function args)
 		parseTrees |+> ifJust (runStepByStep ts) (stepByStep args)
+
+		when noRules $ putStrLn "You didn't specify an action to perform. See -h"
 	
 		return (ts, parseTrees)
 

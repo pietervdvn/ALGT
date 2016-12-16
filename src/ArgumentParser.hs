@@ -23,6 +23,7 @@ data Args = Args 	{ ts_file	:: String
 			, symbol	:: Maybe Symbol
 			, function	:: Maybe Name
 			, stepByStep	:: Maybe Name
+			, dumbTS	:: Bool
 			}
 	deriving (Show)
 	
@@ -68,3 +69,7 @@ args	= Args <$> argument str
 			<> short 's'
 			<> help "Apply the given function, step by step, until the result of the function is the same as the input"
 			))
+		<*> switch
+			(long "dump-typesystem"
+			<> long "dts"
+			<> help "Dump the parsed type system, usefull for debugging purposes")
