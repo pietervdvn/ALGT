@@ -16,7 +16,7 @@ import Data.Char
 import Text.Read (readMaybe)
 import qualified Data.Map as M
 import Data.Map (Map)
-import Data.List (intercalate)
+import Data.List (intercalate, isPrefixOf)
 import Control.Monad
 import Control.Arrow ((&&&))
 
@@ -71,9 +71,18 @@ matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 matchTyping _ _ exp tp (MePtVar nm)		
 			= Left $ "Non-rulecall (expected: "++show exp++") with a var "++ nm-- return $ MVar tp nm -- TODO
 
-matchTyping f r bnf (tp, _) (MePtEvalContext nm hole holeT)
-			= do	hole'	<- typeAs f r holeT hole
-				let holeAsc	= MAscription holeT hole'
+matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm hole holeT)
+			= inMsg ("While typing the evalution context "++ show ctx) $
+			  do	let types	= bnfNames r
+				let options	= types & filter (`isPrefixOf` holeT)
+				let actualType	= head options
+
+				when (null options) $ Left ("The type of the lifted-out expression is not found: "++holeT
+					++"\nAn identifier should start with its type, to handily type it."
+					++"\nAvailable types are: "++showComma types)
+
+				hole'	<- typeAs f r actualType hole
+				let holeAsc	= MAscription actualType hole'
 				return $ MEvalContext tp nm hole'
 
 matchTyping _ _ _ _ (MePtCall fNm True args)
@@ -189,7 +198,7 @@ meAscription ident
 			return $ MePtAscription nm expr
 
 
-meContext ident	= do	name <- 	try (identifier <* char '[')	-- again, bnf-identifier
+meContext ident	= do	name <- 	try (ident <* char '[')	
 			-- char '[' ---------------------------- ^
 			ws
 			(hole, holeT)	<- try (do	hole	<- parseExpression' ident

@@ -173,7 +173,7 @@ b:bool
 
 
 --------------------------------------		[Tx]
-typingEnvironment[x ":" T:typing] ⊢ x, T
+Γ[x ":" T:typing] ⊢ x, T
 
 
 Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
