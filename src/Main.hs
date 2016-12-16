@@ -27,7 +27,7 @@ import Data.Maybe (fromJust, isJust)
 
 import ArgumentParser
 
-version	= [0,0,2]
+version	= [0,0,3]
 
 
 main	:: IO ()
