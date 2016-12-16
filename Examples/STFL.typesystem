@@ -64,9 +64,9 @@ plus(e1, e2)	= !plus((e1:number), e2)
 # (:) is reserved, as predicate that a term is of a production rule
 # one can refer to rewrite rules/functions earlier on
 
-(-->)	: e (in), e (out)	Pronounced as "evaluation"
+(→)	: e (in), e (out)	Pronounced as "evaluation"
 (~~>)	: e (in), e (out)	Pronounced as "big step"
-(~)	: e (in)		Pronounced as "is canonical"
+(✓)	: e (in)		Pronounced as "is canonical"
 
 (⊢)	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
 
@@ -78,40 +78,40 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Rules
 =======
 
-e0 --> e
+e0 → e
 -----------------			[EvalCtx]
-t[e0] --> t[e]
+t[e0] → t[e]
 
 
 n1:number	n2:number
 ------------------------------------	[EvalPlus]
-(n1:number) "+" n2 --> plus(n1, n2)
+(n1:number) "+" n2 → plus(n1, n2)
 
 
 
 b:bool
 --------------------			[EvalAscrBool]
-b "::" "Bool" --> b
+b "::" "Bool" → b
 
 i:number
 -------------------			[EvalCastInt]
-i "::" "Int" --> i
+i "::" "Int" → i
 
 
 ----------------			[EvalParens]
-"(" e ")" --> e
+"(" e ")" → e
 
 
 ---------------------------------------		[EvalIfTrue]
-"If" "True" "Then" e1 "Else" e2 --> e1
+"If" "True" "Then" e1 "Else" e2 → e1
 
 
 ----------------------------------------	[EvalIfFalse]
-"If" "False" "Then" e1 "Else" e2 --> e2
+"If" "False" "Then" e1 "Else" e2 → e2
 
 
 ------------------------------------------------------------	[EvalLamApp]
-("(" "\\" var ":" type "." e ")") arg --> subs(var, arg, e)
+("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
 
 
 
@@ -120,23 +120,23 @@ i "::" "Int" --> i
 
 b:bool
 -------			[CanonBool]
-(~) b
+(✓) b
 
 n:number
 ---------		[CanonNumber]
-(~) n
+(✓) n
 
 
 
-(~) e
+(✓) e
 --------			[BigStepCanon]
 e ~~> e
 
-e0 --> e1	e1 ~~> e2
+e0 → e1	e1 ~~> e2
 --------------------------	[BigStepRec]
 e0 ~~> e2
 
-e0 --> e1	(~) e1
+e0 → e1	(✓) e1
 -----------------------		[BigStepBase]
 e0 ~~> e1
 
@@ -172,29 +172,29 @@ b:bool
 
 
 
---------------------------------------		[Tx]
+--------------------	[Tx]
 Γ[ x ":" T ] ⊢ x, T
 
 
 Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
-----------------------------------------	[TPlus]
+------------------------------				[TPlus]
 Γ ⊢ n1 "+" n2, "Int"
 
 
-Γ ⊢ c, "Bool"	Γ ⊢ e1, T		Γ ⊢ e2, T
-------------------------------------------------------------	[TIf]
+Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
+------------------------------------------		[TIf]
 Γ ⊢ "If" c "Then" e1 "Else" e2, T
 
 
 
 ((x ":" T1) "," Γ) ⊢ e, T2
-----------------------------------------------------------	[TLambda]
+-------------------------------------------------------	[TLambda]
 Γ ⊢ "(" "\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
 
 
 
-Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ		Targ == dom(Tfunc)
--------------------------------------------------------------------------	[Tapp]
+Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
+---------------------------------------------------	[Tapp]
 Γ ⊢ e1 e2, cod(Tfunc)
 
 
@@ -221,11 +221,11 @@ Ta1 "->" Tb1   ==   Ta2 "->" Tb2
 # Properties
 #============
 #
-#";" ⊢ e0 , T	e0 --> e1
+#";" ⊢ e0 , T	e0 → e1
 # --------------------------	[Preservation]
 #";" ⊢ e1 , T
 #
 #
 #           e0:T
 #(Progress) ------------------
-#           e0 --> e1 | (~) e0
+#           e0 → e1 | (~) e0
