@@ -1,14 +1,16 @@
 module Main where
 
 import TypeSystem
+import Utils.TypeSystemToString
+import Utils.ToString
+import Utils.Utils
+import Utils.ArgumentParser
 
 import Parser.TargetLanguageParser
 import Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
 
-import Utils.Utils
-import Utils.ArgumentParser
 
 import System.Environment
 
@@ -25,7 +27,7 @@ import Data.Monoid ((<>))
 import Options.Applicative
 
 
-version	= [0,0,3]
+version	= [0,0,4]
 
 
 main	:: IO ()
@@ -87,7 +89,7 @@ showProofWithDepth input relation (Left str)
 	= "# Could not apply relation "++relation++" to relation the input "++input++", because: \n"++str
 showProofWithDepth input relation (Right proof)
 	= "# "++input++" applied to "++relation++
-		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++show proof++"\n\n\n"
+		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++toParsable proof++"\n\n\n"
 
 
 
@@ -96,7 +98,7 @@ runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
 runFunc ts func (inp, pt)
  	= do	let pt'	= evalFunc ts func [pt]
 		putStrLn $ "# "++show inp++" applied to "++func
-		print pt'
+		putStrLn $ toParsable pt'
 
 runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
 runStepByStep ts func (inp, pt)
@@ -105,6 +107,6 @@ runStepByStep ts func (inp, pt)
 
 evalStar	:: TypeSystem -> Name -> ParseTree -> IO ()
 evalStar ts funcName pt	
-	= do	putStrLn $ "\n " ++ show pt
+	= do	putStrLn $ "\n " ++ toParsable pt
 		let pt'	= evalFunc ts funcName [pt]
 		when (pt' /= pt) $ evalStar ts funcName pt'

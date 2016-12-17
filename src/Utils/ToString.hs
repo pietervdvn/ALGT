@@ -14,7 +14,7 @@ These are presented here.
 
 import Data.List (intercalate)
 
-class (Show a) => ToString a where
+class ToString a where
 	-- show gives us the default haskell representation
 
 
@@ -22,17 +22,14 @@ class (Show a) => ToString a where
 	-- e.g. a parsetree as if it was target language, 
 	-- a meta-expression as if it came from a typesystem file
 	toParsable	:: a -> String
-	toParsable	= show
 
 	-- Show as if this were in the opposite file
 	-- e.g. a parsetree as if it was a meta-expression in a typesystem file
 	-- a meta-expression as if it was target language. This might not always be possible
 	toCoParsable	:: a -> String
-	toCoParsable	= show
 	
 	-- can contain more info, e.g. type info of the expression
 	debug	:: a -> String
-	debug	= show
 
 
 class ToString' opts a where
@@ -43,12 +40,12 @@ class ToString' opts a where
 
 
 instance ToString a => ToString' () a where
-	show'		= const show 
+	show'		= const toParsable
 	toParsable'	= const toParsable
 	toCoParsable'	= const toCoParsable
 	debug'		= const debug
 
-instance ToString a => ToString' String [a] where
+instance (Show a, ToString a) => ToString' String [a] where
 	show' s as		= intercalate s $ map show as
 	toParsable' s as	= intercalate s $ map toParsable as
 	toCoParsable' s as	= intercalate s $ map toCoParsable as

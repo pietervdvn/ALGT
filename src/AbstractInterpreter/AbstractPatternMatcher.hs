@@ -4,8 +4,10 @@ module AbstractInterpreter.AbstractPatternMatcher where
 This module defines 
 -}
 
-import Utils.Utils
 import TypeSystem
+import Utils.Utils
+import Utils.TypeSystemToString
+import Utils.ToString
 
 import AbstractInterpreter.AbstractParseTree
 
@@ -25,7 +27,7 @@ type Assignments	= (Map Name AbstractSet', Assumptions Int, Assumptions String)
 
 
 patternMatch' r pat as
-	= trace ("Trying to match "++show pat++" ~ "++show as) $ patternMatch r pat as
+	= trace ("Trying to match "++toParsable pat++" ~ "++show as) $ patternMatch r pat as
 
 
 patternMatch	:: Syntax -> Expression -> AbstractSet' -> [Assignments]
@@ -47,7 +49,7 @@ patternMatch r (MParseTree (MIdentifier _ s1)) (ConcreteIdentifier _ n)
 patternMatch r (MParseTree (PtSeq mi pts)) pt
 	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
 patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ seq2)
- | length seq1 /= length seq2	= returnF $ "Sequence lengths are not the same: "++show s1 ++ " <~ "++show s2
+ | length seq1 /= length seq2	= returnF $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++show s2
  | otherwise			
 	= do	somePossibleMatch	<- zip seq1 seq2 |+> uncurry (patternMatch r)
 		mergeAssgnss somePossibleMatch
@@ -65,7 +67,7 @@ patternMatch r pat as@EveryPossible{}
 	= do	choice		<- unfold' r as
 		patternMatch r pat choice
 patternMatch _ pat as
-	= trace ("Failing match "++show pat++" ~ "++show as) []
+	= trace ("Failing match "++toParsable pat++" /= "++show as) []
 
 
 mergeAssgnss	:: [Assignments] -> [Assignments]

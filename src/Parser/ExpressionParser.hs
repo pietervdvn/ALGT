@@ -70,7 +70,7 @@ matchTyping f r bnf tp c@(MePtAscription as expr)
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 			= return $ MVar ruleCall nm
 matchTyping _ _ exp tp (MePtVar nm)		
-			= Left $ "Non-rulecall (expected: "++show exp++") with a var "++ nm-- return $ MVar tp nm -- TODO
+			= Left $ "Non-rulecall (expected: "++show exp++") with a var "++ nm
 
 matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm hole@(MePtVar someName))
 			= inMsg ("While typing the evalution context (with only an identifier as hole)"++ show ctx) $
@@ -107,7 +107,8 @@ matchTyping functions syntax@(BNFRules rules) (BNFRuleCall ruleName) _ (MePtCall
 				let returnTyp		= last fType
 				assert Left (equivalent syntax returnTyp ruleName) $
 					"Actual type "++show returnTyp ++" does not match expected type "++show ruleName
-				args'			<- zip args argTypes |> (\(arg, tp) -> typeAs functions syntax tp arg) & allRight
+				args'			<- zip args argTypes |> (\(arg, tp) -> typeAs functions syntax tp arg) 
+								& allRight
 				return $ MCall returnTyp fNm False args'
 matchTyping _ _ bnf _ pt@MePtCall{}
 			= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show pt
@@ -126,7 +127,8 @@ matchTyping _ _ Number tp (MePtInt i)
 matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
  | length bnfs == length pts
 			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f s bnf tp pt) 
-				joined & allRight |> MSeq tp
+				joined & allRight 
+				|> MSeq tp
  | otherwise		= Left $ "Seq could not match " ++ show bnfs ++ " ~ " ++ show pts 
 
 

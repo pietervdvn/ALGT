@@ -13,6 +13,7 @@ import TypeSystem
 
 import Text.Parsec
 import Data.List
+import Data.Either
 import Data.Map (Map)
 import qualified Data.Map as M
 
@@ -103,7 +104,7 @@ typeAsRelation ctx symbol sExprs
 					|> inMsg ("While typing a predicate/conclusion about "++symbol++", somewhere around "++show pos)
 					& allRight
 					& either error return
-		return $ relationMet relation exprs
+		return $ RelationMet relation exprs
 		
  
 predicate	:: Ctx -> Parser u Predicate

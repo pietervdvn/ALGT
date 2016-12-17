@@ -35,7 +35,7 @@ proofThat' ts symbol args
 	= do	successfull	<- proofThats' ts symbol args
 		let conclusions	= successfull & filter isProof |> proofConcl & nub
 		assert Left (1 == length conclusions) $ "Multiple rules provided a proof with different conclusions:\n"++ 
-				(successfull |> show |> lines ||>> ("#  "++) |> unlines >>= (++"\n"))
+				(successfull |> toParsable |> lines ||>> ("#  "++) |> unlines >>= (++"\n"))
 		let successfull'	= successfull & sortOn weight 
 		return $ head successfull'
 
@@ -46,7 +46,7 @@ proofThat' ts symbol args
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
 	= inMsg ("While trying to intepret the rule "++ruleName r++" with "++ toParsable' ", " args) $
-	  do	let (RelationMet rel patterns _)	= ruleConcl r
+	  do	let (RelationMet rel patterns)	= ruleConcl r
 		variables	<- patternMatchInputs ts (rulePreds r) (rel, patterns) args
 		(predicateProofs, vars')
 				<- proofPredicates ts variables (rulePreds r)
@@ -76,7 +76,7 @@ proofPredicate ts vars _ (Same e1 e2)
 		if e1' == e2' then  return (ProofSame e1' e1 e2, vars)
 			else Left $ "Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2
 
-proofPredicate ts vars restingPreds (Needed (RelationMet relation args _))
+proofPredicate ts vars restingPreds (Needed (RelationMet relation args))
 	= do	let inputArgs	= zip args (relModes relation) & filter ((==) In . snd) |> fst	:: [Expression]
 		let args'	= inputArgs |> evalExpr ts vars
 		proof		<- proofThat ts relation args'
@@ -104,7 +104,7 @@ patternMatchInputs ts predicates (rel, relationArgs) args
 proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignments -> [ParseTree] -> Either String Conclusion'
 proofRelationMet ts (rel, relationArgs) vars args
 	= do	resultExprs	<- zipModes ts vars (zip relationArgs $ relModes rel) args
-		return $ relationMet' rel (resultExprs |> fst)
+		return $ RelationMet rel (resultExprs |> fst)
 		
 		
 matchAndMerge	:: TypeSystem -> [Predicate] -> [(Expression, ParseTree)] -> Either String VariableAssignments

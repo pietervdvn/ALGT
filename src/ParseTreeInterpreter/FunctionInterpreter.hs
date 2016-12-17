@@ -73,9 +73,11 @@ mergeVars v1 v2
 		let cv1		= common |> (v1 M.!)
 		let cv2		= common |> (v2 M.!)
 		let different	= zip common (zip cv1 cv2) & filter (uncurry (/=) . snd)
-		if cv1 == cv2 
-			then return (v1 `M.union` v2)
-			else Left $ "Merging contexts failed: some variables are assigned different values: "++show different
+		let msg (nm, (assgn1, assgn2))
+				= nm++" is assigned both "++ inParens (showAssgn assgn1) ++ " and "++ inParens (showAssgn assgn2)
+		let failMsgs	= different |> msg & unlines
+		if cv1 == cv2 then return (v1 `M.union` v2)
+			else inMsg "Merging contexts failed: some variables are assigned different values" $ Left failMsgs
 
 {-
 Disasembles an expression against a pattern
@@ -176,7 +178,7 @@ evaluate ctx (MCall _ "equal" True es)
 	= let	(tp, [e1, e2])	= asInts ctx "equal" es in
 		MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
-	= let	exprs'	= exprs |> evaluate ctx & show
+	= let	exprs'	= exprs |> evaluate ctx & toParsable' ", "
 		msgs	= ["In evaluating a function:", exprs']
 		stack	= ctxStack ctx |> buildStackEl
 		in	error $ unlines $ stack ++ msgs
@@ -220,8 +222,12 @@ evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpre
 					(ctxVars ctx & M.toList |> showVarAssgn & unlines)
 
 showVarAssgn	:: (Name, (ParseTree, Maybe [Int])) -> String
-showVarAssgn (nm, (pt, mPath))
-	= nm ++ " = "++toParsable pt++
+showVarAssgn (nm, assgn)
+	= nm ++ " = "++ showAssgn assgn
+
+showAssgn	:: (ParseTree, Maybe [Int]) -> String
+showAssgn (pt, mPath)
+		= toParsable pt++
 		maybe "" (\path -> "\tContext path is "++show path) mPath
 
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]

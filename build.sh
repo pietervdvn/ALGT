@@ -1,5 +1,11 @@
 #! /bin/bash
 
+
+cd src
+hlint *.hs */*.hs
+./searchTodo.sh
+cd ..
+
 mkdir .bin >/dev/null
 
 cp -r src/* .bin

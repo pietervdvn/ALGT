@@ -95,16 +95,15 @@ typeSystemFile name
 		nls1
 		rels	<- many $ try (nls *> relationDecl syntax <* nls)
 
-		checkNoDuplicates (rels |> relSymbol) (\dups -> "Multiple relations declared with the symbol "++intercalate ", " dups)
+		checkNoDuplicates (rels |> relSymbol) (\dups -> "Multiple relations declared with the symbol "++commas dups)
 			& either error return
 		
 		header "Rules"
 		nls1
 		rules	<- parseRules (syntax, rels, metaFuncs)
-		eof
-		checkNoDuplicates (rules |> ruleName) (\dups -> "Multiple rules have the name "++showComma dups)
-			& either error return
+		rules'	<- makeRules syntax rules & either error return
 
-		let sortedRules = rules |> ((\r -> r & ruleConcl & conclusionRel & relSymbol) &&& id) & merge & M.fromList
-		return $ TypeSystem name syntax metaFuncs rels sortedRules
+		eof
+
+		return $ TypeSystem name syntax metaFuncs rels rules'
 

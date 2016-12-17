@@ -8,7 +8,8 @@ import Utils.Utils
 import Utils.ToString
 
 import Data.List (intercalate)
-import Data.Map as M
+import Data.Map as M hiding (filter, null, foldl)
+import Data.Maybe
 
 {-
 This module defines multiple 'ToString's for all type-system data structures
@@ -18,6 +19,7 @@ This module defines multiple 'ToString's for all type-system data structures
 
 instance ToString BNF where
 	toParsable	= toStr toParsable
+	toCoParsable	= toParsable
 
 	debug (BNFSeq asts)
 			= asts |> toStr debug & unwords & inParens
@@ -35,6 +37,8 @@ instance ToString Syntax where
 	toParsable (BNFRules rules)
 		= let width	= rules & M.keys |> length & maximum in
 			rules & M.toList |> uncurry (toParsableBNFRule width) & unlines
+	toCoParsable	= toParsable
+	debug		= show
 
 
 toParsableBNFRule	:: Int -> Name -> [BNF] -> String
@@ -130,13 +134,199 @@ isMeta str	= "{-#" ++ str ++ "#-}"
 
 
 
+instance ToString' (Name, Int) Clause where
+	show' 	= clauseWith show
+	toParsable'
+		= clauseWith toParsable
+	toCoParsable'	= clauseWith toCoParsable
+	debug'		= clauseWith debug
+
+clauseWith exprShow (fname, i) (MClause pats expr)
+	= let	head	= fname ++ inParens (pats |> exprShow & commas)
+		spacing	= replicate (i - length head) ' ' ++ (if length head > i then "\n"++replicate i ' ' else "") ++ " = "
+		tail	= exprShow expr in
+		head ++ spacing ++ tail
+
+
+
+instance ToString' (Name, Int) Function where
+	show' nmi	= funcWith (show' nmi) nmi
+	toParsable' nmi	= funcWith (toParsable' nmi) nmi
+	toCoParsable' nmi
+			= funcWith (toCoParsable' nmi) nmi
+	debug' nmi	= funcWith (debug' nmi) nmi
+
+
+funcWith showClause (name, int) (MFunction tp clauses)
+	= let	sign	= name ++ replicate (int - length name) ' ' ++ " : "++ intercalate " -> " tp
+		clss	= clauses |> showClause in
+		(sign:clss) & unlines
+
+
+------------------------------------- RELATIONS AND RULES -----------------------------------
+
+instance ToString Relation where
+	toParsable (Relation symbol tps pronounce)
+		= let	sign	= inParens symbol ++ " \t: "++ tps |> (\(nm, mode) -> nm++" "++ inParens (show mode)) & commas
+			pron	= pronounce |> show |> ("\tPronounced as "++) & fromMaybe "" in
+			sign ++ pron
+	toCoParsable (Relation symbol tps pronounce)
+		= let	sign	= inParens symbol -- ++ " : "++ tps |> (\(nm, mode) -> nm++" "++ inParens (show mode)) & commas
+			name	= maybe "" (\p -> show p++", with symbol ")  pronounce
+			in
+			name ++ sign
+	debug		= show
+
+
+
+instance (ToString a) => ToString (ConclusionA a) where
+	toParsable	= showConclusionWith toParsable
+	toCoParsable	= showConclusionWith toCoParsable
+	debug		= showConclusionWith debug
+
+
+showConclusionWith showArg (RelationMet rel [arg])
+		= inParens (relSymbol rel) ++ " " ++ showArg arg
+showConclusionWith showArg (RelationMet rel (arg1:args))	
+		= showArg arg1 ++ " " ++ relSymbol rel ++ " " ++ (args |> showArg & commas)
+
+
+
+
+instance ToString Predicate where
+	toParsable	= showPredicateWith toParsable toParsable
+	toCoParsable	= showPredicateWith toCoParsable toCoParsable
+	debug		= showPredicateWith debug debug
+
+
+showPredicateWith 	:: (Expression -> String) -> (Conclusion -> String) -> Predicate -> String
+showPredicateWith se sc (TermIsA e tp)
+	= se e ++ ": "++ tp
+showPredicateWith se sc (Same e1 e2)
+	= se e1 ++ " = "++ se e2
+showPredicateWith se sc (Needed concl)
+	= sc concl
+
+
+instance ToString Rule where
+	toParsable	= showRuleWith toParsable toParsable
+	toCoParsable	= showRuleWith toCoParsable toCoParsable
+	debug		= showRuleWith debug debug
+
+
+
+showRuleWith	:: (Predicate -> String) -> (Conclusion -> String) -> Rule -> String
+showRuleWith sp sc (Rule nm predicates conclusion)
+	= let	predicates'	= predicates |> sp & intercalate "    "
+		conclusion'	= sc conclusion
+		nm'	= " \t[" ++ nm ++ "]"
+		line	= replicate (2 + max (length predicates') (length conclusion')) '-'
+		in
+		["", " " ++ predicates', line ++ " " ++ nm', " "++ conclusion'] & unlines
+
+
+
+instance ToString' TypeSystem Rules where
+	show'		= const show
+	toParsable'	= showRulesWith toParsable
+	toCoParsable'	= showRulesWith toCoParsable
+	debug'		= showRulesWith debug
+
+showRulesWith	:: (Rule -> String) -> TypeSystem -> Rules -> String
+showRulesWith sr ts (Rules rules)
+	= let relationOf nm	= ts & tsRelations & filter ((==) nm . relSymbol) & head
+	  in
+	  rules & M.toList |> (\(symbol, rules) ->
+		"\n" ++ header "# " ("Rules about "++toCoParsable (relationOf symbol)) '-' ++ "\n "++
+			rules |> sr & unlines
+		)
+		& intercalate "\n\n"
+
+
+------------------------------------ PROOFS ------------------------------------------------
+
+data ProofOptions	= PO {	nameParens		:: String -> String,
+				showNames		:: Bool,
+				showSatisfiesEquality	:: Bool,
+				betweenPredicates	:: String }
+
+
+defaultProofOptions	= PO (\s -> "["++s++"]") True True "    "
+
+
+data ProofOptions'	= PO' {	opts'		:: ProofOptions,
+				st		:: TypeName -> String,
+				sp		:: ParseTree -> String,
+				se		:: Expression -> String,
+				sc 		:: Conclusion' -> String,
+				sr		:: Rule -> String
+				}
+
+instance ToString Proof where
+	toParsable	= toParsable' defaultProofOptions
+	toCoParsable	= toCoParsable' defaultProofOptions
+	debug		= debug' defaultProofOptions
+
+
+instance ToString' ProofOptions Proof where
+	show' po proof		= let opts	= PO' po show show show show show 				in showProofWith opts proof & unlines
+	toParsable' po proof	= let opts	= PO' po id toParsable toParsable toParsable toCoParsable 	in showProofWith opts proof & unlines
+	toCoParsable' po proof	= let opts	= PO' po id toCoParsable toParsable toCoParsable toParsable 	in showProofWith opts proof & unlines
+	debug' po proof		= let opts	= PO' po id debug debug debug debug			 	in showProofWith opts proof & unlines
+		
+
+-- shows a proof part; returns lines 
+showProofWith	:: ProofOptions' -> Proof -> [String]
+showProofWith opts (ProofIsA expr typ)
+		= [sp opts expr ++ " : "++ st opts typ]
+showProofWith opts (ProofSame pt e1 e2)
+ | showSatisfiesEquality (opts' opts)
+	= [se opts e1 ++ " = "++ sp opts pt ++ " = "++ se opts e2]
+ | otherwise
+	= []
+showProofWith opts (Proof concl proverRule predicates)
+	= let	options	= opts' opts
+		preds'	= predicates |> showProofWith opts
+		preds''	= if null preds' then [] else init preds' ||>> (++ betweenPredicates options)  ++ [last preds']
+		preds	= preds'' & foldl (stitch ' ') []	:: [String]
+		predsW	= ("":preds) |> length & maximum	:: Int
+		concl'	= sc opts concl
+		lineL	= max predsW (length concl')
+		name	= if showNames options then " " ++ nameParens options (ruleName proverRule) else ""
+		lineL'	= lineL - if 3 * length name <= lineL && predsW == lineL then length name else 0
+		line	= replicate lineL' '-'		:: String
+		line'	= line ++ name
+		in
+		(preds ++ [line', concl'])
 
 ------------------------------------- FULL TYPESYSTEM FILE -----------------------------------
 
+header	:: String -> String -> Char -> String
+header prefix str chr
+	= let	title	= " "++str++" "
+		line	= title |> const chr
+		in
+		prefix++title++"\n"++prefix++line
+
+header' s
+	= header "" s '='
+
+
 instance ToString TypeSystem where
-	toParsable (TypeSystem name syntax functions relations rules)
-		= [ "# "++name, " SYNTAX \n========", toParsable syntax, show functions, show relations, show rules]
+	toParsable ts@(TypeSystem name syntax functions relations rules)
+		= 	[ header " " ("# "++name++" #") '#'
+			, header' "Syntax", toParsable syntax
+			, header' "Functions", 
+				functions & M.toList |> (\(nm, func) -> toParsable' (nm, 24 :: Int) func) & intercalate "\n\n"
+			, header' "Relations" , toParsable' "\n" relations
+			, header' "Rules", toParsable' ts rules]
 			& intercalate "\n\n"
+	toCoParsable 
+		= toParsable 
+	debug		= show
+
+
+
 
 
 
