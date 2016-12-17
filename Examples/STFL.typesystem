@@ -50,9 +50,6 @@ cod 		: type -> type
 cod("(" T ")")	= "(" cod(T) ")"
 cod(T1 "->" T2) = T2
 
-equate		: type -> type -> type
-equate(T, T) 	= T
-
 # wrappers for builtin functions, as we can't type within a builtin
 plus		: number -> e -> e
 plus(e1, e2)	= !plus((e1:number), e2)
@@ -78,145 +75,145 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Rules
 =======
 
-e0 → e1
+ e0 → e1
 -----------------			[EvalCtx]
-e[e0] → e[e1]
+ e[e0] → e[e1]
 
 
-n1:number	n2:number
+ n1:number	n2:number
 ------------------------------------	[EvalPlus]
-(n1:number) "+" n2 → plus(n1, n2)
+ (n1:number) "+" n2 → plus(n1, n2)
 
 
 
-b:bool
+ b:bool
 --------------------			[EvalAscrBool]
-b "::" "Bool" → b
+ b "::" "Bool" → b
 
-i:number
+ i:number
 -------------------			[EvalCastInt]
-i "::" "Int" → i
+ i "::" "Int" → i
 
 
 ----------------			[EvalParens]
-"(" e ")" → e
+ "(" e ")" → e
 
 
 ---------------------------------------		[EvalIfTrue]
-"If" "True" "Then" e1 "Else" e2 → e1
+ "If" "True" "Then" e1 "Else" e2 → e1
 
 
 ----------------------------------------	[EvalIfFalse]
-"If" "False" "Then" e1 "Else" e2 → e2
+ "If" "False" "Then" e1 "Else" e2 → e2
 
 
 ------------------------------------------------------------	[EvalLamApp]
-("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
+ ("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
 
 
 
 
 
 
-b:bool
+ b:bool
 -------			[CanonBool]
-(✓) b
+ (✓) b
 
-n:number
+ n:number
 ---------		[CanonNumber]
-(✓) n
+ (✓) n
 
 
 
-(✓) e
+ (✓) e
 --------			[BigStepCanon]
-e →* e
+ e →* e
 
-e0 → e1	e1 →* e2
+ e0 → e1	e1 →* e2
 -------------------------	[BigStepRec]
-e0 →* e2
+ e0 →* e2
 
-e0 → e1	(✓) e1
+ e0 → e1	(✓) e1
 ------------------------	[BigStepBase]
-e0 →* e1
+ e0 →* e1
 
 
 
 
 
-"{}" ⊢ e, T  
+ "{}" ⊢ e, T  
 -----------	[TEmptyCtx]
-e :: T
+ e :: T
 
 
 
 
-n:number
+ n:number
 ---------------		[Tnumber] 
-Γ ⊢ n, "Int"
+ Γ ⊢ n, "Int"
 
 
-b:bool
+ b:bool
 ----------------	[Tbool]
-Γ ⊢ b, "Bool"
+ Γ ⊢ b, "Bool"
 
 
 
-Γ ⊢ e, T
+ Γ ⊢ e, T
 -------------------	[TParens]
-Γ ⊢ "(" e ")", T
+ Γ ⊢ "(" e ")", T
 
 
-Γ ⊢ e, T
+ Γ ⊢ e, T
 ------------------	[TAscr]
-Γ ⊢ e "::" T, T
+ Γ ⊢ e "::" T, T
 
 
 
 --------------------	[Tx]
-Γ[ x ":" T ] ⊢ x, T
+ Γ[ x ":" T ] ⊢ x, T
 
 
-Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
 ------------------------------				[TPlus]
-Γ ⊢ n1 "+" n2, "Int"
+ Γ ⊢ n1 "+" n2, "Int"
 
 
-Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
 ------------------------------------------		[TIf]
-Γ ⊢ "If" c "Then" e1 "Else" e2, T
+ Γ ⊢ "If" c "Then" e1 "Else" e2, T
 
 
 
-((x ":" T1) "," Γ) ⊢ e, T2
+ ((x ":" T1) "," Γ) ⊢ e, T2
 -------------------------------------------------------	[TLambda]
-Γ ⊢ "(" "\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
 
 
 
-Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
 ---------------------------------------------------	[Tapp]
-Γ ⊢ e1 e2, cod(Tfunc)
+ Γ ⊢ e1 e2, cod(Tfunc)
 
 
 
-T1 = T2 : type
+ T1 = T2 : type
 --------------- [EqBase]
-T1 == T2
+ T1 == T2
 
 
-T1 == T2
+ T1 == T2
 ----------------- [EqParL]
-"(" T1 ")" == T2
+ "(" T1 ")" == T2
 
-T1 == T2
+ T1 == T2
 ----------------- [EqParR]
-T1 == "(" T2 ")"
+ T1 == "(" T2 ")"
 
 
-Ta1 == Ta2	Tb1 == Tb2
---------------------------------- [EqArrow]
-Ta1 "->" Tb1   ==   Ta2 "->" Tb2
+ Ta1 == Ta2	Tb1 == Tb2
+---------------------------------- [EqArrow]
+ Ta1 "->" Tb1   ==   Ta2 "->" Tb2
 
 
 # Properties

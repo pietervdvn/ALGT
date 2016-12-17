@@ -1,7 +1,18 @@
 
-Gradualize rule "type", add "?"
 
- Overridden functions
+Gradualize rule "type", add "?"
+Insert casts for "e" with "insertCast"
+
+
+ Functions
+===========
+
+insertCast	: type -> e -> e
+insertCast(T, e)= e "::" T
+
+
+
+ Overridden Functions
 ======================
 
 dom		: type -> type
@@ -11,4 +22,10 @@ dom("?")	= "?"
 cod		: type -> type
 cod(T1 -> T2)	= T2
 cod("?")	= "?"
+
+
+ Relations
+===========
+
+Rename relation "==" to "~", Pronounced as "is consistent"
 
