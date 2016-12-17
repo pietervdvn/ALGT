@@ -70,14 +70,6 @@ relationDecl r	= do	char '('
 		
 ------------------------ full file -----------------------------
 
-header hdr
-	= do	ws
-		string hdr
-		ws
-		char '\n'
-		many1 $ char '='
-		char '\n'
-
 typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile name
 	= do	nls
@@ -88,16 +80,13 @@ typeSystemFile name
 
 		nls1
 		header "Functions"
- 		metaFuncs 	<- parseFunctions syntax
+ 		metaFuncs 	<- parseFunctions Nothing syntax
 
 		nls
 		header "Relations"
 		nls1
 		rels	<- many $ try (nls *> relationDecl syntax <* nls)
 
-		checkNoDuplicates (rels |> relSymbol) (\dups -> "Multiple relations declared with the symbol "++commas dups)
-			& either error return
-		
 		header "Rules"
 		nls1
 		rules	<- parseRules (syntax, rels, metaFuncs)

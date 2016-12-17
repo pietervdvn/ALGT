@@ -20,6 +20,7 @@ whitespace = [' ','\t']
 builtinRelations	
 	= [(":", "parsetree generated with"), ("=", "equals")
 	  , ("=>", "implies")
+	  , ("=", "equals")
 	  , (",","argument separation")
 	  , ("[", "Context open")
 	  , ("]", "Context close")
@@ -61,11 +62,19 @@ ws'	= many (char ' ')
 
 colon	= ws *> char ':' <* ws
 
-nl		= char '\n' <|> (try commentLine >> ws >> char '\n')
+nl		= try (ws >> char '\n') <|> char '\n' <|> (try commentLine >> ws >> char '\n')
 nls1		= many1 nl
 nls		= many nl
 
 commentLine	= ws >> char '#' >> many (noneOf "\n") 
+
+header hdr
+	= do	ws
+		string hdr
+		ws
+		char '\n'
+		many1 $ char '='
+		char '\n'
 
 
 ----------------------- Combinators --------------------------------------
@@ -127,4 +136,5 @@ negNumber	:: Parser u Int
 negNumber	= do	sign	<- try ((char '-' <* ws) >> return negate) <|> return id
 			i	<- number
 			return $ sign i
+
 

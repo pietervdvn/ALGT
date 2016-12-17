@@ -34,19 +34,20 @@ data SFunction = SFunction {sfName :: Name, sfType :: Type, sfBody :: [SClause]}
 	deriving (Show, Ord, Eq)
 
 
-parseFunctions	:: Syntax -> Parser u Functions
-parseFunctions bnfs
+parseFunctions	:: Maybe (Map Name Type) -> Syntax -> Parser u Functions
+parseFunctions typings bnfs
 	= do	nls
 		funcs	<- many $ try (parseFunction bnfs)
-		typeFunctions bnfs funcs & either error return
+		typeFunctions typings bnfs funcs & either error return
 
 
 
 
-typeFunctions	:: Syntax -> [SFunction] -> Either String Functions
-typeFunctions bnfs funcs
+typeFunctions	:: Maybe (Map Name Type) -> Syntax -> [SFunction] -> Either String Functions
+typeFunctions alreadyExistingTyping bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
-	  do	let typings	= funcs |> (sfName &&& sfType) & M.fromList
+	  do	let typings'	= funcs |> (sfName &&& sfType) & M.fromList	:: Map Name Type
+		let typings	= maybe typings' (M.union typings') alreadyExistingTyping
 		typedFuncs	<- funcs |+> typeFunction bnfs typings 
 		checkNoDuplicates (typedFuncs |> fst) (\dups -> "The function "++showComma dups++" was declared multiple times")
 		return $ M.fromList typedFuncs
@@ -56,6 +57,7 @@ neatFuncs funcs
 	= funcs |> (\f -> sfName f ++ " : " ++ show (sfType f))
 		|> ("    " ++) & unlines
 
+-- TODO first detect non-existing function names
 typeFunction	:: Syntax -> Map Name Type -> SFunction -> Either String (Name, Function)
 typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
