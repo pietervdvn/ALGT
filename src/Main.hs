@@ -2,7 +2,8 @@ module Main where
 
 import System.Environment
 
-import Utils
+import Utils.Utils
+import Utils.ArgumentParser
 
 import Control.Monad
 
@@ -25,7 +26,6 @@ import Options.Applicative
 import Data.Monoid ((<>))
 import Data.Maybe (fromJust, isJust)
 
-import ArgumentParser
 
 version	= [0,0,3]
 

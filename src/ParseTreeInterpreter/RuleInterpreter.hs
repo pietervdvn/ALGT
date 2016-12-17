@@ -5,7 +5,7 @@ This module defines an evaluator for rules
 -}
 
 
-import Utils
+import Utils.Utils
 import TypeSystem
 
 import ParseTreeInterpreter.FunctionInterpreter

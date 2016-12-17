@@ -1,4 +1,4 @@
-module Test where
+module Utils.Test where
 
 import AbstractInterpreter.Test
 import Main

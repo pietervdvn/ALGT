@@ -3,7 +3,7 @@ module AbstractInterpreter.AbstractParseTree where
 {-
 This module defines an abstract type tree
 -}
-import Utils
+import Utils.Utils
 import TypeSystem
 
 import Data.Map
@@ -31,24 +31,25 @@ _typeOf (ConcreteIdentifier mi _)	= Right mi
 _typeOf (ConcreteInt mi _)		= Right mi
 _typeOf (AsSeq mi _)			= Right mi
 
-type AbstractSet	= (BNFRules, AbstractSet')
+type AbstractSet	= (Syntax, AbstractSet')
 
 typeOf' as	= typeOf $ snd as
 
-generateAbstractSet	:: BNFRules -> Name -> TypeName -> AbstractSet
+generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
 generateAbstractSet r n tm
 			= generateAbstractSet' r (tm, -1) n (BNFRuleCall tm)
 
 
-generateAbstractSet' 			:: BNFRules -> (TypeName, Int) -> Name -> BNFAST -> AbstractSet
-generateAbstractSet' r mi name bnfAst	= (r, _generateAbstractSet' r mi name bnfAst)
+generateAbstractSet' 			:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet
+generateAbstractSet' r mi name bnf	= (r, _generateAbstractSet' r mi name bnf)
 
-_generateAbstractSet'			:: BNFRules -> (TypeName, Int) -> Name -> BNFAST -> AbstractSet'
+_generateAbstractSet'			:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet'
 _generateAbstractSet' r mi n (Literal s)	= ConcreteLiteral mi s
 _generateAbstractSet' r mi n Identifier		= ConcreteIdentifier mi n
 _generateAbstractSet' r mi n Number		= ConcreteInt mi n
 _generateAbstractSet' r mi n (BNFRuleCall tp)
-	| tp `member` r	= EveryPossible mi n tp
+	| tp `member` (getBNF r)
+			= EveryPossible mi n tp
 	| otherwise	= error $ "No bnf-rule with the name " ++ tp
 _generateAbstractSet' r mi n (BNFSeq bnfs)
 			= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet' r mi (n++":"++show i) bnf) & AsSeq mi
@@ -57,9 +58,9 @@ _generateAbstractSet' r mi n (BNFSeq bnfs)
 unfold		:: AbstractSet -> [AbstractSet]
 unfold (r, as)	= zip (repeat r) (unfold' r as)
 
-unfold'		:: BNFRules -> AbstractSet' ->  [AbstractSet']
+unfold'		:: Syntax -> AbstractSet' ->  [AbstractSet']
 unfold' r (EveryPossible _ n e)
-		= let	bnfs	= r ! e
+		= let	bnfs	= getBNF r ! e
 		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet' r (e, i) (n++"/"++show i) bnf)
 		  in choices & nub
 unfold' r as	= [as]

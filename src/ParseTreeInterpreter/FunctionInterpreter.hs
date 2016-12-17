@@ -4,7 +4,7 @@ module ParseTreeInterpreter.FunctionInterpreter where
 This module defines an interpreter for functions. 
 -}
 
-import Utils
+import Utils.Utils
 import TypeSystem
 
 import Control.Monad
@@ -30,7 +30,7 @@ evalExpr ts vars e
 
 type VariableAssignments
 		= Map Name (ParseTree, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
-data Ctx	= Ctx { ctx_syntax	:: BNFRules,		-- Needed for typecasts
+data Ctx	= Ctx { ctx_syntax	:: Syntax,		-- Needed for typecasts
 			ctx_functions 	:: Map Name Function,
 			ctx_vars	:: VariableAssignments,
 			ctx_stack	:: [(Name, [ParseTree])] -- only used for errors
@@ -81,7 +81,7 @@ patternMatch pattern value
 
 The extra function (VariableAssignments -> Bool) injects a test, to test different evaluation contexts
 -}
-patternMatch	:: BNFRules -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Either String VariableAssignments
+patternMatch	:: Syntax -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Either String VariableAssignments
 patternMatch _ _ (MVar _ v) expr
 	= return $ M.singleton v (expr, Nothing)
 patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
@@ -117,13 +117,13 @@ patternMatch _ _ pat expr
 	= Left $ "Could not match "++show pat++" <~ "++showPt' expr
 
 
-patternMatchContxt	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
+patternMatchContxt	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
 patternMatchContxt r extraCheck evalCtx fullContext@(PtSeq _ values)
 	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, [Int]) -> Either String VariableAssignments
 		depthFirstSearch' matchMaker [] values
 
 
-makeMatch	:: BNFRules -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, [Int]) -> Either String VariableAssignments
+makeMatch	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, [Int]) -> Either String VariableAssignments
 makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
 		holeAssgn	<- patternMatch r extraCheck holePattern holeFiller

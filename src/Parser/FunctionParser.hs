@@ -5,7 +5,7 @@ This module parses metafunctions and then passes them through a type checker.
 These have a different parse tree, as we can't parse that in one pass 
 -}
 
-import Utils
+import Utils.Utils
 import Parser.ParsingUtils
 import Parser.ExpressionParser
 
@@ -34,7 +34,7 @@ data SFunction = SFunction {sf_name :: Name, sf_type :: Type, sf_body :: [SClaus
 	deriving (Show, Ord, Eq)
 
 
-parseFunctions	:: BNFRules -> Parser u Functions
+parseFunctions	:: Syntax -> Parser u Functions
 parseFunctions bnfs
 	= do	nls
 		funcs	<- many $ try (parseFunction bnfs)
@@ -43,7 +43,7 @@ parseFunctions bnfs
 
 
 
-typeFunctions	:: BNFRules -> [SFunction] -> Either String Functions
+typeFunctions	:: Syntax -> [SFunction] -> Either String Functions
 typeFunctions bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
 	  do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
@@ -56,14 +56,14 @@ neatFuncs funcs
 	= funcs |> (\f -> sf_name f ++ " : " ++ show (sf_type f))
 		|> ("    " ++) & unlines
 
-typeFunction	:: BNFRules -> Map Name Type -> SFunction -> Either String (Name, Function)
+typeFunction	:: Syntax -> Map Name Type -> SFunction -> Either String (Name, Function)
 typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
 	  do 	clauses	<- body |+> typeClause bnfs typings tp
 		clauses |+> (\cl -> assert Left (equivalents bnfs (typesOf cl) tp) $ "Clause of type "++show (typesOf cl)++" does not match the expected type of "++show tp++"\n"++show cl)
 		return (nm, MFunction tp (clauses ++ [undefinedClause tp nm]))
 
-typeClause	:: BNFRules -> Map Name Type -> Type -> SClause -> Either String Clause
+typeClause	:: Syntax -> Map Name Type -> Type -> SClause -> Either String Clause
 typeClause bnfs funcs tps sc@(SClause patterns expr)
 	= inMsg ("In clause "++show sc) $
           do	let argTps	= init tps
@@ -97,7 +97,7 @@ undefinedClause tp nm
 
 ---------------------------- PARSING OF A SINGLE FUNCTION ------------------------------
 
-parseFunction	:: BNFRules -> Parser u SFunction
+parseFunction	:: Syntax -> Parser u SFunction
 parseFunction bnfs	
 	= do	(nm, tps)	<- metaSignature bnfs
 		nls
@@ -115,7 +115,7 @@ parseType bnfTypes
 		<|>	(choose bnfTypes |> (:[]))
 				
 
-metaSignature	:: BNFRules -> Parser u (Name, Type)
+metaSignature	:: Syntax -> Parser u (Name, Type)
 metaSignature bnfs
 	= do	ws
 		nm	<- identifier

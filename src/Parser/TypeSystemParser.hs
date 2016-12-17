@@ -4,7 +4,7 @@ module Parser.TypeSystemParser where
 This module parses typesystem-files
 -}
 
-import Utils
+import Utils.Utils
 import Parser.ParsingUtils
 
 import Control.Arrow ((&&&))
@@ -41,7 +41,7 @@ parseTypeSystem input file
 
 ---------------------- Relation ---------------
 
-typeMode	:: BNFRules -> Parser u (TypeName, Mode)
+typeMode	:: Syntax -> Parser u (TypeName, Mode)
 typeMode rules	= do	ws
 			t	<- choose $ bnfNames rules
 			ws
@@ -51,7 +51,7 @@ typeMode rules	= do	ws
 	
 
 
-relationDecl	:: BNFRules -> Parser u Relation
+relationDecl	:: Syntax -> Parser u Relation
 relationDecl r	= do	char '('
 			symbol	<- many $ noneOf ")"
 			char ')'
@@ -82,29 +82,29 @@ typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile name
 	= do	nls
 		header "Syntax"
-		bnfs'	<- (many $ try (nls >> bnfRule)) 
+		bnfs	<- (many $ try (nls >> bnfRule)) 
 
-		bnfs	<- makeBNFRules bnfs' & either error return
+		syntax	<- makeSyntax bnfs & either error return
 
 		nls1
 		header "Functions"
- 		metaFuncs 	<- parseFunctions bnfs
+ 		metaFuncs 	<- parseFunctions syntax
 
 		nls
 		header "Relations"
 		nls1
-		rels	<- many $ try (nls *> relationDecl bnfs <* nls)
+		rels	<- many $ try (nls *> relationDecl syntax <* nls)
 
 		checkNoDuplicates (rels |> relSymbol) (\dups -> "Multiple relations declared with the symbol "++intercalate ", " dups)
 			& either error return
 		
 		header "Rules"
 		nls1
-		rules	<- parseRules (bnfs, rels, metaFuncs)
+		rules	<- parseRules (syntax, rels, metaFuncs)
 		eof
 		checkNoDuplicates (rules |> ruleName) (\dups -> "Multiple rules have the name "++showComma dups)
 			& either error return
 
 		let sortedRules = rules |> ((\r -> r & ruleConcl & conclusionRel & relSymbol) &&& id) & merge & M.fromList
-		return $ TypeSystem name bnfs metaFuncs rels sortedRules
+		return $ TypeSystem name syntax metaFuncs rels sortedRules
 

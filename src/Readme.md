@@ -16,6 +16,7 @@ Module overview
 ---------------
 
 `TypeSystem.hs` is the most important module, as it contains all data structures. Go read it first.
+`Utils/*` contains all kind of utils (a `Utils.hs`, argument parsing, tests, ...)
 `Parser/*` contains the parsers, built on parsec. Some notable parsers:
 `Parser/ExpressionParser` contains some extra typing code, which is notable too. Every parser using expressions, uses the same two-stepped technique, borrowing the 'typeAs' from here
 `Parser/TargetLanguageParser` will hapilly parse any file you give it, according to a given BNF.

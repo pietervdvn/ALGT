@@ -1,0 +1,48 @@
+ {-# LANGUAGE FlexibleInstances #-}
+ {-# LANGUAGE MultiParamTypeClasses #-}
+module Utils.ToString where
+
+{-
+
+Haskell has already a built-in show; but we need more. 
+We often want a data representation (often handily available through `deriving Show`), but we often want fancy representations, in multiple flavours.
+
+A flavour could be that we need some more data to accuratly show the data, a version for 'native' (e.g. in the target language) or as expression (in the meta-stuff, e.g. proofs)
+
+These are presented here.
+
+-}
+
+class (Show a) => ToString a where
+	-- show gives us the default haskell representation
+
+
+	-- how you would write it in the original data file
+	-- e.g. a parsetree as if it was target language, 
+	-- a meta-expression as if it came from a typesystem file
+	toParsable	:: a -> String
+	toParsable	= show
+
+	-- Show as if this were in the opposite file
+	-- e.g. a parsetree as if it was a meta-expression in a typesystem file
+	-- a meta-expression as if it was target language. This might not always be possible
+	toCoParsable	:: a -> String
+	toCoParsable	= show
+	
+	-- can contain more info, e.g. type info of the expression
+	debug	:: a -> String
+	debug	= show
+
+
+class ToString' opts a where
+	show'		:: opts -> a -> String
+	toParsable'	:: opts -> a -> String
+	toCoParsable'	:: opts -> a -> String
+	debug'		:: opts -> a -> String
+
+
+instance ToString a => ToString' () a where
+	show'		= const show 
+	toParsable'	= const toParsable
+	toCoParsable'	= const toCoParsable
+	debug'		= const debug

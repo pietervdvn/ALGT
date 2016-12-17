@@ -8,7 +8,7 @@ In this approach, we tokenize first to a tree, and then try to match a rule with
 import Parser.ParsingUtils
 import Parser.BNFParser
 import TypeSystem
-import Utils
+import Utils.Utils
 
 import Text.Parsec
 import Data.Maybe
@@ -49,7 +49,7 @@ instance Show MEParseTree where
 {- Given a context (knwon function typings + bnf syntax), given a bnf rule (as type),
 the parsetree is interpreted/typed following the bnf syntax.
 -}
-typeAs		:: Map Name Type -> BNFRules -> TypeName -> MEParseTree -> Either String Expression
+typeAs		:: Map Name Type -> Syntax -> TypeName -> MEParseTree -> Either String Expression
 typeAs functions rules ruleName pt
 	= inMsg ("While typing "++show pt++" against "++ruleName) $ 
 		matchTyping functions rules (BNFRuleCall ruleName) (ruleName, error "Should not be used") pt
@@ -59,7 +59,7 @@ typeAs functions rules ruleName pt
 
 
 -- we compare the expected parse type (known via the BNF) and the expression we got
-matchTyping	:: Map Name Type -> BNFRules -> BNFAST -> (TypeName, Int) -> MEParseTree -> Either String Expression
+matchTyping	:: Map Name Type -> Syntax -> BNF -> (TypeName, Int) -> MEParseTree -> Either String Expression
 matchTyping f r (BNFRuleCall ruleCall) tp (MePtAscription as expr)
  | not (alwaysIsA r as ruleCall)	
 			= Left $ "Invalid cast: "++as++" is not a "++ruleCall
@@ -99,17 +99,15 @@ matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
 
 matchTyping _ _ _ _ (MePtCall fNm True args)
  = return $ MCall "" fNm True (args |> dynamicTranslate "")
-matchTyping functions bnfRules (BNFRuleCall bnfNm) _ (MePtCall fNm False args)
+matchTyping functions syntax@(BNFRules rules) (BNFRuleCall ruleName) _ (MePtCall fNm False args)
  | fNm `M.notMember` functions	= Left $ "Unknwown function: "++fNm
- | bnfNm `M.notMember` bnfRules	= Left $ "Unknwown type/bnfrule: "++bnfNm
- | otherwise		
-			= do	let fType		= functions M.! fNm
+ | ruleName `M.notMember` rules	= Left $ "Unknwown type/bnfrule: "++ruleName
+ | otherwise		= do	let fType		= functions M.! fNm
 				let argTypes		= init fType
 				let returnTyp		= last fType
-				if not (equivalent bnfRules returnTyp bnfNm)
-					then Left ("Actual type "++show returnTyp ++" does not match expected type "++show bnfNm)
-					else return ()
-				args'			<- zip args argTypes |> (\(arg, tp) -> typeAs functions bnfRules tp arg) & allRight
+				assert Left (equivalent syntax returnTyp ruleName) $
+					"Actual type "++show returnTyp ++" does not match expected type "++show ruleName
+				args'			<- zip args argTypes |> (\(arg, tp) -> typeAs functions syntax tp arg) & allRight
 				return $ MCall returnTyp fNm False args'
 matchTyping _ _ bnf _ pt@(MePtCall _ _ _) 
 			= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show pt
@@ -125,18 +123,18 @@ matchTyping _ _ Number tp (MePtToken s)
 matchTyping _ _ Number tp (MePtInt i)
 			= return $ MParseTree $ MInt tp i
 
-matchTyping f r (BNFSeq bnfs) tp (MePtSeq pts)
+matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
  | length bnfs == length pts
-			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f r bnf tp pt) 
+			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f s bnf tp pt) 
 				joined & allRight |> MSeq tp
  | otherwise		= Left $ "Seq could not match " ++ show bnfs ++ " ~ " ++ show pts 
 
 
-matchTyping f r (BNFRuleCall nm) _ pt
- | nm `M.member` r
-		= do	let bnfASTs	= r M.! nm
+matchTyping f syntax@(BNFRules rules) (BNFRuleCall nm) _ pt
+ | nm `M.member` rules
+		= do	let bnfASTs	= rules M.! nm
 			let oneOption i bnf	= inMsg ("Trying to match "++nm++"." ++ show i++" ("++show bnf++")") $ 
-							matchTyping f r bnf (nm, i) pt
+							matchTyping f syntax bnf (nm, i) pt
 			zip [0..] bnfASTs |> uncurry oneOption & firstRight
  | otherwise	= Left $ "No bnf rule with name " ++ nm
 matchTyping _ _ bnf _ pt

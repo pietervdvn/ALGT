@@ -4,7 +4,7 @@ module Parser.BNFParser where
 This module parses the syntax part of a typesystem to a BNF-AST
 -}
 
-import Utils
+import Utils.Utils
 import Parser.ParsingUtils
 
 import Control.Arrow ((&&&))

@@ -1,4 +1,4 @@
-module Utils where
+module Utils.Utils where
 
 {-
 Some utility functions, often used to program 'left to right'

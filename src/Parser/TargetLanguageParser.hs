@@ -4,7 +4,7 @@ module Parser.TargetLanguageParser where
 This module interprets a BNF-AST datastructure to parse the target language to a Parsetree
 -}
 
-import Utils
+import Utils.Utils
 import Parser.ParsingUtils
 
 import Control.Arrow ((&&&))
@@ -19,17 +19,17 @@ import qualified Data.Map as M
 
 ------------------------ Syntax: Actually parsed stuff -------------------------
 
-parseRule	:: BNFRules -> Name -> Parser u ParseTree
-parseRule rules nm
+parseRule	:: Syntax -> Name -> Parser u ParseTree
+parseRule bnf@(BNFRules rules) nm
  | nm `M.notMember` rules	
-		= fail $ "The BNF-syntax-rule "++nm++" is not defined in the syntax of your typesystem. Try one of "++show (bnfNames rules)
+		= fail $ "The BNF-syntax-rule "++nm++" is not defined in the syntax of your typesystem. Try one of "++show (bnfNames bnf)
  | otherwise	= do	let choices	= zip (rules M.! nm) [0..]
-			parseChoice rules nm choices
+			parseChoice bnf nm choices
 			
 
 
 
-parseChoice	:: BNFRules -> Name -> [(BNFAST, Int)] -> Parser u ParseTree
+parseChoice	:: Syntax -> Name -> [(BNF, Int)] -> Parser u ParseTree
 parseChoice _ name []
 	= fail $ "Could not parse expression of the form "++name
 parseChoice rules name ((bnf,i): rest)
@@ -39,11 +39,11 @@ parseChoice rules name ((bnf,i): rest)
 
 
 
-parsePart'	:: BNFRules -> (TypeName, Int) -> BNFAST -> Parser u ParseTree
+parsePart'	:: Syntax -> (TypeName, Int) -> BNF -> Parser u ParseTree
 parsePart' rules pt bnf
 		= ws >> parsePart rules pt bnf
 
-parsePart	:: BNFRules -> (TypeName, Int) -> BNFAST -> Parser u ParseTree
+parsePart	:: Syntax -> (TypeName, Int) -> BNF -> Parser u ParseTree
 parsePart _ tp (Literal str)
 		= string str |> MLiteral tp
 parsePart _ tp Identifier

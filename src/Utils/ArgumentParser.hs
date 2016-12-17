@@ -1,10 +1,10 @@
-module ArgumentParser where
+module Utils.ArgumentParser where
 
 {-
 This module defines 
 -}
 
-import Utils
+import Utils.Utils
 import TypeSystem
 import Options.Applicative
 import Data.Monoid ((<>))

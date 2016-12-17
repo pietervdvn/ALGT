@@ -1,11 +1,13 @@
-module Tests where
+module Utils.Tests where
 
 {-
 This module defines some tests
 -}
 
-import Utils
 import TypeSystem
+import Utils.Utils
+import Utils.TypeSystemToString
+import Utils.ToString
 
 import Data.Map
 

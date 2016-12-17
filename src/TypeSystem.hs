@@ -13,7 +13,7 @@ ls |+> f	=== mapM f a
 
 -}
 
-import Utils
+import Utils.Utils
 
 import Data.List (intersperse, intercalate)
 
@@ -36,31 +36,91 @@ import Graphs.SearchCycles
 
 {- Syntax is described in a Backus-Naur format, a simple naive parser is constructed from it. -}
 
-data BNFAST 	= Literal String	-- Literally parse 'String'
+data BNF 	= Literal String	-- Literally parse 'String'
 		| Identifier		-- Parse an identifier
 		| Number		-- Parse a number
 		| BNFRuleCall Name	-- Parse the rule with the given name
-		| BNFSeq [BNFAST]	-- Sequence of parts
+		| BNFSeq [BNF]	-- Sequence of parts
 	deriving (Show, Eq)
 
 
-fromSingle	:: BNFAST -> Maybe BNFAST
+fromSingle	:: BNF -> Maybe BNF
 fromSingle (BNFSeq [bnf])	= Just bnf
 fromSingle (BNFSeq _)		= Nothing
 fromSingle bnf			= Just bnf
 
 
-fromRuleCall	:: BNFAST -> Maybe Name
+fromRuleCall	:: BNF -> Maybe Name
 fromRuleCall (BNFRuleCall nm)	= Just nm
 fromRuleCall _			= Nothing
 
+
+calledRules	:: BNF -> [TypeName]
+calledRules (BNFRuleCall nm)	= [nm]
+calledRules (BNFSeq bnfs)	= bnfs >>= calledRules
+calledRules _			= []
+
+
+-- First call, without consumption of a character
+firstCall	:: BNF -> Maybe TypeName
+firstCall (BNFRuleCall nm)	= Just nm
+firstCall (BNFSeq (ast:_))	= firstCall ast
+firstCall _			= Nothing
+
+
+
+
+
+
+
+
+
 {-Represents a syntax: the name of the rule + possible parseways -}
-type BNFRules	= Map TypeName [BNFAST]
+newtype Syntax	= BNFRules { getBNF :: Map TypeName [BNF]}
+	deriving (Show)
+
+
+-- constructor, with checks
+makeSyntax	:: [(Name, [BNF])] -> Either String Syntax
+makeSyntax vals
+	= do	let bnfr	= BNFRules $ M.fromList vals
+		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
+			checkBNF bnfr] & allRight_
+		return $ bnfr
+
+
+
+
+checkBNF	:: Syntax -> Either String ()
+checkBNF bnfs	= inMsg ("While checking the syntax:") $
+		  	allRight_ (checkLeftRecursion bnfs:(bnfs & getBNF & M.toList |> checkUnknownRuleCall bnfs))
+
+checkUnknownRuleCall	:: Syntax -> (Name, [BNF]) -> Either String ()
+checkUnknownRuleCall bnfs' (n, asts)
+	= inMsg ("While checking rule "++n++" for unknowns") $
+	  do	let bnfs	= getBNF bnfs'
+		mapi asts |> (\(i, ast) ->
+			inMsg ("While checking choice "++show i++", namely "++show ast) $
+			do	let unknowns = calledRules ast & filter (flip M.notMember bnfs) 
+				assert Left (null unknowns) $ "Unknown type "++showComma unknowns
+			) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs')) >> return ()
+		
+			
+
+checkLeftRecursion	:: Syntax -> Either String ()
+checkLeftRecursion bnfs
+	= do	let cycles	= leftRecursions bnfs
+		let msg cycle	= cycle & intercalate " -> "
+		let msgs	= cycles |> msg |> ("    "++) & unlines
+		assert Left (null cycles) ("Potential infinite left recursion detected in the syntax. Left cycles are:\n"++msgs)
+
+
+
 
 
 -- The sort is added to make sure the parser first tries "abc", before trying "a". Otherwise, "a" is parsed with an "abc" resting
-bnfNames	:: BNFRules -> [Name]
-bnfNames r	=  M.keys r & sortOn length & reverse
+bnfNames	:: Syntax -> [Name]
+bnfNames r	=  r & getBNF & M.keys & sortOn length & reverse
 
 
 
@@ -79,13 +139,13 @@ b	::= "X" | a
 reachableVia "a" --> [a, b]
 
 -}
-reachableVia	:: BNFRules -> TypeName -> [TypeName]
+reachableVia	:: Syntax -> TypeName -> [TypeName]
 reachableVia rules root
 	= _reachableVia rules [] root
 
-_reachableVia	:: BNFRules -> [TypeName] -> TypeName -> [TypeName]
+_reachableVia	:: Syntax -> [TypeName] -> TypeName -> [TypeName]
 _reachableVia r alreadyVisited root
-	= let	called	= r M.! root >>= calledRules	:: [TypeName]
+	= let	called	= r & getBNF & (M.! root) >>= calledRules	:: [TypeName]
 		new	= called & filter (`notElem` alreadyVisited)	:: [TypeName]
 		visitd'	= root:alreadyVisited
 		new'	= new >>= _reachableVia r visitd'
@@ -93,56 +153,16 @@ _reachableVia r alreadyVisited root
 		nub (visitd' ++ new')
 
 
-calledRules	:: BNFAST -> [TypeName]
-calledRules (BNFRuleCall nm)	= [nm]
-calledRules (BNFSeq bnfs)	= bnfs >>= calledRules
-calledRules _			= []
-
-
--- First call, without consumption of a character
-firstCall	:: BNFAST -> Maybe TypeName
-firstCall (BNFRuleCall nm)	= Just nm
-firstCall (BNFSeq (ast:_))	= firstCall ast
-firstCall _			= Nothing
-
-firstCalls	:: BNFRules -> Map TypeName (Set TypeName)
+firstCalls	:: Syntax -> Map TypeName (Set TypeName)
 firstCalls rules
-	= rules ||>> firstCall |> catMaybes |> S.fromList
+	= rules & getBNF ||>> firstCall |> catMaybes |> S.fromList
 
-leftRecursions	:: BNFRules -> [[TypeName]]
+leftRecursions	:: Syntax -> [[TypeName]]
 leftRecursions	= cleanCycles . firstCalls
 
 
-makeBNFRules	:: [(Name, [BNFAST])] -> Either String BNFRules
-makeBNFRules vals
-	= do	let bnfr	= M.fromList vals
-	
-		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
-			checkBNF bnfr] & allRight_
-		return bnfr
 
 
-checkBNF	:: BNFRules -> Either String ()
-checkBNF bnfs	= inMsg ("While checking the syntax:") $
-		  	allRight_ (checkLeftRecursion bnfs:(bnfs & M.toList |> checkUnknownRuleCall bnfs))
-
-checkUnknownRuleCall	:: BNFRules -> (Name, [BNFAST]) -> Either String ()
-checkUnknownRuleCall bnfs (n, asts)
-	= inMsg ("While checking rule "++n++" for unknowns") $
-	  mapi asts |> (\(i, ast) ->
-		inMsg ("While checking choice "++show i++", namely "++show ast) $
-		do	let unknowns = calledRules ast & filter (flip M.notMember bnfs) 
-			assert Left (null unknowns) $ "Unknown type "++showComma unknowns
-		) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs)) >> return ()
-		
-			
-
-checkLeftRecursion	:: BNFRules -> Either String ()
-checkLeftRecursion bnfs
-	= do	let cycles	= leftRecursions bnfs
-		let msg cycle	= cycle & intercalate " -> "
-		let msgs	= cycles |> msg |> ("    "++) & unlines
-		assert Left (null cycles) ("Potential infinite left recursion detected in the syntax. Left cycles are:\n"++msgs)
 
 {-
 Consider following BNF:
@@ -156,8 +176,8 @@ alwaysIsA searches these relations:
 alwaysIsA rules 'y' 'x'	--> True
 
 -}
-alwaysIsA	:: BNFRules -> TypeName -> TypeName -> Bool
-alwaysIsA rules sub super
+alwaysIsA	:: Syntax -> TypeName -> TypeName -> Bool
+alwaysIsA bnf@(BNFRules rules) sub super
  | super == "" || sub == ""
 		= True	-- The empty string is used in dynamic cases, thus is equivalent to everything
  | sub == super	= True
@@ -177,16 +197,16 @@ alwaysIsA rules sub super
 		subR	= (rules M.! sub)
 		-- and has exactly one choice
 		equalRules	= length subR == 1 && head subR == BNFRuleCall super
-		in equalRules || sub `elem` superR' || or (superR' |> alwaysIsA rules sub)
+		in equalRules || sub `elem` superR' || or (superR' |> alwaysIsA bnf sub)
 				
 -- Either X is a Y, or Y is a X
-equivalent	:: BNFRules -> TypeName -> TypeName -> Bool
+equivalent	:: Syntax -> TypeName -> TypeName -> Bool
 equivalent r x y
 		= alwaysIsA r x y || alwaysIsA r y x
 
 equivalents r x y	= zip x y & all (uncurry $ equivalent r)
 
-alwaysAreA	:: BNFRules -> Type -> Type -> Bool
+alwaysAreA	:: Syntax -> Type -> Type -> Bool
 alwaysAreA rules sub super
 	= let	together	= zip sub super
 		params		= init together |> uncurry (flip (alwaysIsA rules)) & and	-- contravariance
@@ -198,19 +218,19 @@ alwaysAreA rules sub super
 
 
 -- same as mergeContext, but on a list
-mergeContexts	:: BNFRules -> [Map Name TypeName] -> Either String (Map Name TypeName)
+mergeContexts	:: Syntax -> [Map Name TypeName] -> Either String (Map Name TypeName)
 mergeContexts bnfs ctxs
 		= foldM (mergeContext bnfs) M.empty ctxs
 
 
 
 -- Merges two contexts (variable names --> expected types) according to the subtype relationsship defined in the given bnf-rules
-mergeContext	:: BNFRules -> Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
+mergeContext	:: Syntax -> Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
 mergeContext bnfs ctx1 ctx2
 	= let msg v t1 t2 	= v ++ " is typed as both "++show t1++" and "++show t2 in
 		mergeContextWith msg (equivalent bnfs) ctx1 ctx2
 
-checkPatterns		:: BNFRules -> Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
+checkPatterns		:: Syntax -> Map Name TypeName -> Map Name TypeName -> Either String (Map Name TypeName)
 checkPatterns bnfs pats usages
 	= let msg v t1 t2	= v ++ " is deduced a "++show t1++" by its usage in the patterns, but used as a "++show t2 in
 		mergeContextWith msg (alwaysIsA bnfs) pats usages
@@ -334,7 +354,7 @@ unusedIdentifier noOverlap baseName productionType
 
 
 -- walks a  expression, gives which variables have what types
-expectedTyping	:: BNFRules -> Expression -> Either String (Map Name TypeName)
+expectedTyping	:: Syntax -> Expression -> Either String (Map Name TypeName)
 expectedTyping _ (MVar mt nm)	= return $ M.singleton nm mt
 expectedTyping r (MSeq _ mes)		= mes |+> expectedTyping r >>= mergeContexts r
 expectedTyping r (MCall _ _ _ mes)	= mes |+> expectedTyping r >>= mergeContexts r
@@ -497,7 +517,7 @@ weight _ = 1
 
 
 
-typeCheckRule		:: BNFRules -> Rule -> Either String ()
+typeCheckRule		:: Syntax -> Rule -> Either String ()
 typeCheckRule bnfs (Rule nm preds concl)
 	= inMsg ("While typechecking the rule "++show nm) $
 	  do	predTypings	<- mapi preds |> (\(i, p) -> inMsg ("In predicate "++show i) $ typeCheckPredicate bnfs p) & allRight
@@ -508,7 +528,7 @@ typeCheckRule bnfs (Rule nm preds concl)
 
 
 
-typeCheckPredicate	:: BNFRules -> Predicate -> Either String (Map Name TypeName)
+typeCheckPredicate	:: Syntax -> Predicate -> Either String (Map Name TypeName)
 typeCheckPredicate bnfs (TermIsA e tp)
 	= expectedTyping bnfs e
 typeCheckPredicate bnfs (Same e1 e2)
@@ -519,7 +539,7 @@ typeCheckPredicate bnfs (Needed concl)
 	= typeCheckConclusion bnfs concl
 
 
-typeCheckConclusion	:: BNFRules -> Conclusion -> Either String (Map Name TypeName)
+typeCheckConclusion	:: Syntax -> Conclusion -> Either String (Map Name TypeName)
 typeCheckConclusion bnfs (RelationMet relation exprs _)
 	= do	let types 	= relation & relType		-- Types of the relation
 		let modes	= relation & relModes
@@ -544,7 +564,7 @@ typeCheckConclusion bnfs (RelationMet relation exprs _)
 {-Represents a full typesystem file-}
 data TypeSystem 	
 	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's name?
-			tsSyntax	:: BNFRules,	-- synax of the language
+			tsSyntax	:: Syntax,	-- synax of the language
 			tsFunctions 	:: Functions,	-- syntax functions of the TS 
 			tsRelations	:: [Relation],
 			-- predicates and inference rules of the type system, most often used for evaluation and/or typing rules; sorted by conclusion relation

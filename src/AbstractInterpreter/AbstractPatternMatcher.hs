@@ -4,7 +4,7 @@ module AbstractInterpreter.AbstractPatternMatcher where
 This module defines 
 -}
 
-import Utils
+import Utils.Utils
 import TypeSystem
 
 import AbstractInterpreter.AbstractParseTree
@@ -28,7 +28,7 @@ patternMatch' r pat as
 	= trace ("Trying to match "++show pat++" ~ "++show as) $ patternMatch r pat as
 
 
-patternMatch	:: BNFRules -> Expression -> AbstractSet' -> [Assignments]
+patternMatch	:: Syntax -> Expression -> AbstractSet' -> [Assignments]
 patternMatch _ (MCall _ "error" True _) _	
 	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
 patternMatch _ (MCall _ nm _ _) _	

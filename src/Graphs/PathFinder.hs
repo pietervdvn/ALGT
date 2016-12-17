@@ -5,7 +5,7 @@ Pathfinder algorithm.
 Thanks to @iasoon!
 -}
 
-import Utils
+import Utils.Utils
 import Data.Maybe
 import Data.Map hiding (filter, null)
 import Data.Set (Set)

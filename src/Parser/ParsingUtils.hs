@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Parser.ParsingUtils where
 
-import Utils
+import Utils.Utils
 import Text.Parsec
 
 import Data.Functor.Identity

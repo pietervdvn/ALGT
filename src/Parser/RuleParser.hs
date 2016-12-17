@@ -1,6 +1,6 @@
 module Parser.RuleParser where
 
-import Utils
+import Utils.Utils
 import Parser.ParsingUtils
 import qualified Parser.ExpressionParser as EP
 import Parser.ExpressionParser (MEParseTree, typeAs)
@@ -18,17 +18,17 @@ import qualified Data.Map as M
 
 import Control.Arrow ((&&&))
 
-data Ctx	= Ctx 	{ bnfRules	:: BNFRules
+data Ctx	= Ctx 	{ syntax	:: Syntax
 			, rels		:: [Relation]
 			, relTypes	:: Map Symbol Relation
 			, funcs		:: Functions
 			}
 
-bnfNames'	= bnfNames . bnfRules
+bnfNames'	= bnfNames . syntax
 
 relSymbols ctx	= ctx & rels |> relSymbol & sort & reverse
 
-parseRules	:: (BNFRules, [Relation], Functions) -> Parser u [Rule]
+parseRules	:: (Syntax, [Relation], Functions) -> Parser u [Rule]
 parseRules (bnfs, rels, funcs)
 	= do	let ctx	= Ctx bnfs rels (rels |> (relSymbol &&& id) & M.fromList) funcs
 		many $ try (nls *> rule ctx <* nls)
@@ -51,7 +51,7 @@ rule ctx
 		ws
 		con	<- conclusion ctx
 		let rule	= Rule nm preds con
-		typeCheckRule (bnfRules ctx) rule & either error return
+		typeCheckRule (syntax ctx) rule & either error return
 		return rule
 
 
@@ -95,7 +95,7 @@ typeAsRelation	:: Ctx -> String -> [MEParseTree] -> Parser u Conclusion
 typeAsRelation ctx symbol sExprs
 	= do	let relation	= relTypes ctx M.! symbol	-- possible relation symbols
 		let funcTps	= funcs ctx |> typesOf
-		let bnfs	= bnfRules ctx
+		let bnfs	= syntax ctx
 		
 		pos		<- sourcePos
 		exprs		<- zip (relType relation) sExprs
@@ -147,7 +147,7 @@ predicateSame ctx
 		t	<- choose $ bnfNames' ctx
 
 		let funcTps	= funcs ctx |> typesOf
-		let bnfs	= bnfRules ctx
+		let bnfs	= syntax ctx
 		pos	<- sourcePos
 		let typeExpr e	= typeAs funcTps bnfs t e & inMsg ("While typing the predicate around " ++ show pos) & either fail return
 		e1'	<- typeExpr e1

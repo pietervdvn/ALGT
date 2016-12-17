@@ -1,6 +1,6 @@
 module AbstractInterpreter.Test where
 
-import Utils
+import Utils.Utils
 import TypeSystem
 import AbstractInterpreter.AbstractParseTree
 import AbstractInterpreter.AbstractPatternMatcher
@@ -13,7 +13,7 @@ testPattern	= MSeq mi [MVar tp "T1"
 			, MParseTree $ MLiteral mi "->"
 			, MVar tp "T2"]  
 
-testAS	:: BNFRules -> IO ()	
+testAS	:: Syntax -> IO ()	
 testAS r	
 	= do	let t	= generateAbstractSet r "_" "type"
 		print $ snd t
