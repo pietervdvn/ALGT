@@ -10,8 +10,9 @@ We often want a data representation (often handily available through `deriving S
 A flavour could be that we need some more data to accuratly show the data, a version for 'native' (e.g. in the target language) or as expression (in the meta-stuff, e.g. proofs)
 
 These are presented here.
-
 -}
+
+import Data.List (intercalate)
 
 class (Show a) => ToString a where
 	-- show gives us the default haskell representation
@@ -46,3 +47,11 @@ instance ToString a => ToString' () a where
 	toParsable'	= const toParsable
 	toCoParsable'	= const toCoParsable
 	debug'		= const debug
+
+instance ToString a => ToString' String [a] where
+	show' s as		= intercalate s $ map show as
+	toParsable' s as	= intercalate s $ map toParsable as
+	toCoParsable' s as	= intercalate s $ map toCoParsable as
+	debug' s as		= intercalate s $ map debug as
+
+	

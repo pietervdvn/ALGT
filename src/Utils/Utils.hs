@@ -44,7 +44,10 @@ inParens str	= "("++str++")"
 
 
 showComma	:: Show a => [a] -> String
-showComma as	= as |> show & intercalate ", "
+showComma as	= as |> show & commas
+
+
+commas		= intercalate ", "
 
 ------------------- Maybe, Either and other Monad helpers ------------------------------------
 

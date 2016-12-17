@@ -4,8 +4,10 @@ module ParseTreeInterpreter.FunctionInterpreter where
 This module defines an interpreter for functions. 
 -}
 
-import Utils.Utils
 import TypeSystem
+import Utils.TypeSystemToString
+import Utils.ToString
+import Utils.Utils
 
 import Control.Monad
 
@@ -96,14 +98,14 @@ patternMatch _ _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
 patternMatch r f (MParseTree (PtSeq mi pts)) pt
 	= patternMatch r f (MSeq mi (pts |> MParseTree)) pt
 patternMatch r f s1@(MSeq _ seq1) s2@(PtSeq _ seq2)
- | length seq1 /= length seq2	= Left $ "Sequence lengths are not the same: "++show s1 ++ " <~ "++showPt' s2
+ | length seq1 /= length seq2	= Left $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++toCoParsable s2
  | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r f) >>= foldM mergeVars M.empty
 
 patternMatch r f (MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
 	= patternMatch r f expr' expr
  | otherwise	
-	= Left $ showPt' expr ++" is not a "++show as
+	= Left $ toCoParsable expr ++" is not a "++show as
 
 patternMatch r extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
 	= patternMatchContxt r extraCheck (tp, name, hole) value
@@ -114,7 +116,7 @@ patternMatch _ _ (MCall _ "error" True _) _
 patternMatch _ _ (MCall _ nm _ _) _	
 	= error $ "Using a function call in a pattern is not allowed"
 patternMatch _ _ pat expr		
-	= Left $ "Could not match "++show pat++" <~ "++showPt' expr
+	= Left $ "Could not match "++toParsable pat++" /= "++toCoParsable expr
 
 
 patternMatchContxt	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
@@ -185,7 +187,7 @@ evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
 		expr	-> unusedIdentifier nonOverlap Nothing (typeOf expr)
 			
 evaluate ctx (MCall _ nm True args)
-	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++showComma args
+	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++ (toParsable' ", " args)
 
 evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctx_functions ctx
@@ -214,14 +216,19 @@ evaluate ctx (MEvalContext _ nm hole)
 
 evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & PtSeq tp
 evaluate ctx (MParseTree pt)	= pt
-evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++show e++" within context "++show (ctx_vars ctx)
+evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n"++
+					(ctx_vars ctx & M.toList |> showVarAssgn & unlines)
 
+showVarAssgn	:: (Name, (ParseTree, Maybe [Int])) -> String
+showVarAssgn (nm, (pt, mPath))
+	= nm ++ " = "++toParsable pt++
+		maybe "" (\path -> "\tContext path is "++show path) mPath
 
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
 asInts ctx bi exprs	
 	= let 	exprs'	= exprs |> evaluate ctx 
-				|> (\e -> if isMInt' e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ show e)
+				|> (\e -> if isMInt' e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
 				|> (\(MInt _ i) -> i)
 		tp	= typeOf $ head exprs
 		tp'	= if tp == "" then error $ "Declare a return type, by annotating the first argument of a builtin" else tp
@@ -230,4 +237,4 @@ asInts ctx bi exprs
 
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)
-	= "   In "++func++ inParens (args & showComma)
+	= "   In "++func++ inParens (toParsable' ", " args)

@@ -5,8 +5,9 @@ This module defines an evaluator for rules
 -}
 
 
-import Utils.Utils
 import TypeSystem
+import Utils.ToString
+import Utils.Utils
 
 import ParseTreeInterpreter.FunctionInterpreter
 
@@ -22,7 +23,7 @@ proofThat ts rel args
 -- tries to deduce a proof for a given property, might return multiple (top level) proofs
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
 proofThats' ts symbol args
-	= inMsg ("While trying to proof that ("++symbol++") is applicable to "++show args) $
+	= inMsg ("While trying to proof that ("++symbol++") is applicable to \""++(toParsable' ", " args)++"\"") $
 	  do	rules	<- ts & tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
 		let results	= rules |> flip (interpretRule ts) args
 		let successfull	= rights results
@@ -44,7 +45,7 @@ proofThat' ts symbol args
 -- given a rule and 'input' expressions, (tries to) give a proof for it
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
-	= inMsg ("While trying to intepret the rule "++ruleName r++" with args "++show args) $
+	= inMsg ("While trying to intepret the rule "++ruleName r++" with "++(toParsable' ", " args)) $
 	  do	let (RelationMet rel patterns _)	= ruleConcl r
 		variables	<- patternMatchInputs ts (rulePreds r) (rel, patterns) args
 		(predicateProofs, vars')
@@ -68,12 +69,12 @@ proofPredicate ts vars _ (TermIsA expr typ)
 	= let	expr'	= evalExpr ts vars expr in
 		if alwaysIsA (tsSyntax ts) (typeOf expr') typ then
 			return (ProofIsA expr' typ, empty)
-			else Left (show expr ++ " = "++ show expr' ++ " is not a "++show typ)
+			else Left (toParsable expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ)
 proofPredicate ts vars _ (Same e1 e2)
 	= do	let e1'	= evalExpr ts vars e1
 		let e2' = evalExpr ts vars e2
 		if e1' == e2' then  return (ProofSame e1' e1 e2, vars)
-			else Left $ ("Equality predicate not met: "++show e1 ++ "=" ++ showPt' e1' ++ " /= " ++ showPt' e2' ++"="++show e2)
+			else Left $ ("Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2)
 
 proofPredicate ts vars restingPreds (Needed (RelationMet relation args _))
 	= do	let inputArgs	= zip args (relModes relation) & filter ((==) In . snd) |> fst	:: [Expression]
@@ -93,7 +94,7 @@ patternMatchInputs ts predicates (rel, relationArgs) args
 	= do	let inputTypes	= filterMode In rel (relType rel)
 		assert  Left(length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
 		let typesMatch arg expected	= assert Left (equivalent (tsSyntax ts) (typeOf arg) expected) 
-							("Expected type "++show expected++" for "++showPt' arg++" which has the type "++show (typeOf arg))
+							("Expected type "++show expected++" for "++toCoParsable arg++" which has the type "++show (typeOf arg))
 		zip args inputTypes |> uncurry typesMatch & allRight
 		let patterns = filterMode In rel relationArgs
 		matchAndMerge ts predicates $ zip patterns args 
