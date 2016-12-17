@@ -423,7 +423,11 @@ type Functions	= Map Name Function
 
 type Symbol		= Name
 data Mode		= In | Out
-	deriving (Show, Ord, Eq)
+	deriving (Ord, Eq)
+
+instance Show Mode where
+	show In		= "in"
+	show Out	= "out"
 
 -- A relation. Some relations might be able to produce values, given a few input variables (e.g. a evaluation or typing rule)
 data Relation		= Relation {relSymbol :: Symbol, relTypesModes :: [(TypeName, Mode)], relPronounce :: Maybe String }
@@ -587,6 +591,7 @@ checkTypeSystem	:: TypeSystem -> Either String ()
 checkTypeSystem ts
 	=	[ checkBNF (tsSyntax ts)
 		, checkRules (tsSyntax ts) (tsRules' ts)
+		, checkNoDuplicates (tsRelations ts |> relSymbol) (\dups -> "Multiple relations declared with the symbol "++commas dups)
 		] & allRight_
 
 

@@ -1,0 +1,229 @@
+  # ../Examples/STFL.typesystem # 
+ #################################
+
+ Syntax 
+========
+
+bool                ::= "True" | "False"
+e                   ::= eL "+" e | eL "::" type | eL e | eL
+eL                  ::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
+number              ::= Number
+type                ::= typeL "->" type | typeL
+typeL               ::= "Int" | "Bool" | "(" type ")"
+typing              ::= var ":" type
+typingEnvironment   ::= typing "," typingEnvironment | "{}"
+var                 ::= Identifier
+
+
+ Functions 
+===========
+
+cod                      : type -> type
+cod("(" T ")")           = "(" cod(T) ")"
+cod(T1 "->" T2)          = T2
+
+
+dom                      : type -> type
+dom("(" T ")")           = "(" dom(T) ")"
+dom(T1 "->" T2)          = T1
+
+
+plus                     : number -> e -> e
+plus(e1, e2)             = !plus(e1, e2)
+
+
+rename                   : var -> var -> type -> e -> e
+rename(x, newVar, type, body)
+                         = "(" "\\" newVar ":" type "." subs(x, newVar, body) ")"
+
+
+subs                     : var -> e -> e -> e
+subs(x, y, x)            = y
+subs(x, y, "(" "\\" x ":" t "." rest ")")
+                         = subs(x, y, rename(x, !newvar(x, rest), t, rest))
+subs(x, y, "(" "\\" z ":" t "." rest ")")
+                         = "(" "\\" z ":" t "." subs(x, y, rest) ")"
+subs(x, y, "If" cond "Then" e1 "Else" e2)
+                         = "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
+subs(x, y, e1 "+" e2)    = subs(x, y, e1) "+" subs(x, y, e2)
+subs(x, y, e "::" type)  = subs(x, y, e) "::" type
+subs(x, y, f arg)        = subs(x, y, f) subs(x, y, arg)
+subs(x, y, z)            = z
+
+
+ Relations 
+===========
+
+(→) 	: e (in), e (out)	Pronounced as "evaluation"
+(→*) 	: e (in), e (out)	Pronounced as "big step"
+(✓) 	: e (in)	Pronounced as "is canonical"
+(⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
+(::) 	: e (in), type (out)	Pronounced as "type in empty context"
+(==) 	: type (in), type (in)	Pronounced as "equals"
+
+ Rules 
+=======
+
+
+#  Rules about "evaluation", with symbol (→) 
+# -------------------------------------------
+
+ e0 → e1
+---------------  	[EvalCtx]
+ e[e0] → e[e1]
+
+
+ n1: number	n2: number
+-----------------------------------  	[EvalPlus]
+ (n1:number) "+" n2 → plus(n1, n2)
+
+
+ b: bool
+-------------------  	[EvalAscrBool]
+ b "::" "Bool" → b
+
+
+ i: number
+------------------  	[EvalCastInt]
+ i "::" "Int" → i
+
+
+ 
+---------------  	[EvalParens]
+ "(" e ")" → e
+
+
+ 
+--------------------------------------  	[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+ 
+---------------------------------------  	[EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ 
+-----------------------------------------------------------  	[EvalLamApp]
+ ("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
+
+
+
+
+#  Rules about "big step", with symbol (→*) 
+# ------------------------------------------
+
+ (✓) e
+--------  	[BigStepCanon]
+ e →* e
+
+
+ e0 → e1	e1 →* e2
+------------------  	[BigStepRec]
+ e0 →* e2
+
+
+ e0 → e1	(✓) e1
+----------------  	[BigStepBase]
+ e0 →* e1
+
+
+
+
+#  Rules about "is canonical", with symbol (✓) 
+# ---------------------------------------------
+
+ b: bool
+---------  	[CanonBool]
+ (✓) b
+
+
+ n: number
+-----------  	[CanonNumber]
+ (✓) n
+
+
+
+
+#  Rules about "context entails typing", with symbol (⊢) 
+# -------------------------------------------------------
+
+ n: number
+--------------  	[Tnumber]
+ Γ ⊢ n, "Int"
+
+
+ b: bool
+---------------  	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+ Γ ⊢ e, T
+------------------  	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ e, T
+-----------------  	[TAscr]
+ Γ ⊢ e "::" T, T
+
+
+ 
+-------------------  	[Tx]
+ Γ[x ":" T] ⊢ x, T
+
+
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+-----------------------------  	[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
+-----------------------------------  	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, T
+
+
+ (x ":" T1) "," Γ ⊢ e, T2
+-------------------------------------------------------  	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", ("(" T1 ")") "->" T2
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
+-----------------------------------------------  	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+
+
+#  Rules about "type in empty context", with symbol (::) 
+# -------------------------------------------------------
+
+ "{}" ⊢ e, T
+-------------  	[TEmptyCtx]
+ e :: T
+
+
+
+
+#  Rules about "equals", with symbol (==) 
+# ----------------------------------------
+
+ T1 = T2 : type
+----------------  	[EqBase]
+ T1 == T2
+
+
+ T1 == T2
+------------------  	[EqParL]
+ "(" T1 ")" == T2
+
+
+ T1 == T2
+------------------  	[EqParR]
+ T1 == "(" T2 ")"
+
+
+ Ta1 == Ta2	Tb1 == Tb2
+------------------------------  	[EqArrow]
+ Ta1 "->" Tb1 == Ta2 "->" Tb2
+

@@ -50,7 +50,7 @@ mainArgs args
 
 		let noRules	= not ( dumbTS args) && all isNothing [symbol args, function args, stepByStep args]
 
-		when (dumbTS args) $ print ts
+		when (dumbTS args) $ putStrLn $ toParsable ts
 
 		let targetFile	= exampleFile args
 		targetContents'	<- readFile targetFile

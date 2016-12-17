@@ -7,7 +7,7 @@ import TypeSystem
 import Utils.Utils
 import Utils.ToString
 
-import Data.List (intercalate)
+import Data.List (intercalate, sortOn, elemIndex)
 import Data.Map as M hiding (filter, null, foldl)
 import Data.Maybe
 
@@ -101,9 +101,9 @@ instance ToString' ShowParens Expression where
 	-- Show as if this was an expression in the typesystem file
 	toParsable' p (MParseTree pt)	= toCoParsable' p pt
 	toParsable' _ (MVar _ n)	= n
-	toParsable' p (MSeq _ exprs)	= exprs |> toParsable' (deepen p) & unwords
+	toParsable' p (MSeq _ exprs)	= exprs |> toParsable' (deepen p) & unwords & inParens' p
 	toParsable' p (MCall _ nm builtin args)
-				= let args'	= args |> toParsable' (deepen p) & commas & inParens
+				= let args'	= args |> toParsable' (least NotOnRoot p) & commas & inParens
 				  in (if builtin then "!" else "") ++ nm ++ args'
 	toParsable' p (MAscription nm expr)	= (toParsable' (least NotOnRoot p) expr ++ ":" ++ nm) & inParens
 	toParsable' p (MEvalContext tp fullName hole)
@@ -159,7 +159,9 @@ instance ToString' (Name, Int) Function where
 
 funcWith showClause (name, int) (MFunction tp clauses)
 	= let	sign	= name ++ replicate (int - length name) ' ' ++ " : "++ intercalate " -> " tp
-		clss	= clauses |> showClause in
+		-- we drop the last clause, as it is an automatically added error clause for non exhaustive patterns
+		clauses'	= init clauses
+		clss	= clauses' |> showClause in
 		(sign:clss) & unlines
 
 
@@ -203,7 +205,7 @@ showPredicateWith 	:: (Expression -> String) -> (Conclusion -> String) -> Predic
 showPredicateWith se sc (TermIsA e tp)
 	= se e ++ ": "++ tp
 showPredicateWith se sc (Same e1 e2)
-	= se e1 ++ " = "++ se e2
+	= se e1 ++ " = "++ se e2++" : "++ typeOf e1
 showPredicateWith se sc (Needed concl)
 	= sc concl
 
@@ -217,7 +219,7 @@ instance ToString Rule where
 
 showRuleWith	:: (Predicate -> String) -> (Conclusion -> String) -> Rule -> String
 showRuleWith sp sc (Rule nm predicates conclusion)
-	= let	predicates'	= predicates |> sp & intercalate "    "
+	= let	predicates'	= predicates |> sp & intercalate "\t"
 		conclusion'	= sc conclusion
 		nm'	= " \t[" ++ nm ++ "]"
 		line	= replicate (2 + max (length predicates') (length conclusion')) '-'
@@ -234,10 +236,12 @@ instance ToString' TypeSystem Rules where
 
 showRulesWith	:: (Rule -> String) -> TypeSystem -> Rules -> String
 showRulesWith sr ts (Rules rules)
-	= let relationOf nm	= ts & tsRelations & filter ((==) nm . relSymbol) & head
+	= let	relations	= tsRelations ts
+		relationOf nm	= relations & filter ((==) nm . relSymbol) & head
+	  	relationOrder symbol	= fromMaybe (length relations) (elemIndex symbol (relations |> relSymbol))
 	  in
-	  rules & M.toList |> (\(symbol, rules) ->
-		"\n" ++ header "# " ("Rules about "++toCoParsable (relationOf symbol)) '-' ++ "\n "++
+	  rules & M.toList & sortOn (relationOrder . fst) |> (\(symbol, rules) ->
+		"\n" ++ header "# " ("Rules about "++toCoParsable (relationOf symbol)) '-' ++ "\n"++
 			rules |> sr & unlines
 		)
 		& intercalate "\n\n"
