@@ -1,14 +1,20 @@
+ 
+ Syntax Changes
+================
 
+type 	::=+ "?"
 
-Gradualize rule "type", add "?"
-Insert casts for "e" with "insertCast"
+x	::= type 
+delete x
 
+# Insert casts for "e" with "insertCast"
+# Change 
 
- Functions
-===========
+ New Functions
+===============
 
 insertCast	: type -> e -> e
-insertCast(T, e)= e "::" T
+insertCast(T, e)= ("(" e ")") "::" T
 
 
 
@@ -16,16 +22,27 @@ insertCast(T, e)= e "::" T
 ======================
 
 dom		: type -> type
-dom(T1 -> T2)	= T1
+dom(T1 "->" T2)	= T1
 dom("?")	= "?"
 
 cod		: type -> type
-cod(T1 -> T2)	= T2
+cod(T1 "->" T2)	= T2
 cod("?")	= "?"
 
 
- Relations
-===========
+ Rename Relations
+==================
 
-Rename relation "==" to "~", Pronounced as "is consistent"
+Rename relation "==" to "~", pronounced as "is consistent"
+Rename relation "⊢" to "|-", pronounced as "oldschool"
+# TODO copy relations
+
+ New Relations
+===============
+
+
+# TODO a
+
+
+# TODO new rules
 
