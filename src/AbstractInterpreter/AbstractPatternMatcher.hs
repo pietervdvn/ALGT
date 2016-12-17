@@ -30,9 +30,9 @@ patternMatch' r pat as
 
 patternMatch	:: Syntax -> Expression -> AbstractSet' -> [Assignments]
 patternMatch _ (MCall _ "error" True _) _	
-	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
+	= error "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
 patternMatch _ (MCall _ nm _ _) _	
-	= error $ "Using a function call in a pattern is not allowed"
+	= error "Using a function call in a pattern is not allowed"
 
 
 patternMatch r (MVar _ v) as
@@ -59,9 +59,9 @@ patternMatch r (MAscription as expr') expr
 	= returnF $ show expr ++" is not a "++show as
 
 patternMatch r (MEvalContext tp name hole) value@(AsSeq _ _)
-	= error $ "TODO/HELP how do I work with evaluation context in abstract interpretation?"
+	= error "TODO/HELP how do I work with evaluation context in abstract interpretation?"
 
-patternMatch r pat as@(EveryPossible _ _ _)
+patternMatch r pat as@EveryPossible{}
 	= do	choice		<- unfold' r as
 		patternMatch r pat choice
 patternMatch _ pat as
@@ -78,10 +78,10 @@ mergeAssgnss (a:as)
 mergeAssgns	:: Assignments -> Assignments -> [Assignments]
 mergeAssgns (assgs0, assumpsInt0, assumpsStr0) (assgs1, assumpsInt1, assumpsStr1)
 	= do	let commonAssgns	= assgs0 `intersection` assgs1 & keys
-		if not $ null commonAssgns then error $ "TODO: implement unification to fix merge assgns" else cont
+		if not $ null commonAssgns then error "TODO: implement unification to fix merge assgns" else cont
 		assumpsInt	<- mergeAssumptions assumpsInt0 assumpsInt1
 		assumpsStr	<- mergeAssumptions assumpsStr0 assumpsStr1
-		return ((assgs0 `union` assgs1), assumpsInt, assumpsStr)
+		return (assgs0 `union` assgs1, assumpsInt, assumpsStr)
 		
 
 

@@ -38,7 +38,7 @@ Args:
 - Returns a map of resting dependencies
 -}
 searchCycles	:: (Ord n, Eq n) => Map n (Set n) -> Map n (Set n)
-searchCycles	=  snd . runState removeRecursively
+searchCycles	=  execState removeRecursively
 
 removeRecursively	:: (Ord n, Eq n) => State (Map n (Set n)) ()
 removeRecursively 	=  do	stabilize_ checkAllNodes

@@ -59,6 +59,7 @@ ws1	= many1 (oneOf whitespace)
 ws'	:: Parser u String
 ws'	= many (char ' ')
 
+colon	= ws *> char ':' <* ws
 
 nl		= char '\n' <|> (try commentLine >> ws >> char '\n')
 nls1		= many1 nl
@@ -123,7 +124,7 @@ number	:: Parser u Int
 number 	= many1 (oneOf digits) |> read
 
 negNumber	:: Parser u Int
-negNumber	= do	sign	<- try ((char '-' <* ws) >> return (0-1)) <|> return (1)
+negNumber	= do	sign	<- try ((char '-' <* ws) >> return negate) <|> return id
 			i	<- number
-			return $ sign * i
+			return $ sign i
 

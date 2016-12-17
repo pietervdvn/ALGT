@@ -33,8 +33,7 @@ parseChoice	:: Syntax -> Name -> [(BNF, Int)] -> Parser u ParseTree
 parseChoice _ name []
 	= fail $ "Could not parse expression of the form "++name
 parseChoice rules name ((bnf,i): rest)
-	= try (do	parsed	<- parsePart' rules (name, i) bnf
-			return parsed)
+	= try (parsePart' rules (name, i) bnf)
 	   <|>  parseChoice rules name rest
 
 

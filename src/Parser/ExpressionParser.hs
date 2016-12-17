@@ -65,7 +65,7 @@ matchTyping f r (BNFRuleCall ruleCall) tp (MePtAscription as expr)
 			= Left $ "Invalid cast: "++as++" is not a "++ruleCall
  | otherwise 		= typeAs f r as expr |> MAscription as
 matchTyping f r bnf tp c@(MePtAscription as expr)
- | otherwise		= Left $ "Invalid cast: "++show c++" could not be matched with "++show bnf
+			= Left $ "Invalid cast: "++show c++" could not be matched with "++show bnf
 
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 			= return $ MVar ruleCall nm
@@ -109,7 +109,7 @@ matchTyping functions syntax@(BNFRules rules) (BNFRuleCall ruleName) _ (MePtCall
 					"Actual type "++show returnTyp ++" does not match expected type "++show ruleName
 				args'			<- zip args argTypes |> (\(arg, tp) -> typeAs functions syntax tp arg) & allRight
 				return $ MCall returnTyp fNm False args'
-matchTyping _ _ bnf _ pt@(MePtCall _ _ _) 
+matchTyping _ _ bnf _ pt@MePtCall{}
 			= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show pt
 
 matchTyping _ _ (Literal s) tp (MePtToken s')
@@ -119,7 +119,7 @@ matchTyping _ _ Identifier tp (MePtToken s)
  | isIdentifier s	= MIdentifier tp s & MParseTree & return
  | otherwise		= Left $ s ++ " is not an identifier"
 matchTyping _ _ Number tp (MePtToken s)
- | otherwise 		= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
+			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
 matchTyping _ _ Number tp (MePtInt i)
 			= return $ MParseTree $ MInt tp i
 
@@ -156,9 +156,9 @@ dynamicTranslate tp (MePtToken s)	= MParseTree $ MLiteral (tp, -1) s
 dynamicTranslate tp (MePtSeq pts)	= pts |> dynamicTranslate tp & MSeq (tp, -1) 
 dynamicTranslate tp (MePtVar nm)	= MVar tp nm
 dynamicTranslate tp (MePtInt i)	= MParseTree $ MInt (tp, -1) i
-dynamicTranslate _  (MePtAscription tp e)	= dynamicTranslate tp e
-dynamicTranslate tp (MePtCall _ _ _)
-				= error "For now, no calls within a builtin are allowed"
+dynamicTranslate _  (MePtAscription tp e)	
+					= dynamicTranslate tp e
+dynamicTranslate tp MePtCall{}		= error "For now, no calls within a builtin are allowed"
 dynamicTranslate tp (MePtEvalContext name hole)
 				= error "For now, no contexts within a builtin are allowed"
 
@@ -170,10 +170,10 @@ parseExpression	= parseExpression' (identifier <|> iDentifier)
 
 -- we allow expression with some injected 'identifier' parser
 parseExpression'	:: Parser u String -> Parser u MEParseTree
-parseExpression' ident	= mePt ident
+parseExpression'	= mePt
 
 mePt ident
-	= many1 (ws' *> (mePtPart ident) <* ws') |> mePtSeq
+	= many1 (ws' *> mePtPart ident <* ws') |> mePtSeq
 		where 	mePtSeq [a]	= a
 			mePtSeq as	= MePtSeq as
 

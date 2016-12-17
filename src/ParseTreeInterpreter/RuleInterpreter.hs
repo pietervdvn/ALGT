@@ -17,13 +17,13 @@ import Data.List
 
 
 proofThat	:: TypeSystem -> Relation -> [ParseTree] -> Either String Proof
-proofThat ts rel args
-	= proofThat' ts (relSymbol rel) args
+proofThat ts
+	= proofThat' ts . relSymbol
 
 -- tries to deduce a proof for a given property, might return multiple (top level) proofs
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
 proofThats' ts symbol args
-	= inMsg ("While trying to proof that ("++symbol++") is applicable to \""++(toParsable' ", " args)++"\"") $
+	= inMsg ("While trying to proof that ("++symbol++") is applicable to \""++ toParsable' ", " args ++"\"") $
 	  do	rules	<- ts & tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
 		let results	= rules |> flip (interpretRule ts) args
 		let successfull	= rights results
@@ -45,7 +45,7 @@ proofThat' ts symbol args
 -- given a rule and 'input' expressions, (tries to) give a proof for it
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
-	= inMsg ("While trying to intepret the rule "++ruleName r++" with "++(toParsable' ", " args)) $
+	= inMsg ("While trying to intepret the rule "++ruleName r++" with "++ toParsable' ", " args) $
 	  do	let (RelationMet rel patterns _)	= ruleConcl r
 		variables	<- patternMatchInputs ts (rulePreds r) (rel, patterns) args
 		(predicateProofs, vars')
@@ -74,7 +74,7 @@ proofPredicate ts vars _ (Same e1 e2)
 	= do	let e1'	= evalExpr ts vars e1
 		let e2' = evalExpr ts vars e2
 		if e1' == e2' then  return (ProofSame e1' e1 e2, vars)
-			else Left $ ("Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2)
+			else Left $ "Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2
 
 proofPredicate ts vars restingPreds (Needed (RelationMet relation args _))
 	= do	let inputArgs	= zip args (relModes relation) & filter ((==) In . snd) |> fst	:: [Expression]
@@ -125,4 +125,4 @@ zipModes ts assignments ((prototype, Out): relationArgs) args
 zipModes _ _ [] []
 		= return []
 zipModes _ _ _ _
-		= Left $ "Not enough input arguments for relation"		
+		= Left "Not enough input arguments for relation"		

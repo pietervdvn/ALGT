@@ -82,7 +82,7 @@ typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile name
 	= do	nls
 		header "Syntax"
-		bnfs	<- (many $ try (nls >> bnfRule)) 
+		bnfs	<- many (try (nls >> bnfRule)) 
 
 		syntax	<- makeSyntax bnfs & either error return
 

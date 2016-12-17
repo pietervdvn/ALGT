@@ -5,17 +5,19 @@ Some utility functions, often used to program 'left to right'
 -}
 
 import Control.Monad
-import Data.List (intercalate)
-import Data.Maybe
+
 import Data.Either
 import Data.Foldable
+import Data.Maybe
+import Data.List (intercalate)
+import Data.Tuple
+
 import Data.Map (Map)
 import qualified Data.Map as Map
+
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Either
 
-import Data.Tuple
 
 
 -------------------- usefull types -------------------------------------------------------
@@ -127,7 +129,7 @@ dubbles (a:as)	=  (if a `elem` as then (a:) else id) $ dubbles as
 checkNoDuplicates	:: (Eq a) => [a] -> ([a] -> String) -> Either String ()
 checkNoDuplicates as msg
 	= do	let dups	= dubbles as
-		when (not $ null dups) $ Left $ msg dups 
+		unless (null dups) $ Left $ msg dups 
 
 equalizeLength	:: a -> [[a]] -> [[a]]
 equalizeLength a ass
@@ -148,13 +150,6 @@ stitch eq a b	= let	la	= length a
 
 mapi	:: [a] -> [(Int, a)]
 mapi	= zip [0..]
-
-
-mul	:: [Int] -> Int
-mul []	= 1
-mul (i:is)
-	= i * mul is
-
 
 
 invertDict	:: (Eq b, Ord b, Ord a) => Map a (Set b) -> Map b (Set a)

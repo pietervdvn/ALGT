@@ -15,20 +15,20 @@ ls |+> f	=== mapM f a
 
 import Utils.Utils
 
-import Data.List (intersperse, intercalate)
+import Graphs.SearchCycles
+
+import Data.Maybe
+import Data.List
+import Data.Either
 
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Maybe
-import Data.List
-import Data.Either
 
 import Control.Arrow ((&&&))
 import Control.Monad (foldM, when)
 
-import Graphs.SearchCycles
 
 ------------------------ Syntax -------------------------
 
@@ -86,13 +86,13 @@ makeSyntax vals
 	= do	let bnfr	= BNFRules $ M.fromList vals
 		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
 			checkBNF bnfr] & allRight_
-		return $ bnfr
+		return bnfr
 
 
 
 
 checkBNF	:: Syntax -> Either String ()
-checkBNF bnfs	= inMsg ("While checking the syntax:") $
+checkBNF bnfs	= inMsg "While checking the syntax:" $
 		  	allRight_ (checkLeftRecursion bnfs:(bnfs & getBNF & M.toList |> checkUnknownRuleCall bnfs))
 
 checkUnknownRuleCall	:: Syntax -> (Name, [BNF]) -> Either String ()
@@ -101,7 +101,7 @@ checkUnknownRuleCall bnfs' (n, asts)
 	  do	let bnfs	= getBNF bnfs'
 		mapi asts |> (\(i, ast) ->
 			inMsg ("While checking choice "++show i++", namely "++show ast) $
-			do	let unknowns = calledRules ast & filter (flip M.notMember bnfs) 
+			do	let unknowns = calledRules ast & filter (`M.notMember` bnfs) 
 				assert Left (null unknowns) $ "Unknown type "++showComma unknowns
 			) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs')) >> return ()
 		
@@ -140,8 +140,8 @@ reachableVia "a" --> [a, b]
 
 -}
 reachableVia	:: Syntax -> TypeName -> [TypeName]
-reachableVia rules root
-	= _reachableVia rules [] root
+reachableVia rules
+	= _reachableVia rules []
 
 _reachableVia	:: Syntax -> [TypeName] -> TypeName -> [TypeName]
 _reachableVia r alreadyVisited root
@@ -219,8 +219,8 @@ alwaysAreA rules sub super
 
 -- same as mergeContext, but on a list
 mergeContexts	:: Syntax -> [Map Name TypeName] -> Either String (Map Name TypeName)
-mergeContexts bnfs ctxs
-		= foldM (mergeContext bnfs) M.empty ctxs
+mergeContexts bnfs
+		= foldM (mergeContext bnfs) M.empty
 
 
 
@@ -332,7 +332,7 @@ data Expression
 	| MSeq MInfo [Expression]			
 	| MCall TypeName Name Builtin [Expression]	-- function call; not allowed in pattern matching
 	| MAscription TypeName Expression 		-- checks wether the expression is built by this smaller rule.
-	| MEvalContext {evalCtx_fullType::TypeName, evalCtx_fullName::Name, evalCtx_hole::Expression}	-- describes a pattern that searches a context
+	| MEvalContext TypeName Name Expression	-- describes a pattern that searches a context
 	deriving (Show, Ord, Eq)
 
 instance SimplyTyped Expression where
@@ -363,7 +363,7 @@ usedIdentifiers (MEvalContext _ fnm hole)
 usedIdentifiers	_			= []
 
 -- generates an MVar, with a name that does not occurr in the given expression
-unusedIdentifier	:: Expression -> (Maybe Name) -> TypeName -> ParseTree
+unusedIdentifier	:: Expression -> Maybe Name -> TypeName -> ParseTree
 unusedIdentifier noOverlap baseName productionType 
 	= let	name	= fromMaybe "x" baseName
 		alreadyUsed = name: usedIdentifiers noOverlap
@@ -426,7 +426,7 @@ data Mode		= In | Out
 	deriving (Show, Ord, Eq)
 
 -- A relation. Some relations might be able to produce values, given a few input variables (e.g. a evaluation or typing rule)
-data Relation		= Relation {relSymbol :: Symbol, relTypesModes :: [(TypeName, Mode)], relPronounce :: (Maybe String) }
+data Relation		= Relation {relSymbol :: Symbol, relTypesModes :: [(TypeName, Mode)], relPronounce :: Maybe String }
 	deriving (Ord, Eq)
 
 -- Relation types
@@ -503,12 +503,12 @@ data Proof	= Proof { proofConcl	:: Conclusion'
 		| ProofSame ParseTree Expression Expression
 		 deriving (Ord, Eq)
 
-isProof (Proof {})	= True
-isProof _		= False
+isProof Proof{}	= True
+isProof _	= False
 
 {-Number of 'layers' in the proof-}
 depth	:: Proof -> Int
-depth proof@(Proof _ _ _)
+depth proof@Proof{}
 	= if null (proofPreds proof) then 1
 		else proofPreds proof |> depth & maximum & (+1)
 depth _	= 1
@@ -516,7 +516,7 @@ depth _	= 1
 
 {-Number of proof elements-}
 weight	:: Proof -> Int
-weight proof@(Proof _ _ _)
+weight proof@Proof{}
 	 = 1 + (proof & proofPreds |> weight & sum)
 weight _ = 1
 
@@ -554,9 +554,9 @@ typeCheckConclusion bnfs (RelationMet relation exprs _)
 			show (relSymbol relation)++" : "++show types++", but only got "++show (length exprs)++" arguments"
 		
 		let usagesForMode mode	
-			= (filterMode mode relation exprs	-- we get the expressions that are used for INput or OUTput
+			= filterMode mode relation exprs	-- we get the expressions that are used for INput or OUTput
 			  |> expectedTyping bnfs & allRight	-- how are these typed? Either String [Map Name TypeName]
-			  >>= mergeContexts bnfs)			-- merge these, crash for input/output contradictions
+			  >>= mergeContexts bnfs			-- merge these, crash for input/output contradictions
 		pats	<- usagesForMode In			
 		usages 	<- usagesForMode Out
 		checkPatterns bnfs pats usages
@@ -616,8 +616,8 @@ instance Show Clause where
 
 instance Show Relation where
 	show (Relation symbol tps pronounce)
-		= let	sign	= inParens symbol ++ " : "++ (show tps)	:: String
-			pron	= pronounce |> show |> ("\tPronounced as "++) & fromMaybe "" 	:: String in
+		= let	sign	= inParens symbol ++ " : "++ show tps
+			pron	= pronounce |> show |> ("\tPronounced as "++) & fromMaybe "" in
 			sign ++ pron
 
 instance Show (ConclusionA a) where

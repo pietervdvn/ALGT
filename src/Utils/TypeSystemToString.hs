@@ -113,10 +113,10 @@ instance ToString' ShowParens Expression where
 	toCoParsable' p (MParseTree pt)	= toParsable' p pt
 	toCoParsable' p (MSeq mt exprs)	= exprs |> toCoParsable' (deepen p) & unwords
 	toCoParsable' p (MVar mt n)	= n & isMeta
-	toCoParsable' p expr@(MCall _ _ _ _)
+	toCoParsable' p expr@MCall{}
 				= toParsable' p expr & isMeta
 	toCoParsable' p (MAscription as expr)	= toCoParsable' p expr & inParens & (++ isMeta (": "++as))
-	toCoParsable' p ctx@(MEvalContext _ _ _)
+	toCoParsable' p ctx@MEvalContext{}
 				= isMeta $ toParsable' p ctx
 
 

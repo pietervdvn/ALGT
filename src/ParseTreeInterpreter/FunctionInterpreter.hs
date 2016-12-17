@@ -27,15 +27,15 @@ evalFunc ts funcName args
 		"evalFunc with unknown function: "++funcName	
 
 evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> ParseTree
-evalExpr ts vars e	
-	= evaluate (buildCtx ts vars) e
+evalExpr ts vars
+	= evaluate (buildCtx ts vars)
 
 type VariableAssignments
 		= Map Name (ParseTree, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
-data Ctx	= Ctx { ctx_syntax	:: Syntax,		-- Needed for typecasts
-			ctx_functions 	:: Map Name Function,
-			ctx_vars	:: VariableAssignments,
-			ctx_stack	:: [(Name, [ParseTree])] -- only used for errors
+data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
+			ctxFunctions 	:: Map Name Function,
+			ctxVars	:: VariableAssignments,
+			ctxStack	:: [(Name, [ParseTree])] -- only used for errors
 			}
 
 buildCtx ts vars 	= Ctx (tsSyntax ts) (tsFunctions ts) vars []
@@ -49,18 +49,18 @@ applyFunc ctx (nm, MFunction tp clauses) args
 	= evalErr ctx $ "Number of arguments does not match. Expected "++show (length tp - 1)++" variables, but got "++show (length args)++" arguments instead"
  | otherwise
 	= let	stackEl	= (nm, args)
-		ctx'	= ctx {ctx_stack = stackEl:ctx_stack ctx}
+		ctx'	= ctx {ctxStack = stackEl:ctxStack ctx}
 		clauseResults	= clauses |> evalClause ctx' args & catMaybes
-		in if null clauseResults then error $ "Not a single clause matched, even with error injection. This is a bug!" else
+		in if null clauseResults then error "Not a single clause matched, even with error injection. This is a bug!" else
 			head clauseResults
 
 
 evalClause	:: Ctx ->  [ParseTree] -> Clause -> Maybe ParseTree
 evalClause ctx args (MClause pats expr)
-	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctx_syntax ctx) (const True))
+	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctxSyntax ctx) (const True))
 					& either (const Nothing) Just
 		variables	<- mergeVarss variabless & either (const Nothing) Just
-		let ctx'	= ctx {ctx_vars = variables}
+		let ctx'	= ctx {ctxVars = variables}
 		return $ evaluate ctx' expr
 
 
@@ -112,9 +112,9 @@ patternMatch r extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
 		
 
 patternMatch _ _ (MCall _ "error" True _) _	
-	= error $ "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
+	= error "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
 patternMatch _ _ (MCall _ nm _ _) _	
-	= error $ "Using a function call in a pattern is not allowed"
+	= error "Using a function call in a pattern is not allowed"
 patternMatch _ _ pat expr		
 	= Left $ "Could not match "++toParsable pat++" /= "++toCoParsable expr
 
@@ -130,7 +130,7 @@ makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
 		holeAssgn	<- patternMatch r extraCheck holePattern holeFiller
 		assgn'		<- mergeVars baseAssign holeAssgn
-		assert Left (extraCheck assgn') $ "Extra patterns (for the rule) failed"
+		assert Left (extraCheck assgn') "Extra patterns (for the rule) failed"
 		return assgn'
 
 -- depth first search, excluding self match
@@ -158,7 +158,7 @@ evaluate ctx (MCall _ "min" True es)
 		MInt tp (e1 - e2)
 evaluate ctx (MCall _ "mul" True es)
 	= let	(tp, es')	= asInts ctx "mul" es in
-		MInt tp (mul es')
+		MInt tp (product es')
 evaluate ctx (MCall _ "div" True es)
 	= let	(tp, [e1, e2])	= asInts ctx "min" es in
 		MInt tp (e1 `div` e2)
@@ -178,7 +178,7 @@ evaluate ctx (MCall _ "equal" True es)
 evaluate ctx (MCall _ "error" True exprs)
 	= let	exprs'	= exprs |> evaluate ctx & show
 		msgs	= ["In evaluating a function:", exprs']
-		stack	= ctx_stack ctx |> buildStackEl
+		stack	= ctxStack ctx |> buildStackEl
 		in	error $ unlines $ stack ++ msgs
 evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
 	= case evaluate ctx identifier of
@@ -187,26 +187,26 @@ evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
 		expr	-> unusedIdentifier nonOverlap Nothing (typeOf expr)
 			
 evaluate ctx (MCall _ nm True args)
-	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++ (toParsable' ", " args)
+	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++ toParsable' ", " args
 
 evaluate ctx (MCall _ nm False args)
- | nm `M.member` ctx_functions ctx
-	= let	func	= ctx_functions ctx M.! nm
+ | nm `M.member` ctxFunctions ctx
+	= let	func	= ctxFunctions ctx M.! nm
 		args'	= args |> evaluate ctx in
 		applyFunc ctx (nm, func) args'
  | otherwise
 	= evalErr ctx $ "unknown function: "++nm	
 
 evaluate ctx (MVar _ nm)
- | nm `M.member` ctx_vars ctx	
-	= fst $ ctx_vars ctx M.! nm
+ | nm `M.member` ctxVars ctx	
+	= fst $ ctxVars ctx M.! nm
  | otherwise			
 	= evalErr ctx $ "unkown variable "++nm
 
 evaluate ctx (MEvalContext _ nm hole)
- | nm `M.member` ctx_vars ctx	
+ | nm `M.member` ctxVars ctx	
 	= let	hole'	= evaluate ctx hole
-		(context, path)	= ctx_vars ctx M.! nm
+		(context, path)	= ctxVars ctx M.! nm
 		path'	= fromMaybe (error $ nm++" was not captured using an evaluation context") path
 		in
 		replace context path' hole'
@@ -217,7 +217,7 @@ evaluate ctx (MEvalContext _ nm hole)
 evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & PtSeq tp
 evaluate ctx (MParseTree pt)	= pt
 evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n"++
-					(ctx_vars ctx & M.toList |> showVarAssgn & unlines)
+					(ctxVars ctx & M.toList |> showVarAssgn & unlines)
 
 showVarAssgn	:: (Name, (ParseTree, Maybe [Int])) -> String
 showVarAssgn (nm, (pt, mPath))
@@ -231,7 +231,7 @@ asInts ctx bi exprs
 				|> (\e -> if isMInt' e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
 				|> (\(MInt _ i) -> i)
 		tp	= typeOf $ head exprs
-		tp'	= if tp == "" then error $ "Declare a return type, by annotating the first argument of a builtin" else tp
+		tp'	= if tp == "" then error "Declare a return type, by annotating the first argument of a builtin" else tp
 		in
 		((tp', -1), exprs')
 

@@ -1,12 +1,5 @@
 module Main where
 
-import System.Environment
-
-import Utils.Utils
-import Utils.ArgumentParser
-
-import Control.Monad
-
 import TypeSystem
 
 import Parser.TargetLanguageParser
@@ -14,6 +7,12 @@ import Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
 
+import Utils.Utils
+import Utils.ArgumentParser
+
+import System.Environment
+
+import Control.Monad
 
 import Text.Parsec
 
@@ -21,10 +20,9 @@ import Data.Maybe
 import Data.Either
 import Data.Map (Map, fromList)
 import Data.List (intercalate)
+import Data.Monoid ((<>))
 
 import Options.Applicative
-import Data.Monoid ((<>))
-import Data.Maybe (fromJust, isJust)
 
 
 version	= [0,0,3]
@@ -44,7 +42,7 @@ main' args
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
 mainArgs args	
-	= do	ts'	<- parseTypeSystemFile (ts_file args)
+	= do	ts'	<- parseTypeSystemFile (tsFile args)
 		ts	<- either (error . show) return ts'
 		checkTypeSystem ts & either error return
 
@@ -52,9 +50,9 @@ mainArgs args
 
 		when (dumbTS args) $ print ts
 
-		let targetFile	= example_file args
+		let targetFile	= exampleFile args
 		targetContents'	<- readFile targetFile
-		let targets	= (if line_by_line args then lines else (:[])) targetContents'
+		let targets	= (if lineByLine args then lines else (:[])) targetContents'
 
 		parseTrees		<- (targets |+> parseWith targetFile ts (parser args)) |> zip targets
 
@@ -109,8 +107,4 @@ evalStar	:: TypeSystem -> Name -> ParseTree -> IO ()
 evalStar ts funcName pt	
 	= do	putStrLn $ "\n " ++ show pt
 		let pt'	= evalFunc ts funcName [pt]
-		if pt' /= pt then
-			evalStar ts funcName pt'
-		else
-			return ()
-
+		when (pt' /= pt) $ evalStar ts funcName pt'

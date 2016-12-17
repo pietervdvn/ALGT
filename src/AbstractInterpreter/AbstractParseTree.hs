@@ -48,7 +48,7 @@ _generateAbstractSet' r mi n (Literal s)	= ConcreteLiteral mi s
 _generateAbstractSet' r mi n Identifier		= ConcreteIdentifier mi n
 _generateAbstractSet' r mi n Number		= ConcreteInt mi n
 _generateAbstractSet' r mi n (BNFRuleCall tp)
-	| tp `member` (getBNF r)
+	| tp `member` getBNF r
 			= EveryPossible mi n tp
 	| otherwise	= error $ "No bnf-rule with the name " ++ tp
 _generateAbstractSet' r mi n (BNFSeq bnfs)

@@ -16,10 +16,10 @@ descriptionText	= "ALGT (Automated Language Generation Tool)- automatically pars
 			"These can be applied to your target language to interpret, typecheck or proof some other property."
 headerText v	= "Automated Language Generation Tool (version "++ (v |> show & intercalate ".") ++" )"
 
-data Args = Args 	{ ts_file	:: String
-			, example_file	:: String
+data Args = Args 	{ tsFile	:: String
+			, exampleFile	:: String
 			, parser	:: Name
-			, line_by_line	:: Bool
+			, lineByLine	:: Bool
 			, symbol	:: Maybe Symbol
 			, function	:: Maybe Name
 			, stepByStep	:: Maybe Name
@@ -53,17 +53,17 @@ args	= Args <$> argument str
 			(long "line-by-line"
 			<> short 'l'
 			<> help "Parse the target file line by line")
-		<*> ( optional $ strOption 
-			 ( metavar "RELATION"
+		<*> optional (strOption 
+			 (metavar "RELATION"
 			 <> long "relation"
 			 <> short 'r'
 			 <> help "Proof that this relation is applicable to the example file" ))
-		<*> ( optional $ strOption 
-			( metavar "FUNCTION"
+		<*> optional (strOption 
+			(metavar "FUNCTION"
 			 <> long "function"
 			 <> short 'f'
 			 <> help "Apply given function to the program"))
-		<*> ( optional $ strOption
+		<*> optional (strOption
 			(metavar "FUNCTION"
 			<> long "step-by-step"
 			<> short 's'

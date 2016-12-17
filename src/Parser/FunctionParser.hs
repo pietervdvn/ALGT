@@ -30,7 +30,7 @@ instance Show SClause where
 	show (SClause pats e)	= (pats & showComma & inParens)++" --> "++show e
 
 
-data SFunction = SFunction {sf_name :: Name, sf_type :: Type, sf_body :: [SClause]}
+data SFunction = SFunction {sfName :: Name, sfType :: Type, sfBody :: [SClause]}
 	deriving (Show, Ord, Eq)
 
 
@@ -46,14 +46,14 @@ parseFunctions bnfs
 typeFunctions	:: Syntax -> [SFunction] -> Either String Functions
 typeFunctions bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
-	  do	let typings	= funcs |> (sf_name &&& sf_type) & M.fromList
+	  do	let typings	= funcs |> (sfName &&& sfType) & M.fromList
 		typedFuncs	<- funcs |+> typeFunction bnfs typings 
 		checkNoDuplicates (typedFuncs |> fst) (\dups -> "The function "++showComma dups++" was declared multiple times")
 		return $ M.fromList typedFuncs
 
 neatFuncs	:: [SFunction] -> String
 neatFuncs funcs	
-	= funcs |> (\f -> sf_name f ++ " : " ++ show (sf_type f))
+	= funcs |> (\f -> sfName f ++ " : " ++ show (sfType f))
 		|> ("    " ++) & unlines
 
 typeFunction	:: Syntax -> Map Name Type -> SFunction -> Either String (Name, Function)
@@ -84,7 +84,7 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 
 undefinedClause	:: Type -> Name -> Clause
 undefinedClause tp nm
-	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> (\(tp, nm) -> MVar tp nm) 
+	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> uncurry MVar
 		expr	= MCall "" "error" True [MParseTree $ MLiteral ("", -1) $ "Undefined behaviour: non exhaustive patterns in function "++ nm]
 		in
 		MClause args expr
@@ -128,7 +128,7 @@ metaSignature bnfs
 
 parseClause	:: Name -> Int -> Parser u SClause
 parseClause name i
-	= (do	ws
+	= do	ws
 		string name
 		ws
 		string "("
@@ -140,6 +140,6 @@ parseClause name i
 		string "="
 		ws
 		expr	<- parseExpression
-		return $ SClause args expr)
+		return $ SClause args expr
 
 

@@ -25,6 +25,7 @@ data Ctx	= Ctx 	{ syntax	:: Syntax
 			}
 
 bnfNames'	= bnfNames . syntax
+funcTypes ctx	= ctx & funcs |> typesOf
 
 relSymbols ctx	= ctx & rels |> relSymbol & sort & reverse
 
@@ -42,7 +43,7 @@ parseRules (bnfs, rels, funcs)
 rule	:: Ctx -> Parser u Rule
 rule ctx
 	= do	ws
-		preds	<- try (predicate ctx `sepBy` (many1 $ char '\t') <* (ws >> char '\n')) 
+		preds	<- try (predicate ctx `sepBy` many1 (char '\t') <* (ws >> char '\n')) 
 				<|> (ws >> return [])
 		ws
 		nm	<- line
@@ -94,12 +95,11 @@ conclusionPre ctx
 typeAsRelation	:: Ctx -> String -> [MEParseTree] -> Parser u Conclusion
 typeAsRelation ctx symbol sExprs
 	= do	let relation	= relTypes ctx M.! symbol	-- possible relation symbols
-		let funcTps	= funcs ctx |> typesOf
 		let bnfs	= syntax ctx
 		
 		pos		<- sourcePos
 		exprs		<- zip (relType relation) sExprs
-					|> uncurry (typeAs funcTps bnfs) 
+					|> uncurry (typeAs (funcTypes ctx) bnfs) 
 					|> inMsg ("While typing a predicate/conclusion about "++symbol++", somewhere around "++show pos)
 					& allRight
 					& either error return
@@ -126,9 +126,7 @@ predicateIsA	:: Ctx -> Parser u Predicate
 predicateIsA ctx	
 	= do	ws
 		nm	<- identifier' (relSymbols ctx)
-		ws
-		char ':'
-		ws
+		colon
 		t	<- choose $ bnfNames' ctx
 		return $ TermIsA (MVar t nm) t
 
@@ -141,15 +139,12 @@ predicateSame ctx
 		char '='
 		ws
 		e2	<- parseExpr ctx
-		ws
-		char ':'
-		ws
+		colon
 		t	<- choose $ bnfNames' ctx
 
-		let funcTps	= funcs ctx |> typesOf
 		let bnfs	= syntax ctx
 		pos	<- sourcePos
-		let typeExpr e	= typeAs funcTps bnfs t e & inMsg ("While typing the predicate around " ++ show pos) & either fail return
+		let typeExpr e	= typeAs (funcTypes ctx) bnfs t e & inMsg ("While typing the predicate around " ++ show pos) & either fail return
 		e1'	<- typeExpr e1
 		e2'	<- typeExpr e2
 		

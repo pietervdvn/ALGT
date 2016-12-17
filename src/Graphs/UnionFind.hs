@@ -41,7 +41,7 @@ representative nm
 			let nmv	= lookup nm dict
 			case nmv of
 				(Just found)	-> _collapse nm found
-				(Nothing)	-> return nm
+				Nothing		-> return nm
 
 -- Collapses the path.
 _collapse	:: (Ord n) => n -> n -> State (Map n n) n
