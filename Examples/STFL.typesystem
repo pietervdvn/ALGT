@@ -1,5 +1,10 @@
 # A simply typed functional language
 
+# Can be executed (dynamically) with → (one step) or →* (bigstep)
+# Can be typed with ::
+
+
+
  Syntax
 ========
 
@@ -95,6 +100,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
  i "::" "Int" → i
 
 
+
 ----------------			[EvalParens]
  "(" e ")" → e
 
@@ -109,7 +115,6 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 ------------------------------------------------------------	[EvalLamApp]
  ("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
-
 
 
 
@@ -164,9 +169,9 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Γ ⊢ "(" e ")", T
 
 
- Γ ⊢ e, T
-------------------	[TAscr]
- Γ ⊢ e "::" T, T
+ Γ ⊢ e, T'	T' == T
+----------------------- [TAscr]
+ Γ ⊢ e "::" T, T'
 
 
 
@@ -179,9 +184,9 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Γ ⊢ n1 "+" n2, "Int"
 
 
- Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
-------------------------------------------		[TIf]
- Γ ⊢ "If" c "Then" e1 "Else" e2, T
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
+--------------------------------------------------------	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
 
 
 
@@ -194,6 +199,9 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
 ---------------------------------------------------	[Tapp]
  Γ ⊢ e1 e2, cod(Tfunc)
+
+
+
 
 
 

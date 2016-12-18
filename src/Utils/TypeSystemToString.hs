@@ -222,7 +222,7 @@ showRuleWith sp sc (Rule nm predicates conclusion)
 	= let	predicates'	= predicates |> sp & intercalate "\t"
 		conclusion'	= sc conclusion
 		nm'	= " \t[" ++ nm ++ "]"
-		line	= replicate (2 + max (length predicates') (length conclusion')) '-'
+		line	= replicate (2 + max (length' 1 predicates') (length conclusion')) '-'
 		in
 		["", " " ++ predicates', line ++ " " ++ nm', " "++ conclusion'] & unlines
 

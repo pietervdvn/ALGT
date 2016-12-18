@@ -110,6 +110,15 @@ assert c True _ 	= cont
 
 ----------------------- List tools --------------------
 
+
+length'		:: Int -> String -> Int
+length' runningLength []
+		= runningLength
+length' runningLength ('\t':rest)
+		= length' (runningLength & (+ 8) & (`div` 8) & (* 8) ) rest
+length' runningLength (a:as)
+		= length' (runningLength + 1) as
+
 merge		:: Eq a => [(a,b)] -> [(a,[b])]
 merge []	= []
 merge ((a,b):ls)
@@ -130,6 +139,26 @@ checkNoDuplicates	:: (Eq a) => [a] -> ([a] -> String) -> Either String ()
 checkNoDuplicates as msg
 	= do	let dups	= dubbles as
 		unless (null dups) $ Left $ msg dups 
+
+
+checkNoCommon		:: (Ord k) => Map k v -> Map k v -> ([(k, (v, v))] -> String) -> Either String ()
+checkNoCommon dict1 dict2 errMsg
+	= do	let common	= Map.intersection dict1 dict2 & Map.keys
+		let v1s		= common |> (dict1 Map.!)
+		let v2s		= common |> (dict2 Map.!)
+		let msg		= errMsg $ zip common $ zip v1s v2s
+		unless (null common) $ Left msg
+
+checkNoExists		:: (Ord k) => k -> Map k v -> String -> Either String ()
+checkNoExists k dict msg
+ | k `Map.notMember` dict	= return ()
+ | otherwise		= Left msg
+
+checkExists		:: (Ord k) => k -> Map k v -> String -> Either String v
+checkExists k dict msg
+ | k `Map.member` dict
+			= return $ dict Map.! k
+ | otherwise		= Left msg
 
 equalizeLength	:: a -> [[a]] -> [[a]]
 equalizeLength a ass

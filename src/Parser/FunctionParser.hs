@@ -38,19 +38,20 @@ parseFunctions	:: Maybe (Map Name Type) -> Syntax -> Parser u Functions
 parseFunctions typings bnfs
 	= do	nls
 		funcs	<- many $ try (parseFunction bnfs)
-		typeFunctions typings bnfs funcs & either error return
+		typeFunctions typings bnfs funcs |> M.fromList
+			& either error return
 
 
 
 
-typeFunctions	:: Maybe (Map Name Type) -> Syntax -> [SFunction] -> Either String Functions
+typeFunctions	:: Maybe (Map Name Type) -> Syntax -> [SFunction] -> Either String [(Name, Function)]
 typeFunctions alreadyExistingTyping bnfs funcs
 	= inMsg ("Within the environment\n"++ neatFuncs funcs ) $
 	  do	let typings'	= funcs |> (sfName &&& sfType) & M.fromList	:: Map Name Type
 		let typings	= maybe typings' (M.union typings') alreadyExistingTyping
 		typedFuncs	<- funcs |+> typeFunction bnfs typings 
 		checkNoDuplicates (typedFuncs |> fst) (\dups -> "The function "++showComma dups++" was declared multiple times")
-		return $ M.fromList typedFuncs
+		return typedFuncs
 
 neatFuncs	:: [SFunction] -> String
 neatFuncs funcs	

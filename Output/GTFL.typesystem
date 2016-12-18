@@ -5,11 +5,11 @@
 ========
 
 bool                ::= "True" | "False"
-e                   ::= eL "+" e | eL "::" type | eL e | eL
+e                   ::= eL "+" e | eL "::" type | eL e | eL | "TYPE ERROR"
 eL                  ::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
 number              ::= Number
 type                ::= typeL "->" type | typeL
-typeL               ::= "Int" | "Bool" | "(" type ")"
+typeL               ::= "Int" | "Bool" | "(" type ")" | "?"
 typing              ::= var ":" type
 typingEnvironment   ::= typing "," typingEnvironment | "{}"
 var                 ::= Identifier
@@ -21,11 +21,13 @@ var                 ::= Identifier
 cod                      : type -> type
 cod("(" T ")")           = "(" cod(T) ")"
 cod(T1 "->" T2)          = T2
+cod("?")                 = "?"
 
 
 dom                      : type -> type
 dom("(" T ")")           = "(" dom(T) ")"
 dom(T1 "->" T2)          = T1
+dom("?")                 = "?"
 
 
 plus                     : number -> e -> e
@@ -59,7 +61,7 @@ subs(x, y, z)            = z
 (✓) 	: e (in)	Pronounced as "is canonical"
 (⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
 (::) 	: e (in), type (out)	Pronounced as "type in empty context"
-(==) 	: type (in), type (in)	Pronounced as "equals"
+(~) 	: type (in), type (in)	Pronounced as "is consistent"
 
  Rules 
 =======
@@ -67,16 +69,6 @@ subs(x, y, z)            = z
 
 #  Rules about "evaluation", with symbol (→) 
 # -------------------------------------------
-
- e0 → e1
----------------  	[EvalCtx]
- e[e0] → e[e1]
-
-
- n1: number	n2: number
------------------------------------  	[EvalPlus]
- (n1:number) "+" n2 → plus(n1, n2)
-
 
  b: bool
 -------------------  	[EvalAscrBool]
@@ -89,13 +81,23 @@ subs(x, y, z)            = z
 
 
  
----------------  	[EvalParens]
- "(" e ")" → e
+----------------  	[EvalCastUnkown]
+ e "::" "?" → e
 
 
- 
---------------------------------------  	[EvalIfTrue]
- "If" "True" "Then" e1 "Else" e2 → e1
+ e0 → e1
+---------------  	[EvalCtx]
+ e[e0] → e[e1]
+
+
+ e: number
+------------------------------  	[EvalFaultyCastBool]
+ e "::" "Bool" → "TYPE ERROR"
+
+
+ e: bool
+-----------------------------  	[EvalFaultyCastInt]
+ e "::" "Int" → "TYPE ERROR"
 
 
  
@@ -104,8 +106,23 @@ subs(x, y, z)            = z
 
 
  
------------------------------------------------------------  	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
+--------------------------------------  	[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+ (✓) arg	arg "::" type → arg'
+------------------------------------------------------------  	[EvalLamApp']
+ ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+
+
+ 
+---------------  	[EvalParens]
+ "(" e ")" → e
+
+
+ n1: number	n2: number
+-----------------------------------  	[EvalPlus]
+ (n1:number) "+" n2 → plus(n1, n2)
 
 
 
@@ -113,19 +130,19 @@ subs(x, y, z)            = z
 #  Rules about "big step", with symbol (→*) 
 # ------------------------------------------
 
+ e0 → e1	(✓) e1
+------------------------  	[BigStepBase]
+ e0 →* e1
+
+
  (✓) e
 --------  	[BigStepCanon]
  e →* e
 
 
  e0 → e1	e1 →* e2
-------------------  	[BigStepRec]
+--------------------------  	[BigStepRec]
  e0 →* e2
-
-
- e0 → e1	(✓) e1
-----------------  	[BigStepBase]
- e0 →* e1
 
 
 
@@ -134,12 +151,17 @@ subs(x, y, z)            = z
 # ---------------------------------------------
 
  b: bool
----------  	[CanonBool]
+----------  	[CanonBool]
  (✓) b
 
 
+ 
+------------------  	[CanonError]
+ (✓) "TYPE ERROR"
+
+
  n: number
------------  	[CanonNumber]
+------------  	[CanonNumber]
  (✓) n
 
 
@@ -148,38 +170,13 @@ subs(x, y, z)            = z
 #  Rules about "context entails typing", with symbol (⊢) 
 # -------------------------------------------------------
 
- n: number
---------------  	[Tnumber]
- Γ ⊢ n, "Int"
-
-
- b: bool
----------------  	[Tbool]
- Γ ⊢ b, "Bool"
-
-
- Γ ⊢ e, T
-------------------  	[TParens]
- Γ ⊢ "(" e ")", T
-
-
- Γ ⊢ e, T
------------------  	[TAscr]
- Γ ⊢ e "::" T, T
-
-
- 
--------------------  	[Tx]
- Γ[x ":" T] ⊢ x, T
-
-
- Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
------------------------------  	[TPlus]
- Γ ⊢ n1 "+" n2, "Int"
+ Γ ⊢ e, T'	T' ~ T
+------------------------  	[TAscr]
+ Γ ⊢ e "::" T, T'
 
 
  Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
------------------------------------  	[TIf]
+-------------------------------------------  	[TIf]
  Γ ⊢ "If" c "Then" e1 "Else" e2, T
 
 
@@ -188,9 +185,34 @@ subs(x, y, z)            = z
  Γ ⊢ "(" "\\" x ":" T1 "." e ")", ("(" T1 ")") "->" T2
 
 
- Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
------------------------------------------------  	[Tapp]
+ Γ ⊢ e, T
+------------------  	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+-------------------------------  	[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ ~ dom(Tfunc)
+---------------------------------------------------  	[Tapp]
  Γ ⊢ e1 e2, cod(Tfunc)
+
+
+ b: bool
+---------------  	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+ n: number
+--------------  	[Tnumber]
+ Γ ⊢ n, "Int"
+
+
+ 
+-------------------  	[Tx]
+ Γ[x ":" T] ⊢ x, T
 
 
 
@@ -199,31 +221,41 @@ subs(x, y, z)            = z
 # -------------------------------------------------------
 
  "{}" ⊢ e, T
--------------  	[TEmptyCtx]
+--------------  	[TEmptyCtx]
  e :: T
 
 
 
 
-#  Rules about "equals", with symbol (==) 
-# ----------------------------------------
+#  Rules about "is consistent", with symbol (~) 
+# ----------------------------------------------
+
+ Ta1 ~ Ta2	Tb1 ~ Tb2
+-----------------------------  	[ConsArrow]
+ Ta1 "->" Tb1 ~ Ta2 "->" Tb2
+
 
  T1 = T2 : type
-----------------  	[EqBase]
- T1 == T2
+-----------------  	[ConsBase]
+ T1 ~ T2
 
 
- T1 == T2
-------------------  	[EqParL]
- "(" T1 ")" == T2
+ 
+---------  	[ConsLeft]
+ "?" ~ T
 
 
- T1 == T2
-------------------  	[EqParR]
- T1 == "(" T2 ")"
+ T1 ~ T2
+-----------------  	[ConsParL]
+ "(" T1 ")" ~ T2
 
 
- Ta1 == Ta2	Tb1 == Tb2
-------------------------------  	[EqArrow]
- Ta1 "->" Tb1 == Ta2 "->" Tb2
+ T1 ~ T2
+-----------------  	[ConsParR]
+ T1 ~ "(" T2 ")"
+
+
+ 
+---------  	[ConsRight]
+ T ~ "?"
 

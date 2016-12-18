@@ -1,0 +1,47 @@
+ 
+# Turns the runtime of STFL into a dynamic runtime, so that 'faulty' programs evaluate to "TYPE ERROR" instead of not compiling into a proof tree 
+
+ Syntax Changes
+================
+
+
+eL 	::= ... | "TYPE ERROR"
+
+
+
+ New Rules
+===========
+
+
+ e : number
+-------------------------	[EvalFaultyCastBool]
+ e "::" "Bool" → "TYPE ERROR"
+
+ e : bool
+-------------------------	[EvalFaultyCastInt]
+ e "::" "Int" → "TYPE ERROR"
+
+ 
+
+# We 'check' input typing by ascribing. 
+
+ (✓) arg	(arg "::" type) → arg'
+------------------------------------------------------------	[EvalLamAppDyn]
+ ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+
+
+
+
+-------------------	[CanonError]
+ (✓) "TYPE ERROR"
+
+
+
+
+
+ Rule Changes
+==============
+
+Delete [EvalLamApp]
+
+

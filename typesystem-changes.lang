@@ -21,9 +21,9 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 -->
-<language id="gradualization" _name="Gradualization of a typesystem file" version="2.0" _section="Source">
+<language id="typesystem-changes" _name="Changes for a typesystem file" version="2.0" _section="Source">
   <metadata>
-    <property name="globs">*.gradualization</property>
+    <property name="globs">*.typesystem-changes</property>
     <property name="line-comment-start">#</property>
   </metadata>
 
@@ -126,7 +126,7 @@
 
   
 
-    <context id="gradualization" class="no-spell-check">
+    <context id="typesystem-changes" class="no-spell-check">
       <include>
         <context ref="line-comment"/>
         <context ref="function-section"/>

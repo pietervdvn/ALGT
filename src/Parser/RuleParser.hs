@@ -151,15 +151,18 @@ predicateSame ctx
 		
 		return $ Same e1' e2'
 
-
+lineName	:: Parser u String
+lineName
+	= do	char '['
+		ws
+		nm	<- many $ noneOf "]"
+		char ']'
+		return nm
 
 line	:: Parser u String
 line	= do	ws
 		many $ char '-'
 		ws
-		char '['
-		ws
-		nm	<- many $ noneOf "]"
-		char ']'
+		nm	<- lineName
 		ws
 		return nm
