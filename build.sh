@@ -11,6 +11,8 @@ mkdir .bin >/dev/null
 cp -r src/* .bin
 
 cd .bin
+echo "createAssets False \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
+
 ghc Main.hs -fno-warn-tabs
 cd ..
 cp .bin/Main ALGT
