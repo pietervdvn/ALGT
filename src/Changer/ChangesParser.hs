@@ -26,27 +26,17 @@ import Text.Parsec
 defaultChange	:: Parser u a -> Parser u (DefaultChange a)
 defaultChange pa
 	= try	(do	string "Delete"
-			ws
-			a	<- pa
-			ws
+			a	<- inWs pa
 			return $ Delete a)
 	  <|> try (do	string "Copy"
-			ws
-			a0	<- pa
-			ws
+			a0	<- inWs pa
 			string "as" <|> string "to"
-			ws
-			a1	<- pa
-			ws
+			a1	<- inWs pa
 			return $ Copy a0 a1)
 	  <|> try (do	string "Rename"
-			ws
-			a0	<- pa
-			ws
+			a0	<- inWs pa
 			string "to" <|> string "as"
-			ws
-			a1	<- pa
-			ws
+			a1	<- inWs pa
 			return $ Rename a0 a1)
 
 
@@ -60,13 +50,9 @@ changes' pa pb	= many $ try (nls *> ws *> change' pa pb <* ws)
 syntaxChange	:: Parser u SyntaxChange
 syntaxChange   = try (bnfRule |> uncurry OverrideBNFRule) 
 		<|> (do	name	<- identifier
-			ws
-			string "::="
-			ws
+			inWs $ string "::="
 			string "..."
-			ws
-			string "|"
-			ws
+			inWs $ string "|"
 			bnfs	<- bnfLine
 			return $ AddOption name bnfs)
 
@@ -86,13 +72,9 @@ functionChange types syntax
 
 relationRename	:: Parser u (Symbol, (Symbol, Maybe String))
 relationRename 
-	= do	ws
-		string "Rename relation"
-		ws
+	= do	inWs $ string "Rename relation"
 		oldSymb	<- bnfLiteral
-		ws
-		string "to"
-		ws
+		inWs $ string "to"
 		newSymb <- bnfLiteral
 		ws
 		newPron	<- optionMaybe (string ", pronounced as" >> ws >> bnfLiteral)
@@ -101,38 +83,25 @@ relationRename
 
 relationOption	:: Syntax -> Parser u RelationChange
 relationOption syntax
- = try (do	ws
-		string "Delete"
-		ws
+ = try (do	inWs $ string "Delete"
 		symb	<- relationSymb syntax
 		return $ RDelete symb
 		)
-   <|> try (do	ws
-		cons	<- (string "Rename" >> return RRename) 
+   <|> try (do	cons	<- inWs (string "Rename" >> return RRename) 
 				<|> (string "Copy" >> return RCopy)
-		ws
 		symb	<- relationSymb syntax
-		ws
-		string "to" <|> string "as"
-		ws
+		inWs (string "to" <|> string "as")
 		nsymb	<- relationSymb syntax
 		
 		pronounce <- optionMaybe $ do
-			ws
-			char ','
-			ws
-			string "pronounced as"
-			ws
+			inWs $ char ','
+			inWs $ string "pronounced as"
 			bnfLiteral
 
 		prefixRename <- optionMaybe $ do
-			ws
-			char ','
-			ws
+			inWs $ char ','
 			string "prefix"
-			ws
-			pref	<- bnfLiteral
-			ws
+			pref	<- inWs bnfLiteral
 			string "becomes"
 			ws
 			repl	<- bnfLiteral
@@ -141,6 +110,11 @@ relationOption syntax
 
 		return $ cons symb (RCI nsymb pronounce prefixRename)
 		)
+
+
+
+ruleChange	:: TypeSystem -> Parser u RuleChange
+ruleChange ts	=  parseRule (tsSyntax ts, tsRelations ts, tsFunctions ts) |> OverrideRule
 
 
 changesFile	:: TypeSystem -> Name -> Parser u (Changes, TypeSystem)
@@ -245,7 +219,7 @@ changesFile ts0 name
 				nls
 				header "Rule Changes"
 				nls1
-				many $ try (nls >> defaultChange lineName)	
+				changes' lineName $ ruleChange ts5
 			
 		rewritten	<- rewriteRules (tsSyntax ts6) ruleCh (tsRules' ts6)
 					& either error return

@@ -1,12 +1,12 @@
-  # ../Examples/STFL.typesystem # 
- #################################
+  # Examples/STFL.typesystem # 
+ ##############################
 
  Syntax 
 ========
 
 bool                ::= "True" | "False"
-e                   ::= eL "+" e | eL "::" type | eL e | eL | "TYPE ERROR"
-eL                  ::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
+e                   ::= eL "+" e | eL "::" type | eL e | eL
+eL                  ::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")" | "TYPE ERROR"
 number              ::= Number
 type                ::= typeL "->" type | typeL
 typeL               ::= "Int" | "Bool" | "(" type ")" | "?"
@@ -75,9 +75,19 @@ subs(x, y, z)            = z
  b "::" "Bool" → b
 
 
+ e: number
+------------------------------  	[EvalCastBoolErr]
+ e "::" "Bool" → "TYPE ERROR"
+
+
  i: number
 ------------------  	[EvalCastInt]
  i "::" "Int" → i
+
+
+ e: bool
+-----------------------------  	[EvalCastIntErr]
+ e "::" "Int" → "TYPE ERROR"
 
 
  
@@ -90,14 +100,9 @@ subs(x, y, z)            = z
  e[e0] → e[e1]
 
 
- e: number
-------------------------------  	[EvalFaultyCastBool]
- e "::" "Bool" → "TYPE ERROR"
-
-
- e: bool
------------------------------  	[EvalFaultyCastInt]
- e "::" "Int" → "TYPE ERROR"
+ 
+-------------------------------------------------------  	[EvalIfErr]
+ "If" (cond:number) "Then" e1 "Else" e2 → "TYPE ERROR"
 
 
  
@@ -123,6 +128,16 @@ subs(x, y, z)            = z
  n1: number	n2: number
 -----------------------------------  	[EvalPlus]
  (n1:number) "+" n2 → plus(n1, n2)
+
+
+ 
+---------------------------------  	[EvalPlusErrL]
+ (n1:bool) "+" n2 → "TYPE ERROR"
+
+
+ 
+---------------------------------  	[EvalPlusErrR]
+ n1 "+" (n2:bool) → "TYPE ERROR"
 
 
 
@@ -175,9 +190,9 @@ subs(x, y, z)            = z
  Γ ⊢ e "::" T, T'
 
 
- Γ ⊢ c, "Bool"	Γ ⊢ e1, T	Γ ⊢ e2, T
--------------------------------------------  	[TIf]
- Γ ⊢ "If" c "Then" e1 "Else" e2, T
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl ~ Tr
+---------------------------------------------------------  	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
 
 
  (x ":" T1) "," Γ ⊢ e, T2
@@ -258,4 +273,5 @@ subs(x, y, z)            = z
  
 ---------  	[ConsRight]
  T ~ "?"
+
 

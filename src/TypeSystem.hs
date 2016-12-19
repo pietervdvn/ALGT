@@ -478,7 +478,7 @@ data Rule		= Rule 	{ ruleName 	:: Name
 				} deriving (Show, Ord, Eq)
 
 
-newtype Rules	= Rules (Map Name [Rule])
+newtype Rules	= Rules {getRules :: Map Name [Rule]}
 			deriving (Show)
 
 

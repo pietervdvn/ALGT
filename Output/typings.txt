@@ -45,18 +45,18 @@
 
 
 # (If True Then True Else True) :: Bool applied to ::
-# Proof weight: 10, proof depth: 6
+# Proof weight: 14, proof depth: 6
 
-True : bool                True : bool                True : bool
---------------- [Tbool]    --------------- [Tbool]    --------------- [Tbool]
-{} ⊢ True, Bool            {} ⊢ True, Bool            {} ⊢ True, Bool
------------------------------------------------------------------------ [TIf]
-{} ⊢ If True Then True Else True, Bool
-------------------------------------------------------------------- [TParens]
-{} ⊢ ( (If True Then True Else True) ), Bool
---------------------------------------------------------------------- [TAscr]
+True : bool                True : bool                True : bool                T1 = Bool = T2             
+--------------- [Tbool]    --------------- [Tbool]    --------------- [Tbool]    -------------- [EqBase]    
+{} ⊢ True, Bool            {} ⊢ True, Bool            {} ⊢ True, Bool            Bool == Bool               
+-------------------------------------------------------------------------------------------------- [TIf]    
+{} ⊢ If True Then True Else True, Bool                                                                      T1 = Bool = T2
+---------------------------------------------------------------------------------------------- [TParens]    -------------- [EqBase]
+{} ⊢ ( (If True Then True Else True) ), Bool                                                                Bool == Bool
+--------------------------------------------------------------------------------------------------------------------------- [TAscr]
 {} ⊢ (( (If True Then True Else True) )) :: Bool, Bool
------------------------------------------------------------------ [TEmptyCtx]
+----------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
 (( (If True Then True Else True) )) :: Bool :: Bool
 
 
@@ -89,42 +89,42 @@ False : bool
 
 
 # True :: Bool applied to ::
-# Proof weight: 4, proof depth: 4
+# Proof weight: 6, proof depth: 4
 
-True : bool
---------------- [Tbool]
-{} ⊢ True, Bool
------------------------ [TAscr]
+True : bool                T1 = Bool = T2
+--------------- [Tbool]    -------------- [EqBase]
+{} ⊢ True, Bool            Bool == Bool
+------------------------------------------ [TAscr]
 {} ⊢ True :: Bool, Bool
-------------------------------- [TEmptyCtx]
+-------------------------------------- [TEmptyCtx]
 True :: Bool :: Bool
 
 
 
 
 # If True Then 42 Else 43 applied to ::
-# Proof weight: 8, proof depth: 4
+# Proof weight: 10, proof depth: 4
 
-True : bool                42 : number               43 : number
---------------- [Tbool]    ------------ [Tnumber]    ------------ [Tnumber]
-{} ⊢ True, Bool            {} ⊢ 42, Int              {} ⊢ 43, Int
---------------------------------------------------------------------- [TIf]
+True : bool                42 : number               43 : number               T1 = Int = T2
+--------------- [Tbool]    ------------ [Tnumber]    ------------ [Tnumber]    ------------- [EqBase]
+{} ⊢ True, Bool            {} ⊢ 42, Int              {} ⊢ 43, Int              Int == Int
+----------------------------------------------------------------------------------------------- [TIf]
 {} ⊢ If True Then 42 Else 43, Int
---------------------------------------------------------------- [TEmptyCtx]
+----------------------------------------------------------------------------------------- [TEmptyCtx]
 If True Then 42 Else 43 :: Int
 
 
 
 
 # If False Then 23 Else 44 applied to ::
-# Proof weight: 8, proof depth: 4
+# Proof weight: 10, proof depth: 4
 
-False : bool                23 : number               44 : number
----------------- [Tbool]    ------------ [Tnumber]    ------------ [Tnumber]
-{} ⊢ False, Bool            {} ⊢ 23, Int              {} ⊢ 44, Int
----------------------------------------------------------------------- [TIf]
+False : bool                23 : number               44 : number               T1 = Int = T2
+---------------- [Tbool]    ------------ [Tnumber]    ------------ [Tnumber]    ------------- [EqBase]
+{} ⊢ False, Bool            {} ⊢ 23, Int              {} ⊢ 44, Int              Int == Int
+------------------------------------------------------------------------------------------------ [TIf]
 {} ⊢ If False Then 23 Else 44, Int
----------------------------------------------------------------- [TEmptyCtx]
+------------------------------------------------------------------------------------------ [TEmptyCtx]
 If False Then 23 Else 44 :: Int
 
 
@@ -179,16 +179,16 @@ If False Then 23 Else 44 :: Int
 
 
 # If If True Then False Else True Then 123456 Else 42 applied to ::
-# Proof weight: 13, proof depth: 5
+# Proof weight: 17, proof depth: 5
 
-True : bool                False : bool                True : bool                                              
---------------- [Tbool]    ---------------- [Tbool]    --------------- [Tbool]                                  
-{} ⊢ True, Bool            {} ⊢ False, Bool            {} ⊢ True, Bool            123456 : number               42 : number
------------------------------------------------------------------------- [TIf]    ---------------- [Tnumber]    ------------ [Tnumber]
-{} ⊢ If True Then False Else True, Bool                                           {} ⊢ 123456, Int              {} ⊢ 42, Int
--------------------------------------------------------------------------------------------------------------------------------- [TIf]
+True : bool                False : bool                True : bool                T1 = Bool = T2                                                                     
+--------------- [Tbool]    ---------------- [Tbool]    --------------- [Tbool]    -------------- [EqBase]                                                            
+{} ⊢ True, Bool            {} ⊢ False, Bool            {} ⊢ True, Bool            Bool == Bool               123456 : number               42 : number               T1 = Int = T2
+--------------------------------------------------------------------------------------------------- [TIf]    ---------------- [Tnumber]    ------------ [Tnumber]    ------------- [EqBase]
+{} ⊢ If True Then False Else True, Bool                                                                      {} ⊢ 123456, Int              {} ⊢ 42, Int              Int == Int
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TIf]
 {} ⊢ If (If True Then False Else True) Then 123456 Else 42, Int
--------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
 If (If True Then False Else True) Then 123456 Else 42 :: Int
 
 
@@ -267,4 +267,65 @@ If (If True Then False Else True) Then 123456 Else 42 :: Int
 
 
 
+
+# Could not apply relation :: to relation the input (\x : Int . x + 1) True, because: 
+While trying to proof that (::) is applicable to "(( \ x : Int . (x + 1) )) True":
+  Not a single rule matched:
+  While trying to intepret the rule TEmptyCtx with (( \ x : Int . (x + 1) )) True:
+    While trying to proof that (⊢) is applicable to "{}, (( \ x : Int . (x + 1) )) True":
+      Not a single rule matched:
+      While trying to intepret the rule Tnumber with {}, (( \ x : Int . (x + 1) )) True:
+        n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
+      
+      While trying to intepret the rule Tbool with {}, (( \ x : Int . (x + 1) )) True:
+        b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
+      
+      While trying to intepret the rule TParens with {}, (( \ x : Int . (x + 1) )) True:
+        Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
+      
+      While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
+        Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
+      
+      While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
+        Could not match Γ[x ":" T] /= "{}"
+      
+      While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
+        Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
+      
+      While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
+        Sequence lengths are not the same: "If" c "Then" e1 "Else" e2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
+      
+      While trying to intepret the rule TLambda with {}, (( \ x : Int . (x + 1) )) True:
+        Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
+      
+      While trying to intepret the rule Tapp with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to proof that (==) is applicable to "Bool, ( Int )":
+          Not a single rule matched:
+          While trying to intepret the rule EqBase with Bool, ( Int ):
+            Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
+          
+          While trying to intepret the rule EqParL with Bool, ( Int ):
+            Could not match "(" T1 ")" /= "Bool"
+          
+          While trying to intepret the rule EqParR with Bool, ( Int ):
+            While trying to proof that (==) is applicable to "Bool, Int":
+              Not a single rule matched:
+              While trying to intepret the rule EqBase with Bool, Int:
+                Equality predicate not met: T1="Bool" /= "Int"=T2
+              
+              While trying to intepret the rule EqParL with Bool, Int:
+                Could not match "(" T1 ")" /= "Bool"
+              
+              While trying to intepret the rule EqParR with Bool, Int:
+                Could not match "(" T2 ")" /= "Int"
+              
+              While trying to intepret the rule EqArrow with Bool, Int:
+                Could not match Ta1 "->" Tb1 /= "Bool"
+              
+          
+          While trying to intepret the rule EqArrow with Bool, ( Int ):
+            Could not match Ta1 "->" Tb1 /= "Bool"
+          
+      
+  
 

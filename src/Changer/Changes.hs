@@ -18,10 +18,11 @@ import Control.Monad
 import Control.Arrow ((&&&))
 
 
-data DefaultChange a
-	= Rename a a
-	| Copy a a
-	| Delete a
+data DefaultChange k
+	= Rename k k
+	| Copy k k
+	| Delete k
+	| Override k
 	deriving (Show)
 
 -- apply a generic change to a generic map
@@ -57,11 +58,16 @@ data RelationChangeInfo
 		, ruleRename	:: Maybe (String, String)}
 		deriving (Show)
 
+
+
 data RelationChange
 	= RDelete Name
 	| RCopy   Name RelationChangeInfo
 	| RRename Name RelationChangeInfo
 		deriving (Show)
+
+data RuleChange		= OverrideRule Rule
+	deriving (Show)
 
 data Changes = Changes
 			{ changesName	:: Name
@@ -72,7 +78,7 @@ data Changes = Changes
 			, newRelations	:: [Relation] 
 			, changedRels	:: [RelationChange]
 			, newRules	:: [Rule]
-			, ruleChanges	:: [DefaultChange Name]
+			, ruleChanges	:: Changes' Name RuleChange
 			} deriving (Show)
 
 
@@ -222,8 +228,8 @@ _renameRule nm rewrite
 			return $ replacement ++ drop (length prefix) nm
 
 
-
-_rewrDict d	= d & M.elems & concat |> (ruleName &&& id) & merge & M.fromList 
+_rewrDict	:: Map Symbol [Rule] -> Map Name Rule
+_rewrDict d	= d & M.elems & concat |> (ruleName &&& id) & M.fromList 
 
 addRules	:: Syntax -> [Rule] -> Rules -> Either String Rules
 addRules syntax newRules (Rules oldRules)
@@ -232,11 +238,16 @@ addRules syntax newRules (Rules oldRules)
 		checkNoCommon' (_rewrDict oldRules) (_rewrDict newRules) "rule" "Rules"
 		return $ Rules $ M.unionWith (++) oldRules newRules
 
+applyRuleChange	:: Syntax -> RuleChange -> Map Name Rule -> Either String (Map Name Rule)
+applyRuleChange s (OverrideRule rule) r
+	= inMsg ("While overriding rule "++show (ruleName rule)) $
+	  do	checkExists (ruleName rule) r "The rule does not exist. If you want to introduce it, put it in the 'New Rules' section"
+		return $ M.insert (ruleName rule) rule r
 
-rewriteRules	:: Syntax -> [DefaultChange Name] -> Rules -> Either String Rules
+rewriteRules	:: Syntax -> Changes' Name RuleChange -> Rules -> Either String Rules
 rewriteRules syntax changes (Rules rules)
 	= inMsg "While updating the rules" $
 	  do	let rulesOnName	= _rewrDict rules
-		rulesOnName'	<- changes |> applyChangeTo & foldM (&) rulesOnName
-		makeRules syntax (rulesOnName' & M.elems & concat)
+		rulesOnName'	<- changes |> either applyChangeTo (applyRuleChange syntax) & foldM (&) rulesOnName
+		makeRules syntax (rulesOnName' & M.elems)
 		

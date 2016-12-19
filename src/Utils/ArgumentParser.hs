@@ -14,21 +14,30 @@ descriptionText	= "ALGT (Automated Language Generation Tool)- automatically pars
 			"This tool parses a 'typesystem'-file, where the syntax of your language is defined. With this, your target file is parsed."++
 			"In the typesystem file, rewrite rules (or functions) can be defined - or better, rules defining properties can be defined."++
 			"These can be applied to your target language to interpret, typecheck or proof some other property."
-headerText v	= "Automated Language Generation Tool (version "++ (v |> show & intercalate ".") ++" )"
+headerText (v, vId)
+		= "Automated Language Generation Tool (version "++ (v |> show & intercalate ".") ++", "++show vId++" )"
+
 
 data Args = Args 	{ tsFile	:: String
-			, exampleFile	:: String
-			, parser	:: Name
-			, lineByLine	:: Bool
-			, symbol	:: Maybe Symbol
-			, function	:: Maybe Name
-			, stepByStep	:: Maybe Name
+			, exampleFiles	:: [ExampleFile]
+			, changeFile	:: [FilePath]
 			, dumbTS	:: Bool
 			}
 	deriving (Show)
+
+
+data ExampleFile	= ExFileArgs
+	{ fileName	:: String
+	, parser	:: Name
+	, lineByLine	:: Bool
+	, symbol	:: Maybe Symbol
+	, function	:: Maybe Name
+	, stepByStep	:: Maybe Name
+	} deriving (Show)
 	
 
-parseArgs	:: [Int] -> [String] -> IO Args
+
+parseArgs	:: ([Int], String) -> [String] -> IO Args
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
 		handleParseResult result
@@ -37,12 +46,13 @@ parseArgs version strs
 parserInfo v	= info (helper <*> args)
 			(fullDesc <> progDesc descriptionText <> header (headerText v))
 
-args	:: Parser Args
-args	= Args <$> argument str
-			(metavar "TYPESYSTEM-FILE"
-			<> help "FilePath of the typesystem-file"
-			<> action "file")
-		<*> argument str
+
+
+
+targetFile	:: Parser ExampleFile
+targetFile
+	= ExFileArgs <$> 
+		argument str
 			(metavar "TARGET-PROGRAM-FILE"
 			<> help "Filepath of the target programming language"
 			<> action "file")
@@ -68,6 +78,19 @@ args	= Args <$> argument str
 			<> long "step-by-step"
 			<> short 's'
 			<> help "Apply the given function, step by step, until the result of the function is the same as the input"
+			))
+
+args	:: Parser Args
+args	= Args <$> argument str
+			(metavar "TYPESYSTEM-FILE"
+			<> help "FilePath of the typesystem-file"
+			<> action "file")
+		<*> many targetFile
+		<*> many (strOption
+			(metavar "TYPESYSTEM-CHANGES-FILE"
+			<> long "changes"
+			<> short 'c'
+			<> help "Apply the given changes to the type-system file. These changes are applied before any other action"
 			))
 		<*> switch
 			(long "dump-typesystem"

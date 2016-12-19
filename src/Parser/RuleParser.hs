@@ -30,10 +30,17 @@ funcTypes ctx	= ctx & funcs |> typesOf
 
 relSymbols ctx	= ctx & rels |> relSymbol & sort & reverse
 
+_makeCtx (bnfs, rels, funcs)
+	= Ctx bnfs rels (rels |> (relSymbol &&& id) & M.fromList) funcs
+
 parseRules	:: (Syntax, [Relation], Functions) -> Parser u [Rule]
-parseRules (bnfs, rels, funcs)
-	= do	let ctx	= Ctx bnfs rels (rels |> (relSymbol &&& id) & M.fromList) funcs
-		many $ try (nls *> rule ctx <* nls)
+parseRules env
+	= many $ try (nls *> rule (_makeCtx env) <* nls)
+
+
+parseRule	:: (Syntax, [Relation], Functions) -> Parser u Rule
+parseRule env
+	=rule $ _makeCtx env
 
 
 
@@ -127,7 +134,7 @@ predicateIsA	:: Ctx -> Parser u Predicate
 predicateIsA ctx	
 	= do	ws
 		nm	<- identifier' (relSymbols ctx)
-		colon
+		inWs $ char ':'
 		t	<- choose $ bnfNames' ctx
 		return $ TermIsA (MVar t nm) t
 
@@ -140,7 +147,7 @@ predicateSame ctx
 		char '='
 		ws
 		e2	<- parseExpr ctx
-		colon
+		inWs $ char ':'
 		t	<- choose $ bnfNames' ctx
 
 		let bnfs	= syntax ctx

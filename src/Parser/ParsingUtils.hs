@@ -60,7 +60,7 @@ ws1	= many1 (oneOf whitespace)
 ws'	:: Parser u String
 ws'	= many (char ' ')
 
-colon	= ws *> char ':' <* ws
+inWs p	= ws *> p <* ws
 
 nl		= try (ws >> char '\n') <|> char '\n' <|> (try commentLine >> ws >> char '\n')
 nls1		= many1 nl

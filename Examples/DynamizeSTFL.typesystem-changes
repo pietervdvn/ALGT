@@ -14,22 +14,24 @@ eL 	::= ... | "TYPE ERROR"
 
 
  e : number
--------------------------	[EvalFaultyCastBool]
+-------------------------	[EvalCastBoolErr]
  e "::" "Bool" → "TYPE ERROR"
 
  e : bool
--------------------------	[EvalFaultyCastInt]
+-------------------------	[EvalCastIntErr]
  e "::" "Int" → "TYPE ERROR"
 
  
-
-# We 'check' input typing by ascribing. 
-
- (✓) arg	(arg "::" type) → arg'
-------------------------------------------------------------	[EvalLamAppDyn]
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+--------------------------------------  	[EvalIfErr]
+ "If" (cond:number) "Then" e1 "Else" e2 → "TYPE ERROR"
 
 
+-----------------------------------  	[EvalPlusErrL]
+ (n1:bool) "+" n2 → "TYPE ERROR"
+
+
+----------------------------------	[EvalPlusErrR]
+ n1 "+" (n2:bool) → "TYPE ERROR"
 
 
 -------------------	[CanonError]
@@ -42,6 +44,10 @@ eL 	::= ... | "TYPE ERROR"
  Rule Changes
 ==============
 
-Delete [EvalLamApp]
+# We 'check' input typing by ascribing.
+# The (✓) arg is important to force an ordering on the evaluation, otherwise multiple orders are possible
 
+ (✓) arg	(arg "::" type) → arg'
+------------------------------------------------------------	[EvalLamApp]
+ ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
 

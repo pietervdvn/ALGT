@@ -10,7 +10,7 @@ import Parser.TargetLanguageParser
 import Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
-
+import Changer.ChangesParser
 
 import System.Environment
 
@@ -27,7 +27,7 @@ import Data.Monoid ((<>))
 import Options.Applicative
 
 
-version	= [0,0,4]
+version	= ([0,1,0], "Language (Re)Factory")
 
 
 main	:: IO ()
@@ -43,16 +43,36 @@ main' args
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs args	
-	= do	ts'	<- parseTypeSystemFile (tsFile args)
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS)
+	= do	ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		checkTypeSystem ts & either error return
 
-		let noRules	= not ( dumbTS args) && all isNothing [symbol args, function args, stepByStep args]
+		changedTs	
+			<- changeFiles |> mainChanges & foldM (&) ts	:: IO TypeSystem
 
-		when (dumbTS args) $ putStrLn $ toParsable ts
+		when dumbTS $ putStrLn $ toParsable changedTs
 
-		let targetFile	= exampleFile args
+		
+		
+		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
+		return (changedTs , concat parseTrees)
+
+
+
+mainChanges	:: String -> TypeSystem -> IO TypeSystem
+mainChanges filepath ts
+	= do	changes'	<- parseChangesFile ts filepath
+		(changes,ts')	<- changes' & either (error . show) return
+		return ts'
+
+
+mainExFile	:: ExampleFile -> TypeSystem -> IO [(String, ParseTree)]
+mainExFile args ts 
+	= do	let noRules	= all isNothing [symbol args, function args, stepByStep args]
+
+
+		let targetFile	= fileName args
 		targetContents'	<- readFile targetFile
 		let targets	= (if lineByLine args then lines else (:[])) targetContents'
 
@@ -63,8 +83,9 @@ mainArgs args
 		parseTrees |+> ifJust (runStepByStep ts) (stepByStep args)
 
 		when noRules $ putStrLn "You didn't specify an action to perform. See -h"
-	
-		return (ts, parseTrees)
+		return parseTrees
+
+
 
 
 parseWith	:: FilePath -> TypeSystem -> Name -> String -> IO ParseTree
