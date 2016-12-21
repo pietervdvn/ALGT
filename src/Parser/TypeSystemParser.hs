@@ -103,7 +103,7 @@ typeSystemFile name
 				parseRules (syntax, rels, funcs)
 		
 		rules'	<- makeRules syntax rules & either error return
-
+		nls
 		eof
 
 		return $ TypeSystem name syntax funcs rels rules'

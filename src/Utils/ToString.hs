@@ -27,9 +27,11 @@ class ToString a where
 	-- e.g. a parsetree as if it was a meta-expression in a typesystem file
 	-- a meta-expression as if it was target language. This might not always be possible
 	toCoParsable	:: a -> String
+	toCoParsable	= toParsable
 	
 	-- can contain more info, e.g. type info of the expression
 	debug	:: a -> String
+	debug	= toParsable
 
 
 class ToString' opts a where

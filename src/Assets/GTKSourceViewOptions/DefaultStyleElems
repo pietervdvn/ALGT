@@ -1,0 +1,18 @@
+comment shebang doc-comment doc-comment-element
+constant character string special-char number floating-point decimal base-n-integer complex special-constant boolean
+identifier function builtin 
+statement operator keyword 
+type 
+preprocessor 
+error reserved
+warning 
+note
+underlined
+heading0
+heading1
+heading2
+heading3
+heading4
+heading5
+heading6
+

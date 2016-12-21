@@ -1,0 +1,14 @@
+text
+selection
+selection-unfocused
+cursor
+secondary-cursor
+current-line
+line-numbers
+current-line-number
+draw-spaces
+background-pattern
+bracket-match
+bracket-mismatch
+right-margin
+search-match

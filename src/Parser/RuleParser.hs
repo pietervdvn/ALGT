@@ -60,7 +60,7 @@ rule ctx
 		ws
 		con	<- conclusion ctx
 		let rule	= Rule nm preds con
-		typeCheckRule (syntax ctx) rule & either error return
+		check' (syntax ctx) rule & either error return
 		return rule
 
 

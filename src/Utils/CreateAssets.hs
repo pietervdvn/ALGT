@@ -29,7 +29,7 @@ dirConts fp
 		return $ normalFiles ++ concat recursive
 		
 
-name f	= f & replace "." "_" & replace "/" "_"
+name f	= f & replace "." "_" & replace "/" "_" & ("_"++)
 
 
 header dev

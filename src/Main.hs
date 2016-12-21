@@ -46,7 +46,7 @@ mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
 mainArgs (Args tsFile exampleFiles changeFiles dumbTS)
 	= do	ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
-		checkTypeSystem ts & either error return
+		check ts & either error return
 
 		changedTs	
 			<- changeFiles |> mainChanges & foldM (&) ts	:: IO TypeSystem

@@ -1,0 +1,6 @@
+True
+0 + 1
+If True Then 0 Else 1
+(\ x : Bool . True)
+(\f : (Bool -> Bool) . f False)
+

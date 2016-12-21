@@ -1,4 +1,7 @@
+ {-# LANGUAGE FlexibleInstances #-}
+ {-# LANGUAGE MultiParamTypeClasses #-}
 module Utils.Utils where
+
 
 {-
 Some utility functions, often used to program 'left to right'
@@ -9,7 +12,7 @@ import Control.Monad
 import Data.Either
 import Data.Foldable
 import Data.Maybe
-import Data.List (intercalate)
+import Data.List (intercalate, isPrefixOf)
 import Data.Tuple
 
 import Data.Map (Map)
@@ -25,6 +28,15 @@ import qualified Data.Set as Set
 
 type Name = String
 
+
+class Check a where
+	check	:: a -> Either String ()
+	check a	= return ()
+
+class Check' info a where
+	check'	:: info -> a -> Either String ()
+	check' info a
+		= return ()
 
 ------------------- Left to Right programming helpers -----------------------------------
 
@@ -90,6 +102,7 @@ allRight_ eithers
 		= eithers & filter isLeft & allRight >> return ()
 
 
+
 -- Stack message for Either Monad
 inMsg		:: String -> Either String a -> Either String a
 inMsg msg (Left msg')
@@ -109,6 +122,10 @@ assert c False msg	= c msg
 assert c True _ 	= cont
 
 ----------------------- List tools --------------------
+
+validLines	:: String -> [String]
+validLines fileConts
+		= fileConts & lines & filter (not . null) & filter (not . ("#" `isPrefixOf`))
 
 
 length'		:: Int -> String -> Int

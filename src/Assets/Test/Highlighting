@@ -1,0 +1,17 @@
+
+typeL	error
+typeL.0	type
+typeL.1	type
+
+type	noise
+
+
+
+var	identifier
+number	constant
+bool	constant
+
+e	statement
+eL	statement
+
+

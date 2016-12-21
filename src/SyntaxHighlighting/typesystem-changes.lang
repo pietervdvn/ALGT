@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ 
+ Place this file into ~/.local/share/gtksourceview-3.0/language-specs
+
+ Author: Pieter Vander Vennet; pietervdvn@gmail.com
+ 
+
+ GtkSourceView is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+
+ GtkSourceView is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+-->
+<language id="typesystem-changes" _name="Changes for a typesystem file" version="2.0" _section="Source">
+  <metadata>
+    <property name="globs">*.typesystem-changes</property>
+    <property name="line-comment-start">#</property>
+  </metadata>
+
+  <styles>
+    <style id="comment"      _name="Comment"      map-to="def:comment"/>
+    <style id="noise"        _name="Boiler plate that distracts"      map-to="def:comment"/>
+
+    <style id="heading"      _name="Header"       map-to="def:special-char" />
+    <style id="identifier"   _name="Identifier"   />
+    <style id="rel-symb"     _name="Relation symbol" map-to="def:operator"/>
+  </styles>
+
+  <definitions>
+
+    <define-regex id="id">([[:lower:]][[:alnum:]]*)</define-regex>
+    <define-regex id="idUpper">([[:alpha:]][[:alnum:]]*)</define-regex>
+    <define-regex id="tokenR">("([^"\\]|\\\\|\\"|\\n)*")</define-regex>
+
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+      <start>(#)</start>
+      <include>
+        <context ref="def:in-comment"/>
+      </include>
+    </context>
+
+
+    <context id="bnf-keywords" style-ref="def:keyword">
+      <keyword>Identifier</keyword>
+      <keyword>Number</keyword>
+    </context>
+
+    <context id="token" style-ref="def:string">
+      <match>(\%{tokenR})</match>
+    </context>
+
+    <context id="ident" style-ref="identifier">
+      <match>(\%{id})</match>
+    </context>
+  
+
+    <context id="ascription">
+    <match>((?'e'\%{idUpper})\s*:\s*(?'t'\%{id}))</match>
+    <include>
+       <context sub-pattern="t" style-ref="def:type"/>
+    </include>
+    </context>
+
+
+
+    <context id="func-sign">
+      <match>(^\s*(?'f'\%{id})[ \t]*:(?'type'(\%{id}|\s|->)*))</match>
+      <include>
+        <context sub-pattern="f" style-ref="def:identifier"/>
+        <context sub-pattern="type" style-ref="def:type"/>
+      </include>
+    </context>
+
+    <context id="func-clause" end-at-line-end="true">
+    <start>(^\s*\%{id}\s*(?'parO'\())</start>
+    <end>(\)\s*=)</end>
+    <include>
+      <context sub-pattern="0" where="start" style-ref="noise"/>
+      <context sub-pattern="0" where="end" style-ref="noise"/>
+      <context ref="token"/>
+      <context ref="ascription"/>
+    </include>
+    </context>
+
+
+    <context id="function-section">
+      <start>((New|Overridden) Functions)</start>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="heading"/>
+        <context once-only="true" style-ref="heading"><match>(=+)</match></context>
+        <context ref="func-sign"/>
+        <context ref="func-clause"/>
+        <context ref="token"/>
+        <context ref="ident"/>
+        <context ref="line-comment"/>
+        <context ref="relation-section"/>
+        <context ref="function-section"/>
+       </include>
+    </context>
+
+
+
+
+
+    <context id="relation-section">
+      <start>((Rename|New) Relations)</start>
+      <include>
+        <context sub-pattern="0" where="start" style-ref="heading"/>
+        <context once-only="true" style-ref="heading"><match>(=+)</match></context>
+        <context ref="line-comment"/>
+		<context ref="token"/>
+        <context ref="relation-section"/>
+      </include>
+    </context>
+
+
+  
+
+    <context id="typesystem-changes" class="no-spell-check">
+      <include>
+        <context ref="line-comment"/>
+        <context ref="function-section"/>
+		<context ref="token"/>
+      </include>
+    </context>
+
+  </definitions>
+</language>

@@ -229,7 +229,7 @@ changesFile ts0 name
 		eof
 
 
-		checkTypeSystem tsFinal & either error return
+		check tsFinal & either error return
 		return (Changes name newSyntax bnfCh newFuncs funcCh newRels relCh newRules ruleCh, tsFinal)
 
 
