@@ -20,7 +20,6 @@ import Utils.Utils
 import Graphs.SearchCycles
 
 import Data.Maybe
-import Data.List
 import Data.Either
 
 import Data.Map (Map)
@@ -49,11 +48,6 @@ data BNF 	= Literal String	-- Literally parse 'String'
 	deriving (Show, Eq)
 
 
-specialChars	= "+*?[]\\^$.()"
-
-translateRegex	:: String -> String
-translateRegex str
-	= str >>= (\c -> if c `elem` specialChars then "\\"++[c] else c:[])
 
 
 
@@ -321,6 +315,15 @@ mergeContextWith msg' validCombo ctx1 ctx2
 
 
 
+------------------------ Syntax Highlighting --------------
+
+-- A little extra, cause I like fancy colors
+
+data SyntaxStyle = SyntaxStyle
+	{ baseStyles	:: Map TypeName Name
+	, extraStyles	:: Map (TypeName, Int) Name
+	, styleRemaps	:: Map Name Name	-- e.g. noise maps to comment
+	} deriving (Show)
 
 
 ------------------------ functions -------------------------
@@ -645,12 +648,13 @@ weight _ = 1
 
 {-Represents a full typesystem file-}
 data TypeSystem 	
-	= TypeSystem {	tsName :: Name, 	-- what is this typesystem's name?
-			tsSyntax	:: Syntax,	-- synax of the language
-			tsFunctions 	:: Functions,	-- syntax functions of the TS 
-			tsRelations	:: [Relation],
+	= TypeSystem 	{ tsName 	:: Name	-- what is this typesystem's name?
+			, tsSyntax	:: Syntax	-- synax of the language
+			, tsStyle	:: SyntaxStyle
+			, tsFunctions 	:: Functions	-- syntax functions of the TS 
+			, tsRelations	:: [Relation]
 			-- predicates and inference rules of the type system, most often used for evaluation and/or typing rules; sorted by conclusion relation
-			tsRules' 	:: Rules
+			, tsRules' 	:: Rules
 			} deriving (Show)
 
 

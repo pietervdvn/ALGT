@@ -7,9 +7,10 @@ import TypeSystem
 import Utils.Utils
 import Utils.ToString
 
-import Data.List (intercalate, sortOn, elemIndex)
+import Data.List (intercalate, sortOn, elemIndex, sort)
 import Data.Map as M hiding (filter, null, foldl)
 import Data.Maybe
+import Data.Bifunctor
 
 {-
 This module defines multiple 'ToString's for all type-system data structures
@@ -37,7 +38,6 @@ instance ToString Syntax where
 	toParsable (BNFRules rules)
 		= let width	= rules & M.keys |> length & maximum in
 			rules & M.toList |> uncurry (toParsableBNFRule width) & unlines
-	toCoParsable	= toParsable
 	debug		= show
 
 
@@ -45,6 +45,16 @@ toParsableBNFRule	:: Int -> Name -> [BNF] -> String
 toParsableBNFRule w n choices
 	= n++ replicate (w - length n) ' ' ++ "   ::= "++ (choices |> toParsable & intercalate " | ")
 
+------------------------------------ Syntax Highlighting --------------------------------------------
+
+instance ToString SyntaxStyle where
+	toParsable (SyntaxStyle baseStyles extraStyles styleRemaps)
+		= let	styles	= M.toList baseStyles ++
+				  (M.toList extraStyles |> first (\(nm, i) -> nm++"."++show i)) ++
+				  (M.toList styleRemaps |> first show)
+			styles'	= styles ||>> show |> (\(key, val) -> key ++ "\t -> "++val)
+			in
+			styles' & sort & unlines
 
 
 ------------------------------------ EXPRESSIONS --------------------------------------------
@@ -317,9 +327,10 @@ header' s
 
 
 instance ToString TypeSystem where
-	toParsable ts@(TypeSystem name syntax functions relations rules)
+	toParsable ts@(TypeSystem name syntax syntaxStyle functions relations rules)
 		= 	[ header " " ("# "++name++" #") '#'
 			, header' "Syntax", toParsable syntax
+			, header' "Syntax Highlighting", toParsable syntaxStyle
 			, header' "Functions", 
 				functions & M.toList |> (\(nm, func) -> toParsable' (nm, 24 :: Int) func) & intercalate "\n\n"
 			, header' "Relations" , toParsable' "\n" relations

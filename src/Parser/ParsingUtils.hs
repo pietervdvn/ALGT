@@ -68,13 +68,15 @@ nls		= many nl
 
 commentLine	= ws >> char '#' >> many (noneOf "\n") 
 
-header hdr
+header' chr hdr
 	= do	ws
 		string hdr
 		ws
 		char '\n'
-		many1 $ char '='
+		many1 $ char chr
 		char '\n'
+
+header	= header' '='
 
 
 ----------------------- Combinators --------------------------------------
@@ -105,6 +107,11 @@ intersperseM sep (ma:mas)
 			sep
 			as	<- intersperseM sep mas
 			return (a:as)
+
+
+parseEither	:: Parser u a -> Parser u b -> Parser u (Either a b)
+parseEither pa pb
+	= (pa |> Left) <|> (pb |> Right)
 
 ----------------- Identifiers and numbers ---------------------
 

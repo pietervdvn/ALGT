@@ -28,3 +28,4 @@ Cabal dependencies
 
 parsec
 optparse-applicative
+directory >= 1.2.3

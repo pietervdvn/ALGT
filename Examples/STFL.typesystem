@@ -1,4 +1,6 @@
-# A simply typed functional language
+ 
+ STFL # A simply typed lambda function language
+************************************************
 
 # Can be executed (dynamically) with → (one step) or →* (bigstep)
 # Can be typed with ::
@@ -18,12 +20,25 @@ var	::= Identifier
 number	::= Number
 bool	::= "True" | "False"
 e	::= eL "+" e | eL "::" type | eL e | eL
-eL	::= number | bool | var | "(" "\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
+eL	::= number | bool | var | "(\\" var ":" type "." e ")" | "If" e "Then" e "Else" e | "(" e ")"
 
 
 typing			::= var ":" type
 typingEnvironment	::= typing "," typingEnvironment | "{}"
 
+
+ Syntax Style
+==============
+
+type	-> "type"
+typeL	-> "type"
+
+var	-> "identifier"
+number	-> "constant"
+bool	-> "constant"
+e	-> "statement"
+eL	-> "statement"
+eL.4	-> "keyword"
 
  Functions
 ===========
@@ -33,13 +48,13 @@ typingEnvironment	::= typing "," typingEnvironment | "{}"
 # deduces a new name for the variable in an lambda abstraction
 rename		: var -> var -> type -> e -> e
 rename(x, newVar, type, body)
-		= "(" "\\" newVar ":" type "." subs(x, newVar, body ) ")"
+		= "(\\" newVar ":" type "." subs(x, newVar, body ) ")"
 
 # replaces variable x by y in entire expression
 subs						: var -> e -> e -> e
 subs(x, y, x)					= y
-subs(x, y, "(" "\\" x ":" t "." rest ")" )	= subs(x, y, rename(x, !newvar(x, rest), t, rest) )
-subs(x, y, "(" "\\" z ":" t "." rest ")" )	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
+subs(x, y, "(\\" x ":" t "." rest ")" )		= subs(x, y, rename(x, !newvar(x, rest), t, rest) )
+subs(x, y, "(\\" z ":" t "." rest ")" )		= "(\\" z ":" t "." subs(x,y,rest) ")"
 subs(x, y, "If" cond "Then" e1 "Else" e2)	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
 subs(x, y, e1 "+" e2)				= subs(x, y, e1) "+" subs(x, y, e2)
 subs(x, y, e "::" type)				= subs(x, y, e) "::" type
@@ -80,6 +95,8 @@ plus(e1, e2)	= !plus((e1:number), e2)
  Rules
 =======
 
+
+
  e0 → e1
 -----------------			[EvalCtx]
  e[e0] → e[e1]
@@ -114,7 +131,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
 
 ------------------------------------------------------------	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
+ ("(\\" var ":" type "." e ")") arg → subs(var, arg, e)
 
 
 
@@ -192,7 +209,7 @@ plus(e1, e2)	= !plus((e1:number), e2)
 
  ((x ":" T1) "," Γ) ⊢ e, T2
 -------------------------------------------------------	[TLambda]
- Γ ⊢ "(" "\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
+ Γ ⊢ "(\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
 
 
 

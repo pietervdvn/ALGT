@@ -74,7 +74,18 @@ sndEffect (a, mb)
 		= do	b <- mb
 			return (a, b)
 
+fstEffect	:: Monad m => (m a, b) -> m (a, b)
+fstEffect (ma, b)
+		= do	a <- ma
+			return (a, b)
+ifJust'		:: (a -> b -> IO ()) -> Maybe a -> b -> IO ()
+ifJust' f Nothing b	= return ()
+ifJust' f (Just a) b	= f a b
 
+
+ifJust		:: (a -> IO ()) -> Maybe a -> IO ()
+ifJust _ Nothing	= return ()
+ifJust f (Just a)	= f a
 
 firstJusts	:: [Maybe a] -> Maybe a
 firstJusts maybes
@@ -120,6 +131,30 @@ ammendMsg _ a	= a
 assert :: Monad m => (String -> m ()) -> Bool -> String -> m ()
 assert c False msg	= c msg
 assert c True _ 	= cont
+
+----------------------- Tuple Tools ------------------
+
+fst3		:: (a, b, c) -> a
+fst3 (a, _, _)	= a
+
+snd3		:: (a, b, c) -> b
+snd3 (_, b, _)	= b
+
+trd3		:: (a, b, c) -> c
+trd3 (_, _, c)	= c
+
+
+dropFst3		:: (a, b, c) -> (b, c)
+dropFst3 (_, b, c)	= (b, c)
+
+dropSnd3		:: (a, b, c) -> (a, c)
+dropSnd3 (a, _, c)	= (a, c)
+
+dropTrd3	:: (a, b, c) -> (a, b)
+dropTrd3 (a, b, _)	= (a, b)
+
+merge3l			:: (a, b, c) -> ((a, b), c)
+merge3l (a, b, c)	=  ((a, b), c)
 
 ----------------------- List tools --------------------
 
@@ -203,3 +238,10 @@ invertDict	= fmap Set.fromList . Map.fromList . merge . map swap . unmerge . Map
 
 invertDict'	:: (Ord a, Ord b, Eq b) => Map a b -> Map b [a]
 invertDict'	=  Map.fromList .  merge . map swap . Map.toList
+
+specialChars	= "+*?[]\\^$.()"
+
+translateRegex	:: String -> String
+translateRegex str
+	= str >>= (\c -> if c `elem` specialChars then "\\"++[c] else [c])
+

@@ -1,15 +1,21 @@
-(Bool -> Bool)
-Bool
-Bool -> Bool
-(Int)
-((Int))
-(Bool -> (Int) -> Int -> (Int -> Int))
 True
-0 + 1
-If True Then 0 Else 1
-True + False
-(\ x : Bool . True )
-(\f : (Bool -> Bool) . f False) (\x : Bool . x)
-(\f : (Bool -> (Bool)) . f False) 
-(\f : (Bool -> (Bool -> Bool)) . f False) 
-
+(\f : Int . f 5) (\i : Int . i + 1)
+42
+1 + 2
+(True)
+False :: Bool
+( True )
+(If True Then True Else True) :: Bool
+True
+(False)
+True :: Bool
+If True Then 42 Else 43
+If False Then 23 Else 44
+5 + 6
+5 + 6 + 7
+(\x : Int . x + 1) 5
+If (If True Then False Else True) Then 123456 Else 42
+5 + (6 + 7)
+(5 + 6) + (7 + 8)
+5 + (6 + (7 + 8))
+(\x : Int . x + 1) True

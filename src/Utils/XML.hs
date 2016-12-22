@@ -61,3 +61,4 @@ inLT'		:: Tag -> [Attr] -> String -> XML
 inLT' tag attrs cont
 		=  open' tag attrs ++ cont ++ close tag
 
+unlines' strs	= unlines $ filter (not . null) strs

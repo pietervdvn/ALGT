@@ -1,5 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
-module SyntaxHighlighting.Style where
+module SyntaxHighlighting.Highlighting where
 
 {- 
 Builds a syntax highlighting file, based on a typesystem
@@ -15,12 +15,13 @@ import TypeSystem
 import Data.Map as M
 import Data.List as L
 import Data.Maybe
+import Data.Char
 
 import Control.Monad
 
 import Parser.TypeSystemParser
 
-data SyntaxHighlighting	
+data SyntaxHighlightingFile
 	= SH	{ name		:: Name
 		, humanName	:: Name
 		, desc		:: String
@@ -31,8 +32,6 @@ data SyntaxHighlighting
 		, context	:: [StyleContext]
 		} deriving (Show)
 		
-
-type SyntaxStyle	= (Map TypeName Name, Map (TypeName, Int) Name)
 
 data StyleContext
 	= Match Name String (Maybe Name)
@@ -57,7 +56,7 @@ createFullStyles styling syntax
 		
 
 createStyleForRule	:: Syntax -> SyntaxStyle -> TypeName -> [BNF] -> [StyleContext]
-createStyleForRule syntax styling@(defs, _) tp choices
+createStyleForRule syntax styling tp choices
 	= let	choiceStylings	= mapi choices >>= uncurry (createStyleFor syntax styling tp)	:: [StyleContext]
 		choiceRefs	= [0 .. length choices - 1] |> show |> ((tp++"-") ++) |> Ref
 		container	= Container tp Nothing Nothing Nothing choiceRefs
@@ -90,7 +89,7 @@ createStyleFor syntax styling tp i (BNFSeq bnfs)
 
 	  	-- filter references to the element itself, to avoid an infinite loop
 		-- The parent context will relaunch the instance anyway
-		refs'		= refs & L.filter ((/=) tp)
+		refs'		= refs & L.filter (/= tp)
 		
 		final		= Container (tp ++ "-" ++ show i) Nothing Nothing style (refs'|> Ref)
 		in
@@ -142,13 +141,13 @@ createSeqChain style syntax (tp, i) counter (bnf:bnfs)
 
 styleFor	:: SyntaxStyle -> (Name, Int) -> Maybe Name
 styleFor style (tp, i)
-	= styleFor' style (fst $ break (== '-') tp, i)
+	= styleFor' style (takeWhile (/= '-') tp, i)
 
 styleFor'	:: SyntaxStyle -> (Name, Int) -> Maybe Name
-styleFor' (fallBack, specific) full@(name, _)
- | full `M.member` specific
-		= full `M.lookup` specific
- | otherwise	= name `M.lookup` fallBack
+styleFor' styling full@(name, _)
+ | full `M.member` extraStyles styling
+		= full `M.lookup` extraStyles styling
+ | otherwise	= name `M.lookup` baseStyles styling
 
 
 
@@ -156,13 +155,13 @@ styleFor' (fallBack, specific) full@(name, _)
 
 
 
-instance ToString SyntaxHighlighting where
+instance ToString SyntaxHighlightingFile where
 	toParsable sh	= xmlHeader ++ render sh
 
 
-render	:: SyntaxHighlighting -> XML
+render	:: SyntaxHighlightingFile -> XML
 render (SH name humanName desc (lineComment, blockCommentStart, blockCommentEnd) extraStyle mainRule ctxs)
-	= let	inProperty propName = maybe "" $ (inLT' "property" [SA "name" propName]) 
+	= let	inProperty propName = maybe "" $ inLT' "property" [SA "name" propName]
 		metadata	=	inT "metadata" $ unlines
 						[inLT' "property" [SA "name" "globs"] ("*."++name)
 						, inProperty "line-comment-start" lineComment
@@ -208,12 +207,11 @@ defStyles
 
 
 
-instance Check' SyntaxHighlighting StyleContext where
-	check' sh sc
-		= checkStyles sh sc
+instance Check' SyntaxHighlightingFile StyleContext where
+	check'	= checkStyles
 
 
-checkStyles	:: SyntaxHighlighting -> StyleContext -> Either String ()
+checkStyles	:: SyntaxHighlightingFile -> StyleContext -> Either String ()
 checkStyles sh (Match id _ (Just nm))
 	= inMsg ("In context "++show id) $ checkHasStyle nm sh
 checkStyles sh container@Container{}
@@ -224,11 +222,11 @@ checkStyles _ _
 	= return ()
 
 
-instance Check SyntaxHighlighting where
+instance Check SyntaxHighlightingFile where
 	check sh	= return ()
 
 
-checkHasStyle	:: Name -> SyntaxHighlighting -> Either String ()
+checkHasStyle	:: Name -> SyntaxHighlightingFile -> Either String ()
 checkHasStyle style sh
 	= let	isDef	= style `elem` defStyles
 		isContained	 = sh & extraStyle & member style in
@@ -255,7 +253,7 @@ instance ToString StyleContext where
 	toParsable (Match nm match style)
 		= inT' "context" (styleAttr nm style) $ inLT "match" match
 	toParsable (Ref n)
-		= attrTag "context" $ [SA "ref" n]
+		= attrTag "context" [SA "ref" n]
 	toParsable (Container nm start end style includes)
 		= inT' "context" [SA "id" nm] $ unlines'
 			[ maybe "" (inLT "start" . inParens) start
@@ -263,41 +261,12 @@ instance ToString StyleContext where
 			, inT "include" $ unlines'
 				[subPattern start "start" style
 				, subPattern end "end" style
-				, (toParsable' "\n" includes)]
+				, toParsable' "\n" includes]
 			] 
 			
 
-
-
-
-unlines' strs	= strs & L.filter (not . L.null) & unlines
-
-
------------------------ TEST CODE ------------------------------------------
-
-
-
-t	= writeFile "/home/pietervdvn/.local/share/gtksourceview-3.0/language-specs/STFL.lang" tstyle
-		
-
-tstyle	= toParsable $ SH "stfl"
-			"Staticly Typed Functional Language"
-			"Syntax highligting for expressions of STFL"
-			(Nothing, Nothing, Nothing)
-			(M.singleton "noise" "comment")
-			"e"
-			(createFullStyles ts $ stfl_syntax)
-	
-ts	:: SyntaxStyle
-ts	= let	base	= Assets._Test_Highlighting 
-			  & validLines |> words |> (\[k, v] -> (k,v))	:: [(Name, String)]
-		(dotted, normal) = base & L.partition (elem '.' . fst)
-		(specKeys, specVals)	= unzip dotted
-		specKeys'	= specKeys |> break (== '.') ||>> tail ||>> read
-		in (normal & M.fromList, zip specKeys' specVals & M.fromList)
-
-
-stfl_syntax
-	= parseTypeSystem Assets._Test_STFL_typesystem (Just "Test asset STFL")
-		& either (error . show) id
-		& tsSyntax
+createStyleForTypeSystem	:: TypeSystem -> Name -> SyntaxHighlightingFile
+createStyleForTypeSystem ts mainRule
+	= let nm	= tsName ts |> toLower in
+		SH nm nm nm (Nothing, Nothing, Nothing) (ts & tsStyle & styleRemaps) mainRule $
+			createFullStyles (tsStyle ts) (tsSyntax ts)

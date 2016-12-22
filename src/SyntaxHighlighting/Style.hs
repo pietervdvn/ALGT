@@ -35,17 +35,17 @@ deployStyle style
 		check style & either error return
 		writeFile (home ++ "/.local/share/gtksourceview-3.0/styles/"++name style++".xml") $ render style
 
-
+-- TODO actually use these tests!
 instance Check Style where
 	check style
 		= inMsg ("While checking the style "++show (name style)) $
-		  do	let checks = [checkHasDefaultStyles style] ++ (styles style |> checkStyleElem style)
+		  do	let checks = checkHasDefaultStyles style : (styles style |> checkStyleElem style)
 			checks & allRight_		
 
 
 checkHasDefaultStyles	:: Style -> Either String ()
 checkHasDefaultStyles style
-	= inMsg ("While checking if all needed default tags are present") $
+	= inMsg "While checking if all needed default tags are present" $
 	  let 	expected	= Assets._GTKSourceViewOptions_DefaultStyleElems
 					& validLines |> words |> head	:: [String]
 		in expected |> ("def:"++) |> checkHasStyleElem style & allRight_
@@ -90,7 +90,7 @@ instance ToString StyleElem where
 	toParsable (MapTo id target)
 		= attrTag "style" [SA "name" id, SA "use-style" target]
 	toParsable (StyleElem n attrs )
-		= attrTag "style" $ (SA "name" n):attrs
+		= attrTag "style" $ SA "name" n:attrs
 
 render	:: Style -> XML
 render (Style name desc humanName authors colors styles)
@@ -102,9 +102,5 @@ render (Style name desc humanName authors colors styles)
 
 
 
-t	= Style "test-style" "Simple style to test" "Test Style"
-		["The Cat", "Pietervdvn"] [(CA "butter" "#fce94f")]
-		[StyleElem "text" [SA "foreground" "butter"]]
-
-
+t
 

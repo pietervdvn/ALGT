@@ -11,6 +11,7 @@ import Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
 import Changer.ChangesParser
+import SyntaxHighlighting.Highlighting
 
 import System.Environment
 
@@ -21,13 +22,17 @@ import Text.Parsec
 import Data.Maybe
 import Data.Either
 import Data.Map (Map, fromList)
-import Data.List (intercalate)
+import Data.List (intercalate, nub)
 import Data.Monoid ((<>))
-
+import Data.Hashable
 import Options.Applicative
 
 
-version	= ([0,1,0], "Language (Re)Factory")
+
+t	= main' ["../Examples/STFL.typesystem", "--ch", "e", "--ash", "/home/pietervdvn/.local/share/gtksourceview-3.0/language-specs"] >> return ()
+
+
+version	= ([0,1,1], "Colorfull Language (Re)Factory")
 
 
 main	:: IO ()
@@ -39,25 +44,61 @@ main	= do	args	<- getArgs
 main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
 main' args 
 	= do	parsedArgs	<- parseArgs version args
+		when (rmConfig parsedArgs) (removeConfig >> putStrLn "# Config file removed")
 		mainArgs parsedArgs
+			
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs (Args tsFile exampleFiles changeFiles dumbTS)
-	= do	ts'	<- parseTypeSystemFile tsFile
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS createHighlighting autoSaveTo _)
+	= do	config	<- getConfig
+		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		check ts & either error return
+
+		config'		<- mainSyntaxHighl config ts createHighlighting autoSaveTo
+		config''	<- updateHighlightings config' ts
+		when (config /= config'') $ writeConfig config''
+	
 
 		changedTs	
 			<- changeFiles |> mainChanges & foldM (&) ts	:: IO TypeSystem
 
 		when dumbTS $ putStrLn $ toParsable changedTs
-
-		
 		
 		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
 		return (changedTs , concat parseTrees)
 
+mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config
+mainSyntaxHighl config ts (Just parserRule) (Just targetSave)
+	= do	let newConf	= ASH (tsName ts) parserRule 0 targetSave
+		let config'	= config{autoSyntaxes = autoSyntaxes config ++ [newConf]}
+		putStrLn "# Auto syntax highlighting added"
+		return config'
+mainSyntaxHighl _ _ Nothing (Just targetSave)
+	= error "You want to add a new syntax highlighting rule; but no '--create-highlighting PARSER-RULE' flag was specified."
+mainSyntaxHighl c ts (Just parserRule) _
+	= do	putStrLn $ toParsable $ createStyleForTypeSystem ts parserRule
+		return c
+mainSyntaxHighl c _ _ _
+	= return c
+
+
+updateHighlightings 	:: Config -> TypeSystem -> IO Config
+updateHighlightings config ts
+	= do	let currentState	= hash ((tsSyntax ts & show) ++ (tsStyle ts & show))
+		let editState ash	= (tsName ts == ashTsName ash) && (currentState /= ashTsHash ash)
+		autoSyntaxes' <- autoSyntaxes config |+> (\ash -> 
+			if not $ editState ash then return ash else do
+				let fp	= ashSaveTo ash ++ "/" ++ ashTsName ash ++ ".lang"
+				let contents	= toParsable $ createStyleForTypeSystem ts (ashRuleName ash)
+				putStrLn $ "# Updated syntax highlighting. You might want to restart your editor for changes to apply. Updated path: "++fp
+				writeFile fp contents
+				return ash{ashTsHash = currentState}
+			)
+		
+		return config{autoSyntaxes = nub autoSyntaxes'}
+		
 
 
 mainChanges	:: String -> TypeSystem -> IO TypeSystem
@@ -78,9 +119,9 @@ mainExFile args ts
 
 		parseTrees		<- (targets |+> parseWith targetFile ts (parser args)) |> zip targets
 
-		parseTrees |+> ifJust (runRule ts) (symbol args)
-		parseTrees |+> ifJust (runFunc ts) (function args)
-		parseTrees |+> ifJust (runStepByStep ts) (stepByStep args)
+		parseTrees |+> ifJust' (runRule ts) (symbol args)
+		parseTrees |+> ifJust' (runFunc ts) (function args)
+		parseTrees |+> ifJust' (runStepByStep ts) (stepByStep args)
 
 		when noRules $ putStrLn "You didn't specify an action to perform. See -h"
 		return parseTrees
@@ -95,9 +136,7 @@ parseWith file ts bnfRuleName str
 		either (error . show) return parsed
 
 
-ifJust		:: (a -> b -> IO ()) -> Maybe a -> b -> IO ()
-ifJust f Nothing b	= return ()
-ifJust f (Just a) b	= f a b
+
 
 runRule		:: TypeSystem -> Symbol -> (String, ParseTree) -> IO ()
 runRule ts symbol (input, pt)
