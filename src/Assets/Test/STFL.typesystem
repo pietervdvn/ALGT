@@ -4,15 +4,16 @@
 
 # Types
 typeL	::= "Int" | "Bool" | "(" type ")"
-type	::=  typeL "->" type  | typeL
+type	::=  typeL "->" type | typeL
 
 
 # builtins values
 var	::= Identifier
 number	::= Number
 bool	::= "True" | "False"
-# e	::= eL "+" e | eL "::" type | eL e | eL
-eL	::= number | bool | var | "(" "\\" var ":" type "." eL ")" | "If" eL "Then" eL "Else" eL | "(" eL ")"
+# TODO highligting for application!
+e	::= eL "+" e | eL "::" type | eL e | eL
+eL	::= number | bool | var | "(" "\\" var ":" type "." eL ")" | "If" e "Then" e "Else" e | "(" e ")"
 
 
 # typing			::= var ":" type

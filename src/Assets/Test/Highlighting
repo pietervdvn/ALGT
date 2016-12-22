@@ -1,7 +1,6 @@
 
-typeL	error
-typeL.0	type
-typeL.1	type
+typeL	type
+typeL.2	note
 
 type	noise
 
@@ -11,7 +10,7 @@ var	identifier
 number	constant
 bool	constant
 
-e	statement
+e	preprocessor
 eL	statement
 
 

@@ -58,45 +58,45 @@ createFullStyles styling syntax
 
 createStyleForRule	:: Syntax -> SyntaxStyle -> TypeName -> [BNF] -> [StyleContext]
 createStyleForRule syntax styling@(defs, _) tp choices
-	= let	choiceStylings	= mapi choices |> uncurry (createStyleFor syntax styling tp)	:: [(StyleContext, [StyleContext])]
-		choiceStylings'	= choiceStylings >>= uncurry (:)
+	= let	choiceStylings	= mapi choices >>= uncurry (createStyleFor syntax styling tp)	:: [StyleContext]
 		choiceRefs	= [0 .. length choices - 1] |> show |> ((tp++"-") ++) |> Ref
 		container	= Container tp Nothing Nothing Nothing choiceRefs
 		in 
-		container:choiceStylings'
+		container:choiceStylings
 
 
 
 
-_genMatch :: SyntaxStyle -> String -> Int -> String -> (StyleContext, [StyleContext])
+_genMatch :: SyntaxStyle -> String -> Int -> String -> [StyleContext]
 _genMatch styling tp i regex
-	= (Match (tp++"-"++show i) (inParens regex) 
-		$ styleFor styling (tp, i) , [])
+	= [Match (tp++"-"++show i) (inParens regex) $ styleFor styling (tp, i) ]
 
 
-createStyleFor	:: Syntax -> SyntaxStyle -> TypeName -> Int -> BNF -> (StyleContext, [StyleContext])
+
+onHead		:: (a -> a) -> [a] -> [a]
+onHead f []	= []
+onHead f (a:as)	= f a : as
+
+createStyleFor	:: Syntax -> SyntaxStyle -> TypeName -> Int -> BNF -> [StyleContext]
 createStyleFor syntax styling tp i (BNFRuleCall nm)
-	= (Container (tp++"-"++show i) Nothing Nothing (styleFor styling (tp, i)) [Ref nm], [])
+	= [Container (tp++"-"++show i) Nothing Nothing (styleFor styling (tp, i)) [Ref nm]]
 createStyleFor syntax styling tp i (BNFSeq bnfs)
-	= let 	(callsL, bnfsStripL)	= break (not . isRuleCall) bnfs
-		(callsR, bnfsStripRev)	= break (not . isRuleCall) $ reverse bnfsStripL
-		callRefs		= (callsL ++ callsR) |> fromRuleCall & catMaybes |> Ref
-		-- the clean bnfs, with guaranteed not a call left- and rightmost
-		bnfs'			= reverse bnfsStripRev
+	= let 	style		= styleFor styling (tp, i)
+		(SeqState decls refs hardEnd _)		
+				= createSeqChain style syntax (tp, i) 0 bnfs
 
-		style			= styleFor styling (tp, i)
+				  -- apply the hard-end (or soft-end) on the first element of the chain
+		decls'	 	= onHead (\container -> container{end = firstJusts [hardEnd, end container]}) decls
+
+	  	-- filter references to the element itself, to avoid an infinite loop
+		-- The parent context will relaunch the instance anyway
+		refs'		= refs & L.filter ((/=) tp)
 		
-		baseContainer startRgx endRgx refs
-					= Container (tp++"-"++show i) startRgx endRgx (styleFor styling (tp, i)) (callRefs ++ refs)
+		final		= Container (tp ++ "-" ++ show i) Nothing Nothing style (refs'|> Ref)
 		in
-		case bnfs' of
-			[]	-> (baseContainer Nothing Nothing [], [])
-			[bnf]	-> let 	rgx			= startRegex syntax bnf in
-					(baseContainer (Just rgx) (Just "") [], []) 
-			_	-> let	startRgx		= startRegex syntax $ head bnfs'
-					endRgx			= startRegex syntax $ last bnfs'
-					(refs, contexts)	= createSeqChain style syntax (tp, i) 0 $ init $ tail $ bnfs' in
-					(baseContainer (Just startRgx) (Just endRgx) refs, contexts)
+		final : decls'
+
+		
 
 
 
@@ -104,28 +104,37 @@ createStyleFor syntax styling tp i bnf
 	= _genMatch styling tp i $ startRegex syntax bnf
 
 
+data SeqState	= SeqState 
+			{ declared	:: [StyleContext]
+			, refs		:: [Name]
+			, hardEnd	:: Maybe String	-- If "Just ")", we can end with a regex on the head"
+			, softlyEnded	:: Bool		-- Indicates if the last element of the chain has a "end=()" tag
+			}
 
+emptySeqState	= SeqState [] [] Nothing True
 
-createSeqChain	:: Maybe Name -> Syntax -> (TypeName, Int) -> Int -> [BNF] -> ([StyleContext], [StyleContext])
+createSeqChain	:: Maybe Name -> Syntax -> (TypeName, Int) -> Int -> [BNF] -> SeqState
 createSeqChain _ _ _ _ []
-	= ([], [])
-createSeqChain style syntax (tp, i) counter [BNFRuleCall nm]
-	= ([Ref nm], [])
+	= emptySeqState
+createSeqChain style syntax (tp, i) counter [BNFRuleCall call]
+	= emptySeqState {refs=[call], softlyEnded=False}
 createSeqChain style syntax (tp, i) counter [bnf]
-	= let	nm	= tp ++ "-" ++ show i ++ "-" ++ show counter
-		decl	= Container nm (Just $ startRegex syntax bnf) Nothing style [] 
-		in
-		([Ref nm], [decl])
+	= emptySeqState {hardEnd=Just (startRegex syntax bnf), softlyEnded=False}
 createSeqChain style syntax (tp, i) counter (BNFRuleCall call:bnfs)
-	= let	(prevRefs, decls)	= createSeqChain style syntax (tp, i) (counter + 1) bnfs
+	= let	seqState	= createSeqChain style syntax (tp, i) (counter + 1) bnfs
 		in
-		(Ref call:prevRefs, decls)
+		seqState{refs = call:refs seqState, softlyEnded=softlyEnded seqState}
 createSeqChain style syntax (tp, i) counter (bnf:bnfs)
 	= let	nm	= tp ++ "-" ++ show i ++ "-" ++ show counter
-		(prevRef, decls)	= createSeqChain style syntax (tp, i) (counter + 1) bnfs
-		decl	= Container nm (Just $ startRegex syntax bnf) Nothing style prevRef
+		seqState	= createSeqChain style syntax (tp, i) (counter + 1) bnfs
+		
+		end	= case (hardEnd seqState, softlyEnded seqState) of
+				(Nothing, False)	-> Just ""
+				_			-> Nothing
+
+		decl	= Container nm (Just $ startRegex syntax bnf) end style (refs seqState |> Ref)
 		in
-		([Ref nm], decl:decls )
+		emptySeqState{refs = [nm], hardEnd = hardEnd seqState, declared = decl:declared seqState}
 
 
 
@@ -276,7 +285,7 @@ tstyle	= toParsable $ SH "stfl"
 			"Syntax highligting for expressions of STFL"
 			(Nothing, Nothing, Nothing)
 			(M.singleton "noise" "comment")
-			"eL"
+			"e"
 			(createFullStyles ts $ stfl_syntax)
 	
 ts	:: SyntaxStyle

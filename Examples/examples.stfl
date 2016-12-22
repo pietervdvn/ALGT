@@ -1,6 +1,15 @@
+(Bool -> Bool)
+Bool
+Bool -> Bool
+(Int)
+((Int))
+(Bool -> (Int) -> Int -> (Int -> Int))
 True
 0 + 1
 If True Then 0 Else 1
-(\ x : Bool . True)
-(\f : (Bool -> Bool) . f False)
+True + False
+(\ x : Bool . True )
+(\f : (Bool -> Bool) . f False) (\x : Bool . x)
+(\f : (Bool -> (Bool)) . f False) 
+(\f : (Bool -> (Bool -> Bool)) . f False) 
 
