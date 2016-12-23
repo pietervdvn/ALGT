@@ -84,12 +84,27 @@ firstCall _			= Nothing
 
 
 
-
-
-{-Represents a syntax: the name of the rule + possible parseways -}
-newtype Syntax	= BNFRules { getBNF :: Map TypeName [BNF]}
+data WSMode	= IgnoreWS | StrictWS | StrictWSRecursive
 	deriving (Show)
 
+enterRule	:: WSMode -> WSMode
+enterRule StrictWS	= IgnoreWS
+enterRule wsMode	= wsMode
+
+
+strictest		:: WSMode -> WSMode -> WSMode
+strictest StrictWSRecursive _	= StrictWSRecursive
+strictest StrictWS IgnoreWS	= StrictWS
+strictest IgnoreWS IgnoreWS	= IgnoreWS
+strictest a b			= strictest b a
+
+{-Represents a syntax: the name of the rule + possible parseways -}
+data Syntax	= BNFRules { getBNF :: Map TypeName [BNF], getWSMode :: Map TypeName WSMode}
+	deriving (Show)
+
+getFullSyntax	:: Syntax -> Map TypeName ([BNF], WSMode)
+getFullSyntax s
+	= M.intersectionWith ( (,) ) (getBNF s) (getWSMode s)
 
 startRegex	:: Syntax -> BNF -> String
 startRegex _ (Literal s)	= translateRegex s
@@ -111,12 +126,12 @@ consumeOne _
 
 consumeOne'	:: (String -> String) -> Syntax -> Maybe Syntax
 consumeOne' nameEdit syntax
-	= let	syntax'	= syntax & getBNF & M.toList 
+	= let	bnfs'	= syntax & getBNF & M.toList 
 				||>> (|> consumeOne) ||>> catMaybes 	-- consume ones
 				& L.filter (not . L.null . snd)		-- remove empty rulesm
 				|> first nameEdit			-- rename stuff
 				& M.fromList
-		in if M.null syntax' then Nothing else Just $ BNFRules syntax'
+		in if M.null bnfs' then Nothing else Just $ syntax{getBNF = bnfs'}
 
 
 -- If the 'choice' is a single rule call, inline it
@@ -129,7 +144,8 @@ inline _ bnf
 
 inline'		:: Syntax -> Syntax
 inline' syntax
-	= syntax & getBNF & M.toList ||>> (>>= inline syntax) & M.fromList & BNFRules
+	= let	bnfs'	= syntax & getBNF & M.toList ||>> (>>= inline syntax) & M.fromList in
+		syntax{getBNF = bnfs'}
 
 
 renameRule	:: (String -> String) -> BNF -> BNF
@@ -143,9 +159,9 @@ renameRule _ bnf
 
 
 -- constructor, with checks
-makeSyntax	:: [(Name, [BNF])] -> Either String Syntax
+makeSyntax	:: [(Name, ([BNF], WSMode))] -> Either String Syntax
 makeSyntax vals
-	= do	let bnfr	= BNFRules $ M.fromList vals
+	= do	let bnfr	= BNFRules (M.fromList $ vals ||>> fst) (M.fromList $ vals ||>> snd)
 		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
 			checkBNF bnfr] & allRight_
 		return bnfr
@@ -239,16 +255,17 @@ alwaysIsA rules 'y' 'x'	--> True
 
 -}
 alwaysIsA	:: Syntax -> TypeName -> TypeName -> Bool
-alwaysIsA bnf@(BNFRules rules) sub super
+alwaysIsA syntax sub super
  | super == "" || sub == ""
 		= True	-- The empty string is used in dynamic cases, thus is equivalent to everything
  | sub == super	= True
- | super `M.notMember` rules
+ | super `M.notMember` (getBNF syntax)
 	= error $ "Unknwown super name: "++show super
- | sub `M.notMember` rules
+ | sub `M.notMember` (getBNF syntax)
 	= error $ "Unknwown sub name: "++show sub
  | otherwise	-- super-rule should contain a single occurence, sub or another rule
-	= let	superR	= (rules M.! super) |> fromSingle & catMaybes
+	= let	rules	= getBNF syntax
+		superR	= (rules M.! super) |> fromSingle & catMaybes
 		-- this single element should be a BNFRuleCall
 		superR'	= superR |> fromRuleCall & catMaybes
 		-- either sub is an element from superR', or it has a rule which is a super for sub
@@ -259,7 +276,7 @@ alwaysIsA bnf@(BNFRules rules) sub super
 		subR	= (rules M.! sub)
 		-- and has exactly one choice
 		equalRules	= length subR == 1 && head subR == BNFRuleCall super
-		in equalRules || sub `elem` superR' || or (superR' |> alwaysIsA bnf sub)
+		in equalRules || sub `elem` superR' || or (superR' |> alwaysIsA syntax sub)
 				
 -- Either X is a Y, or Y is a X
 equivalent	:: Syntax -> TypeName -> TypeName -> Bool

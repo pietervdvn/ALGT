@@ -99,7 +99,7 @@ matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
 
 matchTyping _ _ _ _ (MePtCall fNm True args)
  = return $ MCall "" fNm True (args |> dynamicTranslate "")
-matchTyping functions syntax@(BNFRules rules) (BNFRuleCall ruleName) _ (MePtCall fNm False args)
+matchTyping functions syntax@(BNFRules rules _) (BNFRuleCall ruleName) _ (MePtCall fNm False args)
  | fNm `M.notMember` functions	= Left $ "Unknwown function: "++fNm
  | ruleName `M.notMember` rules	= Left $ "Unknwown type/bnfrule: "++ruleName
  | otherwise		= do	let fType		= functions M.! fNm
@@ -132,7 +132,7 @@ matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
  | otherwise		= Left $ "Seq could not match " ++ show bnfs ++ " ~ " ++ show pts 
 
 
-matchTyping f syntax@(BNFRules rules) (BNFRuleCall nm) _ pt
+matchTyping f syntax@(BNFRules rules _) (BNFRuleCall nm) _ pt
  | nm `M.member` rules
 		= do	let bnfASTs	= rules M.! nm
 			let oneOption i bnf	= inMsg ("Trying to match "++nm++"." ++ show i++" ("++show bnf++")") $ 

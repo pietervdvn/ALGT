@@ -13,6 +13,7 @@ import Data.Map hiding (null, filter, lookup)
 import qualified Data.Map as M
 import Data.List hiding (union)
 import Data.Maybe
+import Data.Bifunctor
 
 import Control.Monad
 import Control.Arrow ((&&&))
@@ -44,7 +45,7 @@ type Changes' a b	= [Either (DefaultChange a) b]
 
 
 
-data SyntaxChange	= AddOption TypeName [BNF] | OverrideBNFRule TypeName [BNF]
+data SyntaxChange	= AddOption TypeName [BNF] | OverrideBNFRule TypeName ([BNF], WSMode)
 	deriving (Show)
 
 data FunctionChange	= AddClauses Name Function
@@ -92,21 +93,21 @@ checkNoCommon' old new rule section
 addSyntax	:: Syntax -> Syntax -> Either String Syntax
 addSyntax newSyntax oldSyntax
 	= 	inMsg "While updating the syntax" $
-	  do	let oldBNF	= oldSyntax & getBNF
-		let newBNF	= newSyntax & getBNF
+	  do	let oldBNF	= oldSyntax & getFullSyntax
+		let newBNF	= newSyntax & getFullSyntax
 		checkNoCommon' oldBNF newBNF "bnf-type" "Syntax"
 		makeSyntax $ M.toList $ M.union oldBNF newBNF
 
 rewriteSyntax	:: Changes' TypeName SyntaxChange -> Syntax -> Either String Syntax
 rewriteSyntax changes oldSyntax
 	= inMsg "While updating the syntax" $
-	  do	let oldBNF	= oldSyntax & getBNF
+	  do	let oldBNF	= oldSyntax & getFullSyntax
 		bnf'	<- changes |> either applyChangeTo applySyntaxChange
 					& foldM (&) oldBNF
 		makeSyntax $ M.toList bnf'
 
 
-applySyntaxChange	:: SyntaxChange -> Map TypeName [BNF] -> Either String (Map TypeName [BNF])
+applySyntaxChange	:: SyntaxChange -> Map TypeName ([BNF], WSMode) -> Either String (Map TypeName ([BNF], WSMode))
 applySyntaxChange (OverrideBNFRule tn choices) bnfs
 	= inMsg ("While overriding bnfrule "++show tn) $ 
 	  do	checkExists tn bnfs $ show tn++" does not exist in the original definition. Add it to the 'New Syntax'-section if you want to introduce it"
@@ -115,7 +116,7 @@ applySyntaxChange (OverrideBNFRule tn choices) bnfs
 applySyntaxChange (AddOption tn newChoices) bnfs
 	= inMsg ("While adding choices bnfrule "++show tn) $ 
 	  do	checkExists tn bnfs $ show tn++" does not exist. Perhaps you meant to introduce this type?"
-		let bnfs'	= M.adjust ( ++ newChoices) tn bnfs
+		let bnfs'	= M.adjust (first ( ++ newChoices)) tn bnfs
 		return bnfs'
 
 

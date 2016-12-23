@@ -32,13 +32,12 @@ import Options.Applicative
 t	= main' ["../Examples/STFL.typesystem", "--ch", "e", "--ash", "/home/pietervdvn/.local/share/gtksourceview-3.0/language-specs"] >> return ()
 
 
-version	= ([0,1,1], "Colorfull Language (Re)Factory")
+version	= ([0,1,2], "Spaced Language (Re)Factory")
 
 
 main	:: IO ()
-main	= do	args	<- getArgs
-		main' args
-		return ()
+main	= void $ do	args	<- getArgs
+			main' args
 
 
 main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])

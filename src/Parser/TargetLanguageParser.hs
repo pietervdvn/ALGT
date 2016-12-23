@@ -20,37 +20,55 @@ import qualified Data.Map as M
 ------------------------ Syntax: Actually parsed stuff -------------------------
 
 parseRule	:: Syntax -> Name -> Parser u ParseTree
-parseRule bnf@(BNFRules rules) nm
+parseRule syntax nm
+	= parseRule' syntax nm IgnoreWS
+
+
+parseRule'	:: Syntax -> Name -> WSMode -> Parser u ParseTree
+parseRule' bnf@(BNFRules rules wsModes) nm wsModeParent
  | nm `M.notMember` rules	
 		= fail $ "The BNF-syntax-rule "++nm++" is not defined in the syntax of your typesystem. Try one of "++show (bnfNames bnf)
  | otherwise	= do	let choices	= zip (rules M.! nm) [0..]
-			parseChoice bnf nm choices
+			let wsMode	= wsModes M.! nm
+			parseChoice bnf nm (strictest wsMode (enterRule wsModeParent)) choices
 			
 
 
 
-parseChoice	:: Syntax -> Name -> [(BNF, Int)] -> Parser u ParseTree
-parseChoice _ name []
+parseChoice	:: Syntax -> Name -> WSMode -> [(BNF, Int)] -> Parser u ParseTree
+parseChoice _ name _ []
 	= fail $ "Could not parse expression of the form "++name
-parseChoice rules name ((bnf,i): rest)
-	= try (parsePart' rules (name, i) bnf)
-	   <|>  parseChoice rules name rest
+parseChoice rules name wsMode ((bnf,i): rest)
+	= try (parsePart rules (name, i) wsMode bnf)
+	   <|>  parseChoice rules name wsMode rest
 
 
 
-parsePart'	:: Syntax -> (TypeName, Int) -> BNF -> Parser u ParseTree
-parsePart' rules pt bnf
-		= ws >> parsePart rules pt bnf
+parsePart'	:: Syntax -> (TypeName, Int) -> WSMode -> BNF -> Parser u ParseTree
+parsePart' rules pt wsMode bnf
+		= parseWS wsMode >> parsePart rules pt wsMode bnf
 
-parsePart	:: Syntax -> (TypeName, Int) -> BNF -> Parser u ParseTree
-parsePart _ tp (Literal str)
+parsePart	:: Syntax -> (TypeName, Int) -> WSMode -> BNF -> Parser u ParseTree
+parsePart _ tp _ (Literal str)
 		= string str |> MLiteral tp
-parsePart _ tp Identifier
+parsePart _ tp _ Identifier
 		= identifier |> MIdentifier tp
-parsePart _ tp Number
+parsePart _ tp _ Number
 		= number |> MInt tp
-parsePart rules tp (BNFSeq bnfs)
-		= bnfs |+> parsePart' rules tp |> PtSeq tp
-parsePart rules _ (BNFRuleCall nm)
+parsePart rules tp wsMode (BNFSeq [bnf])
+		= parsePart rules tp wsMode bnf
+parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
+		= do	head	<- parsePart rules tp wsMode bnf
+			tail	<- bnfs |+> parsePart' rules tp wsMode 
+			return $ PtSeq tp $ head:tail
+parsePart rules _ wsMode (BNFRuleCall nm)
 		= parseRule rules nm
+
+
+
+
+parseWS		:: WSMode -> Parser u String
+parseWS IgnoreWS	= ws
+parseWS	_		= return ""
+
 

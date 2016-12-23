@@ -28,22 +28,27 @@ instance ToString BNF where
 
 toStr			:: (BNF -> String) -> BNF -> String
 toStr _ (Literal str)	= show str
-toStr _ Identifier		= "Identifier"
+toStr _ Identifier	= "Identifier"
 toStr _ Number		= "Number"
 toStr _ (BNFRuleCall n)	= n
 toStr f (BNFSeq asts)	= asts |> f & unwords
 
 
 instance ToString Syntax where
-	toParsable (BNFRules rules)
-		= let width	= rules & M.keys |> length & maximum in
-			rules & M.toList |> uncurry (toParsableBNFRule width) & unlines
+	toParsable (BNFRules rules wsModes)
+		= let 	width	= rules & M.keys |> length & maximum
+			merged	= M.intersectionWith ( (,) ) rules wsModes in
+			merged & M.toList |> uncurry (toParsableBNFRule width) & unlines
 	debug		= show
 
+instance ToString WSMode where
+	toParsable IgnoreWS	= "::="
+	toParsable StrictWS	= "~~="
+	toParsable StrictWSRecursive	= "//="
 
-toParsableBNFRule	:: Int -> Name -> [BNF] -> String
-toParsableBNFRule w n choices
-	= n++ replicate (w - length n) ' ' ++ "   ::= "++ (choices |> toParsable & intercalate " | ")
+toParsableBNFRule	:: Int -> Name -> ([BNF], WSMode) -> String
+toParsableBNFRule w n (choices, wsMode)
+	= n++ replicate (w - length n) ' ' ++ "\t "++ toParsable wsMode ++ " " ++ (choices |> toParsable & intercalate " | ")
 
 ------------------------------------ Syntax Highlighting --------------------------------------------
 

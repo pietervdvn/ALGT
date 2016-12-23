@@ -48,10 +48,11 @@ bnfExpr'
 
 bnfLine	= bnfExpr' `sepBy` try (nls *> ws *>  string "|" <* ws)
 
+
 bnfRule
 	= do	name	<- identifier
 		ws
-		string "::="
+		wsMode	<- prs "::=" IgnoreWS <|> prs "~~" StrictWS <|> prs "//=" StrictWSRecursive
 		bnfs 	<- bnfLine
-		return (name,bnfs)
+		return (name, (bnfs, wsMode))
 
