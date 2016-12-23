@@ -12,3 +12,4 @@ Type CTRL+SHIFT+U, followed by a hexcode to obtain following chars:
 →	2192
 ✓	2713
 ⊢	22a2
+Γ	0393

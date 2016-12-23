@@ -37,16 +37,16 @@ bnfNumber
 bnfRuleCall
 	= identifier |> BNFRuleCall
 
-bnfExpr	= ws >> (bnfIdentifier <|> (bnfLiteral |> Literal) <|> bnfNumber <|> bnfRuleCall) <* ws
+bnfExpr	= bnfIdentifier <|> (bnfLiteral |> Literal) <|> bnfNumber <|> bnfRuleCall
 
 bnfExpr'	
-	= do	e	<- many bnfExpr
+	= do	e	<- many $ inWs bnfExpr
 		return $ case e of
 			[expr]	-> expr
 			_	-> BNFSeq e
 
 
-bnfLine	= bnfExpr' `sepBy` string "|" <* ws
+bnfLine	= bnfExpr' `sepBy` try (nls *> ws *>  string "|" <* ws)
 
 bnfRule
 	= do	name	<- identifier

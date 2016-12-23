@@ -1,1 +1,0 @@
-# Updated syntax highlighting. You might want to restart your editor for changes to apply. Updated path: /home/pietervdvn/.local/share/gtksourceview-3.0/language-specs/STFL.lang

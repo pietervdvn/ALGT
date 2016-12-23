@@ -1,2 +1,3 @@
+../ALGT Typesystem.typesystem
 killall pluma
-pluma examples.stfl & sleep 10 && killall pluma
+pluma STFL.typesystem0 & sleep 10 && killall pluma

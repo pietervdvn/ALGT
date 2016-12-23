@@ -1,0 +1,21 @@
+ Typesystem0
+*************
+
+
+ Syntax
+========
+
+ id	::= Identifier
+
+
+ stars	::= "*" stars | "*"
+ title	::= id "\n" stars
+
+
+ file	::= title
+
+
+ Syntax Style
+==============
+
+ title	= "heading1"

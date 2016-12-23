@@ -1,0 +1,86 @@
+
+ Lollyscript
+*************
+
+
+ Syntax
+========
+
+q	::= "un" | "lin"
+
+preType	::= "Int" | "Unit" 
+	| type "*" type | type "->" type 
+	| "Fut" x type | "Res" x type
+type	::= q preType
+
+
+x	::= Identifier
+n	::= Number
+
+unit	::= "unit"
+v	::= q n | q unit | q v "," v
+	| q "λ" x type e
+	| q "Fut" x type
+	| q "Res" x type
+
+eL	::= x | q n | q unit | q e "," e 
+	| q "λ" x type e 
+	| "Let" x "," x "=" e "," e 
+	| "Promise" type | "fork" e | "wait" e | "resolve" e e | q "Fut" x type | q "Res" x type
+e	::= eL e | eL
+
+
+typing		::= x ":" type
+typeEnv		::= typing ";" typeEnv | "{}"
+
+promiseVal	::= x "=" v
+promiseEnv	::= promiseVal ";" promiseEnv| "{}"
+
+
+thread		::= e
+
+program		::= thread "\n" program | promiseEnv
+
+ Functions
+===========
+
+lookup		: typeEnv -> x -> type
+lookup( (x ":" T) ";" rest, x )	= T
+lookup( typing ";" rest, x)	= lookup(rest, x)
+
+
+find		: promiseEnv -> x -> v
+find( (x "=" v) ";" rest, x)	= v
+find( assgn ";" rest, x )	= find(rest, x)
+
+
+# deduces a new name for the variable in an lambda abstraction
+rename		: var -> var -> type -> e -> e
+rename(x, newVar, type, body)
+		= "(\\" newVar ":" type "." subs(x, newVar, body ) ")"
+
+# replaces variable x by y in entire expression
+subs						: var -> e -> e -> e
+subs(x, y, x)					= y
+subs(x, y, "(\\" x ":" t "." rest ")" )		= subs(x, y, rename(x, !newvar(x, rest), t, rest) )
+subs(x, y, "(\\" z ":" t "." rest ")" )		= "(\\" z ":" t "." subs(x,y,rest) ")"
+subs(x, y, "If" cond "Then" e1 "Else" e2)	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
+subs(x, y, e1 "+" e2)				= subs(x, y, e1) "+" subs(x, y, e2)
+subs(x, y, e "::" type)				= subs(x, y, e) "::" type
+subs(x, y, f arg)				= subs(x, y, f) subs(x, y, arg) 
+subs(x, y, z)					= z
+
+
+ Relations
+===========
+
+(→)	: e (in), e (out)
+
+
+ Rules
+=======
+
+
+
+
+
