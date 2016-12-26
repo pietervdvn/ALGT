@@ -156,6 +156,9 @@ dropTrd3 (a, b, _)	= (a, b)
 merge3l			:: (a, b, c) -> ((a, b), c)
 merge3l (a, b, c)	=  ((a, b), c)
 
+
+mapBoth f (a, a')	= (f a, f a')
+
 ----------------------- List tools --------------------
 
 validLines	:: String -> [String]

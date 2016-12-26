@@ -11,7 +11,7 @@ mi	= (tp, -1)
 testPattern	:: Expression
 testPattern	= MSeq mi [MVar tp "T1"
 			, MParseTree $ MLiteral mi "->"
-			, MVar tp "T2"]  
+			, MVar tp "T1"]  
 
 testAS	:: Syntax -> IO ()	
 testAS r	
