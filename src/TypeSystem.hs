@@ -104,7 +104,7 @@ data Syntax	= BNFRules { getBNF :: Map TypeName [BNF], getWSMode :: Map TypeName
 
 getFullSyntax	:: Syntax -> Map TypeName ([BNF], WSMode)
 getFullSyntax s
-	= M.intersectionWith ( (,) ) (getBNF s) (getWSMode s)
+	= M.intersectionWith (,) (getBNF s) (getWSMode s)
 
 startRegex	:: Syntax -> BNF -> String
 startRegex _ (Literal s)	= translateRegex s
@@ -259,9 +259,9 @@ alwaysIsA syntax sub super
  | super == "" || sub == ""
 		= True	-- The empty string is used in dynamic cases, thus is equivalent to everything
  | sub == super	= True
- | super `M.notMember` (getBNF syntax)
+ | super `M.notMember` getBNF syntax
 	= error $ "Unknwown super name: "++show super
- | sub `M.notMember` (getBNF syntax)
+ | sub `M.notMember` getBNF syntax
 	= error $ "Unknwown sub name: "++show sub
  | otherwise	-- super-rule should contain a single occurence, sub or another rule
 	= let	rules	= getBNF syntax

@@ -255,7 +255,7 @@ instance ToString StyleContext where
 	toParsable (Ref n)
 		= attrTag "context" [SA "ref" n]
 	toParsable (Container nm start end style includes)
-		= inT' "context" [SA "id" nm] $ unlines'
+		= inT' "context" [SA "id" nm, BA "extend-parent" True] $ unlines'
 			[ maybe "" (inLT "start" . inParens) start
 			, maybe "" (inLT "end" . inParens) end
 			, inT "include" $ unlines'

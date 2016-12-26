@@ -37,7 +37,7 @@ toStr f (BNFSeq asts)	= asts |> f & unwords
 instance ToString Syntax where
 	toParsable (BNFRules rules wsModes)
 		= let 	width	= rules & M.keys |> length & maximum
-			merged	= M.intersectionWith ( (,) ) rules wsModes in
+			merged	= M.intersectionWith (,) rules wsModes in
 			merged & M.toList |> uncurry (toParsableBNFRule width) & unlines
 	debug		= show
 
