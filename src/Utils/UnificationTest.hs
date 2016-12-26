@@ -3,6 +3,16 @@ module Utils.UnificationTest where
 {-
 This module defines 
 -}
+import Utils.Unification
+import Utils.Utils
+import Data.Map (Map, (!), member)
+import qualified Data.Map as M
+import Data.Set (Set, insert, findMin, deleteMin)
+import qualified Data.Set as S
+import qualified Data.List as L
+import Data.Maybe
+import Data.Bifunctor
+import Control.Arrow ((&&&))
 
 
 data Tree	= Node String [Tree] | Var String

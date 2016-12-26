@@ -1,4 +1,4 @@
-module Unification (unify, substitute, occursCheck) where
+module Utils.Unification (unify, substitute, occursCheck, Node(..), Substitution) where
 
 {-
 This module implements a general unification for trees
