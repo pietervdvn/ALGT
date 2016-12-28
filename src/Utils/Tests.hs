@@ -35,7 +35,7 @@ t0	= guard (alwaysIsA testSyntax "a" "b")
 t1	= guard (alwaysIsA testSyntax "b" "a")
 t2	= guard (alwaysIsA stflSyntax "typeL" "type")
 t3	= guard (not $ alwaysIsA stflSyntax "type" "typeL")
-t4	= unless (UnificationTest.tests) $ Left "Unification tests failed"
+t4	= unless UnificationTest.tests $ Left "Unification tests failed"
 
 f0	= Left ()
 

@@ -201,6 +201,9 @@ bnfNames	:: Syntax -> [Name]
 bnfNames r	=  r & getBNF & M.keys & sortOn length & reverse
 
 
+mightContainA	:: Syntax -> TypeName -> TypeName -> Bool
+mightContainA syntax searched origin
+	= reachableVia syntax origin & elem searched
 
 {- Deduces wether a certain value can be parsed as subtree of the given rule
 e.g.

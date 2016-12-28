@@ -1,4 +1,4 @@
-module Utils.Unification (unify, substitute, occursCheck, Node(..), Substitution) where
+module Utils.Unification (unify, unifySub, substitute, occursCheck, Node(..), Substitution) where
 
 {-
 This module implements a general unification for trees
@@ -24,6 +24,7 @@ class (Eq a, Ord a) => Node a where
 	sameSymbol	:: a -> a -> Bool
 	isVar		:: a -> Bool
 	getName		:: a -> Name
+	
 
 type Substitution a 	= Map Name a
 
@@ -45,12 +46,17 @@ substitute' subs a
 
 
 
-
 -- unify (without infinite tree check). Do an additional 'occurs check' if you want this
 unify	:: (Node a) => a -> a -> Either String (Substitution a)
 unify a b
+	= let smallestOf a b	= Just $ if getName a <= getName b then a else b
+		in
+		unifySub smallestOf a b
+
+unifySub	:: (Node a) => (a -> a -> Maybe a) -> a -> a -> Either String (Substitution a)
+unifySub smallestOf a b
 	= let	st	= UnifSt S.empty (S.singleton (a,b)) Nothing 
-		st'	= execState runUnify st in
+		st'	= execState (runUnify smallestOf) st in
 		buildSubs st'
 		
 
@@ -86,16 +92,16 @@ data UnifSt a	= UnifSt
 type USt a	= State (UnifSt a)
 
 
-runUnify	:: (Node a) => USt a ()
-runUnify	= 
+runUnify	:: (Node a) => (a -> a -> Maybe a) -> USt a ()
+runUnify smallestOf	= 
 	do	done	<- gets nonCanon |> S.null
 		err	<- gets errMsg |> isJust
-		unless (done || err) (unifyStep >> runUnify)
+		unless (done || err) (unifyStep smallestOf >> runUnify smallestOf)
 
-unifyStep	:: (Node a) => USt a ()
-unifyStep	=
+unifyStep	:: (Node a) => (a -> a -> Maybe a) -> USt a ()
+unifyStep smallestOf	=
 	do	(t0, t1)	<- poll
-		case handleUnif t0 t1 of
+		case handleUnif smallestOf t0 t1 of
 			Left err	
 				-> modify (\st -> st {errMsg = Just err})
 			Right (mSubs, newNonCanon)
@@ -104,8 +110,8 @@ unifyStep	=
 
 		
 		
-handleUnif	:: Node a => a -> a -> Either String (Maybe (String,a), Set (a, a))
-handleUnif a b
+handleUnif	:: Node a => (a -> a -> Maybe a) -> a -> a -> Either String (Maybe (String,a), Set (a, a))
+handleUnif smallestOf a b
  | a == b	= return (Nothing, S.empty)
  | hasChildren a && hasChildren b
 	= do	let	as	= getChildren a
@@ -116,9 +122,12 @@ handleUnif a b
  | isVar a && isVar b
 	= do	let na	= getName a
 		let nb	= getName b
-		retSubs $ if na < nb then (na, b) else (nb, a)
+		smallest	<- smallestOf a b & maybe (Left "These are not compatible variables") return
+		retSubs $ if a == smallest then (nb, a) else (na, b)
  | isVar a	= retSubs (getName a, b)
  | isVar b	= retSubs (getName b, a)
+ | otherwise	= Left "Could not unify"
+
 
 
 addSubs		:: (Node a, Ord a) => Maybe (String, a) -> USt a ()

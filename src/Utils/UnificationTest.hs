@@ -27,8 +27,7 @@ instance Node Tree where
 	getChildren (Node _ ch)	= ch
 	getChildren _		= []
 
-	newChildren (Node f _) ch
-				= Node f ch
+	newChildren (Node f _)	= Node f
 
 	
 	isVar (Var _)		= True

@@ -18,4 +18,21 @@ eL	::= number | bool | var | "(" "\\" var ":" type "." eL ")" | "If" e "Then" e 
 # typing			::= var ":" type
 # typingEnvironment	::= typing "," typingEnvironment | "{}"
 
+ Functions
+===========
 
+dom 		: type -> type
+dom("(" T ")")	= "(" dom(T) ")"
+dom(T1 "->" T2) = T1
+
+cod 		: type -> type
+cod("(" T ")")	= "(" cod(T) ")"
+cod(T1 "->" T2) = T2
+
+
+equality	: type -> type -> type
+equality(T , T)	= T
+
+
+detectAscr	: e -> e
+detectAscr(e[e0 "::" t])	= e[e0]

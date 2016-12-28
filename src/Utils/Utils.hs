@@ -63,10 +63,17 @@ showComma as	= as |> show & commas
 
 commas		= intercalate ", "
 
+allCombinations	:: [[a]] -> [[a]]
+allCombinations []	= [[]]
+allCombinations (a:as)
+	= do	tails	<- allCombinations as
+		head	<- a
+		return (head:tails)
+
 ------------------- Maybe, Either and other Monad helpers ------------------------------------
 
-cont		:: Monad m => m ()
-cont		= return ()
+pass		:: Monad m => m ()
+pass		= return ()
 
 
 sndEffect	:: Monad m => (a, m b) -> m (a, b)
@@ -91,6 +98,7 @@ firstJusts	:: [Maybe a] -> Maybe a
 firstJusts maybes
 	= let	as	= catMaybes maybes in
 		if null as then Nothing else Just $ head as
+
 
 -- Gives the first right value. If none of the values is Right, concats the 'error messages' (with newlines and indentation)
 firstRight	:: [Either String b] -> Either String b
@@ -130,7 +138,7 @@ ammendMsg _ a	= a
 
 assert :: Monad m => (String -> m ()) -> Bool -> String -> m ()
 assert c False msg	= c msg
-assert c True _ 	= cont
+assert c True _ 	= pass
 
 ----------------------- Tuple Tools ------------------
 
@@ -156,6 +164,8 @@ dropTrd3 (a, b, _)	= (a, b)
 merge3l			:: (a, b, c) -> ((a, b), c)
 merge3l (a, b, c)	=  ((a, b), c)
 
+unmerge3r		:: (a, (b, c)) -> (a, b, c)
+unmerge3r (a, (b, c))	= (a, b, c) 
 
 mapBoth f (a, a')	= (f a, f a')
 
