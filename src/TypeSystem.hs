@@ -242,20 +242,20 @@ leftRecursions	:: Syntax -> [[TypeName]]
 leftRecursions	= cleanCycles . firstCalls
 
 
-smallesCommonType	:: Syntax -> TypeName -> TypeName -> Maybe TypeName
-smallesCommonType syntax t1 t2 
+smallestCommonType	:: Syntax -> TypeName -> TypeName -> Maybe TypeName
+smallestCommonType syntax t1 t2 
  | t1 == t2			= Just t1
  | alwaysIsA syntax t1 t2	= Just t2
  | alwaysIsA syntax t2 t1	= Just t1
  | otherwise {- Unrelated types -}
 				= Nothing
 
-smallesCommonType'	:: Syntax -> [TypeName] -> Maybe TypeName
-smallesCommonType' _ []	= Nothing
-smallesCommonType' s [t]	= Just t
-smallesCommonType' s (t:ts)
-			= do	t'	<- smallesCommonType' s ts
-				smallesCommonType s t t'
+smallestCommonType'	:: Syntax -> [TypeName] -> Maybe TypeName
+smallestCommonType' _ []	= Nothing
+smallestCommonType' s [t]	= Just t
+smallestCommonType' s (t:ts)
+			= do	t'	<- smallestCommonType' s ts
+				smallestCommonType s t t'
 
 {-
 Consider following BNF:

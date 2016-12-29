@@ -53,7 +53,7 @@ subs(x, y, z)					= z
 
 
 
-eval			: e -> value
+eval			: e -> e
 eval( (v : value) )	= v
 eval(("(" "\\" x ":" t "." e ")") arg)
 			= eval(subs(x, arg, e))

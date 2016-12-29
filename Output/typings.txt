@@ -1,0 +1,16 @@
+Warning:
+  While checking the totality of function "cod":
+    Following calls will fall through:
+      cod("Int")
+      cod("Bool")
+  
+  While checking the totality of function "dom":
+    Following calls will fall through:
+      dom("Int")
+      dom("Bool")
+  
+  
+  While checking that the functions do have the strictest possible types:
+    "rename" can be typed as "eL", instead of a "e"
+  
+

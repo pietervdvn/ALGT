@@ -5,6 +5,7 @@ This module defines an abstract type tree
 -}
 import Prelude hiding (subtract)
 import Utils.Utils
+import Utils.ToString
 import TypeSystem
 import Utils.Unification
 
@@ -17,16 +18,13 @@ import Data.List (intercalate, intersperse, nub)
 import Control.Arrow ((&&&))
 import Control.Monad
 
-import Debug.Trace
-
-
 data AbstractSet'
 	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
 	| ConcreteLiteral MInfo String
 	| ConcreteIdentifier MInfo Name
 	| ConcreteInt MInfo Name
 	| AsSeq MInfo [AbstractSet']		-- Sequence
-	deriving (Ord, Eq)
+	deriving (Ord, Eq, Show)
 
 
 isEveryPossible			:: AbstractSet' -> Bool
@@ -59,13 +57,13 @@ replaceAS	:: AbstractSet' -> [Int] -> AbstractSet' -> AbstractSet'
 replaceAS _ [] toPlace	= toPlace
 replaceAS (AsSeq mi orig) (i:rest) toPlace
  | length orig <= i
-	= error $ "Invalid substitution path: index "++show i++" to big for " ++show orig
+	= error $ "Invalid substitution path: index "++show i++" to big for " ++toParsable' " " orig
  | otherwise
 	= let	(init, head:tail)	= splitAt i orig
 		head'		= replaceAS head rest toPlace in
 		(init ++ (head':tail)) & AsSeq mi
 replaceAS rest path toReplace
-	= error $ "Invalid substitution path: not a sequence, but trying to execute the path "++show path++" on " ++show rest
+	= error $ "Invalid substitution path: not a sequence, but trying to execute the path "++show path++" on " ++toParsable rest
 
 
 asAS	:: Expression -> AbstractSet'
@@ -77,7 +75,7 @@ asAS (MVar tp _)	= EveryPossible ("?", -1) "?" tp
 asAS (MSeq mi exprs)	= exprs |> asAS & AsSeq mi 
 asAS (MCall tp _ _ _)	= EveryPossible ("fc", -1) "function call" tp
 asAS (MAscription tp e)	= asAS e
-asAS MEvalContext{}	= error $ "No contexts allowed here"
+asAS MEvalContext{}	= error "No contexts allowed here"
 
 instance SimplyTyped AbstractSet' where
 	typeOf as	= _typeOf as & either id fst
@@ -116,13 +114,16 @@ type AbstractSet	= (Syntax, AbstractSet')
 
 typeOf' as	= typeOf $ snd as
 
+
 generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
 generateAbstractSet r n tm
-			= generateAbstractSet' r (tm, -1) n (BNFRuleCall tm)
+			= (r, generateAbstractSet' r n tm)
 
 
-generateAbstractSet' 			:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet
-generateAbstractSet' r mi name bnf	= (r, _generateAbstractSet' r mi name bnf)
+generateAbstractSet'	:: Syntax -> Name -> TypeName -> AbstractSet'
+generateAbstractSet' r n tm
+			= _generateAbstractSet' r (tm, -1) n (BNFRuleCall tm)
+
 
 _generateAbstractSet'			:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet'
 _generateAbstractSet' r mi n (Literal s)	= ConcreteLiteral mi s
@@ -159,8 +160,7 @@ subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
 -}
 subtract	:: Syntax -> [AbstractSet'] -> AbstractSet' -> [AbstractSet']
 subtract syntax ass minus
-	= trace ("Calculating "++show ass++ " - "++show minus) $
-	  do	as	<- nub ass
+	= do	as	<- nub ass
 		guard $ not $ sameStructure as minus
 		let unfolded	= unfold' syntax as
 		let subbed	= subtract syntax unfolded minus
@@ -170,16 +170,21 @@ subtract syntax ass minus
 		if not doUnfold then return as else subbed
 
 subtractAll	:: Syntax -> [AbstractSet'] -> [AbstractSet'] -> [AbstractSet']
-subtractAll s ass minuses
-	= L.foldl (subtract s) ass minuses
+subtractAll	= L.foldl . subtract
 
 
+instance ToString AbstractSet' where
+	toParsable (EveryPossible _ _ name)	= name 
+	toParsable (ConcreteLiteral _ s)	= show s
+	toParsable (ConcreteIdentifier _ nm)	= "Identifier"
+	toParsable (ConcreteInt _ nm)		= "Number"
+	toParsable (AsSeq _ ass)		= ass |> toParsable & unwords & inParens
+	
+	toCoParsable (EveryPossible _ _ name)	= name 
+	toCoParsable (ConcreteLiteral _ s)	= show s
+	toCoParsable (ConcreteIdentifier _ nm)	= "Identifier:"++nm
+	toCoParsable (ConcreteInt _ nm)		= "Number:"++nm
+	toCoParsable (AsSeq _ ass)		= ass |> toCoParsable & unwords & inParens
 
 
-
-instance Show AbstractSet' where
-	show (EveryPossible _ _ name)	= name 
-	show (ConcreteLiteral _ s)	= show s
-	show (ConcreteIdentifier _ nm)	= "Identifier:"++nm
-	show (ConcreteInt _ nm)		= "Number:"++nm
-	show (AsSeq _ ass)		= ass |> show & unwords & inParens
+	debug	= show

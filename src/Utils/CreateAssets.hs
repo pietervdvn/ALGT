@@ -39,10 +39,11 @@ header dev
 fileLine	:: Bool -> FilePath -> String -> IO String
 fileLine dev origDir file
 	= do	let name'	= drop (1 + length origDir) $ name file
+		let pragma	= if dev then "{-# NOINLINE "++name'++" #-}\n" else ""
 		let devAssgn	= "unsafePerformIO $ readFile "++show file
 		contents	<- if dev then return devAssgn else
 					readFile file |> show
-		return $ name' ++ "\t = "++contents
+		return $ pragma ++ name' ++ "\t = "++contents
 
 createAssets'	:: Bool -> FilePath -> IO String
 createAssets' dev fp

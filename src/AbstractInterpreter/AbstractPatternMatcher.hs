@@ -54,7 +54,7 @@ patternMatch r (MParseTree (MIdentifier _ s1)) (ConcreteIdentifier _ n)
 patternMatch r (MParseTree (PtSeq mi pts)) pt
 	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
 patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ seq2)
- | length seq1 /= length seq2	= returnF $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++show s2
+ | length seq1 /= length seq2	= returnF $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++toParsable s2
  | otherwise			
 	= do	somePossibleMatch	<- zip seq1 seq2 |+> uncurry (patternMatch r)
 		mergeAssgnss r somePossibleMatch
@@ -76,7 +76,7 @@ patternMatch syntax evalCtx@(MEvalContext tp name hole) value
 		(match, pths)		<- searchMatches syntax neededType [] value'
 		pth			<- pths
 		let match'		= replaceAS match pth (asAS hole)
-		holeAssignment		<- patternMatch syntax hole (generateAbstractSet syntax "" neededType & snd)
+		holeAssignment		<- patternMatch syntax hole (generateAbstractSet' syntax "" neededType)
 		let ctxAssignment	= (M.singleton name (match', Just pth), M.empty, M.empty )
 		mergeAssgns syntax holeAssignment ctxAssignment
 patternMatch r pat as@EveryPossible{}
@@ -131,10 +131,10 @@ mergeAssgn	:: Syntax -> (AbstractSet', Maybe [Int]) -> (AbstractSet', Maybe [Int
 mergeAssgn syntax (a, pathA) (b, pathB)
  | pathA /= pathB	= Left "Context paths don't match"
  | otherwise
-	= inMsg ("While trying to unify "++show a++" and "++show b) $
+	= inMsg ("While trying to unify "++toParsable a++" and "++toParsable b) $
 		do	
 			substitution	<- unifySub (smallestOf syntax) a b
-			return $ (substitute substitution a, pathA)
+			return (substitute substitution a, pathA)
 
 -- we add a special rule, that these variables *can* be matched with each other, despite having a different symbol
 smallestOf	:: Syntax -> AbstractSet' -> AbstractSet' -> Maybe AbstractSet'

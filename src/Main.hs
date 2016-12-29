@@ -27,9 +27,11 @@ import Data.Monoid ((<>))
 import Data.Hashable
 import Options.Applicative
 
+import AbstractInterpreter.Tools
 
 
-version	= ([0,1,2], "Spaced Language (Re)Factory")
+
+version	= ([0,1,3], "Total Language (Re)Factory")
 
 
 main	:: IO ()
@@ -51,6 +53,8 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS createHighlighting autoSav
 		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		check ts & either error return
+		
+		checkTS ts & either putStrLn return
 
 		config'		<- mainSyntaxHighl config ts createHighlighting autoSaveTo
 		config''	<- updateHighlightings config' ts
