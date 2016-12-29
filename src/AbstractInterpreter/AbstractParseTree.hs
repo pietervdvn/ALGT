@@ -3,6 +3,7 @@ module AbstractInterpreter.AbstractParseTree where
 {-
 This module defines an abstract type tree
 -}
+import Prelude hiding (subtract)
 import Utils.Utils
 import TypeSystem
 import Utils.Unification
@@ -14,19 +15,44 @@ import Data.List as L
 import Data.List (intercalate, intersperse, nub)
 
 import Control.Arrow ((&&&))
+import Control.Monad
+
+import Debug.Trace
 
 
 data AbstractSet'
-	= EveryPossible MInfo Name TypeName 	-- The name is used to identify different expressions, used to diverge on pattern matching
+	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
 	| ConcreteLiteral MInfo String
 	| ConcreteIdentifier MInfo Name
 	| ConcreteInt MInfo Name
 	| AsSeq MInfo [AbstractSet']		-- Sequence
 	deriving (Ord, Eq)
 
+
 isEveryPossible			:: AbstractSet' -> Bool
 isEveryPossible EveryPossible{}	= True
 isEveryPossible _		= False
+
+
+-- erases variable names and producing rules
+eraseDetails	:: AbstractSet' -> AbstractSet'
+eraseDetails (EveryPossible mi _ tn)
+		= EveryPossible (tn, -1) "" tn
+eraseDetails (ConcreteLiteral mi s)
+		= ConcreteLiteral (_eMI mi) s
+eraseDetails (ConcreteIdentifier mi _)
+		= ConcreteIdentifier (_eMI mi) ""
+eraseDetails (ConcreteInt mi _)
+		= ConcreteInt (_eMI mi) ""
+eraseDetails (AsSeq mi ass)
+		= ass |> eraseDetails & AsSeq (_eMI mi)
+
+sameStructure	:: AbstractSet' -> AbstractSet' -> Bool
+sameStructure as bs
+	= eraseDetails as == eraseDetails bs
+
+
+_eMI (tn, _)	= (tn, -1)
 
 
 replaceAS	:: AbstractSet' -> [Int] -> AbstractSet' -> AbstractSet'
@@ -119,6 +145,36 @@ unfold' r (EveryPossible _ n e)
 		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet' r (e, i) (n++"/"++show i) bnf)
 		  in choices & nub
 unfold' r as	= [as]
+
+
+{- Given abstract sets, removes the second from this set
+e.g.
+
+a	::= "x" | "y" | b
+b	::= a "~" b
+
+subtract [a] b	--> "x" | "y"
+subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
+
+-}
+subtract	:: Syntax -> [AbstractSet'] -> AbstractSet' -> [AbstractSet']
+subtract syntax ass minus
+	= trace ("Calculating "++show ass++ " - "++show minus) $
+	  do	as	<- nub ass
+		guard $ not $ sameStructure as minus
+		let unfolded	= unfold' syntax as
+		let subbed	= subtract syntax unfolded minus
+		let doUnfold	= isEveryPossible as 
+					&& alwaysIsA syntax (typeOf minus) (typeOf as) 
+					&& subbed /= unfolded
+		if not doUnfold then return as else subbed
+
+subtractAll	:: Syntax -> [AbstractSet'] -> [AbstractSet'] -> [AbstractSet']
+subtractAll s ass minuses
+	= L.foldl (subtract s) ass minuses
+
+
+
 
 
 instance Show AbstractSet' where

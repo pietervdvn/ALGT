@@ -59,11 +59,14 @@ patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ seq2)
 	= do	somePossibleMatch	<- zip seq1 seq2 |+> uncurry (patternMatch r)
 		mergeAssgnss r somePossibleMatch
 
-patternMatch r (MAscription as expr') expr
+patternMatch r ascr@(MAscription as expr') expr
  | alwaysIsA r (typeOf expr) as	
 	= patternMatch r expr' expr
+ | mightContainA r as (typeOf expr)
+	= do	possExpr	<- unfold' r expr & filter isEveryPossible
+		patternMatch r ascr possExpr
  | otherwise	
-	= returnF $ show expr ++" is not a "++show as
+	= error $ show expr ++" is not a "++show as
 
 patternMatch syntax evalCtx@(MEvalContext tp name hole) value
 	= do	-- first of all, the current expression should (be able to) contain the sub expression

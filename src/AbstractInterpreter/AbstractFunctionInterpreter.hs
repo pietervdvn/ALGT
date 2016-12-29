@@ -10,18 +10,54 @@ import Utils.Utils
 import Data.List
 import Data.Map ((!))
 
+import Prelude hiding (Subtract)
 import AbstractInterpreter.AbstractParseTree
 import AbstractInterpreter.AbstractPatternMatcher
 
 import Data.Maybe
 
-interpretClause	:: Syntax -> Clause -> [AbstractSet'] -> [([AbstractSet'], AbstractSet')]
+
+type Arguments	= [AbstractSet']
+
+
+
+data Analysis	= Analysis 
+		{ results	:: [(Int, (Arguments, AbstractSet'))]	-- clausenr, arguments to value
+		, leftOvers	:: [Arguments]			-- Unhandled cases
+		}
+
+addResult	:: Int -> [(Arguments, AbstractSet')] -> Analysis -> Analysis
+addResult i res' (Analysis res lo)
+	= Analysis (zip (repeat i) res' ++ res) lo
+
+instance Show Analysis where
+	show (Analysis results lo)	
+			= results |> (\(i, (args, res))-> padR 40 ' ' (show i ++ "   "++show args) ++ "\t--> "++ padR 10 ' ' (show res) ++ " : " ++ show (typeOf res)) & unlines
+				++ "\nNON-MATCHING: "++show lo
+
+interpretFunction	::  Syntax -> Function -> Arguments -> Analysis
+interpretFunction syntax (MFunction _ clauses) args
+	= interpretClauses syntax (mapi $ init clauses) [args]
+
+
+interpretClauses	:: Syntax -> [(Int, Clause)] -> [Arguments] -> Analysis
+interpretClauses _ [] leftOvers
+			= Analysis [] leftOvers
+interpretClauses syntax ((i, clause):clauses) argss
+		= let 	results		= [ interpretClause syntax clause args | args <- argss ] & concat
+			usedArgs	= results >>= fst
+			analysis	= interpretClauses syntax clauses argss
+			in
+			addResult i results analysis
+			
+
+
+interpretClause	:: Syntax -> Clause -> [AbstractSet'] -> [(Arguments, AbstractSet')]
 interpretClause syntax (MClause patterns expr) args
  | length args /= length patterns	= error $ "Number of arguments does not match, expected "++show (length patterns)++" arguments but only got "++show (length args)
  | otherwise
 	= do	let assgns	= zip patterns args |> uncurry (patternMatch syntax)
 					& allCombinations |> mergeAssgnss syntax & concat
-		-- assgns |> fst3 |> (! "e") |> show & unlines & error 
 		assgn	<- assgns
 		let filledPats	= patterns |> evalExpr assgn
 		let filledExpr	= evalExpr assgn expr
@@ -34,7 +70,7 @@ evalExpr assgns (MParseTree (MLiteral mi token))
 evalExpr assgns (MVar _ n)
 		= fromMaybe (error $ "Unknown variable: "++show n) (findAssignment n assgns) & fst
 evalExpr _ (MCall tp _ _ _)
-		= EveryPossible ("", -1) "Function call" tp
+		= EveryPossible (tp, -1) "Function call" tp
 evalExpr assgns (MSeq mi exprs)
 		= exprs |> evalExpr assgns & AsSeq mi
 evalExpr assgns (MAscription t e)

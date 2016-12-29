@@ -225,6 +225,14 @@ checkExists k dict msg
 			= return $ dict Map.! k
  | otherwise		= Left msg
 
+padL		:: Int -> a -> [a] -> [a]
+padL i filler as
+		= replicate (i - length as) filler ++ as
+
+padR		:: Int -> a -> [a] -> [a]
+padR i filler as
+		= as ++ replicate (i - length as) filler
+
 equalizeLength	:: a -> [[a]] -> [[a]]
 equalizeLength a ass
 	= let	longest		= ass |> length & maximum
