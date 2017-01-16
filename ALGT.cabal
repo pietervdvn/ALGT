@@ -15,12 +15,11 @@ extra-source-files:  README.md
 
 executable ALGT
   hs-source-dirs:      src
+  ghc-options:         -fno-warn-tabs
   main-is:             Main.hs
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative, directory, microlens, microlens-th, text, blaze-svg, hashable
-  other-modules:       AbstractInterpreter.AbstractFunctionInterpreter
-        AbstractInterpreter.AbstractParseTree
-        AbstractInterpreter.AbstractPatternMatcher
+  other-modules:       
         AbstractInterpreter.MinimalTypes
         AbstractInterpreter.Tools
         Assets
@@ -30,18 +29,10 @@ executable ALGT
         Graphs.SearchCycles
         ParseTreeInterpreter.FunctionInterpreter
         ParseTreeInterpreter.RuleInterpreter
-        Parser.BNFParser
-        Parser.ExpressionParser
-        Parser.FunctionParser
-        Parser.ParsingUtils
-        Parser.RuleParser
-        Parser.TargetLanguageParser
-        Parser.TypeSystemParser
         SyntaxHighlighting.Highlighting
         TypeSystem
         Utils.ArgumentParser
         Utils.ToString
-        Utils.TypeSystemToString
         Utils.Unification
         Utils.Utils
         Utils.XML
