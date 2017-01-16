@@ -1,4 +1,8 @@
- 
+
+ Gradualized
+************* 
+
+
  Syntax Changes
 ================
 
@@ -6,23 +10,23 @@
 typeL 	::= ... | "?"
 
 
+
  Function Changes
 ==================
 
-+ dom		: type -> type
+dom		: type -> type
+...
 dom("?")	= "?"
 
-+ cod		: type -> type
+cod		: type -> type
+...
 cod("?")	= "?"
-
 
 
  Relation Changes
 ==================
 
-
-Rename (==) to (~), pronounced as "is consistent", prefix "Eq" becomes "Cons"
-
+Rename (==) to (~), pronounced as "is consistent"
 
 
  New Rules

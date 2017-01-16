@@ -1,4 +1,7 @@
  
+ Dynamized
+***********
+
 # Turns the runtime of STFL into a dynamic runtime, so that 'faulty' programs evaluate to "TYPE ERROR" instead of not compiling into a proof tree 
 
  Syntax Changes
