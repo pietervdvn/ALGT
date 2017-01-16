@@ -7,7 +7,6 @@ Builds a syntax highlighting file, based on a typesystem
 
 import Utils.Utils
 import Utils.ToString
-import Utils.TypeSystemToString
 import Utils.XML
 import Assets
 import TypeSystem
@@ -19,7 +18,7 @@ import Data.Char
 
 import Control.Monad
 
-import Parser.TypeSystemParser
+import TypeSystem.Parser.TypeSystemParser
 
 data SyntaxHighlightingFile
 	= SH	{ name		:: Name
@@ -145,9 +144,9 @@ styleFor style (tp, i)
 
 styleFor'	:: SyntaxStyle -> (Name, Int) -> Maybe Name
 styleFor' styling full@(name, _)
- | full `M.member` extraStyles styling
-		= full `M.lookup` extraStyles styling
- | otherwise	= name `M.lookup` baseStyles styling
+ | full `M.member` get extraStyles styling
+		= full `M.lookup` get extraStyles styling
+ | otherwise	= name `M.lookup` get baseStyles styling
 
 
 
@@ -267,6 +266,6 @@ instance ToString StyleContext where
 
 createStyleForTypeSystem	:: TypeSystem -> Name -> SyntaxHighlightingFile
 createStyleForTypeSystem ts mainRule
-	= let nm	= tsName ts |> toLower in
-		SH nm nm nm (Nothing, Nothing, Nothing) (ts & tsStyle & styleRemaps) mainRule $
-			createFullStyles (tsStyle ts) (tsSyntax ts)
+	= let nm	= get tsName ts |> toLower in
+		SH nm nm nm (Nothing, Nothing, Nothing) (ts & get tsStyle & get styleRemaps) mainRule $
+			createFullStyles (get tsStyle ts) (get tsSyntax ts)

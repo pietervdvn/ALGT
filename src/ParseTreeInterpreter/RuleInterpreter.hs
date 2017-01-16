@@ -15,10 +15,12 @@ import Data.Map (Map, empty, findWithDefault)
 import Data.Either
 import Data.List
 
+import Lens.Micro hiding ((&))
+
 
 proofThat	:: TypeSystem -> Relation -> [ParseTree] -> Either String Proof
 proofThat ts
-	= proofThat' ts . relSymbol
+	= proofThat' ts . get relSymbol
 
 -- tries to deduce a proof for a given property, might return multiple (top level) proofs
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
@@ -33,7 +35,7 @@ proofThats' ts symbol args
 proofThat'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String Proof
 proofThat' ts symbol args
 	= do	successfull	<- proofThats' ts symbol args
-		let conclusions	= successfull & filter isProof |> proofConcl & nub
+		let conclusions	= successfull & filter isProof |> _proofConcl & nub
 		assert Left (1 == length conclusions) $ "Multiple rules provided a proof with different conclusions:\n"++ 
 				(successfull |> toParsable |> lines ||>> ("#  "++) |> unlines >>= (++"\n"))
 		let successfull'	= successfull & sortOn weight 
@@ -45,13 +47,20 @@ proofThat' ts symbol args
 -- given a rule and 'input' expressions, (tries to) give a proof for it
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
-	= inMsg ("While trying to intepret the rule "++ruleName r++" with "++ toParsable' ", " args) $
-	  do	let (RelationMet rel patterns)	= ruleConcl r
-		variables	<- patternMatchInputs ts (rulePreds r) (rel, patterns) args
+	= inMsg ("While trying to intepret the rule "++get ruleName r++" with "++ toParsable' ", " args) $
+	  do	let (RelationMet rel patterns)	= get ruleConcl r
+		variables	<- patternMatchInputs ts (get rulePreds r) (rel, patterns) args
 		(predicateProofs, vars')
-				<- proofPredicates ts variables (rulePreds r)
-		concl		<- proofRelationMet ts (rel, patterns) vars' args
+				<- proofPredicates ts variables (get rulePreds r)
+		let concl	= proofRelationMet ts (rel, patterns) vars' args
 		return $ Proof concl r predicateProofs
+
+proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignments -> [ParseTree] -> Conclusion'
+proofRelationMet ts (rel, relationArgs) vars args
+	= let	relationArgs'	= relationArgs |> evalExpr ts vars
+		resultExprs	= weaveMode (relModes rel) args relationArgs'
+		in RelationMet rel resultExprs
+	
 
 
 -- predicates are proven from left to right, as a left predicate might introduce variables used by a following predicate
@@ -66,10 +75,10 @@ proofPredicates ts vars (pred:preds)
 
 proofPredicate	:: TypeSystem -> VariableAssignments -> [Predicate] -> Predicate -> Either String (Proof, VariableAssignments)
 proofPredicate ts vars _ (TermIsA expr typ)
-	= let	expr'	= evalExpr ts vars expr in
-		if alwaysIsA (tsSyntax ts) (typeOf expr') typ then
+	= let	expr'	= evalExpr ts vars (MVar typ expr) in
+		if alwaysIsA (get tsSyntax ts) (typeOf expr') typ then
 			return (ProofIsA expr' typ, empty)
-			else Left (toParsable expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ)
+			else Left ( expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ)
 proofPredicate ts vars _ (Same e1 e2)
 	= do	let e1'	= evalExpr ts vars e1
 		let e2' = evalExpr ts vars e2
@@ -77,10 +86,10 @@ proofPredicate ts vars _ (Same e1 e2)
 			else Left $ "Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2
 
 proofPredicate ts vars restingPreds (Needed (RelationMet relation args))
-	= do	let inputArgs	= zip args (relModes relation) & filter ((==) In . snd) |> fst	:: [Expression]
+	= do	let inputArgs	= filterMode In relation args
 		let args'	= inputArgs |> evalExpr ts vars
 		proof		<- proofThat ts relation args'
-		let concl	= proofConcl proof
+		let concl	= _proofConcl proof
 		-- now, we take the 'out'-expresssions from the conclusion and pattern match those into the out of the needed
 		let toMatch	= filterMode Out relation (zip args (conclusionArgs concl))	:: [(Expression, ParseTree)]
 		matched		<- matchAndMerge ts restingPreds toMatch	-- this predicate might contain a context evaluation
@@ -88,12 +97,12 @@ proofPredicate ts vars restingPreds (Needed (RelationMet relation args))
 
 
 
-
+-- pattern matches the given parsetrees (args), gives the assignment. Note that the given predicates are tried (in the case of an evaluation context, it might influence the choice of the hole)
 patternMatchInputs	:: TypeSystem -> [Predicate] -> (Relation, [Expression]) -> [ParseTree] -> Either String VariableAssignments
 patternMatchInputs ts predicates (rel, relationArgs) args
 	= do	let inputTypes	= filterMode In rel (relType rel)
-		assert  Left(length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
-		let typesMatch arg expected	= assert Left (equivalent (tsSyntax ts) (typeOf arg) expected) 
+		assert Left (length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
+		let typesMatch arg expected	= assert Left (equivalent (get tsSyntax ts) (typeOf arg) expected) 
 							("Expected type "++show expected++" for "++toCoParsable arg++" which has the type "++show (typeOf arg))
 		zip args inputTypes |> uncurry typesMatch & allRight
 		let patterns = filterMode In rel relationArgs
@@ -101,28 +110,12 @@ patternMatchInputs ts predicates (rel, relationArgs) args
 		
 		
 
-proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignments -> [ParseTree] -> Either String Conclusion'
-proofRelationMet ts (rel, relationArgs) vars args
-	= do	resultExprs	<- zipModes ts vars (zip relationArgs $ relModes rel) args
-		return $ RelationMet rel (resultExprs |> fst)
-		
-		
+	
+-- pattern matches each parsetree into it's accompanying expression. Returns an assignment
 matchAndMerge	:: TypeSystem -> [Predicate] -> [(Expression, ParseTree)] -> Either String VariableAssignments
 matchAndMerge ts predicates patsArgs
 	= do	let evalContextMatches assngs	= proofPredicates ts assngs predicates & isRight
-		matches	<- patsArgs |+> uncurry (patternMatch (tsSyntax ts) evalContextMatches)
+		matches	<- patsArgs |+> uncurry (patternMatch (get tsSyntax ts) evalContextMatches)
 		matches & mergeVarss
 
 
-zipModes	:: TypeSystem -> VariableAssignments -> [(Expression, Mode)] -> [ParseTree] -> Either String [(ParseTree, Mode)]
-zipModes ts assignments ((_, In):relationArgs) (arg:args)
-		= do	tail	<- zipModes ts assignments relationArgs args
-			return ((arg, In):tail)
-zipModes ts assignments ((prototype, Out): relationArgs) args
-		= do	let arg	= evalExpr ts assignments prototype
-			tail	<- zipModes ts assignments relationArgs args
-			return ((arg, Out):tail)
-zipModes _ _ [] []
-		= return []
-zipModes _ _ _ _
-		= Left "Not enough input arguments for relation"		

@@ -1,78 +1,81 @@
+{-# LANGUAGE FlexibleContexts #-}
 module AbstractInterpreter.Test where
 
-import Prelude hiding (subtract)
-import Utils.Utils
-import Assets
+import Prelude hiding (Subtract)
 import TypeSystem
-import Parser.TypeSystemParser
-
-import AbstractInterpreter.AbstractParseTree
-import AbstractInterpreter.AbstractPatternMatcher
-import AbstractInterpreter.AbstractFunctionInterpreter
-import AbstractInterpreter.MinimalTypes
-import AbstractInterpreter.Tools
-
-import Data.List
-import Data.Map (Map, (!))
-
-
+import TypeSystem.Parser.TypeSystemParser
+import Utils.Utils
+import Utils.ToString
 import Utils.Unification
+import Utils.LatticeImage
+import Graphs.Lattice
+
+import Assets
+
+import AbstractInterpreter.AbstractSet as AS
+import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.PatternMatcher
+
+import AbstractInterpreter.Data
+
+import Data.Map ((!), Map)
+import qualified Data.Map as M
+import Data.List
+import Data.Bifunctor (first)
+
 import Control.Monad
+import Control.Arrow ((&&&))
 
-tp	= "type"
-mi	= (tp, -1)
+import Main
 
-testPattern	:: Expression
-testPattern	= MSeq mi [MVar tp "T1"
-			, MParseTree $ MLiteral mi "->"
-			, MVar tp "T1"]  
-stfl	= parseTypeSystem Assets._Test_STFL_typesystem (Just "Test_STFL")
-stfl'	= stfl & either (error . show) id
-syntax	= tsSyntax stfl'
+t0	= iar
+t1	= main' ["../Examples/STFL.typesystem"] & void
+t2	= main' ["../Examples/STFL.typesystem", "--ia" ]& void
 
-typ		= generateAbstractSet' syntax "_" "type"
-e		= generateAbstractSet' syntax "_" "e"
-eL		= generateAbstractSet' syntax "_" "eL"
+stfl	= parseTypeSystem Assets._Test_STFL_typesystem (Just "Test_STFL")& either (error . show) id
+syntax	= get tsSyntax stfl
 
 
-diffT0		= (e, AsSeq ("e", -1) [eL, e])
-diffT1		= (e, generateAbstractSet' syntax "_" "value")
-diffT2		= (e, ConcreteLiteral ("bool", -1) "True" )
-diffT3		= (e, e)
-diffTs		= [diffT0, diffT1, diffT2, diffT3]
+rls	= tsRules stfl ! "→"
+evalCtx	= rls & filter ((==) "EvalCtx" . get ruleName) & head
 
-tDiff (e, minus)
-		= subtract syntax [e] minus
-	
-tDiff' v@(e, minus)
-	= do	let diff	= tDiff v
-		putStrLn $ "Difference of "++show e++"   - "++show minus
-		print $ length $ show diff
-		print diff
-		putStrLn "\n\n"
+e i	= generateAbstractSet syntax (show i) "e"
+typ i	= generateAbstractSet syntax (show i) "type"
 
-testDiffs	= diffTs |+> tDiff' & void
-
-t	= testAS
-testAS	:: IO ()	
-testAS	= checkStrictestTypes stfl' & either putStrLn print
+ePlus	= AsSeq ("e",0) [EveryPossible ("e",0) "0/0:0" "eL",ConcreteLiteral ("e",0) "+",EveryPossible ("e",0) "0/0:2" "e"]
+ePlusN	= AsSeq ("e",0) [EveryPossible ("number",0) "0/0:0" "number",ConcreteLiteral ("e",0) "+",EveryPossible ("number",0) "0/0:2" "number"]
 
 
-testFS	= do	testF stfl' "eval" [e]
-		testF stfl' "dom" [typ]
-		testF stfl' "cod" [typ]
-		testF stfl' "equality" [typ, typ]
+testRule	:: Rule -> IO ()
+testRule rule	
+	= do	putStrLn $ " Analysis of "++show (get ruleName rule)
+		putStrLn $ "---------------"++replicate (length $ show $ get ruleName rule) '-'
+		putStrLn $ toParsable $ interpretRule' stfl rule
+
+
+evalRel	= stfl & get tsRelations & filter ((==) "→" . get relSymbol)  & head
+
+holeMatch	= stfl & get tsRelations |> (id &&& buildHoleArgs) & M.fromList	:: Map Relation [Name]
+holeNoMatch	= holeMatch ||>> ("No_match_"++)
+
+buildHoleArgs r	= mapi (relModes r) |> first show ||>> show ||>> inParens |> uncurry (++) |> (get relSymbol r ++) 
 
 
 
-testF	:: TypeSystem -> Name -> [AbstractSet'] -> IO ()
-testF ts n args
-	= do	putStrLn $ "Testing (first clause of) function "++show n
-		let function	= tsFunctions ts ! n
-		let results	 = interpretFunction (tsSyntax ts) (tsFunctions ts |> typesOf |> last)function args
-		print results
-		putStrLn "\n\n\n"
-		
+
+iar		= rls |+> testRule & void
+applicT		= rls |> interpretRule' stfl & concat |+> fillHoleWith holeMatch & either error id
+{-
+nonApplicTo	= subtractArgs syntax [e 0] applicTo
+recApplic	= interpretRule' stfl evalCtx
+applicTo'	= (nonApplicTo >>= interpretRule stfl evalCtx) |> possibleArgs :: [Arguments]
+nonApplicTo'	= [subtractArgs syntax nonApp applicTo' | nonApp <- nonApplicTo ] & concat	:: [Arguments]
+-}
 
 
+s	:: (ToString' String a , Eq a) => [a] -> IO ()
+s args	= (args & nub |> toParsable' "\n") & unlines & putStrLn
 
+
+s'	:: [Arguments] -> IO ()
+s' args	= (args & nub |> toCoParsable' "\n") & unlines & putStrLn

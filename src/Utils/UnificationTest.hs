@@ -46,7 +46,7 @@ tree0		= Node "f" [varX, Node "a"[]]
 tree1		= Node "f" [Node "b" [], varY]
 
 unif0_1		= Right (M.fromList [("x", Node "b" []), ("y", Node "a" [])], [])
-unifxy		= Right (M.fromList [("x", varY)], [])
+unifxy		= Right (M.fromList [("y", varX)], [])
 
 unifx_0		= Right (M.fromList [("x",Node "f" [Var "x",Node "a" []])] , ["x"])
 	
@@ -57,6 +57,6 @@ test ((a, b), exp)
 		cycles == exp
 
 -- Should return true
-tests		= [((tree0, tree1), unif0_1), ((varX, varY), unifxy), ((varX, tree0), unifx_0)] |> test & and
-
+tests'		= [((tree0, tree1), unif0_1), ((varX, varY), unifxy), ((varX, tree0), unifx_0)] 
+tests		= tests' |> test & mapi & filter (not . snd) |> fst |> (\i -> Left $ "Unification test "++show i++" failed")
 

@@ -35,7 +35,6 @@ deployStyle style
 		check style & either error return
 		writeFile (home ++ "/.local/share/gtksourceview-3.0/styles/"++name style++".xml") $ render style
 
--- TODO actually use these tests!
 instance Check Style where
 	check style
 		= inMsg ("While checking the style "++show (name style)) $
@@ -101,6 +100,4 @@ render (Style name desc humanName authors colors styles)
 			(styles |> toParsable & unlines)
 
 
-
-t
 

@@ -1,13 +1,14 @@
 module Main where
 
 import TypeSystem
-import Utils.TypeSystemToString
 import Utils.ToString
 import Utils.Utils
 import Utils.ArgumentParser
+import Graphs.Lattice (asSVG)
+import Utils.LatticeImage (terminalCS)
 
-import Parser.TargetLanguageParser
-import Parser.TypeSystemParser (parseTypeSystemFile)
+import TypeSystem.Parser.TargetLanguageParser
+import TypeSystem.Parser.TypeSystemParser (parseTypeSystemFile)
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
 import Changer.ChangesParser
@@ -21,17 +22,16 @@ import Text.Parsec
 
 import Data.Maybe
 import Data.Either
-import Data.Map (Map, fromList)
+import Data.Map (Map, fromList, keys)
 import Data.List (intercalate, nub)
 import Data.Monoid ((<>))
---import Data.Hashable
+import Data.Hashable
 import Options.Applicative
 
 import AbstractInterpreter.Tools
 
 
-
-version	= ([0,1,3], "Total Language (Re)Factory")
+version	= ([0,1,6], "Total Language Lattice (the correcter edition)")
 
 
 main	:: IO ()
@@ -42,37 +42,43 @@ main	= void $ do	args	<- getArgs
 main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
 main' args 
 	= do	parsedArgs	<- parseArgs version args
-		-- when (rmConfig parsedArgs) (removeConfig >> putStrLn "# Config file removed")
+		when (rmConfig parsedArgs) (removeConfig >> putStrLn "# Config file removed")
 		mainArgs parsedArgs
 			
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs (Args tsFile exampleFiles changeFiles dumbTS)
-	= do	-- config	<- getConfig
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract createSVG createHighlighting autoSaveTo _)
+	= do	config	<- getConfig
 		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		check ts & either error return
 		
 		checkTS ts & either putStrLn return
-		{--
+
 		config'		<- mainSyntaxHighl config ts createHighlighting autoSaveTo
 		config''	<- updateHighlightings config' ts
 		when (config /= config'') $ writeConfig config''
-		--}
+	
 
 		changedTs	
 			<- changeFiles |> mainChanges & foldM (&) ts	:: IO TypeSystem
 
-		when dumbTS $ putStrLn $ toParsable changedTs
+		when dumbTS $ putStrLn $ toParsable' (24::Int) changedTs
+
+		when interpretAbstract $ void $
+			get tsFunctions changedTs & keys |+> runFuncAbstract changedTs
+
+		createSVG & ifJust (\pth -> do
+			let l	= changedTs & get tsSyntax & latticeAsSVG terminalCS
+			writeFile pth l)
 		
 		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
 		return (changedTs , concat parseTrees)
 
-{--
 mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config
 mainSyntaxHighl config ts (Just parserRule) (Just targetSave)
-	= do	let newConf	= ASH (tsName ts) parserRule 0 targetSave
+	= do	let newConf	= ASH (get tsName ts) parserRule 0 targetSave
 		let config'	= config{autoSyntaxes = autoSyntaxes config ++ [newConf]}
 		putStrLn "# Auto syntax highlighting added"
 		return config'
@@ -87,8 +93,8 @@ mainSyntaxHighl c _ _ _
 
 updateHighlightings 	:: Config -> TypeSystem -> IO Config
 updateHighlightings config ts
-	= do	let currentState	= hash ((tsSyntax ts & show) ++ (tsStyle ts & show))
-		let editState ash	= (tsName ts == ashTsName ash) && (currentState /= ashTsHash ash)
+	= do	let currentState	= hash ((get tsSyntax ts & show) ++ (get tsStyle ts & show))
+		let editState ash	= (get tsName ts == ashTsName ash) && (currentState /= ashTsHash ash)
 		autoSyntaxes' <- autoSyntaxes config |+> (\ash -> 
 			if not $ editState ash then return ash else do
 				let fp	= ashSaveTo ash ++ "/" ++ ashTsName ash ++ ".lang"
@@ -100,7 +106,7 @@ updateHighlightings config ts
 		
 		return config{autoSyntaxes = nub autoSyntaxes'}
 		
---}
+
 
 mainChanges	:: String -> TypeSystem -> IO TypeSystem
 mainChanges filepath ts
@@ -132,7 +138,7 @@ mainExFile args ts
 
 parseWith	:: FilePath -> TypeSystem -> Name -> String -> IO ParseTree
 parseWith file ts bnfRuleName str
-	= do	let parser	= parse $ parseRule (tsSyntax ts) bnfRuleName
+	= do	let parser	= parse $ parseRule (get tsSyntax ts) bnfRuleName
 		let parsed	= parser file str
 		either (error . show) return parsed
 
@@ -153,7 +159,11 @@ showProofWithDepth input relation (Right proof)
 		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++toParsable proof++"\n\n\n"
 
 
-
+runFuncAbstract	:: TypeSystem -> Name -> IO ()
+runFuncAbstract ts name
+	= do	putStrLn $ " Abstract interpretation of "++show name
+		putStrLn $ "-----------------------------"++replicate (length $ show name) '-'
+		putStrLn $ toParsable $ interpretFunction ts name
 		
 runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
 runFunc ts func (inp, pt)

@@ -9,6 +9,7 @@ import Utils.Utils
 import Data.List
 import Data.List.Utils (replace)
 import Data.Bifunctor
+import Data.Foldable
 
 import Control.Monad
 
@@ -29,7 +30,8 @@ dirConts fp
 		return $ normalFiles ++ concat recursive
 		
 
-name f	= f & replace "." "_" & replace "/" "_" & ("_"++)
+replacements	= [(".", "_"), ("-", "_"), ("/", "_")]
+name fp		= foldr (uncurry replace) fp replacements & ("_"++)
 
 
 header dev

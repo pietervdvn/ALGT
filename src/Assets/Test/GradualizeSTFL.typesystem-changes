@@ -1,0 +1,60 @@
+
+ Gradualized
+************* 
+
+
+ Syntax Changes
+================
+
+
+typeL 	::= ... | "?"
+
+
+
+ Function Changes
+==================
+
+dom		: type -> type
+...
+dom("?")	= "?"
+
+cod		: type -> type
+...
+cod("?")	= "?"
+
+
+ Relation Changes
+==================
+
+Rename (==) to (~), pronounced as "is consistent"
+
+
+ New Rules
+===========
+
+ --------- [ConsLeft]
+  "?" ~ T
+
+
+ --------- [ConsRight]
+  T ~ "?"
+
+
+------------------  	[EvalCastUnkown]
+ e "::" "?" → e
+
+ 
+
+ (✓) arg	(arg "::" type) → arg'
+------------------------------------------------------------	[EvalLamApp']
+ ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+
+
+
+
+ Rule Changes
+==============
+
+Delete [EvalLamApp]
+
+

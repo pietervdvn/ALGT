@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
 module Changer.Changes where
 
 {-
@@ -5,52 +6,106 @@ This module defines the main data structures, representing a '.typesystem-change
 -}
 
 import TypeSystem
-import Utils.TypeSystemToString
 import Utils.ToString
 import Utils.Utils
 
 import Data.Map hiding (null, filter, lookup)
 import qualified Data.Map as M
 import Data.List hiding (union)
+import Data.List as L
 import Data.Maybe
 import Data.Bifunctor
+import Data.Either
 
 import Control.Monad
 import Control.Arrow ((&&&))
 
 
-data DefaultChange k
-	= Rename k k
+data DefaultChange k v
+	= Rename k k	-- simply rename the entries
 	| Copy k k
 	| Delete k
-	| Override k
+	| New k v
+	| Override k v		-- take the entry and edit it slightly
+	| OverrideAs k k v	-- take the entry, save it slightly, save it as k2 (and remove the original entry)
+	| Edit k v
+	| EditAs k k v		-- take the old entry, edit it with the edit function, save it as the new key
 	deriving (Show)
+
+
+
+
+type EditFunction k v	= (Bool -> k -> v -> v -> Either String v)
+
+noEditAllowed isOverride k origV oldV
+	= Left $ "You want to "++if isOverride then "override" else "edit" ++ " a value, but this is not supported. This is a bug."
+
+
+
+applyChangeTo	:: (Show k, Ord k, Eq k) => DefaultChange k v -> Map k v -> Either String (Map k v)
+applyChangeTo	= applyChangeTo' noEditAllowed
+
+
 
 -- apply a generic change to a generic map
-applyChangeTo	:: (Show k, Ord k) => DefaultChange k -> Map k v -> Either String (Map k v)
-applyChangeTo (Rename ok nk) dict
-	= do	dict'	<- applyChangeTo (Copy ok nk) dict
-		applyChangeTo (Delete ok) dict'
-applyChangeTo (Delete ok) dict
+applyChangeTo'	:: (Show k, Ord k, Eq k) =>  EditFunction k v -> DefaultChange k v -> Map k v -> Either String (Map k v)
+applyChangeTo' f (Rename ok nk) dict
+	= do	dict'	<- applyChangeTo' f (Copy ok nk) dict
+		applyChangeTo' f (Delete ok) dict'
+applyChangeTo' _ (Delete ok) dict
 	= do	v	<- checkExists ok dict $ "You want delete "++show ok++", but it does not exist."
 		return $ M.delete ok dict
-applyChangeTo (Copy ok nk) dict
+applyChangeTo' _ (Copy ok nk) dict
 	= do	v	<- checkExists ok dict $ "You want to rename/copy "++show ok++" as "++show nk++", but it does not exist."
-		checkNoExists nk dict $ "You want to rename/copy "++show ok++" to "++show nk++", but the new name already exists. Try deleting it first."
+		_checkTargetNoExists "copy" ok nk dict
 		return $ M.insert nk v dict
+applyChangeTo' _ (New k v) dict
+	= do	checkNoExists k dict $ "You want to introduce "++show k++", but it already exists. Try overriding it in the 'Changes'-section instead."
+		return $ M.insert k v dict
+applyChangeTo' edit (Override k vNew) dict
+	= applyChangeTo' edit (OverrideAs k k vNew) dict
+applyChangeTo' edit (OverrideAs k kNew vNew) dict
+	= do	vOld	<- checkExists k dict $ "You want to override "++show k++ (if k /= kNew then " as "++show kNew else "") ++", but it does not exist. If you want to introduce this, add it in the 'new' section"
+		_checkTargetNoExists "copy" k kNew dict
+		v	<- edit True k vOld vNew
+		return $ M.insert kNew v $ M.delete k dict
+applyChangeTo' edit (Edit k vNew) dict
+	= applyChangeTo' edit (EditAs k k vNew) dict
+applyChangeTo' edit (EditAs k kNew vNew) dict
+	= do	vOld	<- checkExists k dict $ "You want to edit "++show k++(if k /= kNew then " as "++show kNew else "") ++", but it does not exist. If you want to introduce this, add it in the 'new' section"
+		_checkTargetNoExists "copy" k kNew dict
+		v	<- edit False k vOld vNew
+		return $ M.insert kNew v dict
 
-type Changes' a b	= [Either (DefaultChange a) b]
+_checkTargetNoExists action kOld kNew dict
+	= do	let msg		= "You want to "++action++" "++show kOld++" to "++show kNew++", but the new name already exists. Try deleting it first."
+		unless (kOld == kNew) $ checkNoExists kNew dict msg
+
+isNew		:: DefaultChange k v -> Bool
+isNew New{}	= True
+isNew _		= False
+
+
+
+applyAllChanges	:: (Show k, Ord k, Eq k) => EditFunction k v-> [DefaultChange k v] -> Map k v -> Either String (Map k v)
+applyAllChanges f changes dict
+		= changes & foldM (flip $ applyChangeTo' f) dict
+
+
+refactorFunc		:: (Eq k) => [DefaultChange k v] -> k -> k
+refactorFunc []	k 	= k
+refactorFunc (Rename ok nk:rest) k
+	| ok == k	= nk
+	| otherwise	= refactorFunc rest k
+refactorFunc (OverrideAs ok nk _:rest) k
+	| ok == k	= nk
+	| otherwise	= refactorFunc rest k
+refactorFunc (_:rest) k	= refactorFunc rest k
 
 
 
 
 
-data SyntaxChange	= AddOption TypeName [BNF] | OverrideBNFRule TypeName ([BNF], WSMode)
-	deriving (Show)
-
-data FunctionChange	= AddClauses Name Function
-			| OverrideFunc Name Function
-	deriving (Show)
 
 
 data RelationChangeInfo	
@@ -60,26 +115,21 @@ data RelationChangeInfo
 		deriving (Show)
 
 
-
 data RelationChange
 	= RDelete Name
 	| RCopy   Name RelationChangeInfo
 	| RRename Name RelationChangeInfo
 		deriving (Show)
 
-data RuleChange		= OverrideRule Rule
-	deriving (Show)
+
+
 
 data Changes = Changes
 			{ changesName	:: Name
-			, newSyntax	:: Syntax
-			, changedSyntax	:: Changes' TypeName SyntaxChange
-			, newFunctions	:: Functions
-			, changedFuncs	:: Changes' Name FunctionChange
-			, newRelations	:: [Relation] 
-			, changedRels	:: [RelationChange]
-			, newRules	:: [Rule]
-			, ruleChanges	:: Changes' Name RuleChange
+			, changedSyntax	:: [DefaultChange TypeName ([BNF], WSMode)]
+			, changedFuncs	:: [DefaultChange Name Function]
+			, changedRels	:: [DefaultChange Symbol Relation]
+			, changedRules	:: [DefaultChange Name Rule]
 			} deriving (Show)
 
 
@@ -90,165 +140,156 @@ checkNoCommon' old new rule section
 
 
 
-addSyntax	:: Syntax -> Syntax -> Either String Syntax
-addSyntax newSyntax oldSyntax
-	= 	inMsg "While updating the syntax" $
-	  do	let oldBNF	= oldSyntax & getFullSyntax
-		let newBNF	= newSyntax & getFullSyntax
-		checkNoCommon' oldBNF newBNF "bnf-type" "Syntax"
-		makeSyntax $ M.toList $ M.union oldBNF newBNF
-
-rewriteSyntax	:: Changes' TypeName SyntaxChange -> Syntax -> Either String Syntax
-rewriteSyntax changes oldSyntax
-	= inMsg "While updating the syntax" $
-	  do	let oldBNF	= oldSyntax & getFullSyntax
-		bnf'	<- changes |> either applyChangeTo applySyntaxChange
-					& foldM (&) oldBNF
-		makeSyntax $ M.toList bnf'
 
 
-applySyntaxChange	:: SyntaxChange -> Map TypeName ([BNF], WSMode) -> Either String (Map TypeName ([BNF], WSMode))
-applySyntaxChange (OverrideBNFRule tn choices) bnfs
-	= inMsg ("While overriding bnfrule "++show tn) $ 
-	  do	checkExists tn bnfs $ show tn++" does not exist in the original definition. Add it to the 'New Syntax'-section if you want to introduce it"
-		let bnfs'	= M.insert tn choices bnfs
-		return bnfs'
-applySyntaxChange (AddOption tn newChoices) bnfs
-	= inMsg ("While adding choices bnfrule "++show tn) $ 
-	  do	checkExists tn bnfs $ show tn++" does not exist. Perhaps you meant to introduce this type?"
-		let bnfs'	= M.adjust (first ( ++ newChoices)) tn bnfs
-		return bnfs'
+editSyntax	:: Bool -> TypeName -> ([BNF], WSMode) -> ([BNF], WSMode) -> Either String ([BNF], WSMode)
+-- Case for overwriting
+editSyntax True _ old new
+		= return new
+-- Case for editing (thus adding cases)
+editSyntax False n (oldBNFs, oldWS) (newBNF, newWS)
+	= inMsg ("While updating syntax rule "++show n) $
+	  do	unless (oldWS == newWS) $ Left $ "Whitespace-mode doesn't match. Expected mode (by the original definition): "++toParsable oldWS++", but got "++toParsable newWS
+		return (oldBNFs ++ newBNF, newWS)
 
 
 
 
-addFunctions	:: Functions -> Functions -> Either String Functions
-addFunctions newFuncs oldFuncs
-	= inMsg "While updating the functions" $
-	  do	checkNoCommon' newFuncs oldFuncs "function" "Functions"
-		let functions	= M.union newFuncs oldFuncs
-		return functions
+editFunction	:: Syntax -> Bool -> Name -> Function -> Function -> Either String Function
+-- We overwrite. The new function type is a *subtype* of the old type
+editFunction syntax True nm old new
+	= do	-- check for *subtyping*
+		let sType x	= intercalate " -> " (typesOf x)
+		unless (alwaysAreA' syntax new old ) $ Left $ "The original function has a type "++ sType old++
+			", but the new function has type "++ sType new++" which is not a subtype"
+		return new
+-- We add a function clauses. Types should be exactly the same
+editFunction syntax False nm old@(MFunction tOld clauses) new@(MFunction tNew clauses')	-- edit case
+	= do	-- check for *type equality*
+		unless (tOld == tNew) $ Left $ "Types don't match. Expected type: "++ intercalate " -> " tOld ++
+			", actual type: "++ intercalate " -> " tNew
+		return $ MFunction tNew $ clauses ++ clauses'
+		
 
-rewriteFunctions	:: Changes' Name FunctionChange -> Functions -> Either String Functions
-rewriteFunctions changes oldFuncs
-	= inMsg "While updating the functions" $
-	  changes |> either applyChangeTo applyFunctionChange
-		& foldM (&) oldFuncs
+
+editRelation	:: Bool -> Symbol -> Relation -> Relation -> Either String Relation
+-- OverrideAs, thus 'renaming' (with a new symbol and name)
+-- Both renaming and copying do the same here
+editRelation _ symb (Relation _ oldTps oldPronounce) (Relation newSymb tps newPronounce)
+	= do	unless (oldTps == tps) $ Left $ "You want to copy/rename the relation "++symb++" as "++newSymb++" but the types don't match"
+		return $ Relation newSymb tps $ firstJusts[newPronounce, oldPronounce]
+
+
+	
+editRule	:: Syntax -> Bool -> Name -> Rule -> Rule -> Either String Rule
+-- Case for overwriting
+editRule syntax True nm old new
+	= return new
+editRule syntax false nm old new
+	= Left "Editing rules is not implemented. How did you end here?"
+
+
+
+
+--------------------------------------- ToString -------------------------------------------------
+
+
+instance ToString' (k -> String, Bool -> k -> v -> String) (DefaultChange k v) where
+	toParsable' (sk, _) (Rename k0 k1)	= "Rename "++sk k0++" to "++sk k1
+	toParsable' (sk, _) (Copy k0 k1)	= "Copy "  ++sk k0++" as "++sk k1
+	toParsable' (sk, _) (Delete k)		= "Delete "++sk k
+	toParsable' (_, sv) (New k v)		= sv True k v
+	toParsable' (sk, sv) (Override k v)	= sv True k v
+	toParsable' (sk, sv) (Edit k v)		= sv False k v
+	toParsable' (sk, sv) (EditAs k _ v)	= sv False k v
+	toParsable' (sk, sv) (OverrideAs k _ v)	= sv False k v
+	
+	toCoParsable'	= toParsable'
+	debug'		= toParsable'
+	show'		= toParsable'
+
+
+
+instance ToString' (k -> String, Bool -> k -> v -> String, Bool -> String) [DefaultChange k v] where
+	toParsable' (sk, sv, section) changes	
+			= let	(new, changed)	= L.partition isNew changes
+				new'	= new |> toParsable' (sk, sv) 
+						& intercalate "\n"
+						& inHeader' ("New "++ section True)
+
+				changed' = changed |> toParsable' (sk, sv )
+						& intercalate "\n"
+					 	& inHeader' (section False ++" Changes")
+
+				guard ls v	= [ v | not $ null ls]
+				in
+				[guard new new', guard changed changed'] & concat & unlines
+				
+
+	toCoParsable'	= toParsable'
+	debug'		= toParsable'
+	show'		= toParsable'
 		
 
 
 
-applyFunctionChange	:: FunctionChange -> Functions -> Either String Functions
-applyFunctionChange (OverrideFunc nm func) fs
-	= inMsg ("While overriding function "++show nm) $
-	  do	checkFuncOVerride nm func fs
-		return $ M.insert nm func fs
-applyFunctionChange (AddClauses nm func@(MFunction _ newClauses)) fs
-	= inMsg ("While adding clauses to function "++show nm) $ 
-	  do	(MFunction tp clauses)	<- checkFuncOVerride nm func fs
-		let newFunc	= MFunction tp (init clauses ++ newClauses)	-- throw away the falltrhough; newClauses has it anyway
-		return $ M.insert nm newFunc fs
 
-checkFuncOVerride	:: Name -> Function -> Map Name Function -> Either String Function
-checkFuncOVerride nm func fs
-	= do	oldFunc	<- checkExists nm fs $ show nm++", but it does not exist. Add it to the 'New Functions'-section if you want to introduce it."
-		unless (typesOf oldFunc == typesOf func) $ Left $ "The new version of "++show nm++" has the type "++(typesOf func & intercalate " -> ")++
-			", expeced "++(typesOf oldFunc & intercalate " -> ")
-		return oldFunc
-
-
-
-
-
-
-addRelations	:: [Relation] -> [Relation] -> Either String [Relation]
-addRelations newRels oldRels
-	= inMsg "While updating the relations" $
-          do	let asDict ls	= ls |> (relSymbol &&& id) & M.fromList
-		checkNoCommon' (asDict newRels) (asDict oldRels) "relation" "Relations"
-		return $ oldRels ++ newRels
+instance ToString' Int Changes where
+	toParsable' i (Changes
+			 changesName	
+			 changedSyntax
+			 changedFuncs
+			 changedRels
+			 changedRules)
+		= let	plural s doPluralize	= s ++ if doPluralize then "s" else ""	:: String
+			
+			showBNFRule newOverride tn (bnfs, ws)
+				=  toParsable (tn :: TypeName
+					, i
+					, ws :: WSMode
+					, if newOverride then "" else "... | "
+					, bnfs :: [BNF])
+			syntaxExtras	= (id :: TypeName -> String
+						, showBNFRule
+						, const "Syntax" :: Bool -> String)
+			changedSyntax'	= toParsable' syntaxExtras changedSyntax
 
 
-rewriteRelations	:: [RelationChange] -> TypeSystem -> Either String TypeSystem
-rewriteRelations changes ts
-	= changes |> applyRelationChange & foldM (&) ts
 
-applyRelationChange	:: RelationChange -> TypeSystem -> Either String TypeSystem
-applyRelationChange (RDelete symbol) ts
-	= do	unless (symbol `elem` (tsRelations ts |> relSymbol)) $ Left $
-			"You want to remove relation "++show symbol++", but it does not exist"
-		let rules'	= tsRules ts & M.delete symbol
-		let rels'	= tsRelations ts & filter ((/=) symbol . relSymbol)
-		return ts{ tsRules' = Rules rules', tsRelations = rels'}	
-applyRelationChange (RCopy symbol rci@(RCI newSymb _ ruleRename)) ts
-	= inMsg ("While copying "++show symbol++" to "++show newSymb) $ 
-	  do	(ts', oldRelation, newRelation)	<- createRelation (symbol, rci) ts
-		let existingRules	= ts & tsRules & findWithDefault [] symbol
-		let rewrittenRules	= existingRules |> _rewriteRule (M.singleton oldRelation newRelation) ruleRename
-		return ts' {tsRules' = Rules $ M.insert newSymb rewrittenRules (tsRules ts)}
-applyRelationChange (RRename oldSymbol rci@(RCI newSymb _ ruleRename)) ts
-	= inMsg ("While renaming "++show oldSymbol++" to "++show newSymb) $ 
-	  do	(ts', oldRelation, newRelation)	<- createRelation (oldSymbol, rci) ts
-		let rules'	= tsRules ts ||>> _rewriteRule (M.singleton oldRelation newRelation) ruleRename
-		let rulesAboutOldSymbol
-				= rules' M.! oldSymbol
-		let rules''	= rules' & M.delete oldSymbol 
-					 & M.insert newSymb rulesAboutOldSymbol
-		let relations'	= tsRelations ts' & filter ((/=) oldSymbol . relSymbol)
-		return ts' {tsRules' = Rules rules'' , tsRelations = relations'}
+			showFunc newOverride n f
+					= funcWith (if newOverride then "" else "\n...") (toParsable' (n, i) :: Clause -> String) (n, i) f ++ "\n"
+			functionExtras	= (id :: Name -> String
+						, showFunc
+						, plural "Function")
+			changedFuncs'	= toParsable' functionExtras changedFuncs
 
+			showRelCh newOverride nm (Relation newSymb _ pronounced)
+					= [if newOverride then "Copy" else "Rename"
+						, nm & inParens
+						, if newOverride then "as" else "to"
+						, newSymb & inParens
+						  ++ maybe "" (\p -> ", pronounced as "++ show p) pronounced
+						] & unwords
 
-createRelation	:: (Symbol, RelationChangeInfo) -> TypeSystem -> Either String (TypeSystem, Relation, Relation)
-createRelation	(oldSymbol, RCI newSymbol pronounce ruleRename) ts
-	= do	let msg		= "You want to add an relation based on"++show oldSymbol++", but it does not exist"
-		oldRelation@(Relation oldN tp oldPronounce)	
-				<- fromMaybe (Left msg) (tsRelations ts |> (relSymbol &&& Right) & lookup oldSymbol)
-		let newRelation 
-			= Relation newSymbol tp (firstJusts [pronounce, oldPronounce])
-		relations'	<- addRelations [newRelation] $ tsRelations ts
-		return (ts{tsRelations = relations'}, oldRelation, newRelation)
+			relExtras	= (inParens	:: Symbol -> String
+						, showRelCh
+						, plural "Relation")
+			changedRels'	= toParsable' relExtras changedRels
 
+			ruleExtras	= (show :: Name -> String
+						, const $ const toParsable :: Bool -> Name -> Rule -> String
+						, plural "Rule")
+			changedRules'	= toParsable' ruleExtras changedRules
 
-_rewriteConclusion	:: Map Relation Relation -> ConclusionA a -> ConclusionA a
-_rewriteConclusion dict (RelationMet rel args)
-		= RelationMet (findWithDefault rel rel dict) args
+			in
+			inHeader "" changesName '*' $ unlines
+				[ changedSyntax'
+				, changedFuncs'
+				, changedRels'
+				, changedRules'
+				]
 
-_rewritePredicate	:: Map Relation Relation -> Predicate -> Predicate
-_rewritePredicate dict (Needed concl)
-		= Needed $ _rewriteConclusion dict concl
-_rewritePredicate _ p	= p
+	toCoParsable'	= toParsable'
+	debug' _	= show
+	show' _		= show
 
-_rewriteRule		:: Map Relation Relation -> Maybe (String, String) -> Rule -> Rule
-_rewriteRule dict rename (Rule nm preds concl)
-		= Rule (_renameRule nm rename) (preds |> _rewritePredicate dict) (_rewriteConclusion dict concl)
-
-_renameRule	:: Name -> Maybe (String, String) -> Name
-_renameRule nm rewrite
-    = fromMaybe nm $ do	(prefix, replacement)	<- rewrite
-			guard (prefix `isPrefixOf` nm)
-			return $ replacement ++ drop (length prefix) nm
-
-
-_rewrDict	:: Map Symbol [Rule] -> Map Name Rule
-_rewrDict d	= d & M.elems & concat |> (ruleName &&& id) & M.fromList 
-
-addRules	:: Syntax -> [Rule] -> Rules -> Either String Rules
-addRules syntax newRules (Rules oldRules)
-	= inMsg "While updating the rules" $
-	  do	(Rules newRules)	<- makeRules syntax newRules
-		checkNoCommon' (_rewrDict oldRules) (_rewrDict newRules) "rule" "Rules"
-		return $ Rules $ M.unionWith (++) oldRules newRules
-
-applyRuleChange	:: Syntax -> RuleChange -> Map Name Rule -> Either String (Map Name Rule)
-applyRuleChange s (OverrideRule rule) r
-	= inMsg ("While overriding rule "++show (ruleName rule)) $
-	  do	checkExists (ruleName rule) r "The rule does not exist. If you want to introduce it, put it in the 'New Rules' section"
-		return $ M.insert (ruleName rule) rule r
-
-rewriteRules	:: Syntax -> Changes' Name RuleChange -> Rules -> Either String Rules
-rewriteRules syntax changes (Rules rules)
-	= inMsg "While updating the rules" $
-	  do	let rulesOnName	= _rewrDict rules
-		rulesOnName'	<- changes |> either applyChangeTo (applyRuleChange syntax) & foldM (&) rulesOnName
-		makeRules syntax (rulesOnName' & M.elems)
-		

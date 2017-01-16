@@ -21,12 +21,18 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import Lens.Micro.Extras as LME
+
+get	= LME.view
 
 
 -------------------- usefull types -------------------------------------------------------
 
 
 type Name = String
+
+-- Represents some path in some tree
+type Path	= [Int]
 
 
 class Check a where
@@ -56,6 +62,16 @@ class Check' info a where
 
 inParens str	= "("++str++")"
 
+inHeader prefix str chr msg
+	= let	title	= " "++str++" "
+		line	= title |> const chr
+		in
+		[prefix ++ title, prefix ++ line, "", msg] & unlines
+
+inHeader' s
+	= inHeader "" s '='
+
+
 
 showComma	:: Show a => [a] -> String
 showComma as	= as |> show & commas
@@ -69,6 +85,9 @@ allCombinations (a:as)
 	= do	tails	<- allCombinations as
 		head	<- a
 		return (head:tails)
+
+
+
 
 ------------------- Maybe, Either and other Monad helpers ------------------------------------
 
@@ -121,12 +140,12 @@ allRight_ eithers
 		= eithers & filter isLeft & allRight >> return ()
 
 
+indent msg	= msg & lines |> ("  "++) & unlines
 
 -- Stack message for Either Monad
 inMsg		:: String -> Either String a -> Either String a
 inMsg msg (Left msg')
-		= let indMsg	= msg' & lines |> ("  "++) & unlines in
-		 	Left (msg ++ ":\n"++ indMsg)
+		= Left (msg ++ ":\n"++ indent msg')
 inMsg _ right	= right
 
 
@@ -174,6 +193,21 @@ mapBoth f (a, a')	= (f a, f a')
 validLines	:: String -> [String]
 validLines fileConts
 		= fileConts & lines & filter (not . null) & filter (not . ("#" `isPrefixOf`))
+
+replaceN	:: Int -> a -> [a] -> [a]
+replaceN 0 a (_:as)
+		= a : as
+replaceN i a (h:as)
+		= h : replaceN (i-1) a as
+
+
+
+replacePointwise	:: [a] -> [[a]] -> [[a]]
+replacePointwise origs pointwise
+	= do	i	<- [0..length pointwise -1]
+		ai'	<- pointwise !! i
+		return $ replaceN i ai' origs
+
 
 
 length'		:: Int -> String -> Int

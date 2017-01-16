@@ -5,7 +5,7 @@ This module implements a cycle searcher. It works as a reference counting garbag
 --}
 
 
-import Utils.Utils
+import Utils.Utils hiding (get)
 import Control.Monad.State
 import Data.Map hiding (null, filter, map)
 import qualified Data.Map as M

@@ -7,13 +7,14 @@ This module calculates what the minimal typings for the functions are (thus the 
 import TypeSystem
 import Utils.Utils
 
-import AbstractInterpreter.AbstractFunctionInterpreter
-import AbstractInterpreter.AbstractParseTree
+import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.Data
+import AbstractInterpreter.FunctionInterpreter
 
 import qualified Data.Map as M
+import qualified Data.List as L
 import Data.Map (Map, (!), mapWithKey, differenceWith)
 import Data.Maybe
-
 
 -- same as strictestTypes, but only returns the types that can be stricter
 stricterTypes	:: Syntax -> Functions -> Map Name TypeName
@@ -26,7 +27,7 @@ stricterTypes s f
 
 strictestTypes	:: Syntax -> Functions -> Map Name TypeName
 strictestTypes syntax functions
-	= let	startTypes	= functions |> const ""
+	= let	startTypes	= functions |> const bottomSymbol
 		origTypes	= functions |> typesOf |> last
 		in
 		searchStrictest syntax origTypes functions startTypes
@@ -48,10 +49,10 @@ step s backup functions state
 
 minimalTypeOf	:: Syntax -> Map Name TypeName -> Function -> Maybe TypeName
 minimalTypeOf s funcSigns f
-	= let	args		= typesOf f & init |> generateAbstractSet' s "_"
+	= let	args		= typesOf f & init |> generateAbstractSet s "_"
 		analysis	= interpretFunction s funcSigns f args
-		tps		= analysis & results |> snd |> snd |> typeOf & filter (/= "")
+		tps		= analysis & get results & M.elems |> M.elems & concat |> typeOf & filter (/= bottomSymbol) & L.nub
 		in
-		smallestCommonType' s tps
+		biggestCommonType' s tps
 
 

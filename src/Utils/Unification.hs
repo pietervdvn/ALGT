@@ -4,7 +4,7 @@ module Utils.Unification (unify, unifySub, substitute, occursCheck, Node(..), Su
 This module implements a general unification for trees
 -}
 
-import Utils.Utils
+import Utils.Utils hiding (get)
 import Data.Map (Map, (!), member)
 import qualified Data.Map as M
 import Data.Set (Set, insert, findMin, deleteMin)

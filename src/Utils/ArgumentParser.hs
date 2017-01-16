@@ -1,33 +1,44 @@
-module Utils.ArgumentParser where
+module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), AutoSyncHighlighting(..), Config(..), getConfig, writeConfig, removeConfig)where
 
 {-
-This module defines 
+This module defines parsing of the arguments and reading/writing of the config file
 -}
 
-import Utils.Utils
 import TypeSystem
-import Options.Applicative
+import Utils.Utils
+
 import Data.Monoid ((<>))
 import Data.List (intercalate)
-import System.Directory
+import Data.Maybe
 
 import Control.Monad
+
+import Options.Applicative
+
+import System.Directory
+import System.Exit
+
 
 descriptionText	= "ALGT (Automated Language Generation Tool)- automatically parse, interpret and proof properties of aribtrary languages.\n\n"++
 			"This tool parses a 'typesystem'-file, where the syntax of your language is defined. With this, your target file is parsed."++
 			"In the typesystem file, rewrite rules (or functions) can be defined - or better, rules defining properties can be defined."++
 			"These can be applied to your target language to interpret, typecheck or proof some other property."
-headerText (v, vId)
-		= "Automated Language Generation Tool (version "++ (v |> show & intercalate ".") ++", "++show vId++" )"
 
+showVersion (v, vId)	= (v |> show & intercalate ".") ++", "++show vId
+headerText v
+		= "Automated Language Generation Tool (version "++ showVersion v ++" )"
+
+data MainArgs	= MainArgs Bool (Maybe Args)
 
 data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
 			, changeFile		:: [FilePath]
 			, dumbTS		:: Bool
-		--	, createHighlighting	:: Maybe String
-		--	, autoSaveTo		:: Maybe String
-		--	, rmConfig		:: Bool
+			, interpretAbstract	:: Bool
+			, createSVG		:: Maybe String
+			, createHighlighting	:: Maybe String
+			, autoSaveTo		:: Maybe String
+			, rmConfig		:: Bool
 			}
 	deriving (Show)
 
@@ -49,7 +60,7 @@ data AutoSyncHighlighting = ASH
 	, ashSaveTo	:: FilePath
 	} deriving (Show, Read, Eq)
 
-data Config	= Config 
+data Config	= Config 	
 	{ autoSyntaxes	:: [AutoSyncHighlighting] }
 		deriving (Show, Read, Eq)
 
@@ -60,7 +71,14 @@ emptyConfig
 parseArgs	:: ([Int], String) -> [String] -> IO Args
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		handleParseResult result
+		MainArgs doShowVersion args	<- handleParseResult result
+		when doShowVersion $ do
+			putStrLn (showVersion version)
+			exitSuccess
+		when (isNothing args) $ do
+			putStrLn "No typesystem file given. See -h"
+			exitFailure
+		return $ fromJust args
 
 
 
@@ -94,7 +112,7 @@ removeConfig
 
 
 
-parserInfo v	= info (helper <*> args)
+parserInfo v	= info (helper <*> mainArgs)
 			(fullDesc <> progDesc descriptionText <> header (headerText v))
 
 
@@ -131,6 +149,7 @@ targetFile
 			<> help "Apply the given function, step by step, until the result of the function is the same as the input"
 			))
 
+
 args	:: Parser Args
 args	= Args <$> argument str
 			(metavar "TYPESYSTEM-FILE"
@@ -147,7 +166,15 @@ args	= Args <$> argument str
 			(long "dump-typesystem"
 			<> long "dts"
 			<> help "Dump the parsed type system, usefull for debugging purposes")
-		{--<*> optional (strOption  
+		<*> switch
+			(long "interpret-abstractly"
+			<> long "ia"
+			<> help "Interpret each function over all possible values")
+		<*> optional (strOption
+			(metavar "SVG-PATH"
+			<> long "lsvg"
+			<> help "Create a SVG of the subset relationship between BNF-rules"))
+		<*> optional (strOption  
 			(metavar "PARSER-RULE"
 			<> long "create-highlighting"
 			<> long "ch"
@@ -163,7 +190,14 @@ args	= Args <$> argument str
 			<> long "remove-config"
 			<> long "rmc"
 			<> help "Remove the config file, with auto-highlighting. Try this option if the tool doesn't work'")
-		--}
+		
 
+mainArgs	:: Parser MainArgs
+mainArgs	
+	= MainArgs <$> switch
+			(long "version"
+			<> short 'v'
+			<> help "Show the version number and text")
+		<*> optional args
 
 

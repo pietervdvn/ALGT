@@ -7,11 +7,11 @@ import TypeSystem
 import Changer.Changes
 import Utils.Utils
 import Utils.ToString
-import Parser.ParsingUtils
-import Parser.BNFParser
-import Parser.FunctionParser
-import Parser.TypeSystemParser
-import Parser.RuleParser
+import TypeSystem.Parser.ParsingUtils
+import TypeSystem.Parser.BNFParser
+import TypeSystem.Parser.FunctionParser
+import TypeSystem.Parser.TypeSystemParser
+import TypeSystem.Parser.RuleParser
 
 import Data.Maybe
 import Data.Map (Map)
@@ -22,8 +22,11 @@ import Control.Monad
 
 import Text.Parsec
 
+import Lens.Micro hiding ((&))
 
-defaultChange	:: Parser u a -> Parser u (DefaultChange a)
+
+-- The simple, key only case
+defaultChange	:: Parser u k -> Parser u (DefaultChange k v)
 defaultChange pa
 	= try	(do	string "Delete"
 			a	<- inWs pa
@@ -40,28 +43,43 @@ defaultChange pa
 			return $ Rename a0 a1)
 
 
-change'		:: Parser u a -> Parser u b -> Parser u (Either (DefaultChange a) b)
+-- The more complicated case
+defaultChange'	:: Parser u k -> Parser u (DefaultChange k v) -> Parser u (DefaultChange k v)
+defaultChange' pk pEdit
+	= try (defaultChange pk) <|> pEdit
+
+defaultChanges	:: Parser u k -> Parser u (DefaultChange k v) -> Parser u [DefaultChange k v]
+defaultChanges pk pEdit
+	= many $ try (nls *> ws *> defaultChange' pk pEdit <* ws )
+
+
+change'		:: Parser u k -> Parser u b -> Parser u (Either (DefaultChange k v) b)
 change' pa pb	= try (pb |> Right) <|> (defaultChange pa |> Left)
 
 
 changes' pa pb	= many $ try (nls *> ws *> change' pa pb <* ws)
 
 
-syntaxChange	:: Parser u SyntaxChange
-syntaxChange   = try (bnfRule |> uncurry OverrideBNFRule) 
+syntaxChange	:: Parser u (DefaultChange TypeName ([BNF], WSMode))
+syntaxChange   = try (bnfRule |> uncurry Override) 
 		<|> (do	name	<- identifier
-			inWs $ string "::="
+			wsMode	<- inWs parseWSMode
 			string "..."
 			inWs $ string "|"
 			bnfs	<- bnfLine
-			return $ AddOption name bnfs)
+			return $ Edit name (bnfs, wsMode))
 
 
 
-functionChange	:: Map Name Type -> Syntax -> Parser u FunctionChange
+functionChange	:: Map Name Type -> Syntax -> Parser u (DefaultChange Name Function)
 functionChange types syntax
-	=  do	cons		<- try (char '+' >> return AddClauses) <|> return OverrideFunc
-		untypedFunc	<- parseFunction syntax
+	= do	(nm, tps)	<- metaSignature syntax
+		nls1
+		cons		<- try (string "..." >> nls1 >> return Edit) <|> return Override
+		clauses		<- parseClauses nm tps
+		let untypedFunc	= SFunction nm tps clauses
+
+
 		(nm, function)	<- typeFunction syntax types untypedFunc
 					& either error return
 		return $ cons nm function
@@ -70,25 +88,15 @@ functionChange types syntax
 
 
 
-relationRename	:: Parser u (Symbol, (Symbol, Maybe String))
-relationRename 
-	= do	inWs $ string "Rename relation"
-		oldSymb	<- bnfLiteral
-		inWs $ string "to"
-		newSymb <- bnfLiteral
-		ws
-		newPron	<- optionMaybe (string ", pronounced as" >> ws >> bnfLiteral)
-		return (oldSymb, (newSymb, newPron))
 
-
-relationOption	:: Syntax -> Parser u RelationChange
-relationOption syntax
+relationOption	:: Syntax -> Map Symbol Relation -> Parser u (DefaultChange Symbol Relation)
+relationOption syntax rels
  = try (do	inWs $ string "Delete"
 		symb	<- relationSymb syntax
-		return $ RDelete symb
+		return $ Delete symb
 		)
-   <|> try (do	cons	<- inWs (string "Rename" >> return RRename) 
-				<|> (string "Copy" >> return RCopy)
+   <|> try (do	cons	<- inWs (string "Rename" >> return OverrideAs) 
+				<|> (string "Copy" >> return EditAs)
 		symb	<- relationSymb syntax
 		inWs (string "to" <|> string "as")
 		nsymb	<- relationSymb syntax
@@ -98,28 +106,28 @@ relationOption syntax
 			inWs $ string "pronounced as"
 			bnfLiteral
 
-		prefixRename <- optionMaybe $ do
-			inWs $ char ','
-			string "prefix"
-			pref	<- inWs bnfLiteral
-			string "becomes"
-			ws
-			repl	<- bnfLiteral
-			return (pref, repl)
-			
-
-		return $ cons symb (RCI nsymb pronounce prefixRename)
+		let oldTyping	= (rels M.! symb) & get relTypesModes
+		return $ cons symb nsymb (Relation nsymb oldTyping pronounce)
 		)
 
 
 
-ruleChange	:: TypeSystem -> Parser u RuleChange
-ruleChange ts	=  parseRule (tsSyntax ts, tsRelations ts, tsFunctions ts) |> OverrideRule
+ruleChange	:: TypeSystem -> Parser u (DefaultChange Name Rule)
+ruleChange ts	=  parseRule (get tsSyntax ts, get tsRelations ts, get tsFunctions ts) |> (\r -> Override (get ruleName r) r)
+
+
+
+
 
 
 changesFile	:: TypeSystem -> Name -> Parser u (Changes, TypeSystem)
 changesFile ts0 name
-	= do	
+	= do	name'	<- option name $ try $ do
+				nls 
+				n	<- inWs (try identifier <|> iDentifier)
+				nl
+				inWs $ many1 $ char '*'
+				return n
 
 		-- SYNTAX --
 		------------
@@ -130,18 +138,22 @@ changesFile ts0 name
 				nls1
 				many (try (nls >> bnfRule)) 
 
-		newSyntax	<- makeSyntax bnfs & either error return
 
 		bnfCh	<- option [] $ try $ do
 				nls
 				header "Syntax Changes"
 				nls1
-				changes' identifier syntaxChange
+				defaultChanges identifier syntaxChange
+		let bnfCh'	= (bnfs |> uncurry New) ++ bnfCh
 
-		syntax'	<- (tsSyntax ts0 & addSyntax newSyntax 
-				>>= rewriteSyntax bnfCh)
-				& either error return
-		let ts1	 = ts0{tsSyntax = syntax'}
+
+		let syntax'	= get tsSyntax ts0 & getFullSyntax
+					& applyAllChanges editSyntax bnfCh'
+					& either error id
+					& fromFullSyntax
+		
+
+		let ts1	 = set tsSyntax syntax' ts0 & refactor (refactorFunc bnfCh')
 
 		-- FUNCTIONS --
 		---------------
@@ -150,28 +162,33 @@ changesFile ts0 name
 				nls
 				header "New Functions"
 				nls1
-				parseFunctions (tsFunctions ts1 |> typesOf & Just) syntax'
+				parseFunctions (get tsFunctions ts1 |> typesOf & Just) (get tsSyntax ts1)
 
-		functions'	<- tsFunctions ts1 & addFunctions newFuncs
-					& either error return
+		let newFuncs'	= newFuncs & M.toList |> uncurry New
 
-		let ts2		 = ts1{tsFunctions = functions'}
+		let functions'	= get tsFunctions ts1 & applyAllChanges (editFunction (get tsSyntax ts1)) newFuncs'
+					& either error id
 
 		funcCh	<- option [] $ try $ do
 				nls
 				header "Function Changes"
 				nls1
-				changes' identifier $ functionChange (tsFunctions ts2 |> typesOf) syntax' 
-		
-		functions''	<- rewriteFunctions funcCh (tsFunctions ts2)
-					& either error return
+				defaultChanges identifier $ functionChange (functions' |> typesOf) (get tsSyntax ts1)
 
-		let ts3		= ts2{tsFunctions = functions''}
+		let funcCh'	= newFuncs' ++ funcCh
+		
+		let functions''	= get tsFunctions ts1
+					& applyAllChanges (editFunction (get tsSyntax ts1)) funcCh'
+					& either error id
+
+
+		let ts2	= set tsFunctions functions'' ts1 & refactor (liftFunctionName $ refactorFunc funcCh')
 
 
 		-- RELATIONS --
 		---------------
 
+		let relationDict	= get tsRelations ts2 |> (get relSymbol &&& id) & M.fromList
 
 		
 		newRels	<- option [] $ try $ do
@@ -180,13 +197,9 @@ changesFile ts0 name
 				nls1
 				try (string "Love, for example" >>
 					 error "Yeah, get a lover. And while you're out there, get me one too") <|> return ()
-				many $ try (nls *> relationDecl syntax' <* nls)
+				many $ try (nls *> relationDecl (get tsSyntax ts2) <* nls)
+		let newRels'	= newRels |> (\r -> New (get relSymbol r) r)
 		
-		relations'	<- addRelations newRels (tsRelations ts3)
-					& either error return
-		let ts4	 = ts3{tsRelations = relations'}
-
-
 		relCh	<- option [] $ try $ do
 				nls
 				header "Relation Changes"
@@ -194,10 +207,15 @@ changesFile ts0 name
 				try (string "Please!" >> 
 					error "Hey! You are a polite chap! You deserve a cookie") <|> return ()
 				
-				many $ try (nls >> relationOption syntax')
+				many $ try (nls >> relationOption (get tsSyntax ts2) relationDict)
+
+		let relCh'	= newRels' ++ relCh
+		let relations'	= relationDict & applyAllChanges editRelation relCh'
+					& either error id
+					& M.elems
+					
 		
-		ts5	<- rewriteRelations relCh ts4
-				& either error return
+		let ts3		= set tsRelations relations' ts2 & refactor (liftRelationSymbol $ refactorFunc relCh')
 
 
 		-- Rules --
@@ -208,29 +226,32 @@ changesFile ts0 name
 				nls
 				header "New Rules"
 				nls1
-				parseRules (tsSyntax ts5, tsRelations ts5, tsFunctions ts5)
-		
-		rules'	<- addRules (tsSyntax ts5) newRules (tsRules' ts5)
-				& either error return
-		let ts6		= ts5{tsRules' = rules'}
-
+				parseRules (get tsSyntax ts3, get tsRelations ts3, get tsFunctions ts3)
+		let newRules'	= newRules |> (\r -> New (get ruleName r) r)
 		
 		ruleCh	<- option [] $ try $ do
 				nls
 				header "Rule Changes"
 				nls1
-				changes' lineName $ ruleChange ts5
-			
-		rewritten	<- rewriteRules (tsSyntax ts6) ruleCh (tsRules' ts6)
-					& either error return
+				defaultChanges lineName $ ruleChange ts3
 
-		let tsFinal	 = ts6{tsRules' = rewritten}
+		let ruleCh'	= newRules' ++ ruleCh
+
+		
+		let rules'	= get tsRules' ts3 & getRulesOnName
+					& applyAllChanges (editRule (get tsSyntax ts3)) ruleCh'
+					& either error id
+					& fromRulesOnName (get tsSyntax ts3)
+					& either error id
+
+
+		let tsFinal	= set tsRules' rules' ts3 & refactor (liftRuleName $ refactorFunc ruleCh')
 		nls
 		eof
 
 
 		check tsFinal & either error return
-		return (Changes name newSyntax bnfCh newFuncs funcCh newRels relCh newRules ruleCh, tsFinal)
+		return (Changes name bnfCh' funcCh' relCh ruleCh', over tsName ((name'++" ")++) tsFinal)
 
 
 

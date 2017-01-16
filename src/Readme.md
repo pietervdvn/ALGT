@@ -23,3 +23,11 @@ Module overview
 
 `ParseTreeInterpreter` handles interpretation of functions and rules, with 'simple' parsetrees
 
+Cabal dependencies
+------------------
+
+parsec
+optparse-applicative
+directory >= 1.2.3
+microlens 0.4.7.0
+blaze-svg

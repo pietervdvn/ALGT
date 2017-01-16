@@ -5,7 +5,6 @@ This module defines an interpreter for functions.
 -}
 
 import TypeSystem
-import Utils.TypeSystemToString
 import Utils.ToString
 import Utils.Utils
 
@@ -19,11 +18,11 @@ import Data.Bifunctor (first)
 
 evalFunc	:: TypeSystem -> Name -> [ParseTree] -> ParseTree
 evalFunc ts funcName args	
- | funcName `M.member` tsFunctions ts
-	= let	func	= tsFunctions ts M.! funcName in
+ | funcName `M.member` get tsFunctions ts
+	= let	func	= get tsFunctions ts M.! funcName in
 		applyFunc (buildCtx' ts) (funcName, func) args
  | otherwise
-	= evalErr (Ctx (tsSyntax ts) (tsFunctions ts) M.empty []) $
+	= evalErr (Ctx (get tsSyntax ts) (get tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
 
 evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> ParseTree
@@ -31,14 +30,14 @@ evalExpr ts vars
 	= evaluate (buildCtx ts vars)
 
 type VariableAssignments
-		= Map Name (ParseTree, Maybe [Int])	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
+		= Map Name (ParseTree, Maybe Path)	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
 data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
 			ctxFunctions 	:: Map Name Function,
 			ctxVars	:: VariableAssignments,
 			ctxStack	:: [(Name, [ParseTree])] -- only used for errors
 			}
 
-buildCtx ts vars 	= Ctx (tsSyntax ts) (tsFunctions ts) vars []
+buildCtx ts vars 	= Ctx (get tsSyntax ts) (get tsFunctions ts) vars []
 buildCtx' ts		= buildCtx ts M.empty
 
 
@@ -123,11 +122,11 @@ patternMatch _ _ pat expr
 
 patternMatchContxt	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
 patternMatchContxt r extraCheck evalCtx fullContext@(PtSeq _ values)
-	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, [Int]) -> Either String VariableAssignments
+	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, Path) -> Either String VariableAssignments
 		depthFirstSearch' matchMaker [] values
 
 
-makeMatch	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, [Int]) -> Either String VariableAssignments
+makeMatch	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, Path) -> Either String VariableAssignments
 makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
 		holeAssgn	<- patternMatch r extraCheck holePattern holeFiller
@@ -136,12 +135,12 @@ makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 		return assgn'
 
 -- depth first search, excluding self match
-depthFirstSearch'	:: ((ParseTree, [Int]) -> Either String VariableAssignments) -> [Int] -> [ParseTree] -> Either String VariableAssignments
+depthFirstSearch'	:: ((ParseTree, Path) -> Either String VariableAssignments) -> Path -> [ParseTree] -> Either String VariableAssignments
 depthFirstSearch' matchMaker path values
 	= do	let deeper	= zip [0..] values |> (\(i, pt) -> depthFirstSearch matchMaker (path++[i]) pt)
 		firstRight deeper
 
-depthFirstSearch	:: ((ParseTree, [Int]) -> Either String VariableAssignments) -> [Int] -> ParseTree -> Either String VariableAssignments
+depthFirstSearch	:: ((ParseTree, Path) -> Either String VariableAssignments) -> Path -> ParseTree -> Either String VariableAssignments
 depthFirstSearch matchMaker path pt@(PtSeq _ values)
 	= do	let deeper	= depthFirstSearch' matchMaker path values
 		let self	= matchMaker (pt, path)
@@ -221,11 +220,11 @@ evaluate ctx (MParseTree pt)	= pt
 evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n"++
 					(ctxVars ctx & M.toList |> showVarAssgn & unlines)
 
-showVarAssgn	:: (Name, (ParseTree, Maybe [Int])) -> String
+showVarAssgn	:: (Name, (ParseTree, Maybe Path)) -> String
 showVarAssgn (nm, assgn)
 	= nm ++ " = "++ showAssgn assgn
 
-showAssgn	:: (ParseTree, Maybe [Int]) -> String
+showAssgn	:: (ParseTree, Maybe Path) -> String
 showAssgn (pt, mPath)
 		= toParsable pt++
 		maybe "" (\path -> "\tContext path is "++show path) mPath
