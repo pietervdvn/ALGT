@@ -25,9 +25,9 @@ data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
 			, changeFile		:: [FilePath]
 			, dumbTS		:: Bool
-			, createHighlighting	:: Maybe String
-			, autoSaveTo		:: Maybe String
-			, rmConfig		:: Bool
+		--	, createHighlighting	:: Maybe String
+		--	, autoSaveTo		:: Maybe String
+		--	, rmConfig		:: Bool
 			}
 	deriving (Show)
 
@@ -147,7 +147,7 @@ args	= Args <$> argument str
 			(long "dump-typesystem"
 			<> long "dts"
 			<> help "Dump the parsed type system, usefull for debugging purposes")
-		<*> optional (strOption  
+		{--<*> optional (strOption  
 			(metavar "PARSER-RULE"
 			<> long "create-highlighting"
 			<> long "ch"
@@ -163,7 +163,7 @@ args	= Args <$> argument str
 			<> long "remove-config"
 			<> long "rmc"
 			<> help "Remove the config file, with auto-highlighting. Try this option if the tool doesn't work'")
-		
+		--}
 
 
 

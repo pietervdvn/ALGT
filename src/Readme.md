@@ -23,9 +23,3 @@ Module overview
 
 `ParseTreeInterpreter` handles interpretation of functions and rules, with 'simple' parsetrees
 
-Cabal dependencies
-------------------
-
-parsec
-optparse-applicative
-directory >= 1.2.3

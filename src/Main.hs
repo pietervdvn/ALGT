@@ -24,7 +24,7 @@ import Data.Either
 import Data.Map (Map, fromList)
 import Data.List (intercalate, nub)
 import Data.Monoid ((<>))
-import Data.Hashable
+--import Data.Hashable
 import Options.Applicative
 
 import AbstractInterpreter.Tools
@@ -42,24 +42,24 @@ main	= void $ do	args	<- getArgs
 main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
 main' args 
 	= do	parsedArgs	<- parseArgs version args
-		when (rmConfig parsedArgs) (removeConfig >> putStrLn "# Config file removed")
+		-- when (rmConfig parsedArgs) (removeConfig >> putStrLn "# Config file removed")
 		mainArgs parsedArgs
 			
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs (Args tsFile exampleFiles changeFiles dumbTS createHighlighting autoSaveTo _)
-	= do	config	<- getConfig
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS)
+	= do	-- config	<- getConfig
 		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		check ts & either error return
 		
 		checkTS ts & either putStrLn return
-
+		{--
 		config'		<- mainSyntaxHighl config ts createHighlighting autoSaveTo
 		config''	<- updateHighlightings config' ts
 		when (config /= config'') $ writeConfig config''
-	
+		--}
 
 		changedTs	
 			<- changeFiles |> mainChanges & foldM (&) ts	:: IO TypeSystem
@@ -69,6 +69,7 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS createHighlighting autoSav
 		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
 		return (changedTs , concat parseTrees)
 
+{--
 mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config
 mainSyntaxHighl config ts (Just parserRule) (Just targetSave)
 	= do	let newConf	= ASH (tsName ts) parserRule 0 targetSave
@@ -99,7 +100,7 @@ updateHighlightings config ts
 		
 		return config{autoSyntaxes = nub autoSyntaxes'}
 		
-
+--}
 
 mainChanges	:: String -> TypeSystem -> IO TypeSystem
 mainChanges filepath ts

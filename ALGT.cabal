@@ -17,4 +17,32 @@ executable ALGT
   hs-source-dirs:      src
   main-is:             Main.hs
   default-language:    Haskell2010
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative, directory
+  other-modules:       AbstractInterpreter.AbstractFunctionInterpreter
+        AbstractInterpreter.AbstractParseTree
+        AbstractInterpreter.AbstractPatternMatcher
+        AbstractInterpreter.MinimalTypes
+        AbstractInterpreter.Tools
+        Assets
+        Changer.Changes
+        Changer.ChangesParser
+        Graphs.PathFinder
+        Graphs.SearchCycles
+        ParseTreeInterpreter.FunctionInterpreter
+        ParseTreeInterpreter.RuleInterpreter
+        Parser.BNFParser
+        Parser.ExpressionParser
+        Parser.FunctionParser
+        Parser.ParsingUtils
+        Parser.RuleParser
+        Parser.TargetLanguageParser
+        Parser.TypeSystemParser
+        SyntaxHighlighting.Highlighting
+        TypeSystem
+        Utils.ArgumentParser
+        Utils.ToString
+        Utils.TypeSystemToString
+        Utils.Unification
+        Utils.Utils
+        Utils.XML
+
