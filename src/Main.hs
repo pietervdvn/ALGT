@@ -32,7 +32,7 @@ import Options.Applicative
 import AbstractInterpreter.Tools
 
 
-version	= ([0,1,6], "Total Language Lattice (the correcter edition)")
+version	= ([0,1,7], "Total Language Factory - with fancy parsetrees")
 
 
 main	:: IO ()
