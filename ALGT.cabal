@@ -20,27 +20,22 @@ executable ALGT
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative, directory, microlens, microlens-th, text, blaze-svg, hashable
   other-modules:       
+        AbstractInterpreter.AbstractSet
+        AbstractInterpreter.Data
+        AbstractInterpreter.FunctionInterpreter
         AbstractInterpreter.MinimalTypes
+        AbstractInterpreter.PatternMatcher
         AbstractInterpreter.Tools
         Assets
         Changer.Changes
         Changer.ChangesParser
+        Graphs.Lattice
         Graphs.PathFinder
         Graphs.SearchCycles
         ParseTreeInterpreter.FunctionInterpreter
         ParseTreeInterpreter.RuleInterpreter
         SyntaxHighlighting.Highlighting
         TypeSystem
-        Utils.ArgumentParser
-        Utils.ToString
-        Utils.Unification
-        Utils.Utils
-        Utils.XML
-        AbstractInterpreter.AbstractSet
-        AbstractInterpreter.Data
-        AbstractInterpreter.FunctionInterpreter
-        AbstractInterpreter.PatternMatcher
-        Graphs.Lattice
         TypeSystem.BNF
         TypeSystem.Expression
         TypeSystem.Function
@@ -59,7 +54,13 @@ executable ALGT
         TypeSystem.SyntaxStyle
         TypeSystem.TypeSystem
         TypeSystem.Types
+        Utils.ArgumentParser
+        Utils.Image
         Utils.LatticeImage
+        Utils.ParseTreeImage
+        Utils.ToString
         Utils.ToStringExtra
-
+        Utils.Unification
+        Utils.Utils
+        Utils.XML
 
