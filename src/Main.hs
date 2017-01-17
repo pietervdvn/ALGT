@@ -74,7 +74,7 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract createSV
 			let l	= changedTs & get tsSyntax & latticeAsSVG terminalCS
 			writeFile pth l)
 		
-		parseTrees <- exampleFiles & (:[]) |+> (`mainExFile` changedTs)
+		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
 		return (changedTs , concat parseTrees)
 
 mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config

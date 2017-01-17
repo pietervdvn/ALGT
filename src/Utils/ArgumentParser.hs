@@ -31,7 +31,7 @@ headerText v
 data MainArgs	= MainArgs Bool (Maybe Args)
 
 data Args = Args 	{ tsFile		:: String
-			, exampleFiles		:: ExampleFile
+			, exampleFiles		:: [ExampleFile]
 			, changeFile		:: [FilePath]
 			, dumbTS		:: Bool
 			, interpretAbstract	:: Bool
@@ -162,7 +162,7 @@ args	= Args <$> argument str
 			(metavar "TYPESYSTEM-FILE"
 			<> help "FilePath of the typesystem-file"
 			<> action "file")
-		<*> targetFile
+		<*> many targetFile
 		<*> many (strOption
 			(metavar "TYPESYSTEM-CHANGES-FILE"
 			<> long "changes"
