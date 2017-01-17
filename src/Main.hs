@@ -5,7 +5,8 @@ import Utils.ToString
 import Utils.Utils
 import Utils.ArgumentParser
 import Graphs.Lattice (asSVG)
-import Utils.LatticeImage (terminalCS)
+import Utils.LatticeImage (terminalCS, whiteCS)
+import Utils.ParseTreeImage
 
 import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem.Parser.TypeSystemParser (parseTypeSystemFile)
@@ -73,7 +74,7 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract createSV
 			let l	= changedTs & get tsSyntax & latticeAsSVG terminalCS
 			writeFile pth l)
 		
-		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
+		parseTrees <- exampleFiles & (:[]) |+> (`mainExFile` changedTs)
 		return (changedTs , concat parseTrees)
 
 mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config
@@ -117,7 +118,7 @@ mainChanges filepath ts
 
 mainExFile	:: ExampleFile -> TypeSystem -> IO [(String, ParseTree)]
 mainExFile args ts 
-	= do	let noRules	= all isNothing [symbol args, function args, stepByStep args]
+	= do	let noRules	= all isNothing ([symbol, function, stepByStep, ptSvg] |> (\f -> f args))
 
 
 		let targetFile	= fileName args
@@ -129,8 +130,13 @@ mainExFile args ts
 		parseTrees |+> ifJust' (runRule ts) (symbol args)
 		parseTrees |+> ifJust' (runFunc ts) (function args)
 		parseTrees |+> ifJust' (runStepByStep ts) (stepByStep args)
+		
+		parseTrees |> snd & mapi |+> ifJust' renderParseTree (ptSvg args)
 
-		when noRules $ putStrLn "You didn't specify an action to perform. See -h"
+		when noRules $ do
+			putStrLn "# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions"
+			parseTrees |+> printDebug
+			pass
 		return parseTrees
 
 
@@ -159,12 +165,25 @@ showProofWithDepth input relation (Right proof)
 		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++toParsable proof++"\n\n\n"
 
 
+
 runFuncAbstract	:: TypeSystem -> Name -> IO ()
 runFuncAbstract ts name
 	= do	putStrLn $ " Abstract interpretation of "++show name
 		putStrLn $ "-----------------------------"++replicate (length $ show name) '-'
 		putStrLn $ toParsable $ interpretFunction ts name
 		
+printDebug	:: (String, ParseTree) -> IO ()
+printDebug (inp, pt)
+	= do	putStrLn $ "# "++show inp++" was parsed as:"
+		putStrLn $ debug pt
+
+
+renderParseTree	:: Name -> (Int, ParseTree) -> IO ()
+renderParseTree nm (i, pt)
+	= do	let fileName	= nm ++ "." ++ show i ++ ".svg"
+		let conts	=  parseTreeSVG 1 terminalCS pt
+		writeFile fileName conts
+
 runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
 runFunc ts func (inp, pt)
  	= do	let pt'	= evalFunc ts func [pt]
