@@ -31,7 +31,7 @@ headerText v
 data MainArgs	= MainArgs Bool (Maybe Args)
 
 data Args = Args 	{ tsFile		:: String
-			, exampleFiles		:: [ExampleFile]
+			, exampleFiles		:: ExampleFile
 			, changeFile		:: [FilePath]
 			, dumbTS		:: Bool
 			, interpretAbstract	:: Bool
@@ -50,6 +50,7 @@ data ExampleFile	= ExFileArgs
 	, symbol	:: Maybe Symbol
 	, function	:: Maybe Name
 	, stepByStep	:: Maybe Name
+	, ptSvg		:: Maybe Name
 	} deriving (Show)
 	
 
@@ -148,6 +149,12 @@ targetFile
 			<> short 's'
 			<> help "Apply the given function, step by step, until the result of the function is the same as the input"
 			))
+		<*> optional (strOption
+			(metavar "svg-name"
+			<> long "parstree-svg"
+			<> long "ptsvg"
+			<> help "Create a neat svg-image of each parsetree"
+			))
 
 
 args	:: Parser Args
@@ -155,7 +162,7 @@ args	= Args <$> argument str
 			(metavar "TYPESYSTEM-FILE"
 			<> help "FilePath of the typesystem-file"
 			<> action "file")
-		<*> many targetFile
+		<*> targetFile
 		<*> many (strOption
 			(metavar "TYPESYSTEM-CHANGES-FILE"
 			<> long "changes"
