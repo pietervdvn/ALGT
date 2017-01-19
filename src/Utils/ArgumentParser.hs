@@ -35,6 +35,7 @@ data Args = Args 	{ tsFile		:: String
 			, changeFile		:: [FilePath]
 			, dumbTS		:: Bool
 			, interpretAbstract	:: Bool
+			, interpretRulesAbstract:: Bool
 			, createSVG		:: Maybe String
 			, createHighlighting	:: Maybe String
 			, autoSaveTo		:: Maybe String
@@ -177,6 +178,10 @@ args	= Args <$> argument str
 			(long "interpret-abstractly"
 			<> long "ia"
 			<> help "Interpret each function over all possible values")
+		<*> switch
+			(long "interpret-rules-abstractly"
+			<> long "ira"
+			<> help "Interpret each rule over all possible values")
 		<*> optional (strOption
 			(metavar "SVG-PATH"
 			<> long "lsvg"

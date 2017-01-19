@@ -4,7 +4,7 @@ import TypeSystem
 import Utils.ToString
 import Utils.Utils
 import Utils.ArgumentParser
-import Graphs.Lattice (asSVG)
+import Graphs.Lattice 
 import Utils.LatticeImage (terminalCS, whiteCS)
 import Utils.ParseTreeImage
 
@@ -18,18 +18,22 @@ import SyntaxHighlighting.Highlighting
 import System.Environment
 
 import Control.Monad
+import Control.Arrow ((&&&))
 
 import Text.Parsec
 
 import Data.Maybe
 import Data.Either
-import Data.Map (Map, fromList, keys)
+import Data.Map (Map, fromList, keys, toList)
 import Data.List (intercalate, nub)
 import Data.Monoid ((<>))
 import Data.Hashable
 import Options.Applicative
 
 import AbstractInterpreter.Tools
+import AbstractInterpreter.FullAnalysis
+import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.Data
 
 
 version	= ([0,1,7], "Total Language Factory - with fancy parsetrees")
@@ -49,7 +53,7 @@ main' args
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract createSVG createHighlighting autoSaveTo _)
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpretRulesAbstract createSVG createHighlighting autoSaveTo _)
 	= do	config	<- getConfig
 		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
@@ -69,6 +73,10 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract createSV
 
 		when interpretAbstract $ void $
 			get tsFunctions changedTs & keys |+> runFuncAbstract changedTs
+
+
+		when interpretRulesAbstract $ void $
+			get tsRules' changedTs & get rules & toList |+> runRuleAbstract changedTs
 
 		createSVG & ifJust (\pth -> do
 			let l	= changedTs & get tsSyntax & latticeAsSVG terminalCS
@@ -165,11 +173,17 @@ showProofWithDepth input relation (Right proof)
 		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++toParsable proof++"\n\n\n"
 
 
+runRuleAbstract	:: TypeSystem -> (Symbol, [Rule]) -> IO ()
+runRuleAbstract ts (s, rules)
+	= do	let text	= rules |> (get ruleName &&& interpretRule' ts) ||>> toParsable 
+					|> (\(nm, analysis) -> inHeader "" ("Analysis of rule "++ show nm) '-' analysis)
+					& unlines
+		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' text
+
 
 runFuncAbstract	:: TypeSystem -> Name -> IO ()
 runFuncAbstract ts name
-	= do	putStrLn $ " Abstract interpretation of "++show name
-		putStrLn $ "-----------------------------"++replicate (length $ show name) '-'
+	= do	putStrLn $ inHeader "" ("Abstract interpretation of "++show name) '-' ""
 		putStrLn $ toParsable $ interpretFunction ts name
 		
 printDebug	:: (String, ParseTree) -> IO ()
