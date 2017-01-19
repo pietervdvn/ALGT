@@ -5,33 +5,38 @@ This module defines a small tool, creating asset files
 -}
 
 import System.Directory
-import Utils.Utils
 import Data.List
-import Data.List.Utils (replace)
 import Data.Bifunctor
+import qualified Data.Map as M
 import Data.Foldable
 
 import Control.Monad
 
+(|>)		= flip fmap
+(|+>)		= forM
+(&)		= flip ($)
 
 dirConts	:: FilePath -> IO [FilePath]
 dirConts fp 
-	= do	files	<- getDirectoryContents fp |> delete "." |> delete ".."
-		let files'	= files |> ((fp++"/") ++)
+	= do	files	<- getDirectoryContents fp 
+		let files'	= files & delete "." & delete ".." |> ((fp++"/") ++)
 		print files'
 		mode		<- files' |+> doesDirectoryExist	:: IO [Bool]
 		let (directories', normalFiles')	
 				=  zip files' mode & partition snd 	:: ([(FilePath, Bool)], [(FilePath, Bool)])
 		let directories	= directories' |> fst
 		let normalFiles	= normalFiles' |> fst
-		putStrLn ("Found asset files: "++ showComma normalFiles)
-		putStrLn ("Directories: "++showComma directories)
 		recursive	<- directories |+> dirConts
 		return $ normalFiles ++ concat recursive
 		
 
-replacements	= [(".", "_"), ("-", "_"), ("/", "_")]
-name fp		= foldr (uncurry replace) fp replacements & ("_"++)
+replacements	= M.fromList [('.', '_'), ('-', '_'), ('/', '_')]
+
+
+replace c	= M.findWithDefault c c replacements
+
+name		:: String -> String
+name fp		= fp |> replace & ("_"++)
 
 
 header dev
@@ -44,7 +49,7 @@ fileLine dev origDir file
 		let pragma	= if dev then "{-# NOINLINE "++name'++" #-}\n" else ""
 		let devAssgn	= "unsafePerformIO $ readFile "++show file
 		contents	<- if dev then return devAssgn else
-					readFile file |> show
+					fmap show (readFile file)
 		return $ pragma ++ name' ++ "\t = "++contents
 
 createAssets'	:: Bool -> FilePath -> IO String
