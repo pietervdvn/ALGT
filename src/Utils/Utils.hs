@@ -188,6 +188,8 @@ unmerge3r (a, (b, c))	= (a, b, c)
 
 mapBoth f (a, a')	= (f a, f a')
 
+both f (a, a')		= f a && f a'
+
 ----------------------- List tools --------------------
 
 validLines	:: String -> [String]
