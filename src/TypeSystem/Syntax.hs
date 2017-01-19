@@ -88,7 +88,7 @@ asLattice syntax
 		nms		= syntax & M.keys
 		topBottom	= M.fromList ((bottomSymbol, S.fromList nms): zip nms (repeat $ S.singleton topSymbol))
 		relations'	= M.unionWith S.union relations topBottom
-		in makeLattice bottomSymbol topSymbol relations' 
+		in fst $ makeLattice bottomSymbol topSymbol relations' 
 
 latticeAsSVG	:: ColorScheme -> Syntax -> String
 latticeAsSVG cs s

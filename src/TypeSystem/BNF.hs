@@ -20,7 +20,7 @@ data BNF 	= Literal String	-- Literally parse 'String'
 		| Number		-- Parse a number
 		| BNFRuleCall Name	-- Parse the rule with the given name
 		| BNFSeq [BNF]	-- Sequence of parts
-	deriving (Show, Eq)
+	deriving (Show, Eq, Ord)
 
 
 data WSMode	= IgnoreWS | StrictWS | StrictWSRecursive
@@ -40,9 +40,12 @@ fromRuleCall (BNFRuleCall nm)	= Just nm
 fromRuleCall _			= Nothing
 
 isRuleCall	:: BNF -> Bool
-isRuleCall (BNFRuleCall _)	= True
+isRuleCall BNFRuleCall{}	= True
 isRuleCall _			= False
 
+isSeq		:: BNF -> Bool
+isSeq BNFSeq{}	= True
+isSeq _		= False
 
 calledRules	:: BNF -> [TypeName]
 calledRules (BNFRuleCall nm)	= [nm]
@@ -98,6 +101,8 @@ instance ToString WSMode where
 
 
 instance ToString (Name, Int, WSMode, String, [BNF]) where
+	toParsable (n, i, ws, extra, [])
+		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ "< no bnfs declared >"
 	toParsable (n, i, ws, extra, bnfs)
 		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ toParsable' " | " bnfs
 

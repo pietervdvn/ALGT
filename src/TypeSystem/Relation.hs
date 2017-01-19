@@ -9,6 +9,7 @@ import Utils.ToString
 import TypeSystem.Types
 
 import Data.Maybe
+import Data.List (find)
 
 import Lens.Micro.TH
 import Lens.Micro hiding ((&))
@@ -58,6 +59,10 @@ weaveMode (In:modes) (inA:ins) outs
 weaveMode (Out:modes) ins (out:outs)
 	= out : weaveMode modes ins outs
 
+
+findRelation	:: [Relation] -> Symbol -> Maybe Relation
+findRelation rels s
+	= find ((==) s . get relSymbol) rels
 
 instance Refactorable TypeName Relation where
 	refactor	= over (relTypesModes . each . _1)
