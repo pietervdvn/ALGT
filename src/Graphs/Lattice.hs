@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Graphs.Lattice (Lattice, makeLattice, asSVG, subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, infimum, infimums, supremum, supremums) where
+module Graphs.Lattice (Lattice, makeLattice, addElement, asSVG, subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, infimum, infimums, supremum, supremums) where
 
 {-
 This module defines a finite lattice structure.
@@ -28,29 +28,48 @@ data Lattice a	= Lattice
 	{ _bottom	:: a
 	, _top		:: a
 	, _isSubsetOfEvery	:: Map a (Set a)	-- every 'a' is also every element of the corresponding set	
-	, _isSuperSetOfEvery	:: Map a (Set a)
+	, _isSupersetOfEvery	:: Map a (Set a)
 	} deriving (Show)
 
 makeLenses ''Lattice
 
 
-makeLattice	:: (Ord a) => a -> a -> Map a (Set a) -> Lattice a
+makeLattice	:: (Ord a) => a -> a -> Map a (Set a) -> (Lattice a, [(a, a)])
 makeLattice bottom top isSubsetOf
-	= let	lattice	= removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSuperSetOfEvery used in intialization. This is a bug") 
+	= let	(lattice, unneeded)	= removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
+		lattice'		= set isSupersetOfEvery (invertDict $ get isSubsetOfEvery lattice) lattice
 		in
-		set isSuperSetOfEvery (invertDict $ get isSubsetOfEvery lattice) lattice
+		(lattice', unneeded)
+
+addElement	:: (Ord a) => a -> [a] -> [a] -> Lattice a -> (Lattice a, [(a, a)])
+addElement newEl subsOfNew supersOfNew lattice
+	= let	cleanse ls symb	= if null ls then [symb] else ls
+		subsOfNew'	= cleanse subsOfNew (get bottom lattice)
+		supersOfNew'	= cleanse supersOfNew (get top lattice)
+
+		isSubsetOfEvery'= foldr (M.adjust (S.insert newEl)) (get isSubsetOfEvery lattice) subsOfNew'
+					& M.insert newEl (S.fromList supersOfNew')
+		isSupersetOfEvery'
+				= foldr (M.adjust (S.insert newEl)) (get isSupersetOfEvery lattice) supersOfNew'
+					& M.insert newEl (S.fromList subsOfNew')
+		lattice'	= lattice	& set isSubsetOfEvery isSubsetOfEvery' 
+						& set isSupersetOfEvery isSupersetOfEvery'
+		in
+		removeTransitive lattice'
 
 {-
  Consider lattice ["bottom" {"a","b"}] ["a", {"top", "b"} ] ["b", {"top"}]
 "bottom" can reach "b" via a, so the direct link "bottom" "b" can be removed
+
+Returns removed links
 -}
-removeTransitive	:: (Ord a) => Lattice a -> Lattice a
+removeTransitive	:: (Ord a) => Lattice a -> (Lattice a, [(a, a)])
 removeTransitive lattice
-	= foldl removeUnneedDirectLinksFor lattice (M.keys $ get isSubsetOfEvery lattice)
+	= foldl removeUnneedDirectLinksFor (lattice, []) (M.keys $ get isSubsetOfEvery lattice)
 
 
-removeUnneedDirectLinksFor	:: (Ord a) => Lattice a -> a -> Lattice a
-removeUnneedDirectLinksFor lattice a
+removeUnneedDirectLinksFor	:: (Ord a) => (Lattice a, [(a, a)]) -> a -> (Lattice a, [(a, a)])
+removeUnneedDirectLinksFor (lattice, removed) a
 	= let	-- direct links
 		direct		= supersetsOf lattice a
 		-- All subsets which can not be reached in one step.
@@ -60,8 +79,10 @@ removeUnneedDirectLinksFor lattice a
 		unneeded	= S.intersection direct indirect
 		-- ... and remove it
 		subsets'	= foldl (\subsets ch -> M.adjust (S.delete ch) a subsets) (get isSubsetOfEvery lattice) unneeded
+		removed'	= zip (S.toList unneeded) (repeat a)
+		lattice'	= set isSubsetOfEvery subsets' lattice
 		in
-		set isSubsetOfEvery subsets' lattice
+		(lattice', removed ++ removed')
 
 		
 -- Gives all supersets of a, thus all sets including 'a'
@@ -83,7 +104,7 @@ allSubsetsOf lattice a
 -- Direct subsets, << , 'bedekkingsgraad', thus all (named) sets which are a part of set 'a' 
 subsetsOf		:: (Ord a) => Lattice a -> a -> Set a
 subsetsOf lattice a
-	= get isSuperSetOfEvery lattice & M.findWithDefault S.empty a
+	= get isSupersetOfEvery lattice & M.findWithDefault S.empty a
 
 
 -- Direct supersets, tus all sets of which set 'a' is a part
