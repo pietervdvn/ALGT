@@ -11,19 +11,26 @@ import Utils.ToString
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.Data
 import AbstractInterpreter.FunctionInterpreter
+import AbstractInterpreter.RuleInterpreter as RI
 import AbstractInterpreter.MinimalTypes
 
 import Data.Map (Map, (!))
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import Control.Monad
+import Data.List
+import Data.Maybe
 
+import Control.Monad
 import Control.Arrow ((&&&))
 
 interpretFunction	:: TypeSystem -> Name -> Analysis
 interpretFunction ts n
 	= interpretFunction' (get tsSyntax ts) (get tsFunctions ts |> typesOf |> last)	(get tsFunctions ts ! n)
+
+
+
+
 
 checkTS	ts
 	=  [checkTotality ts, checkStrictestTypes ts] & allRight_ & inMsg "Warning"

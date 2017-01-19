@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TemplateHaskell #-}
 module AbstractInterpreter.RuleInterpreter where
 
 {-
@@ -25,41 +25,36 @@ import Data.Bifunctor
 import Control.Monad
 import Control.Arrow ((&&&))
 
+import Lens.Micro hiding ((&))
+import Lens.Micro.TH
+
+
 type AbstractConclusion 	= ConclusionA AbstractSet
 
 
 data RuleApplication	= RuleApplication
-	{ possibleArgs	:: Arguments
-	, assignment	:: Assignments
-	, conclusion	:: AbstractConclusion
-	, predicates	:: [AbstractConclusion]
+	{ _possibleArgs	:: Arguments
+	, _assignment	:: Assignments
+	, _conclusion	:: AbstractConclusion
+	, _predicates	:: [AbstractConclusion]
 	} deriving (Show, Eq)
-
+makeLenses ''RuleApplication
 
 type RuleAnalysis = [RuleApplication]
 
 isTrivial	:: RuleApplication -> Bool
 isTrivial rapp
-	= conclusion rapp `elem` predicates rapp
+	= get conclusion rapp `elem` get predicates rapp
 
 isRecursive	:: RuleApplication -> Bool
 isRecursive rapp
-	= (conclusion rapp & conclusionRel) `elem` (predicates rapp |> conclusionRel)
+	= (get conclusion rapp & conclusionRel) `elem` (get predicates rapp |> conclusionRel)
 
 
-applySubs	:: (Assignments -> Substitution AbstractSet) -> RuleAnalysis -> RuleAnalysis
-applySubs buildSubs ran
-	= ran |> _applySubs buildSubs
 
-
-impossibleArgs	:: Syntax -> RuleAnalysis -> [Arguments]
-impossibleArgs s ran
-	= let 	rel		= ran & head & conclusion & conclusionRel
-		inTypes		= relTypesWith In rel & generateArgs s	:: Arguments
-		-- the 'normal' inapplicable forms
-		classicalImpArgs	= subtractArgs s inTypes (ran |> possibleArgs)
-		in classicalImpArgs
-
+fillHoleWith'	:: Map Relation [Name] -> RuleApplication -> RuleApplication
+fillHoleWith' assgns rapp
+		= fillHoleWith assgns rapp & either (const rapp) id
 
 fillHoleWith	:: Map Relation [Name] -> RuleApplication -> Either String RuleApplication
 fillHoleWith assignments (RuleApplication possibleArgs assignment conclusion predicates)
@@ -70,31 +65,19 @@ fillHoleWith assignments (RuleApplication possibleArgs assignment conclusion pre
 		let predicates'		= predicates	||>> substitute subs
 		return (RuleApplication possibleArgs' assignment' conclusion' predicates')
 
+
+
 matchHoles	:: Map Relation [Name] -> AbstractConclusion -> Either String (Substitution AbstractSet)
 matchHoles assignments concl@(RelationMet r args)
-	= do	let args'	= assignments ! r
+	= inMsg ("While matching the holes of "++inParens (toParsable concl)) $
+	  do	let args'	= either error id $  checkExists r assignments $ "Could not find an assignment for "++show r
 		unless (all isEveryPossible args) $ Left $ "Could not match holes, "++toParsable concl++" contains structure with input/output arguments"
 		let nms		= args |> (\(EveryPossible _ n _) -> n) 
 		zip nms args' ||>> (\t -> EveryPossible (t, -1) t t) & M.fromList & return
 
 
-_applySubs	:: (Assignments -> Substitution AbstractSet) -> RuleApplication -> RuleApplication
-_applySubs buildSubs (RuleApplication args assignment concl preds)
-	= let	subs	= buildSubs assignment in
-		RuleApplication
-			(args |> substitute subs)
-			(assignment |> first (substitute subs))
-			(concl |>  substitute subs)
-			(preds ||>> substitute subs)
 
 
-
-setConclusion ts concl ran
-	= ran  |> _setConclusion ts concl
-
-_setConclusion	:: TypeSystem -> Conclusion -> RuleApplication -> RuleApplication
-_setConclusion ts concl rapp
-	= rapp {conclusion = concl |> evalExpr' ts (assignment rapp) }
 
 
 interpretRule'	:: TypeSystem -> Rule -> RuleAnalysis
@@ -105,11 +88,14 @@ interpretRule' ts rule@(Rule _ _ (RelationMet r _) )
 
 
 interpretRule	:: TypeSystem -> Rule -> Arguments -> RuleAnalysis
-interpretRule ts (Rule _ predicates concl) args
-	= let	baseAnalysis	= interpretConclusion ts concl args
-		ranalysis	= foldr (handlePredicate ts) baseAnalysis predicates
-		in
-		ranalysis & setConclusion ts concl 
+interpretRule ts (Rule _ preds concl) args
+	= do	baseAnalysis	<- interpretConclusion ts concl args
+		let analysis	= foldr (handlePredicate ts) baseAnalysis preds
+		let assgn	= get assignment analysis
+		-- we apply the conclusion and predicates again as to make sure all variables are evaluated
+		analysis & set conclusion (evalConcl' ts assgn concl)
+			& set predicates (preds & mapMaybe (evalPred' ts assgn))
+			& return 
 					
 
 
@@ -127,7 +113,7 @@ interpretConclusion ts (RelationMet r exprs) args
 
 
 
-handlePredicate	:: TypeSystem -> Predicate -> RuleAnalysis -> RuleAnalysis
+handlePredicate	:: TypeSystem -> Predicate -> RuleApplication -> RuleApplication
 handlePredicate ts (TermIsA nm tp) ranalysis
 	= ascribe (get tsSyntax ts) (nm, tp) ranalysis
 handlePredicate ts (Same e1 e2) ranalysis
@@ -137,15 +123,11 @@ handlePredicate ts (Needed concl) ranalysis
 
 
 
-addNeeded	:: TypeSystem -> ConclusionA Expression -> RuleAnalysis -> RuleAnalysis
-addNeeded ts concl ran
-	= ran |> _addNeeded ts concl
-
 
 -- while the other two are just simple substititutions, a 'conclusion' predicate might introduce new variables
-_addNeeded	:: TypeSystem -> ConclusionA Expression -> RuleApplication -> RuleApplication
-_addNeeded ts concl ruleApp
-	= let	assgn	= assignment ruleApp
+addNeeded	:: TypeSystem -> ConclusionA Expression -> RuleApplication -> RuleApplication
+addNeeded ts concl ruleApp
+	= let	assgn	= get assignment ruleApp
 		r	= conclusionRel concl
 		outs	= conclusionArgs concl & filterMode Out r
 		newVars	= (outs >>= usedVariables) & filter ((`M.notMember` assgn) . fst)
@@ -154,13 +136,23 @@ _addNeeded ts concl ruleApp
 		assgn'	= M.union newVars' assgn
 		concl'	= concl |> evalExpr' ts assgn' 
 		in
-		ruleApp{ predicates = concl' : predicates ruleApp, assignment = assgn' }
+		ruleApp	& over predicates (concl':)
+	
+		& set assignment assgn'
+
+applySubs	:: (Assignments -> Substitution AbstractSet) -> RuleApplication -> RuleApplication
+applySubs buildSubs (RuleApplication args assignment concl preds)
+	= let	subs	= buildSubs assignment in
+		RuleApplication
+			(args |> substitute subs)
+			(assignment |> first (substitute subs))
+			(concl |>  substitute subs)
+			(preds ||>> substitute subs)
 
 
 
 
-
-ascribe	:: Syntax -> (Name, TypeName) -> RuleAnalysis -> RuleAnalysis
+ascribe	:: Syntax -> (Name, TypeName) -> RuleApplication -> RuleApplication
 ascribe s (k, v) ranalysis
 	= let 	-- we known (n1 :: number); and we now (n1 --> e1/0:2). Merge so that (e1/0:2 :: number)
 		buildAsc' assgn =  ((assgn ! k) & fst & getName, v)
@@ -170,7 +162,7 @@ ascribe s (k, v) ranalysis
 		applySubs buildSubs ranalysis	
 		
 
-unifyPreds	:: TypeSystem -> (Expression, Expression) -> RuleAnalysis -> RuleAnalysis
+unifyPreds	:: TypeSystem -> (Expression, Expression) -> RuleApplication -> RuleApplication
 unifyPreds ts toUnify
 	= applySubs (buildUnifyPred ts toUnify) 
 
@@ -184,20 +176,27 @@ buildUnifyPred ts (e0, e1) assgn
 
 
 
-
-
-
-
 evalExpr'	:: TypeSystem -> Assignments -> Expression -> AbstractSet
 evalExpr' ts
 	= evalExpr (get tsFunctions ts |> typesOf |> last) 
 
 
+evalConcl'	:: TypeSystem -> Assignments -> Conclusion -> AbstractConclusion
+evalConcl' ts assgn concl
+	= concl |> evalExpr' ts assgn
+
+evalPred'	:: TypeSystem -> Assignments -> Predicate -> Maybe AbstractConclusion
+evalPred' ts assgns (Needed concl)
+		= Just $ evalConcl' ts assgns concl
+evalPred' _ _ _	= Nothing
+
 
 instance ToString RuleAnalysis where
 	toParsable matchingForms
-		= "Applicable to:\n" ++ indent (matchingForms |> possibleArgs ||>> eraseDetails & nub |> toParsable' ", " & unlines) ++
-			"Results:\n" ++ indent (toParsable' "\n" matchingForms)
+		= ["Applicable to:"
+			, indent (matchingForms |> get possibleArgs ||>> eraseDetails & nub |> toParsable' ", " & unlines)
+			, "Results:"
+			, indent (toParsable' "\n" matchingForms)] & unlines
 
 
 instance ToString RuleApplication where

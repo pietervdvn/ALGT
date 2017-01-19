@@ -11,14 +11,18 @@ import Utils.ToString
 import TypeSystem
 import Utils.Unification
 
-import Data.Map
+import Data.Map (Map, (!), member, fromList, toList)
+import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Set (Set)
 import Data.List as L
 import Data.List (intercalate, intersperse, nub)
+import Data.Tuple (swap)
 
 import Control.Arrow ((&&&))
 import Control.Monad
+
+import Debug.Trace -- TODO
 
 data AbstractSet
 	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
@@ -50,9 +54,79 @@ instance Node AbstractSet where
 
 
 
+toBNF			:: AbstractSet -> BNF
+toBNF (EveryPossible _ _ tp)
+			= BNFRuleCall tp
+toBNF (ConcreteLiteral mi s)
+			= Literal s
+toBNF (ConcreteIdentifier _ _)
+			= Identifier
+toBNF (ConcreteInt _ _)
+			= Number
+toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
+
+
+
+reverseSyntax	:: Syntax -> Map [AbstractSet] Name
+reverseSyntax synt
+	= let prepBNFs tp bnfs	= bnfs	|> generateAbstractSet' synt "" tp
+					|> eraseDetails
+					& sort in
+	  synt	& get bnf 
+		& M.mapWithKey prepBNFs
+		& toList 
+		|> swap & fromList
+
+{-
+Tries to simplify the abstractset, eventually by refolding.
+Names will be invalidated afterwards
+
+E.g. ["True", "False"] -> ["Bool"]
+
+-}
+refold		:: Syntax -> Map [AbstractSet] Name -> [AbstractSet] -> [AbstractSet]
+refold _ _ [a]	= [a]
+refold syntax revTable as
+		= let	as'	= as |> eraseDetails & nub
+			grouped	= as' & groupBy mightFoldSeq |> foldGroup syntax revTable & concat
+			matched	= revTable & M.lookup (sort grouped)
+					& maybe grouped (\tn -> [EveryPossible _eMI "" tn])
+			in
+			trace ("\n\nFolding "++toParsable' ", " as++" became "++toParsable' ", " matched) $ matched
+
+
+mightFoldSeq	:: AbstractSet -> AbstractSet -> Bool
+mightFoldSeq (AsSeq _ s1) (AsSeq _ s2)
+ | length s1 /= length s2	= False
+ | otherwise		= True
+mightFoldSeq a1 a2		= False
+
+
+foldGroup	:: Syntax -> Map [AbstractSet] Name -> [AbstractSet] -> [AbstractSet]
+foldGroup _ _ []		= []
+foldGroup _ _ [as]		= [as]
+foldGroup syntax revTable ass
+ | not $ isAsSeq $ head ass	= ass
+	-- All 'details' have been erased, and the entire group has the same structure
+	-- In other words, all are a sequence with only differences on e.g. "True" 
+ | otherwise	= do	let seqqed	= ass 	|> fromAsSeq & transpose	:: [[AbstractSet]]
+			let seqqed'	= seqqed |> head			:: [AbstractSet]
+			-- now, all 'indices' should be the same, except for one focus point
+			let diffPoints	= seqqed |> (\(a:as) -> all ((==) a) as)
+						& mapi & filter (not . snd)	:: [(Int, Bool)]
+			if length diffPoints /= 1 then ass else do
+				let i		= head diffPoints & fst
+				a		<- (seqqed !! i) & refold syntax revTable	:: [AbstractSet]
+				let mergedSeq	= (take i seqqed') ++ [a] ++ (drop (i + 1) seqqed')
+				return $ AsSeq _eMI mergedSeq
+
 generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
-generateAbstractSet r n tm
-			= _generateAbstractSet r (tm, -1) n (BNFRuleCall tm)
+generateAbstractSet s n tp
+			= generateAbstractSet' s n tp (BNFRuleCall tp)
+
+generateAbstractSet'	:: Syntax -> Name -> TypeName -> BNF -> AbstractSet
+generateAbstractSet' s n tp bnf
+			= _generateAbstractSet s (tp, -1) n bnf
 
 
 _generateAbstractSet				:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet
@@ -145,11 +219,11 @@ subtractAll syntax b minus
 
 
 subsetOf	:: Syntax -> AbstractSet -> AbstractSet -> Bool
-subsetOf s (AsSeq _ subs) 	(AsSeq _ supers)
+subsetOf s (AsSeq _ subs) (AsSeq _ supers)
 	= zip subs supers & all (uncurry $ subsetOf s)
-subsetOf s sub 			super@EveryPossible{}
+subsetOf s sub super@EveryPossible{}
 	= alwaysIsA' s sub super
-subsetOf s sub@EveryPossible{}	super
+subsetOf s sub@EveryPossible{} super
 	= False
 subsetOf s concreteSub concreteSuper
 	= sameStructure concreteSub concreteSuper
@@ -167,6 +241,13 @@ isConcrete ConcreteIdentifier{}	= True
 isConcrete ConcreteInt{}	= True
 isConcrete _			= False
 
+isAsSeq				:: AbstractSet -> Bool
+isAsSeq AsSeq{}			= True
+isAsSeq _			= False
+
+
+fromAsSeq			:: AbstractSet -> [AbstractSet]
+fromAsSeq (AsSeq _ seq)		= seq
 
 -- Simple heuristic if it is worth it to subtract two abstract sequences
 sameForm	:: [AbstractSet] -> [AbstractSet] -> Bool
@@ -175,6 +256,8 @@ sameForm (a:as) (b:bs)
  | isConcrete a && isConcrete b	= sameStructure a b
  | otherwise			= sameForm as bs
 sameForm _ _	= False
+
+
 
 sameStructure	:: AbstractSet -> AbstractSet -> Bool
 sameStructure as bs

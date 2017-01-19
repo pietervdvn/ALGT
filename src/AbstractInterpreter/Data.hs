@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts, TemplateHaskell, TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
 module AbstractInterpreter.Data where
 
 
@@ -48,6 +48,10 @@ subtractArg s args minus
 			replacePointwise args pointWise
 
 type Assignments	= Map Name (AbstractSet, Maybe Path)
+
+instance ToString' Int Assignments where
+	toParsable' i dict
+		= dict & M.toList |> (\(nm, (as, mPath)) -> padR i ' ' nm ++ " --> " ++ toCoParsable as) & unlines
 
 
 findAssignment		:: Name -> Assignments -> Maybe (AbstractSet, Maybe [Int])
