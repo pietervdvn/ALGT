@@ -17,12 +17,10 @@ import qualified Data.Set as S
 import Data.Set (Set)
 import Data.List as L
 import Data.List (intercalate, intersperse, nub)
-import Data.Tuple (swap)
 
 import Control.Arrow ((&&&))
 import Control.Monad
 
-import Debug.Trace -- TODO
 
 data AbstractSet
 	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
@@ -92,7 +90,7 @@ refold syntax revTable as
 			matched	= revTable & M.lookup (sort grouped)
 					& maybe grouped (\tn -> [EveryPossible _eMI "" tn])
 			in
-			trace ("\n\nFolding "++toParsable' ", " as++" became "++toParsable' ", " matched) $ matched
+			matched
 
 
 mightFoldSeq	:: AbstractSet -> AbstractSet -> Bool
@@ -155,12 +153,22 @@ unfold r (EveryPossible _ n e)
 unfold r as	= [as]
 
 
--- Unfolds until everything is a sequence (thus no more 'everyPossible's in the set)
+-- Unfolds until everything is a sequence (thus no more 'everyPossible's in the set). You'll probably end up with something infinite, so be carefull
 unfoldFull	:: Syntax -> AbstractSet -> [AbstractSet]
 unfoldFull syntax as
 	= do	as'	<- unfold syntax as
 		if isEveryPossible as' then unfoldFull syntax as'
 			else return as'
+
+-- Unfolds all "EveryPossible" in the abstractset exactly once
+unfoldAll	:: Syntax -> AbstractSet -> [AbstractSet]
+unfoldAll syntax (AsSeq mi seq)
+	= do	seq'	<- seq |> unfoldAll syntax & allCombinations
+		return $ AsSeq mi seq'
+unfoldAll syntax as@EveryPossible{}
+	= unfold syntax as
+unfoldAll syntax as
+	= [as]
 
 
 {- Given abstract sets, removes the second from this set

@@ -1,5 +1,5 @@
 name:                ALGT
-version:             0.1.7.0
+version:             0.1.8.0
 synopsis:            Simple project template from stack
 description:         Please see README.md
 homepage:            https://github.com/pietervdvn/ALGT#readme
@@ -26,7 +26,9 @@ executable ALGT
         AbstractInterpreter.FunctionInterpreter
         AbstractInterpreter.MinimalTypes
         AbstractInterpreter.PatternMatcher
+        AbstractInterpreter.RuleInterpreter
         AbstractInterpreter.Tools
+        AssetsHelper
         Assets
         Changer.Changes
         Changer.ChangesParser
@@ -56,6 +58,7 @@ executable ALGT
         TypeSystem.TypeSystem
         TypeSystem.Types
         Utils.ArgumentParser
+        Utils.CreateAssets
         Utils.Image
         Utils.LatticeImage
         Utils.ParseTreeImage
@@ -64,4 +67,5 @@ executable ALGT
         Utils.Unification
         Utils.Utils
         Utils.XML
+
 

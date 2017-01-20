@@ -51,7 +51,17 @@ type Assignments	= Map Name (AbstractSet, Maybe Path)
 
 instance ToString' Int Assignments where
 	toParsable' i dict
-		= dict & M.toList |> (\(nm, (as, mPath)) -> padR i ' ' nm ++ " --> " ++ toCoParsable as) & unlines
+		= _toString i toParsable dict
+	toCoParsable' i dict
+		= _toString i toCoParsable dict
+	debug' i dict
+		= _toString i debug dict
+	show' _		= show
+
+_toString	:: Int -> (AbstractSet -> String) -> Assignments -> String
+_toString i showAs dict
+	= dict & M.toList |> (\(nm, (as, mPath)) -> padR i ' ' nm ++ " --> " ++ showAs as) & unlines
+
 
 
 findAssignment		:: Name -> Assignments -> Maybe (AbstractSet, Maybe [Int])

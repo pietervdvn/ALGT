@@ -274,7 +274,7 @@ inline' syntax
 -- constructor, with checks
 makeSyntax	:: [(Name, ([BNF], WSMode))] -> Either String Syntax
 makeSyntax vals
-	= do	let bnfs	= M.fromList $ vals ||>> fst
+	= do	let bnfs	= vals & M.fromList |> fst ||>> normalize
 		let bnfr	= BNFRules bnfs (M.fromList $ vals ||>> snd) (asLattice bnfs)
 		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
 			check bnfr] & allRight_
@@ -282,11 +282,19 @@ makeSyntax vals
 
 
 instance Check' Syntax (Name, [BNF]) where
-	check'	= checkUnknownRuleCall
+	check' s rule@(n, bnfs)
+		= inMsg ("While checking the syntax rule "++show n)
+			$ allRight_ [checkUnknownRuleCall s rule, checkNoDuplicateChoices rule]
+
+
+checkNoDuplicateChoices	:: (Name, [BNF]) -> Either String ()
+checkNoDuplicateChoices (n, asts)
+	= inMsg "While checking for duplicate choices" $
+	  checkNoDuplicates asts $ (\dups -> "The choice "++showComma dups++" appears multiple times")
 
 checkUnknownRuleCall	:: Syntax -> (Name, [BNF]) -> Either String ()
 checkUnknownRuleCall bnfs' (n, asts)
-	= inMsg ("While checking rule "++n++" for unknowns") $
+	= inMsg "While checking for unknowns" $
 	  do	let bnfs	= getBNF bnfs'
 		mapi asts |> (\(i, ast) ->
 			inMsg ("While checking choice "++show i++", namely "++show ast) $
@@ -298,7 +306,7 @@ checkUnknownRuleCall bnfs' (n, asts)
 
 instance Check Syntax where
 	check syntax	= inMsg "While checking the syntax:" $
-		  		allRight_ (checkLeftRecursion syntax:(syntax & getBNF & M.toList |> checkUnknownRuleCall syntax))
+		  		allRight_ (checkLeftRecursion syntax:checkAllUnique syntax:(syntax & getBNF & M.toList |> check' syntax))
 
 
 checkLeftRecursion	:: Syntax -> Either String ()
@@ -309,7 +317,16 @@ checkLeftRecursion bnfs
 		assert Left (null cycles) ("Potential infinite left recursion detected in the syntax. Left cycles are:\n"++msgs)
 
 
-
+checkAllUnique		:: Syntax -> Either String ()
+checkAllUnique syntax
+	= do	let lookupT	= syntax & get bnf & M.toList 
+					& unmerge 
+					|> swap
+					& merge :: [(BNF, [TypeName])]
+		let duplicates	= lookupT & filter ((<) 1 . length . snd)
+		
+		let msg bnf tns	="The bnf sequence "++toParsable bnf ++ " is presented as a choice in multiple rule declarations, namely "++showComma tns++". Please, sperate them of into a new rule"
+		duplicates |> uncurry msg |> Left & allRight_		 
 
 
 

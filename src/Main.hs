@@ -36,7 +36,7 @@ import AbstractInterpreter.RuleInterpreter
 import AbstractInterpreter.Data
 
 
-version	= ([0,1,7], "Total Language Factory - with fancy parsetrees")
+version	= ([0,1,8], "Total Language Factory - with fancy parsetrees")
 
 
 main	:: IO ()
@@ -53,7 +53,7 @@ main' args
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpretRulesAbstract createSVG createHighlighting autoSaveTo _)
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpretRulesAbstract iraSVG createSVG createHighlighting autoSaveTo _)
 	= do	config	<- getConfig
 		ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
@@ -77,6 +77,9 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpre
 
 		when interpretRulesAbstract $ void $
 			get tsRules' changedTs & get rules & toList |+> runRuleAbstract changedTs
+		iraSVG & ifJust (\path ->  do
+			let l	= createRuleSyntax changedTs & latticeAsSVG terminalCS
+			writeFile path l)
 
 		createSVG & ifJust (\pth -> do
 			let l	= changedTs & get tsSyntax & latticeAsSVG terminalCS
@@ -84,6 +87,33 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpre
 		
 		parseTrees <- exampleFiles |+> (`mainExFile` changedTs)
 		return (changedTs , concat parseTrees)
+
+
+
+
+runRuleAbstract	:: TypeSystem -> (Symbol, [Rule]) -> IO ()
+runRuleAbstract ts (s, rules)
+	= do	let text	= rules |> (get ruleName &&& interpretRule' ts) ||>> toParsable 
+					|> (\(nm, analysis) -> inHeader "" ("Analysis of rule "++ show nm) '-' analysis)
+					& unlines
+		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' text
+
+		let syntax'	= createRuleSyntax ts
+		putStrLn $ inHeader "" ("Resulting syntax") '=' $  "# Use --irasvg [PATH] to create a subtyping of this syntax \n\n" ++ toParsable syntax'
+
+runFuncAbstract	:: TypeSystem -> Name -> IO ()
+runFuncAbstract ts name
+	= do	putStrLn $ inHeader "" ("Abstract interpretation of "++show name) '-' ""
+		putStrLn $ toParsable $ interpretFunction ts name
+		
+
+
+
+
+
+
+
+
 
 mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config
 mainSyntaxHighl config ts (Just parserRule) (Just targetSave)
@@ -124,6 +154,8 @@ mainChanges filepath ts
 		return ts'
 
 
+
+
 mainExFile	:: ExampleFile -> TypeSystem -> IO [(String, ParseTree)]
 mainExFile args ts 
 	= do	let noRules	= all isNothing ([symbol, function, stepByStep, ptSvg] |> (\f -> f args))
@@ -146,6 +178,8 @@ mainExFile args ts
 			parseTrees |+> printDebug
 			pass
 		return parseTrees
+
+
 
 
 
@@ -173,19 +207,9 @@ showProofWithDepth input relation (Right proof)
 		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++toParsable proof++"\n\n\n"
 
 
-runRuleAbstract	:: TypeSystem -> (Symbol, [Rule]) -> IO ()
-runRuleAbstract ts (s, rules)
-	= do	let text	= rules |> (get ruleName &&& interpretRule' ts) ||>> toParsable 
-					|> (\(nm, analysis) -> inHeader "" ("Analysis of rule "++ show nm) '-' analysis)
-					& unlines
-		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' text
 
 
-runFuncAbstract	:: TypeSystem -> Name -> IO ()
-runFuncAbstract ts name
-	= do	putStrLn $ inHeader "" ("Abstract interpretation of "++show name) '-' ""
-		putStrLn $ toParsable $ interpretFunction ts name
-		
+
 printDebug	:: (String, ParseTree) -> IO ()
 printDebug (inp, pt)
 	= do	putStrLn $ "# "++show inp++" was parsed as:"

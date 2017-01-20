@@ -13,7 +13,6 @@ import Data.Either
 import Data.Foldable
 import Data.Maybe
 import Data.List (intercalate, isPrefixOf)
-import Data.Tuple
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -189,6 +188,8 @@ unmerge3r (a, (b, c))	= (a, b, c)
 mapBoth f (a, a')	= (f a, f a')
 
 both f (a, a')		= f a && f a'
+
+swap (a, b)		= (b, a)
 
 ----------------------- List tools --------------------
 

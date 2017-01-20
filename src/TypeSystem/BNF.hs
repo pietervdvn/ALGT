@@ -11,6 +11,8 @@ import Utils.ToString
 
 import TypeSystem.Types
 
+import Data.Maybe
+
 
 {- Syntax is described in a Backus-Naur format, a simple naive parser is constructed from it. -}
 
@@ -22,6 +24,14 @@ data BNF 	= Literal String	-- Literally parse 'String'
 		| BNFSeq [BNF]	-- Sequence of parts
 	deriving (Show, Eq, Ord)
 
+
+normalize	:: BNF -> BNF
+normalize (BNFSeq seq)
+	= let	seq'	= (seq |> normalize) >>= (\bnf -> fromMaybe [bnf] $ fromSeq bnf) in
+		case seq' of
+			[bnf] 	-> bnf
+			_	-> BNFSeq seq'
+normalize bnf	= bnf
 
 data WSMode	= IgnoreWS | StrictWS | StrictWSRecursive
 	deriving (Show, Eq)
@@ -46,6 +56,10 @@ isRuleCall _			= False
 isSeq		:: BNF -> Bool
 isSeq BNFSeq{}	= True
 isSeq _		= False
+
+fromSeq		:: BNF -> Maybe [BNF]
+fromSeq (BNFSeq seq)	= Just seq
+fromSeq _	= Nothing
 
 calledRules	:: BNF -> [TypeName]
 calledRules (BNFRuleCall nm)	= [nm]

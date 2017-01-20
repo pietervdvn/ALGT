@@ -21,14 +21,12 @@ import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
 
-import AssetsHelper (stfl) -- TODO Remove
-
 type AnalysisSyntax	= Syntax
 
-t	= do	let s'	= stfl & prepareSyntax & analyse stfl
-		putStrLn $ toParsable s'
-		writeFile "Syntax.svg" $ latticeAsSVG terminalCS s'
-		
+
+createRuleSyntax	:: TypeSystem -> Syntax
+createRuleSyntax ts
+	= ts & prepareSyntax & analyse ts
 
 ruleNameFor	:: Symbol -> Int -> TypeName -> Mode -> String
 ruleNameFor symbol i tn mode

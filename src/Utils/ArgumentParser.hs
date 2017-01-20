@@ -36,6 +36,7 @@ data Args = Args 	{ tsFile		:: String
 			, dumbTS		:: Bool
 			, interpretAbstract	:: Bool
 			, interpretRulesAbstract:: Bool
+			, iraSVG		:: Maybe String
 			, createSVG		:: Maybe String
 			, createHighlighting	:: Maybe String
 			, autoSaveTo		:: Maybe String
@@ -182,6 +183,10 @@ args	= Args <$> argument str
 			(long "interpret-rules-abstractly"
 			<> long "ira"
 			<> help "Interpret each rule over all possible values")
+		<*> optional (strOption
+			(metavar "SVG-PATH"
+			<> long "irasvg"
+			<> help "Create a SVG of the subset relationship between BNF-rules of the rules"))
 		<*> optional (strOption
 			(metavar "SVG-PATH"
 			<> long "lsvg"
