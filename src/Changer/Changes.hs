@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, TemplateHaskell #-}
 module Changer.Changes where
 
 {-
@@ -20,6 +20,8 @@ import Data.Either
 import Control.Monad
 import Control.Arrow ((&&&))
 
+import Lens.Micro hiding ((&))
+import Lens.Micro.TH
 
 data DefaultChange k v
 	= Rename k k	-- simply rename the entries
@@ -108,30 +110,16 @@ refactorFunc (_:rest) k	= refactorFunc rest k
 
 
 
-data RelationChangeInfo	
-	= RCI 	{ name		:: Name
-		, pronounced	:: Maybe String
-		, ruleRename	:: Maybe (String, String)}
-		deriving (Show)
-
-
-data RelationChange
-	= RDelete Name
-	| RCopy   Name RelationChangeInfo
-	| RRename Name RelationChangeInfo
-		deriving (Show)
-
-
 
 
 data Changes = Changes
-			{ changesName	:: Name
-			, changedSyntax	:: [DefaultChange TypeName ([BNF], WSMode)]
-			, changedFuncs	:: [DefaultChange Name Function]
-			, changedRels	:: [DefaultChange Symbol Relation]
-			, changedRules	:: [DefaultChange Name Rule]
+			{ _changesName		:: Name
+			, _changedSyntax	:: [DefaultChange TypeName ([BNF], WSMode)]
+			, _changedFuncs		:: [DefaultChange Name Function]
+			, _changedRels		:: [DefaultChange Symbol Relation]
+			, _changedRules		:: [DefaultChange Name Rule]
 			} deriving (Show)
-
+makeLenses ''Changes
 
 checkNoCommon' old new rule section
 	= checkNoCommon old new
