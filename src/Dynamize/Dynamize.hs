@@ -30,9 +30,57 @@ as both (non-same) derivations might be calculated
 
 import Utils.Utils
 
+import TypeSystem
+import Changer.Changes
+
+import AbstractInterpreter.FullAnalysis
+
+import Data.Map as M
+
+import Control.Arrow
+
+dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> Changes
+dynamize ts rule typeErr addStuckStateRules
+		= let	syntax		= get tsSyntax ts
+			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule))
+			newRules	= addStuckStateRules |> calculateNewRulesFor ts & concat
+						|> (\rule -> New (get ruleName rule) rule)
+			in
+			Changes "Dynamized" [changedSyntax] [] [] newRules
 
 
-detectStuckStates	:: TypeSystem -> Symbol -> TypeName -> [AbstractSet]
-detectStuckStates ts symb argTp
-	= error "hi"
+
+
+calculateNewRulesFor	:: TypeSystem -> Relation -> [Rule]
+calculateNewRulesFor ts relation
+	= let	analysisSyntax	= "hi" in
+		error $ "Fix rules for "++get relSymbol relation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

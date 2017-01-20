@@ -108,19 +108,27 @@ newtype Rules	= Rules {_rules :: Map Symbol [Rule]}
 			deriving (Show)
 makeLenses ''Rules
 
-
+getRulesOnName	:: Rules -> Map Name Rule
 getRulesOnName rls
 	= rls & get rules & M.elems & concat |> (get ruleName &&& id) & M.fromList
 
+fromRulesOnName :: Syntax -> Map k Rule -> Either String Rules
 fromRulesOnName syntax rules
 	= rules & M.elems & makeRules syntax
 
+rulesOnName	:: Lens' Rules (Map Name Rule)
+rulesOnName	= lens getRulesOnName (\_ rulesDict -> _makeRules $ M.elems rulesDict)
+
+
+_makeRules	:: [Rule] -> Rules
+_makeRules rules
+	= let sortedRules = rules |> ((\r -> r & get ruleConcl & conclusionRel & get relSymbol) &&& id) & merge
+		in Rules $ M.fromList sortedRules		
 
 makeRules	:: Syntax -> [Rule] -> Either String Rules
 makeRules s rules
 	= do 	checkNoDuplicates (rules |> get ruleName) (\dups -> "Multiple rules have the name "++showComma dups)
-		let sortedRules = rules |> ((\r -> r & get ruleConcl & conclusionRel & get relSymbol) &&& id) & merge
-		let rules'	= Rules $ M.fromList sortedRules		
+		let rules'	= _makeRules rules
 		check' s rules'
 		return rules'
 

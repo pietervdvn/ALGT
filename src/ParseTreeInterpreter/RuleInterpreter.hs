@@ -26,7 +26,7 @@ proofThat ts
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
 proofThats' ts symbol args
 	= inMsg ("While trying to proof that ("++symbol++") is applicable to \""++ toParsable' ", " args ++"\"") $
-	  do	rules	<- ts & tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
+	  do	rules	<- ts & get tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
 		let results	= rules |> flip (interpretRule ts) args
 		let successfull	= rights results
 		assert Left (not $ null successfull) $ "Not a single rule matched:\n"++unlines (lefts results)

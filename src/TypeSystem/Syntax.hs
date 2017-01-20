@@ -67,6 +67,8 @@ fromFullSyntax	:: Map TypeName ([BNF], WSMode) -> Syntax
 fromFullSyntax dict
 	= BNFRules (dict |> fst) (dict |> snd) (dict |> fst & asLattice)
 
+fullSyntax	:: Lens' Syntax (Map TypeName ([BNF], WSMode))
+fullSyntax	= lens getFullSyntax (const fromFullSyntax)
 
 instance Refactorable TypeName Syntax where
 	refactor ftn (BNFRules bnfs ws _)

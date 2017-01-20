@@ -1,4 +1,4 @@
-module Changer.ChangesParser where
+	module Changer.ChangesParser where
 
 {-
 Yeah, what would this module implement?
@@ -147,13 +147,9 @@ changesFile ts0 name
 		let bnfCh'	= (bnfs |> uncurry New) ++ bnfCh
 
 
-		let syntax'	= get tsSyntax ts0 & getFullSyntax
-					& applyAllChanges editSyntax bnfCh'
-					& either error id
-					& fromFullSyntax
-		
 
-		let ts1	 = set tsSyntax syntax' ts0 & refactor (refactorFunc bnfCh')
+		let ts1	 = applySyntaxChanges bnfCh' ts0
+				& either error id
 
 		-- FUNCTIONS --
 		---------------
@@ -177,13 +173,8 @@ changesFile ts0 name
 
 		let funcCh'	= newFuncs' ++ funcCh
 		
-		let functions''	= get tsFunctions ts1
-					& applyAllChanges (editFunction (get tsSyntax ts1)) funcCh'
-					& either error id
-
-
-		let ts2	= set tsFunctions functions'' ts1 & refactor (liftFunctionName $ refactorFunc funcCh')
-
+		let ts2	= applyFuncChanges funcCh' ts1
+				& either error id
 
 		-- RELATIONS --
 		---------------
@@ -210,12 +201,9 @@ changesFile ts0 name
 				many $ try (nls >> relationOption (get tsSyntax ts2) relationDict)
 
 		let relCh'	= newRels' ++ relCh
-		let relations'	= relationDict & applyAllChanges editRelation relCh'
-					& either error id
-					& M.elems
-					
 		
-		let ts3		= set tsRelations relations' ts2 & refactor (liftRelationSymbol $ refactorFunc relCh')
+		let ts3		= applyRelChanges relCh' ts2
+					& either error id
 
 
 		-- Rules --
@@ -238,20 +226,14 @@ changesFile ts0 name
 		let ruleCh'	= newRules' ++ ruleCh
 
 		
-		let rules'	= get tsRules' ts3 & getRulesOnName
-					& applyAllChanges (editRule (get tsSyntax ts3)) ruleCh'
+		let tsFinal	= applyRuleChanges ruleCh' ts3
 					& either error id
-					& fromRulesOnName (get tsSyntax ts3)
-					& either error id
-
-
-		let tsFinal	= set tsRules' rules' ts3 & refactor (liftRuleName $ refactorFunc ruleCh')
 		nls
 		eof
 
 
 		check tsFinal & either error return
-		return (Changes name bnfCh' funcCh' relCh ruleCh', over tsName ((name'++" ")++) tsFinal)
+		return (Changes name' bnfCh' funcCh' relCh ruleCh', applyNameChange name' tsFinal)
 
 
 

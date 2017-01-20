@@ -60,10 +60,6 @@ weaveMode (Out:modes) ins (out:outs)
 	= out : weaveMode modes ins outs
 
 
-findRelation	:: [Relation] -> Symbol -> Maybe Relation
-findRelation rels s
-	= find ((==) s . get relSymbol) rels
-
 instance Refactorable TypeName Relation where
 	refactor	= over (relTypesModes . each . _1)
 

@@ -35,8 +35,9 @@ import AbstractInterpreter.FullAnalysis
 import AbstractInterpreter.RuleInterpreter
 import AbstractInterpreter.Data
 
+import Dynamize.Test
 
-version	= ([0,1,8], "Total Language Factory - with fancy parsetrees")
+version	= ([0,1,8], "Total Language Analysis")
 
 
 main	:: IO ()

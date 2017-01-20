@@ -17,7 +17,9 @@ import TypeSystem.Relation
 import TypeSystem.Rule
 
 import Data.Map as M
-import Data.List (intercalate)
+import Data.List (intercalate, find)
+
+import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
@@ -44,8 +46,23 @@ instance Check TypeSystem where
 			] & allRight_
 
 
-tsRules		:: TypeSystem -> Map Name [Rule]
-tsRules	ts	= get tsRules' ts & (\(Rules dict) -> dict)
+tsRules		:: Lens' TypeSystem (Map Name [Rule])
+tsRules		= tsRules' . rules
+
+tsRelations'	:: Lens' TypeSystem (Map Name Relation)
+tsRelations'	=  lens (\ts -> get tsRelations ts |> (get relSymbol &&& id) & M.fromList)
+			(\ts rels -> set tsRelations (M.elems rels) ts)
+
+tsRulesOnName	:: Lens' TypeSystem (Map Name Rule)
+tsRulesOnName	=  tsRules' . rulesOnName
+			
+			
+
+findRelation	:: TypeSystem -> Symbol -> Maybe Relation
+findRelation rels s
+	= find ((==) s . get relSymbol) $ get tsRelations rels
+
+
 
 instance Refactorable TypeName TypeSystem where
 	refactor f ts	= ts	& over tsSyntax (refactor f)

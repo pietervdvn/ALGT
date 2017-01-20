@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, FlexibleContexts, TemplateHaskell, RankNTypes #-}
 module Changer.Changes where
 
 {-
@@ -22,6 +22,9 @@ import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
+
+
+
 
 data DefaultChange k v
 	= Rename k k	-- simply rename the entries
@@ -110,8 +113,6 @@ refactorFunc (_:rest) k	= refactorFunc rest k
 
 
 
-
-
 data Changes = Changes
 			{ _changesName		:: Name
 			, _changedSyntax	:: [DefaultChange TypeName ([BNF], WSMode)]
@@ -177,7 +178,44 @@ editRule syntax false nm old new
 	= Left "Editing rules is not implemented. How did you end here?"
 
 
+--------------------------------------- Application on typesystem -----------------------------
 
+
+applyChanges	:: Changes -> TypeSystem -> Either String TypeSystem
+applyChanges changes ts
+		= (ts	& applyNameChange (get changesName changes)
+			& return)
+			>>= applySyntaxChanges (get changedSyntax changes)
+			>>= applyFuncChanges (get changedFuncs changes)
+			>>= applyRelChanges (get changedRels changes)
+			>>= applyRuleChanges (get changedRules changes)
+
+applyNameChange name
+	= over tsName ((name++" ")++) 
+
+applySyntaxChanges bnfCh'
+	= applyChangesOn editSyntax id bnfCh' (tsSyntax . fullSyntax)
+
+applyFuncChanges funcCh' ts
+	= applyChangesOn (editFunction (get tsSyntax ts)) liftFunctionName funcCh' tsFunctions ts
+
+applyRelChanges relCh'
+	= applyChangesOn editRelation liftRelationSymbol relCh' tsRelations'
+
+applyRuleChanges ruleCh' ts
+	= applyChangesOn (editRule (get tsSyntax ts)) liftRuleName ruleCh' tsRulesOnName ts
+
+applyChangesOn	:: (Ord k, Show k, Refactorable a TypeSystem) =>
+			EditFunction k v
+			-> ((k -> k) -> a -> a)
+			-> [DefaultChange k v] 
+			-> Lens' TypeSystem (Map k v) ->  TypeSystem
+			-> Either String TypeSystem
+applyChangesOn editFunc refactorFuncEdit changes lens ts
+	= do	changed'	<- get lens ts & applyAllChanges editFunc changes
+		let ts'	= set lens changed' ts
+		let refF	= refactorFuncEdit $ refactorFunc changes
+		return $ refactor refF ts'
 
 --------------------------------------- ToString -------------------------------------------------
 
@@ -208,7 +246,7 @@ instance ToString' (k -> String, Bool -> k -> v -> String, Bool -> String) [Defa
 				changed' = changed |> toParsable' (sk, sv )
 						& intercalate "\n"
 					 	& inHeader' (section False ++" Changes")
-
+ 
 				guard ls v	= [ v | not $ null ls]
 				in
 				[guard new new', guard changed changed'] & concat & unlines

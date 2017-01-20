@@ -51,7 +51,7 @@ Actually adds which forms can be applied to the rules
 -}
 analyse		:: TypeSystem -> AnalysisSyntax -> AnalysisSyntax
 analyse ts synt
-	= let	findRel' symb	= fromJust $ findRelation (get tsRelations ts) symb
+	= let	findRel' symb	= fromJust $ findRelation ts symb
 		relations	= get tsRules' ts & get rules & M.toList 
 		relations'	= relations
 					|> over _1 (findRel')	:: [(Relation, [Rule])]
