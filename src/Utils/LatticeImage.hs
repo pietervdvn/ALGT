@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Utils.LatticeImage(latticeSVG, ColorScheme(..), terminalCS, whiteCS, linesIntersect) where
 
 import Utils.Utils
@@ -40,7 +40,7 @@ main = do	let cs	= terminalCS
 latticeSVG	:: Int -> ColorScheme ->  ([[String]], [(String, String)], [(String, String)]) -> String
 latticeSVG pxFactor cs (groupsS, connectedS, connectedDashedS)
 	= let	maxWidth	= groupsS |> length & maximum
-		groupsS'	= head groupsS : (init $ tail groupsS |> padR maxWidth []) ++ [last groupsS]
+		groupsS'	= head groupsS : init (tail groupsS |> padR maxWidth []) ++ [last groupsS]
 		groups		= groupsS' ||>> Text.pack
 		connected	= connectedS |> over _1 Text.pack |> over _2 Text.pack
 		connectedDashed	= connectedDashedS |> over _1 Text.pack |> over _2 Text.pack

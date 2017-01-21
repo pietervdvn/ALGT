@@ -94,7 +94,7 @@ drawLine cs dashed (x0,y0) (x1, y1)
 			! A.stroke (stringValue $ get lineColor cs)
 			! A.strokeWidth (intValue $ get lineThickness cs)
 			! A.strokeLinecap "round"
-	   in if dashed then pth ! A.strokeDasharray (stringValue $ [show $ lt, ",", show $ 5 * lt] & unwords) else pth
+	   in if dashed then pth ! A.strokeDasharray (stringValue $ [show lt, ",", show $ 5 * lt] & unwords) else pth
 
 {-
 Height: 

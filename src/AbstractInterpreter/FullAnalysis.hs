@@ -68,8 +68,7 @@ analyse		:: TypeSystem -> AnalysisSyntax -> AnalysisSyntax
 analyse ts synt
 	= let	findRel' symb	= fromJust $ findRelation ts symb
 		relations	= get tsRules' ts & get rules & M.toList 
-		relations'	= relations
-					|> over _1 (findRel')	:: [(Relation, [Rule])]
+		relations'	= relations |> over _1 findRel'	:: [(Relation, [Rule])]
 		holeFillers	= createHoleFillFor ts
 		possibleArgs	= relations' |> possibleSets ts synt holeFillers
 					& M.unionsWith (++) 

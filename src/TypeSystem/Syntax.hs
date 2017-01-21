@@ -297,7 +297,7 @@ instance Check' Syntax (Name, [BNF]) where
 checkNoDuplicateChoices	:: (Name, [BNF]) -> Either String ()
 checkNoDuplicateChoices (n, asts)
 	= inMsg "While checking for duplicate choices" $
-	  checkNoDuplicates asts $ (\dups -> "The choice "++showComma dups++" appears multiple times")
+	  checkNoDuplicates asts (\dups -> "The choice "++showComma dups++" appears multiple times")
 
 checkUnknownRuleCall	:: Syntax -> (Name, [BNF]) -> Either String ()
 checkUnknownRuleCall bnfs' (n, asts)

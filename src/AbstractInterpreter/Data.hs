@@ -50,16 +50,13 @@ subtractArg s args minus
 type Assignments	= Map Name (AbstractSet, Maybe Path)
 
 instance ToString' Int Assignments where
-	toParsable' i dict
-		= _toString i toParsable dict
-	toCoParsable' i dict
-		= _toString i toCoParsable dict
-	debug' i dict
-		= _toString i debug dict
+	toParsable'	= _toString toParsable
+	toCoParsable'	= _toString toCoParsable
+	debug'		= _toString debug
 	show' _		= show
 
-_toString	:: Int -> (AbstractSet -> String) -> Assignments -> String
-_toString i showAs dict
+_toString	:: (AbstractSet -> String) -> Int -> Assignments -> String
+_toString showAs i dict
 	= dict & M.toList |> (\(nm, (as, mPath)) -> padR i ' ' nm ++ " --> " ++ showAs as) & unlines
 
 
