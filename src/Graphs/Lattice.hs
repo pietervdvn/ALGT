@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Graphs.Lattice (Lattice, makeLattice, addElement, asSVG, subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, infimum, infimums, supremum, supremums) where
+module Graphs.Lattice (Lattice, makeLattice, addElement, addRelation, asSVG, subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, infimum, infimums, supremum, supremums, removeTransitive') where
 
 {-
 This module defines a finite lattice structure.
@@ -23,6 +23,11 @@ import qualified Data.List as L
 import Data.Maybe
 
 import Control.Monad
+import Control.Monad.State (State, execState)
+import qualified Control.Monad.State as State
+
+import Debug.Trace
+
 
 data Lattice a	= Lattice
 	{ _bottom	:: a
@@ -57,6 +62,14 @@ addElement newEl subsOfNew supersOfNew lattice
 		in
 		removeTransitive lattice'
 
+
+addRelation	:: (Ord a, Eq a) => a -> a -> Lattice a -> Lattice a
+addRelation sub super l
+ | sub == super	= l
+ | otherwise
+	= l	& over isSubsetOfEvery (M.adjust (S.insert super) sub)
+		& over isSupersetOfEvery (M.adjust (S.insert sub) super)
+
 {-
  Consider lattice ["bottom" {"a","b"}] ["a", {"top", "b"} ] ["b", {"top"}]
 "bottom" can reach "b" via a, so the direct link "bottom" "b" can be removed
@@ -67,6 +80,9 @@ removeTransitive	:: (Ord a) => Lattice a -> (Lattice a, [(a, a)])
 removeTransitive lattice
 	= foldl removeUnneedDirectLinksFor (lattice, []) (M.keys $ get isSubsetOfEvery lattice)
 
+
+removeTransitive'	:: (Ord a) => Lattice a -> Lattice a
+removeTransitive'	= fst . removeTransitive
 
 removeUnneedDirectLinksFor	:: (Ord a) => (Lattice a, [(a, a)]) -> a -> (Lattice a, [(a, a)])
 removeUnneedDirectLinksFor (lattice, removed) a
@@ -106,6 +122,9 @@ subsetsOf		:: (Ord a) => Lattice a -> a -> Set a
 subsetsOf lattice a
 	= get isSupersetOfEvery lattice & M.findWithDefault S.empty a
 
+allElems	:: (Ord a) => Lattice a -> [a]
+allElems l	= get top l:get bottom l:(get isSubsetOfEvery l & M.keys)
+
 
 -- Direct supersets, tus all sets of which set 'a' is a part
 supersetsOf		:: (Ord a) => Lattice a -> a -> Set a
@@ -144,25 +163,46 @@ supremums l as
 ------------------- CODE TO SHOW A FANCY SVG ---------------------
 
 
-asSVG			:: (Ord a) => (a -> String) -> (a -> Bool) -> Int -> ColorScheme -> Lattice a -> String
+asSVG			:: (Ord a, Show a) => (a -> String) -> (a -> Bool) -> Int -> ColorScheme -> Lattice a -> String
 asSVG shw doDash pxW cs lattice
 	= let	(groups, conn, dashed)	= flatRepresentation lattice doDash
 		shwTpl (a, b)		= (shw a, shw b)
 		in latticeSVG  pxW cs (groups ||>> shw, conn |> shwTpl, dashed |> shwTpl)
 		
 
+-- calculates how many steps might be taken from the top
+longestPathToTop	:: (Ord a) => Lattice a -> [(a, Int)]
+longestPathToTop l	
+		= let	startState	= M.singleton (get top l) (0::Int) in
+			execState (untilStable $ stepLongest l) startState & M.toList
 
-flatRepresentation	:: (Ord a) => Lattice a -> (a -> Bool) -> ([[a]], [(a, a)], [(a, a)])
+untilStable	:: (Eq s) => State s () -> State s ()
+untilStable st	= do	st0	<- State.get
+			st
+			st1	<- State.get
+			unless (st0 == st1) $ untilStable st
+
+stepLongest	:: (Ord a) => Lattice a -> State (Map a Int) ()
+stepLongest l	= allElems l |+> stepElem l & void
+				
+
+
+stepElem	:: (Ord a) => Lattice a -> a -> State (Map a Int) ()
+stepElem l a	= do	let supersOfA	= a & allSupersetsOf l & S.toList
+			distances	<- State.get
+			let distances'	= supersOfA |> (`M.lookup` distances) & catMaybes
+			unless (null distances') (State.modify (M.insert a $ 1 + maximum distances'))
+
+
+
+flatRepresentation	:: (Ord a, Show a) => Lattice a -> (a -> Bool) -> ([[a]], [(a, a)], [(a, a)])
 flatRepresentation lattice dashedLines
-	= let	-- we build from top to bottom, to put values at their highest possible position
-		startQueue	= [get top lattice]
-		startSeen	= get bottom lattice : startQueue
-		queues		= takeWhile (not . null . snd) $ iterate (nextQueue lattice) (S.fromList startSeen, startQueue)
-		levels		= queues |> snd & reverse
+	= let	-- Connections between elements
 		relations	= get isSubsetOfEvery lattice |> S.toList & M.toList & unmerge
 		(dashed, conn)	= L.partition (\(a, b) -> dashedLines a || dashedLines b) relations
+		levels		= longestPathToTop lattice |> swap & merge & L.sortOn fst
 		in
-		([get bottom lattice] : levels, conn, dashed)
+		(levels |> snd & reverse, conn, dashed)
 
 nextQueue	:: (Ord a) => Lattice a -> (Set a, [a]) -> (Set a, [a])
 nextQueue lattice (alreadySeen, queue)

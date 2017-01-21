@@ -17,10 +17,12 @@ import qualified Data.Set as S
 import Data.Set (Set)
 import Data.List as L
 import Data.List (intercalate, intersperse, nub)
+import Data.Maybe
 
 import Control.Arrow ((&&&))
 import Control.Monad
 
+import Debug.Trace
 
 data AbstractSet
 	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
@@ -65,7 +67,10 @@ toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
 
 
 
-reverseSyntax	:: Syntax -> Map [AbstractSet] Name
+refold		:: Syntax -> [AbstractSet] -> [AbstractSet]
+refold s	= refold' s (reverseSyntax s)
+
+reverseSyntax	:: Syntax -> [([AbstractSet], Name)]
 reverseSyntax synt
 	= let prepBNFs tp bnfs	= bnfs	|> generateAbstractSet' synt "" tp
 					|> eraseDetails
@@ -73,7 +78,7 @@ reverseSyntax synt
 	  synt	& get bnf 
 		& M.mapWithKey prepBNFs
 		& toList 
-		|> swap & fromList
+		|> swap
 
 {-
 Tries to simplify the abstractset, eventually by refolding.
@@ -82,41 +87,76 @@ Names will be invalidated afterwards
 E.g. ["True", "False"] -> ["Bool"]
 
 -}
-refold		:: Syntax -> Map [AbstractSet] Name -> [AbstractSet] -> [AbstractSet]
-refold _ _ [a]	= [a]
-refold syntax revTable as
+refold'		:: Syntax -> [([AbstractSet], Name)] -> [AbstractSet] -> [AbstractSet]
+refold' _ _ [a]	= [a]
+refold' syntax revTable as
 		= let	as'	= as |> eraseDetails & nub
-			grouped	= as' & groupBy mightFoldSeq |> foldGroup syntax revTable & concat
-			matched	= revTable & M.lookup (sort grouped)
-					& maybe grouped (\tn -> [EveryPossible _eMI "" tn])
+			grouped	= as' & groupBy mightFoldSeq |> foldGroup syntax revTable
+			grouped'	= grouped |> eatSubexpressions syntax
+						& concat & sort
+			matched	= foldl lookupFold grouped' revTable
 			in
 			matched
+
+
+lookupFold		:: [AbstractSet] -> ([AbstractSet], Name) -> [AbstractSet]
+lookupFold as ([], _)	= as 
+lookupFold as (needed, becomes)
+	= if needed `isSubsequenceOf` as then
+				EveryPossible (becomes, -1) "" becomes : (as L.\\ needed)
+			else	as
+
+
+eatSubexpressions	:: Syntax -> [AbstractSet] -> [AbstractSet]
+eatSubexpressions _ []	= []
+eatSubexpressions _ [as]
+			= [as]
+eatSubexpressions s (head@(EveryPossible _ _ tn):rest)
+	= let	rest'	= rest & filter (\sub -> not $ alwaysIsA s (typeOf sub) tn)
+		overShadowed	= rest' |> fromEveryPossible 
+					& catMaybes
+					& any (\super -> alwaysIsA s tn super)
+		head'	= if overShadowed then [] else [head]
+		result	= head' ++ eatSubexpressions s rest'
+		in
+		result
+		
+eatSubexpressions s (as:rest)
+	= as : eatSubexpressions s rest
 
 
 mightFoldSeq	:: AbstractSet -> AbstractSet -> Bool
 mightFoldSeq (AsSeq _ s1) (AsSeq _ s2)
  | length s1 /= length s2	= False
- | otherwise		= True
-mightFoldSeq a1 a2		= False
+ | otherwise			= 1 == length (diffPoints $ transpose [s1, s2])
+mightFoldSeq a1 a2		= True
 
 
-foldGroup	:: Syntax -> Map [AbstractSet] Name -> [AbstractSet] -> [AbstractSet]
+diffPoints		:: [[AbstractSet]] -> [Int]
+diffPoints seqqed	= seqqed |> (\(a:as) -> all ((==) a) as)
+				& mapi & filter (not . snd)
+				|> fst	:: [Int]
+
+
+foldGroup	:: Syntax -> [([AbstractSet], Name)] -> [AbstractSet] -> [AbstractSet]
 foldGroup _ _ []		= []
 foldGroup _ _ [as]		= [as]
 foldGroup syntax revTable ass
  | not $ isAsSeq $ head ass	= ass
 	-- All 'details' have been erased, and the entire group has the same structure
 	-- In other words, all are a sequence with only differences on e.g. "True" 
- | otherwise	= do	let seqqed	= ass 	|> fromAsSeq & transpose	:: [[AbstractSet]]
+ | otherwise	= do	let tp		= typeOf $ head ass
+			let seqqed	= ass 	|> fromAsSeq & transpose	:: [[AbstractSet]]
+			let diffPts	= diffPoints seqqed			:: [Int]
 			let seqqed'	= seqqed |> head			:: [AbstractSet]
 			-- now, all 'indices' should be the same, except for one focus point
-			let diffPoints	= seqqed |> (\(a:as) -> all ((==) a) as)
-						& mapi & filter (not . snd)	:: [(Int, Bool)]
-			if length diffPoints /= 1 then ass else do
-				let i		= head diffPoints & fst
-				a		<- (seqqed !! i) & refold syntax revTable	:: [AbstractSet]
+			if length diffPts /= 1 then ass else do
+				let i		= head diffPts
+				a		<- (seqqed !! i) & refold' syntax revTable	:: [AbstractSet]
 				let mergedSeq	= (take i seqqed') ++ [a] ++ (drop (i + 1) seqqed')
-				return $ AsSeq _eMI mergedSeq
+				return $ AsSeq (tp, -1) mergedSeq
+
+
 
 generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
 generateAbstractSet s n tp
@@ -208,6 +248,10 @@ _subtract syntax s minus
  | otherwise		= return s
 
 
+isSubexpressionOf	:: Syntax -> TypeName -> AbstractSet -> Bool
+isSubexpressionOf s everyPossible doesContain
+	= alwaysIsA s everyPossible (typeOf doesContain)
+
 
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
@@ -243,6 +287,11 @@ isEveryPossible			:: AbstractSet -> Bool
 isEveryPossible EveryPossible{}	= True
 isEveryPossible _		= False
 
+fromEveryPossible		:: AbstractSet -> Maybe TypeName
+fromEveryPossible (EveryPossible _ _ tn)
+				= Just tn
+fromEveryPossible _		= Nothing
+
 isConcrete 			:: AbstractSet -> Bool
 isConcrete ConcreteLiteral{}	= True
 isConcrete ConcreteIdentifier{}	= True
@@ -274,17 +323,17 @@ sameStructure as bs
 
 -- erases variable names and producing rules
 eraseDetails	:: AbstractSet -> AbstractSet
-eraseDetails (EveryPossible _ _ tn)
-		= EveryPossible _eMI "" tn
-eraseDetails (ConcreteLiteral _ s)
-		= ConcreteLiteral _eMI s
-eraseDetails (ConcreteIdentifier _ _)
-		= ConcreteIdentifier _eMI ""
-eraseDetails (ConcreteInt _ _)
-		= ConcreteInt _eMI ""
-eraseDetails (AsSeq _ ass)
-		= ass |> eraseDetails & AsSeq _eMI
-_eMI		= ("", -1)
+eraseDetails (EveryPossible mi _ tn)
+		= EveryPossible (tn, -1) "" tn
+eraseDetails (ConcreteLiteral mi s)
+		= ConcreteLiteral (_eMI mi) s
+eraseDetails (ConcreteIdentifier mi _)
+		= ConcreteIdentifier (_eMI mi) ""
+eraseDetails (ConcreteInt mi _)
+		= ConcreteInt (_eMI mi) ""
+eraseDetails (AsSeq mi ass)
+		= ass |> eraseDetails & AsSeq (_eMI mi)
+_eMI (tn, _)	= (tn, -1)
 
 
 getAt		:: AbstractSet -> Path -> AbstractSet
@@ -336,11 +385,14 @@ instance ToString AbstractSet where
 	toParsable (ConcreteInt _ nm)		= "Number"
 	toParsable (AsSeq _ ass)		= ass |> toParsable & unwords & inParens
 	
-	toCoParsable (EveryPossible _ n tp)	= tp++n 
-	toCoParsable (ConcreteLiteral _ s)	= show s
-	toCoParsable (ConcreteIdentifier _ nm)	= "Identifier"++nm
-	toCoParsable (ConcreteInt _ nm)		= "Number"++nm
-	toCoParsable (AsSeq _ ass)		= ass |> toCoParsable & unwords & inParens
+	toCoParsable as@(EveryPossible _ n tp)		= tp++n
+	toCoParsable as@(ConcreteLiteral _ s)		= show s ++ _to as
+	toCoParsable as@(ConcreteIdentifier _ nm)	= "Identifier"++nm ++ _to as
+	toCoParsable as@(ConcreteInt _ nm)		= "Number"++nm ++ _to as
+	toCoParsable as@(AsSeq _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as
 
 
 	debug	= show
+
+
+_to as	= " : "++typeOf as

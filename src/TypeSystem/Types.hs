@@ -54,3 +54,13 @@ class Refactorable n a where
 	-- replaces all values within the context, e.g. rename BNF-rules in a syntax
 	refactor	:: (n -> n) -> a -> a
  
+
+refactor'	:: (Refactorable n a, Eq n) => [(n, n)] -> a -> a
+refactor' list	= refactor (_refFunc list)
+
+_refFunc	:: (Eq n) => [(n, n)] -> n -> n
+_refFunc [] n	= n 
+_refFunc ((n0, nRep):rest) n1
+ | n0 == n1	= nRep
+ | otherwise	= _refFunc rest n1
+

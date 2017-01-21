@@ -67,6 +67,11 @@ fromFullSyntax	:: Map TypeName ([BNF], WSMode) -> Syntax
 fromFullSyntax dict
 	= BNFRules (dict |> fst) (dict |> snd) (dict |> fst & asLattice)
 
+
+rebuildSubtypings	:: Syntax -> Syntax
+rebuildSubtypings s
+		= set lattice (get bnf s & asLattice) s
+
 fullSyntax	:: Lens' Syntax (Map TypeName ([BNF], WSMode))
 fullSyntax	= lens getFullSyntax (const fromFullSyntax)
 

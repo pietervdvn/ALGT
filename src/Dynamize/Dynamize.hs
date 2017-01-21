@@ -29,10 +29,13 @@ as both (non-same) derivations might be calculated
  -}
 
 import Utils.Utils
+import Utils.ToString
+import Prelude hiding (subtract)
 
 import TypeSystem
 import Changer.Changes
 
+import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.FullAnalysis
 
 import Data.Map as M
@@ -53,11 +56,29 @@ dynamize ts rule typeErr addStuckStateRules
 
 calculateNewRulesFor	:: TypeSystem -> Relation -> [Rule]
 calculateNewRulesFor ts relation
-	= let	analysisSyntax	= "hi" in
-		error $ "Fix rules for "++get relSymbol relation
+	= let	syntax		= get tsSyntax ts
+		symb		= get relSymbol relation
+		analysisSyntax	= createRuleSyntax ts
+		tps		= relation & relTypesWith In
+		ruleNames	= tps & mapi |> (\(i, tp) -> ruleNameFor symb i tp In)
+		args		= generateArgs syntax tps & zip ruleNames	:: [(Name, AbstractSet)]
+		argsDebug	= args ||>> toParsable ||>> (" --> "++) 
+					|> uncurry (++)
+					& unlines & indent
+		stuckArgs	= args |> stuckArg analysisSyntax
+		in
+		error $ unlines [ "Fix rules for "++get relSymbol relation
+				, argsDebug
+				-- , stuckArgs & show
+				, ""
+				, toParsable analysisSyntax]
 
 
 
+stuckArg	:: Syntax -> (TypeName, AbstractSet) -> [AbstractSet]
+stuckArg analysisSyntax (acceptableInput, allInput)
+	= let	acceptableInput'	= generateAbstractSet analysisSyntax "" acceptableInput in
+		subtract analysisSyntax [allInput] acceptableInput'
 
 
 

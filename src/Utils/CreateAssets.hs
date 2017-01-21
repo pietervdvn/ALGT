@@ -1,4 +1,4 @@
-module Utils.CreateAssets where
+module Utils.CreateAssets (createAssets, createAssets') where
 
 {-
 This module defines a small tool, creating asset files
