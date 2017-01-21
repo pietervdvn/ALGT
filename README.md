@@ -8,6 +8,8 @@ A tool to create, based on syntax, an interpreter for any language (and support 
 
 # Usefull hex codes
 
+You never now which fancy symbols you'll want to type.
+
 Type CTRL+SHIFT+U, followed by a hexcode to obtain following chars:
 →	2192
 ✓	2713

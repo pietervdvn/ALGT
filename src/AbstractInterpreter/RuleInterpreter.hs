@@ -202,5 +202,5 @@ instance ToString RuleAnalysis where
 instance ToString RuleApplication where
 	toParsable rapp@(RuleApplication _ _ concl preds)
 		= let 	rec	= if isRecursive rapp then "(recursion) " else ""  in
-			toCoParsable concl ++ if null preds then "" else "\t where "++ rec ++ toCoParsable' ", " preds
+			toCoParsable concl ++ if null preds then "" else "\n\t where "++ rec ++ toCoParsable' ", " preds
 

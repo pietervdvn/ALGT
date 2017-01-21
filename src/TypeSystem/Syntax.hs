@@ -291,8 +291,14 @@ makeSyntax vals
 instance Check' Syntax (Name, [BNF]) where
 	check' s rule@(n, bnfs)
 		= inMsg ("While checking the syntax rule "++show n)
-			$ allRight_ [checkUnknownRuleCall s rule, checkNoDuplicateChoices rule]
+			$ allRight_ $ ([checkUnknownRuleCall s, checkNoDuplicateChoices, checkTrivial] |> (rule &))
 
+
+checkTrivial	:: (Name, [BNF]) -> Either String ()
+checkTrivial (nm, [BNFRuleCall _])
+	= inMsg "While checking for triviality" $
+		Left $ "The rule "++show nm++" only calls another rule and is trivial. Please remove it"
+checkTrivial	_	= pass
 
 checkNoDuplicateChoices	:: (Name, [BNF]) -> Either String ()
 checkNoDuplicateChoices (n, asts)
@@ -329,10 +335,12 @@ checkAllUnique syntax
 	= do	let lookupT	= syntax & get bnf & M.toList 
 					& unmerge 
 					|> swap
-					& merge :: [(BNF, [TypeName])]
+					& merge 
+					& filter (not . isRuleCall . fst)
+						:: [(BNF, [TypeName])]
 		let duplicates	= lookupT & filter ((<) 1 . length . snd)
 		
-		let msg bnf tns	="The bnf sequence "++toParsable bnf ++ " is presented as a choice in multiple rule declarations, namely "++showComma tns++". Please, sperate them of into a new rule"
+		let msg bnf tns	="The bnf sequence "++toParsable bnf ++ " is presented as a choice in multiple rule declarations, namely "++showComma tns++". Please, separate them of into a new rule"
 		duplicates |> uncurry msg |> Left & allRight_		 
 
 

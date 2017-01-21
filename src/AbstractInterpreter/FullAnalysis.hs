@@ -26,7 +26,7 @@ import Lens.Micro hiding ((&))
 type AnalysisSyntax	= Syntax
 
 
-createRuleSyntax	:: TypeSystem -> Syntax
+createRuleSyntax	:: TypeSystem -> (Syntax, [TypeName])
 createRuleSyntax ts
 	= let	-- add new, empty rules to the syntax, e.g. (origRule)(symbol)in0
 		-- keep note of (newRuleName, origRule)
@@ -35,12 +35,12 @@ createRuleSyntax ts
 		addExtraSubtypings s	= over lattice (\l -> foldr (uncurry addRelation) l newRulesAndSuper
 									& removeTransitive') s	:: Syntax
 		-- actually analyse, thus add (origRule)(symbol)in0 ::= form1 | form2 | ...
-		syntax'			= analyse ts syntax 
+		(syntax', trivial)	= analyse ts syntax 
 		-- rebuild subtyping-relations, for the new rules
 		syntax''		= syntax' & rebuildSubtypings  & addExtraSubtypings
 		-- add extra subtypings, namely every (origRule)(symbol)in0 is also a origRule
 		in
-		syntax''
+		(syntax'', trivial)
 
 ruleNameFor	:: Symbol -> Int -> TypeName -> Mode -> String
 ruleNameFor symbol i tn mode
@@ -64,7 +64,7 @@ createHoleFillFor ts
 {-
 Actually adds which forms can be applied to the rules
 -}
-analyse		:: TypeSystem -> AnalysisSyntax -> AnalysisSyntax
+analyse		:: TypeSystem -> AnalysisSyntax -> (AnalysisSyntax, [TypeName])
 analyse ts synt
 	= let	findRel' symb	= fromJust $ findRelation ts symb
 		relations	= get tsRules' ts & get rules & M.toList 
@@ -77,11 +77,12 @@ analyse ts synt
 		-- remove direct cycles, e.g. "a ::= ... | a | ..."
 		possibleArgs'	= possibleArgs & M.mapWithKey (\k bnfs -> bnfs |> _validCall k & catMaybes & nub)
 		-- remove trivial rules, e.g. "a ::= b"
-		(invalidArgs, possibleArgs'')
+		(trivial, possibleArgs'')
 				= possibleArgs'	& M.partition (\v -> length v == 1 && (v & head & isRuleCall))
-		refactoring	= invalidArgs ||>> fromRuleCall |> catMaybes |> head & M.toList :: [(TypeName, TypeName)]
+		refactoring	= trivial ||>> fromRuleCall |> catMaybes |> head & M.toList :: [(TypeName, TypeName)]
+		synt'		= synt & over bnf (M.union possibleArgs'') & refactor' refactoring
 		in
-		synt & over bnf (M.union possibleArgs'') & refactor' refactoring
+		(synt', trivial & M.keys)
 
 
 _validCall	:: TypeName -> BNF -> Maybe BNF

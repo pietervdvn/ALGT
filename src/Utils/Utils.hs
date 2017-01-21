@@ -65,7 +65,7 @@ inHeader prefix str chr msg
 	= let	title	= " "++str++" "
 		line	= title |> const chr
 		in
-		[prefix ++ title, prefix ++ line, "", msg] & unlines
+		["", prefix ++ title, prefix ++ line, "", msg] & unlines
 
 inHeader' s
 	= inHeader "" s '='
@@ -139,7 +139,8 @@ allRight_ eithers
 		= eithers & filter isLeft & allRight >> return ()
 
 
-indent msg	= msg & lines |> ("  "++) & unlines
+indent []	= []
+indent msg	= msg & lines |> ("  "++) & unlines & init
 
 -- Stack message for Either Monad
 inMsg		:: String -> Either String a -> Either String a

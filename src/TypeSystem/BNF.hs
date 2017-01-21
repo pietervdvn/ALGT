@@ -118,7 +118,7 @@ instance ToString (Name, Int, WSMode, String, [BNF]) where
 	toParsable (n, i, ws, extra, [])
 		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ "< no bnfs declared >"
 	toParsable (n, i, ws, extra, bnfs)
-		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ toParsable' " | " bnfs
+		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ toParsable' ("\n" ++ replicate i ' ' ++  "| ") bnfs
 
 
 instance Refactorable TypeName BNF where

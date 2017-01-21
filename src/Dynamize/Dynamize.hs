@@ -58,7 +58,7 @@ calculateNewRulesFor	:: TypeSystem -> Relation -> [Rule]
 calculateNewRulesFor ts relation
 	= let	syntax		= get tsSyntax ts
 		symb		= get relSymbol relation
-		analysisSyntax	= createRuleSyntax ts
+		analysisSyntax	= createRuleSyntax ts & fst
 		tps		= relation & relTypesWith In
 		ruleNames	= tps & mapi |> (\(i, tp) -> ruleNameFor symb i tp In)
 		args		= generateArgs syntax tps & zip ruleNames	:: [(Name, AbstractSet)]
@@ -69,7 +69,7 @@ calculateNewRulesFor ts relation
 		in
 		error $ unlines [ "Fix rules for "++get relSymbol relation
 				, argsDebug
-				-- , stuckArgs & show
+				, stuckArgs & show
 				, ""
 				, toParsable analysisSyntax]
 
@@ -78,7 +78,7 @@ calculateNewRulesFor ts relation
 stuckArg	:: Syntax -> (TypeName, AbstractSet) -> [AbstractSet]
 stuckArg analysisSyntax (acceptableInput, allInput)
 	= let	acceptableInput'	= generateAbstractSet analysisSyntax "" acceptableInput in
-		subtract analysisSyntax [allInput] acceptableInput'
+		subtract analysisSyntax (unfold analysisSyntax acceptableInput') acceptableInput'
 
 
 

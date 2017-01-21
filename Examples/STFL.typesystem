@@ -16,8 +16,6 @@ type	::= typeL "->" type | typeL
 
 
 
-
-
 # builtins values
 var	::= Identifier
 number	::= Number

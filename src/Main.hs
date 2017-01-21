@@ -76,10 +76,14 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpre
 			get tsFunctions changedTs & keys |+> runFuncAbstract changedTs
 
 
-		when interpretRulesAbstract $ void $
+		when interpretRulesAbstract $ void $ do
 			get tsRules' changedTs & get rules & toList |+> runRuleAbstract changedTs
+			abstractRuleSyntax changedTs
+
+
+
 		iraSVG & ifJust (\path ->  do
-			let l	= createRuleSyntax changedTs & latticeAsSVG terminalCS
+			let l	= createRuleSyntax changedTs & fst & latticeAsSVG terminalCS
 			writeFile path l)
 
 		createSVG & ifJust (\pth -> do
@@ -94,13 +98,30 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpre
 
 runRuleAbstract	:: TypeSystem -> (Symbol, [Rule]) -> IO ()
 runRuleAbstract ts (s, rules)
-	= do	let text	= rules |> (get ruleName &&& interpretRule' ts) ||>> toParsable 
+	= do	let analysises	= rules |> (get ruleName &&& interpretRule' ts)
+		let text	= analysises ||>> toParsable 
 					|> (\(nm, analysis) -> inHeader "" ("Analysis of rule "++ show nm) '-' analysis)
 					& unlines
-		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' text
+		let full	= analysises |> snd & concat & toParsable
 
-		let syntax'	= createRuleSyntax ts
-		putStrLn $ inHeader "" "Resulting syntax" '=' $  "# Use --irasvg [PATH] to create a subtyping of this syntax \n\n" ++ toParsable syntax'
+		let relation	= findRelation ts s & fromJust & toParsable & (++"\n")
+		let ruleNms	= rules |> get ruleName |> indent
+		let help	= (relation : "Known rules are" : ruleNms) |> ("# "++) & unlines
+	
+		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' help ++ full ++ text
+
+
+
+abstractRuleSyntax	:: TypeSystem -> IO ()
+abstractRuleSyntax ts	
+	= let	(syntax', trivial)	= createRuleSyntax ts
+		omitted		= "Following types were ommitted, as they turned out to be exactly their input type: \n"++
+					(trivial & unlines & indent)
+		omitted'	= omitted & lines |> ("# "++) & unlines
+		helpMsg		= "# Use --irasvg [PATH] to create a subtyping of this syntax \n\n"
+		 in
+		putStrLn $ inHeader "" "Resulting syntax" '=' $  helpMsg ++ omitted' ++ "\n\n"
+				 ++ toParsable syntax'
 
 runFuncAbstract	:: TypeSystem -> Name -> IO ()
 runFuncAbstract ts name
