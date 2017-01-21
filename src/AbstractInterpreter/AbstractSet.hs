@@ -22,8 +22,6 @@ import Data.Maybe
 import Control.Arrow ((&&&))
 import Control.Monad
 
-import Debug.Trace
-
 data AbstractSet
 	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
 	| ConcreteLiteral MInfo String
@@ -103,8 +101,8 @@ lookupFold		:: [AbstractSet] -> ([AbstractSet], Name) -> [AbstractSet]
 lookupFold as ([], _)	= as 
 lookupFold as (needed, becomes)
 	= if needed `isSubsequenceOf` as then
-				EveryPossible (becomes, -1) "" becomes : (as L.\\ needed)
-			else	as
+		EveryPossible (becomes, -1) "" becomes : (as L.\\ needed)
+		else	as
 
 
 eatSubexpressions	:: Syntax -> [AbstractSet] -> [AbstractSet]
@@ -115,7 +113,7 @@ eatSubexpressions s (head@(EveryPossible _ _ tn):rest)
 	= let	rest'	= rest & filter (\sub -> not $ alwaysIsA s (typeOf sub) tn)
 		overShadowed	= rest' |> fromEveryPossible 
 					& catMaybes
-					& any (\super -> alwaysIsA s tn super)
+					& any (alwaysIsA s tn)
 		head'	= if overShadowed then [] else [head]
 		result	= head' ++ eatSubexpressions s rest'
 		in
@@ -133,7 +131,7 @@ mightFoldSeq a1 a2		= True
 
 
 diffPoints		:: [[AbstractSet]] -> [Int]
-diffPoints seqqed	= seqqed |> (\(a:as) -> all ((==) a) as)
+diffPoints seqqed	= seqqed |> (\(a:as) -> all (== a) as)
 				& mapi & filter (not . snd)
 				|> fst	:: [Int]
 
@@ -153,7 +151,7 @@ foldGroup syntax revTable ass
 			if length diffPts /= 1 then ass else do
 				let i		= head diffPts
 				a		<- (seqqed !! i) & refold' syntax revTable	:: [AbstractSet]
-				let mergedSeq	= (take i seqqed') ++ [a] ++ (drop (i + 1) seqqed')
+				let mergedSeq	= take i seqqed' ++ [a] ++ drop (i + 1) seqqed'
 				return $ AsSeq (tp, -1) mergedSeq
 
 
@@ -163,8 +161,8 @@ generateAbstractSet s n tp
 			= generateAbstractSet' s n tp (BNFRuleCall tp)
 
 generateAbstractSet'	:: Syntax -> Name -> TypeName -> BNF -> AbstractSet
-generateAbstractSet' s n tp bnf
-			= _generateAbstractSet s (tp, -1) n bnf
+generateAbstractSet' s n tp
+			= _generateAbstractSet s (tp, -1) n
 
 
 _generateAbstractSet				:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet

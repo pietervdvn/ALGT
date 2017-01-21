@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
-module Utils.LatticeImage(latticeSVG, ColorScheme(..), terminalCS, whiteCS) where
+module Utils.LatticeImage(latticeSVG, ColorScheme(..), terminalCS, whiteCS, linesIntersect) where
 
 import Utils.Utils
 import Utils.Image
@@ -11,6 +11,10 @@ import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
 
 import qualified Data.Map as M
+import Data.List
+import Data.Map (Map)
+
+import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
 
@@ -33,12 +37,11 @@ main = do	let cs	= terminalCS
 		writeFile "test.svg" a
 
 
-
-
-
 latticeSVG	:: Int -> ColorScheme ->  ([[String]], [(String, String)], [(String, String)]) -> String
 latticeSVG pxFactor cs (groupsS, connectedS, connectedDashedS)
-	= let	groups	= groupsS ||>> Text.pack
+	= let	maxWidth	= groupsS |> length & maximum
+		groupsS'	= head groupsS : (init $ tail groupsS |> padR maxWidth []) ++ [last groupsS]
+		groups		= groupsS' ||>> Text.pack
 		connected	= connectedS |> over _1 Text.pack |> over _2 Text.pack
 		connectedDashed	= connectedDashedS |> over _1 Text.pack |> over _2 Text.pack
 		
@@ -53,15 +56,57 @@ latticeSVG pxFactor cs (groupsS, connectedS, connectedDashedS)
 
 lattice		:: ColorScheme -> W -> H -> [[Text]] -> [(Text, Text)] -> [(Text, Text)] -> S.Svg
 lattice cs w h groups connected connectedDashed
-	= do	let groups'	= positions w h groups 
+	= do	let bestGroups	= bestPos w h groups (connected ++ connectedDashed)
+		let groups'	= positions w h bestGroups |> filter (not . Text.null . fst)
 		let queryPos	= M.fromList $ concat groups'
 		connected |+> uncurry (drawLineBetween cs False queryPos)
 		connectedDashed |+> uncurry (drawLineBetween cs True queryPos)
 		let gl		= length groups `div` 2
 		groups' & take gl & concat |+> annotatedDot cs True
 		groups' & drop gl & concat |+> annotatedDot cs False
-
 		pass
+
+
+
+bestPos		:: W -> H -> [[Text]] -> [(Text, Text)] -> [[Text]]
+bestPos w h groups conns
+	= let	iter	= foldr (optimizeRow w h conns) groups [0..length groups - 1]
+		in
+		if iter == groups then iter
+			else bestPos w h iter conns
+		
+
+
+
+optimizeRow	:: W -> H -> [(Text, Text)] -> Int -> [[Text]] -> [[Text]]
+optimizeRow w h conns i ts
+	= let	start		= take i ts
+		(toOpt:end)	= drop i ts
+		scoreOf' row	= scoreOf w h conns (start ++ [row] ++ end)
+		optRow		= permutations toOpt |> (scoreOf' &&& id)
+					& sortOn fst & head & snd
+		in
+		start ++ [optRow] ++ end
+		
+		
+
+
+scoreOf		:: W -> H -> [(Text, Text)] -> [[Text]] -> Int
+scoreOf w h conns ts	
+	= let	poss		= positions w h ts |> filter (not . Text.null . fst)
+		queryPos	= M.fromList $ concat poss
+		in score queryPos conns
+
+
+
+
+score		:: Map Text (X, Y) -> [(Text, Text)] -> Int
+score queryPos connections
+	= (do	let lines	= connections |> lookupPoints queryPos
+		l1	<- lines
+		l2	<- lines
+		return $ if linesIntersect l1 l2 then 1 else 0)
+		& sum & (`div` 2)
 
 
 

@@ -37,7 +37,7 @@ import AbstractInterpreter.Data
 
 import Dynamize.Test
 
-version	= ([0,1,8], "Total Language Analysis")
+version	= ([0,1,9], "Total Language Analysis: Syntax (and fancy graphs!)")
 
 
 main	:: IO ()
@@ -100,7 +100,7 @@ runRuleAbstract ts (s, rules)
 		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' text
 
 		let syntax'	= createRuleSyntax ts
-		putStrLn $ inHeader "" ("Resulting syntax") '=' $  "# Use --irasvg [PATH] to create a subtyping of this syntax \n\n" ++ toParsable syntax'
+		putStrLn $ inHeader "" "Resulting syntax" '=' $  "# Use --irasvg [PATH] to create a subtyping of this syntax \n\n" ++ toParsable syntax'
 
 runFuncAbstract	:: TypeSystem -> Name -> IO ()
 runFuncAbstract ts name

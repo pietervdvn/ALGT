@@ -61,10 +61,30 @@ packageSVG (pxW, pxH) (viewBoxW, viewBoxH) svg
 
 drawLineBetween	:: ColorScheme -> Bool -> Map Text (X, Y) -> Text -> Text -> S.Svg
 drawLineBetween cs dashed coors start end
-	= do	let find x	= findWithDefault (error $ "Images: I do not know what "++Text.unpack x++" is") x coors 
-		let start'	= find start
-		let end'	= find end
+	= do	let (start', end')	= lookupPoints coors (start, end)
 		drawLine cs dashed start' end'
+
+lookupPoints	:: Map Text (X, Y) -> (Text, Text) -> ((X, Y), (X, Y))
+lookupPoints coors (start, end)
+	= let	find x	= findWithDefault (error $ "Images: I do not know what "++Text.unpack x++" is") x coors 
+		start'	= find start
+		end'	= find end
+		in (start', end')
+
+
+
+linesIntersect	:: ((X, Y), (X, Y)) -> ((X, Y), (X, Y)) -> Bool
+linesIntersect (e@(ex, ey), f@(fx, fy)) (p@(px, py), q@(qx, qy))
+ | e == p || e == q || f == p || f == q
+		= False
+ | otherwise
+		= let	side0	= (fx - ex)*(py - fy) - (fy - ey)*(px - fx)
+			side1	= (fx - ex)*(qy - fy) - (fy - ey)*(qx - fx)
+			in
+			signum side0 /= signum side1
+			
+
+
 
 drawLine	:: ColorScheme -> Bool -> (X, Y) -> (X, Y) -> S.Svg
 drawLine cs dashed (x0,y0) (x1, y1)
@@ -74,7 +94,7 @@ drawLine cs dashed (x0,y0) (x1, y1)
 			! A.stroke (stringValue $ get lineColor cs)
 			! A.strokeWidth (intValue $ get lineThickness cs)
 			! A.strokeLinecap "round"
-	   in if dashed then pth ! A.strokeDasharray (stringValue $ [show $ 5 * lt] & unwords) else pth
+	   in if dashed then pth ! A.strokeDasharray (stringValue $ [show $ lt, ",", show $ 5 * lt] & unwords) else pth
 
 {-
 Height: 
