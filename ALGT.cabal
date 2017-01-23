@@ -1,5 +1,5 @@
 name:                ALGT
-version:             0.1.9.0
+version:             0.1.9.1
 synopsis:            Simple project template from stack
 description:         Please see README.md
 homepage:            https://github.com/pietervdvn/ALGT#readme
@@ -67,5 +67,8 @@ executable ALGT
         Utils.Unification
         Utils.Utils
         Utils.XML
+        Dynamize.Dynamize
+        Dynamize.Test
+
 
 

@@ -279,7 +279,7 @@ _toString showSyntax ts ra
 			] & unlines
 
 instance ToString TypeNameSpec where
-	toParsable tns	= ruleNameFor tns
+	toParsable	= ruleNameFor
 
 
 

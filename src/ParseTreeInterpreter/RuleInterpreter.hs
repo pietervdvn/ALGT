@@ -48,19 +48,13 @@ proofThat' ts symbol args
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
 	= inMsg ("While trying to intepret the rule "++get ruleName r++" with "++ toParsable' ", " args) $
-	  do	let (RelationMet rel patterns)	= get ruleConcl r
-		variables	<- patternMatchInputs ts (get rulePreds r) (rel, patterns) args
+	  do	let (RelationMet rel conclusionArgs)	= get ruleConcl r
+		variables	<- patternMatchInputs ts (get rulePreds r) (rel, conclusionArgs) args
 		(predicateProofs, vars')
 				<- proofPredicates ts variables (get rulePreds r)
-		let concl	= proofRelationMet ts (rel, patterns) vars' args
+		let concl	= RelationMet rel (conclusionArgs |> evalExpr ts vars')
 		return $ Proof concl r predicateProofs
 
-proofRelationMet	:: TypeSystem -> (Relation, [Expression]) -> VariableAssignments -> [ParseTree] -> Conclusion'
-proofRelationMet ts (rel, relationArgs) vars args
-	= let	relationArgs'	= relationArgs |> evalExpr ts vars
-		resultExprs	= weaveMode (relModes rel) args relationArgs'
-		in RelationMet rel resultExprs
-	
 
 
 -- predicates are proven from left to right, as a left predicate might introduce variables used by a following predicate

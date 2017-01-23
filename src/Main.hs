@@ -39,7 +39,7 @@ import AbstractInterpreter.AbstractSet as AS
 
 import Dynamize.Test
 
-version	= ([0,1,9], "Total Language Analysis: Syntax (and fancy graphs!)")
+version	= ([0,1,9,1], "Total Language Analysis: Syntax (and fancy graphs!)")
 
 
 main	:: IO ()
@@ -118,7 +118,7 @@ abstractRuleSyntax	:: TypeSystem -> IO ()
 abstractRuleSyntax ts	
 	= do	let ra	= analyzeRelations ts
 		putStrLn $ toParsable' ts ra
-		putStrLn $ "# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
+		putStrLn "# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
 
 runFuncAbstract	:: TypeSystem -> Name -> IO ()
 runFuncAbstract ts name

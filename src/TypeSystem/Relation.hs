@@ -52,12 +52,14 @@ relTypesWith mode rel
 		= filterMode mode rel (relType rel)
 
 
-weaveMode	:: [Mode] -> [a] -> [a] -> [a]
+weaveMode	:: (Show a) => [Mode] -> [a] -> [a] -> [a]
 weaveMode [] [] []	= []
 weaveMode (In:modes) (inA:ins) outs
  	= inA : weaveMode modes ins outs
 weaveMode (Out:modes) ins (out:outs)
 	= out : weaveMode modes ins outs
+weaveMode modes ins outs
+	= error $ "Error: Weavemode fallthrough with "++show modes ++"; "++show ins ++ "; " ++show outs
 
 
 instance Refactorable TypeName Relation where

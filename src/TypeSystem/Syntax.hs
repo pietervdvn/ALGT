@@ -290,9 +290,9 @@ makeSyntax vals
 
 instance Check' Syntax (Name, [BNF]) where
 	check' s rule@(n, bnfs)
-		= inMsg ("While checking the syntax rule "++show n) $ do
-			[checkUnknownRuleCall s, checkNoDuplicateChoices, checkTrivial] 
-				|> (rule &) & allRight_
+		= [checkUnknownRuleCall s, checkNoDuplicateChoices, checkTrivial] 
+			|> (rule &) & allRight_
+			& inMsg ("While checking the syntax rule "++show n)
 
 
 checkTrivial	:: (Name, [BNF]) -> Either String ()
