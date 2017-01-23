@@ -23,7 +23,7 @@ data Proof	= Proof { _proofConcl	:: Conclusion'
 			}
 		| ProofIsA ParseTree TypeName
 		| ProofSame ParseTree Expression Expression
-		 deriving (Ord, Eq)
+		 deriving (Show, Ord, Eq)
 
 makeLenses ''Proof
 
