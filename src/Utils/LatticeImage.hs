@@ -91,17 +91,20 @@ optimizeRow w h conns i ts
 		
 
 
-scoreOf		:: W -> H -> [(Text, Text)] -> [[Text]] -> Int
+scoreOf		:: W -> H -> [(Text, Text)] -> [[Text]] -> (Int, Float)
 scoreOf w h conns ts	
 	= let	poss		= positions w h ts |> filter (not . Text.null . fst)
 		queryPos	= M.fromList $ concat poss
 		in score queryPos conns
 
+score			:: Map Text (X, Y) -> [(Text, Text)] -> (Int, Float)
+score dict conns	= (crossings dict conns, distances dict conns)
 
+distances		:: Map Text (X, Y) -> [(Text, Text)] -> Float
+distances dict conns	= conns |> uncurry (distanceBetween' dict) & sum
 
-
-score		:: Map Text (X, Y) -> [(Text, Text)] -> Int
-score queryPos connections
+crossings		:: Map Text (X, Y) -> [(Text, Text)] -> Int
+crossings queryPos connections
 	= (do	let lines	= connections |> lookupPoints queryPos
 		l1	<- lines
 		l2	<- lines

@@ -58,7 +58,6 @@ class Check' info a where
 (|+>)	= forM
 
 
-
 inParens str	= "("++str++")"
 
 inHeader prefix str chr msg
@@ -193,6 +192,9 @@ both f (a, a')		= f a && f a'
 swap (a, b)		= (b, a)
 
 ----------------------- List tools --------------------
+
+chain		:: (Traversable t) => t (a -> a) -> a -> a
+chain fs a	= foldl (&) a fs 
 
 validLines	:: String -> [String]
 validLines fileConts

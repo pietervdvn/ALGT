@@ -13,6 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 
 import Data.Map (Map, findWithDefault)
+import qualified Data.Map as M
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
@@ -83,7 +84,18 @@ linesIntersect (e@(ex, ey), f@(fx, fy)) (p@(px, py), q@(qx, qy))
 			in
 			signum side0 /= signum side1
 			
+distanceBetween	:: (X, Y) -> (X, Y) -> Float
+distanceBetween	(x0, y0) (x1, y1)
+	= let	sqr a	= a * a
+		in
+		sqrt $ fromIntegral $ sqr (x1 - x0) + sqr (y1 - y0)
 
+distanceBetween':: Map Text (X, Y) -> Text -> Text -> Float
+distanceBetween' dict p0 p1
+		= let	coor0	= dict M.! p0
+			coor1	= dict M.! p1
+			in
+			distanceBetween coor0 coor1 
 
 
 drawLine	:: ColorScheme -> Bool -> (X, Y) -> (X, Y) -> S.Svg
