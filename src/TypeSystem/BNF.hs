@@ -61,6 +61,10 @@ fromSeq		:: BNF -> Maybe [BNF]
 fromSeq (BNFSeq seq)	= Just seq
 fromSeq _	= Nothing
 
+fromSeq'	:: BNF -> [BNF]
+fromSeq' (BNFSeq seq)	= seq
+fromSeq' bnf	= [bnf]
+
 calledRules	:: BNF -> [TypeName]
 calledRules (BNFRuleCall nm)	= [nm]
 calledRules (BNFSeq bnfs)	= bnfs >>= calledRules

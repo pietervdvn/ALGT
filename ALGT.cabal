@@ -22,7 +22,7 @@ executable ALGT
   other-modules:       
         AbstractInterpreter.AbstractSet
         AbstractInterpreter.Data
-        AbstractInterpreter.FullAnalysis
+        AbstractInterpreter.RelationAnalysis
         AbstractInterpreter.FunctionInterpreter
         AbstractInterpreter.MinimalTypes
         AbstractInterpreter.PatternMatcher

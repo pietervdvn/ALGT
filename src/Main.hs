@@ -25,15 +25,17 @@ import Text.Parsec
 import Data.Maybe
 import Data.Either
 import Data.Map (Map, fromList, keys, toList)
+import qualified Data.Map as M
 import Data.List (intercalate, nub)
 import Data.Monoid ((<>))
 import Data.Hashable
 import Options.Applicative
 
 import AbstractInterpreter.Tools
-import AbstractInterpreter.FullAnalysis
+import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.RuleInterpreter
 import AbstractInterpreter.Data
+import AbstractInterpreter.AbstractSet as AS
 
 import Dynamize.Test
 
@@ -83,7 +85,7 @@ mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpre
 
 
 		iraSVG & ifJust (\path ->  do
-			let l	= createRuleSyntax changedTs & fst & latticeAsSVG terminalCS
+			let l	= analyzeRelations changedTs & get raSyntax & latticeAsSVG terminalCS
 			writeFile path l)
 
 		createSVG & ifJust (\pth -> do
@@ -114,14 +116,9 @@ runRuleAbstract ts (s, rules)
 
 abstractRuleSyntax	:: TypeSystem -> IO ()
 abstractRuleSyntax ts	
-	= let	(syntax', trivial)	= createRuleSyntax ts
-		omitted		= "Following types were ommitted, as they turned out to be exactly their input type: \n"++
-					(trivial & unlines & indent)
-		omitted'	= omitted & lines |> ("# "++) & unlines
-		helpMsg		= "# Use --irasvg [PATH] to create a subtyping of this syntax \n\n"
-		 in
-		putStrLn $ inHeader "" "Resulting syntax" '=' $  helpMsg ++ omitted' ++ "\n\n"
-				 ++ toParsable syntax'
+	= do	let ra	= analyzeRelations ts
+		putStrLn $ toParsable' ts ra
+		putStrLn $ "# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
 
 runFuncAbstract	:: TypeSystem -> Name -> IO ()
 runFuncAbstract ts name

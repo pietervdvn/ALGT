@@ -36,7 +36,7 @@ import TypeSystem
 import Changer.Changes
 
 import AbstractInterpreter.AbstractSet
-import AbstractInterpreter.FullAnalysis
+import AbstractInterpreter.RelationAnalysis
 
 import Data.Map as M
 
@@ -58,29 +58,11 @@ calculateNewRulesFor	:: TypeSystem -> Relation -> [Rule]
 calculateNewRulesFor ts relation
 	= let	syntax		= get tsSyntax ts
 		symb		= get relSymbol relation
-		analysisSyntax	= createRuleSyntax ts & fst
+		ra		= analyzeRelations ts
 		tps		= relation & relTypesWith In
-		ruleNames	= tps & mapi |> (\(i, tp) -> ruleNameFor symb i tp In)
-		args		= generateArgs syntax tps & zip ruleNames	:: [(Name, AbstractSet)]
-		argsDebug	= args ||>> toParsable ||>> (" --> "++) 
-					|> uncurry (++)
-					& unlines & indent
-		stuckArgs	= args |> stuckArg analysisSyntax
 		in
 		error $ unlines [ "Fix rules for "++get relSymbol relation
-				, argsDebug
-				, stuckArgs & show
-				, ""
-				, toParsable analysisSyntax]
-
-
-
-stuckArg	:: Syntax -> (TypeName, AbstractSet) -> [AbstractSet]
-stuckArg analysisSyntax (acceptableInput, allInput)
-	= let	acceptableInput'	= generateAbstractSet analysisSyntax "" acceptableInput in
-		subtract analysisSyntax (unfold analysisSyntax acceptableInput') acceptableInput'
-
-
+				, toParsable' ts ra]
 
 
 

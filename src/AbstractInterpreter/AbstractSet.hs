@@ -1,3 +1,4 @@
+ {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
 module AbstractInterpreter.AbstractSet where
 
 {-
@@ -140,7 +141,7 @@ foldGroup	:: Syntax -> [([AbstractSet], Name)] -> [AbstractSet] -> [AbstractSet]
 foldGroup _ _ []		= []
 foldGroup _ _ [as]		= [as]
 foldGroup syntax revTable ass
- | not $ isAsSeq $ head ass	= ass
+ | not $ all isAsSeq ass	= ass
 	-- All 'details' have been erased, and the entire group has the same structure
 	-- In other words, all are a sequence with only differences on e.g. "True" 
  | otherwise	= do	let tp		= typeOf $ head ass
@@ -373,7 +374,17 @@ _typeOf (ConcreteInt mi _)		= Right mi
 _typeOf (AsSeq mi _)			= Right mi
 
 
-
+instance Refactorable TypeName AbstractSet where
+	refactor ftn (EveryPossible mi n tn)
+			= EveryPossible (refactor ftn mi) n (ftn tn)
+	refactor ftn (ConcreteLiteral mi s)
+			= ConcreteLiteral (refactor ftn mi) s
+	refactor ftn (ConcreteIdentifier mi n)
+			= ConcreteIdentifier (refactor ftn mi) n
+	refactor ftn (ConcreteInt mi i)
+			= ConcreteInt (refactor ftn mi) i
+	refactor ftn (AsSeq mi seq)
+			= seq |> refactor ftn & AsSeq (refactor ftn mi) 
 
 
 instance ToString AbstractSet where
