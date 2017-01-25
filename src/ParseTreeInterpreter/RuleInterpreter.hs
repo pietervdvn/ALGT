@@ -48,12 +48,12 @@ proofThat' ts symbol args
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
 	= inMsg ("While trying to intepret the rule "++get ruleName r++" with "++ toParsable' ", " args) $
-	  do	let (RelationMet rel conclusionArgs)	= get ruleConcl r
+	  do	let concl@(RelationMet rel conclusionArgs)	= get ruleConcl r
 		variables	<- patternMatchInputs ts (get rulePreds r) (rel, conclusionArgs) args
 		(predicateProofs, vars')
 				<- proofPredicates ts variables (get rulePreds r)
-		let concl	= RelationMet rel (conclusionArgs |> evalExpr ts vars')
-		return $ Proof concl r predicateProofs
+		let concl'	= concl |> evalExpr ts vars'
+		return $ Proof concl' r predicateProofs
 
 
 

@@ -83,7 +83,7 @@ optimizeRow w h conns i ts
 	= let	start		= take i ts
 		(toOpt:end)	= drop i ts
 		scoreOf' row	= scoreOf w h conns (start ++ [row] ++ end)
-		optRow		= permutations toOpt |> (scoreOf' &&& id)
+		optRow		= permutations toOpt & take 50 {-TODO remove this factor-} |> (scoreOf' &&& id)
 					& sortOn fst & head & snd
 		in
 		start ++ [optRow] ++ end

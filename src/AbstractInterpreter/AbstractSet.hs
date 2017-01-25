@@ -145,7 +145,8 @@ foldGroup syntax revTable ass
 	-- All 'details' have been erased, and the entire group has the same structure
 	-- In other words, all are a sequence with only differences on e.g. "True" 
  | otherwise	= do	let tp		= typeOf $ head ass
-			let seqqed	= ass 	|> fromAsSeq & transpose	:: [[AbstractSet]]
+			let seqqed	= ass 	|> fromAsSeq & catMaybes & transpose
+										:: [[AbstractSet]]
 			let diffPts	= diffPoints seqqed			:: [Int]
 			let seqqed'	= seqqed |> head			:: [AbstractSet]
 			-- now, all 'indices' should be the same, except for one focus point
@@ -302,8 +303,12 @@ isAsSeq AsSeq{}			= True
 isAsSeq _			= False
 
 
-fromAsSeq			:: AbstractSet -> [AbstractSet]
-fromAsSeq (AsSeq _ seq)		= seq
+fromAsSeq			:: AbstractSet -> Maybe [AbstractSet]
+fromAsSeq (AsSeq _ seq)		= Just seq
+fromAsSeq _			= Nothing
+
+fromAsSeq'			:: AbstractSet -> [AbstractSet]
+fromAsSeq' as			= fromMaybe [as] $ fromAsSeq as
 
 -- Simple heuristic if it is worth it to subtract two abstract sequences
 sameForm	:: [AbstractSet] -> [AbstractSet] -> Bool
