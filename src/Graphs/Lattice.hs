@@ -1,5 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Graphs.Lattice (Lattice, makeLattice, addElement, addRelation, asSVG, subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, infimum, infimums, supremum, supremums, removeTransitive') where
+module Graphs.Lattice (Lattice, bottom, top, makeLattice, addElement, addRelation, asSVG,
+			subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, 
+			infimum, infimums, supremum, supremums, removeTransitive') where
 
 {-
 This module defines a finite lattice structure.

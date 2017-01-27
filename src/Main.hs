@@ -39,9 +39,7 @@ import AbstractInterpreter.AbstractSet as AS
 
 import Dynamize.Test
 
-import Utils.FakeIO
-
-version	= ([0,1,9,1], "Total Language Analysis: Syntax (and fancy graphs!)")
+version	= ([0,1,10], "Total Language Analysis: Syntax (and fancy graphs!)")
 
 
 main	:: IO ()

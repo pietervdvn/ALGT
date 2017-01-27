@@ -63,7 +63,7 @@ makeLenses ''RelationAnalysis
 
 
 analyzeRelations	:: TypeSystem -> RelationAnalysis
-analyzeRelations 	=  calculateInverses . 
+analyzeRelations 	=  -- calculateInverses . 
 				createRuleSyntax
 
 
@@ -107,7 +107,6 @@ inverseFor recursiveForms ra positiveNameSpec
 		positiveForms	= ra & get raIntroduced & (M.! positiveNameSpec)	:: [AbstractSet]
 		
 
-		-- From here on, stuff is broken
 		doesContainRec as
 				= fromAsSeq' as |> fromEveryPossible 
 						& catMaybes 
@@ -117,6 +116,13 @@ inverseFor recursiveForms ra positiveNameSpec
 				= positiveForms & partition doesContainRec		:: ([AbstractSet], [AbstractSet])
 
 		superT		= get tnsSuper positiveNameSpec
+
+		{- consider
+		(e)(→)in0	::= "(" (e)(→)in0 ")" | ...
+
+		This means that !(e)(→)in0 should not contain "(" e ")". We transform every "(e)(→)in0" to "e" (thus "(" e ")" ) and subtract that from the superset
+
+		-}
 
 		factorAway	= recursiveForms |> (ruleNameFor &&& get tnsSuper)	:: [(TypeName, TypeName)]
 		posAsClass	= posRecursive |> refactor' factorAway
@@ -187,20 +193,15 @@ invertRecAS nameSpecLookups as
 
 -------------------------------------------- PREPARE RA -------------------------------------------------------------
 
-rebuildSubtypings'	:: [TypeNameSpec] -> Syntax -> Syntax
-rebuildSubtypings' tnss syntax
-	= let	tnss'			= tnss 	|> (ruleNameFor &&& get tnsSuper)		:: [(TypeName, TypeName)]
-		addRels			= tnss' |> (& uncurry addRelation) & chain		:: Lattice TypeName -> Lattice TypeName
-		in
-		syntax	& rebuildSubtypings
-			& over lattice (removeTransitive' . addRels)
 
 
 createRuleSyntax	:: TypeSystem -> RelationAnalysis
 createRuleSyntax ts
 	= let	-- add new, empty rules to the syntax, e.g. (origRule)(symbol)in0
 		-- keep note of (newRuleName, origRule)
-		(syntax, tnss)		= ts & prepareSyntax ||>> snd
+		(syntax, relTnss)		= ts & prepareSyntax 
+		-- while the new BNF-rules are empty, these should be declared a subtype of the rule they were derived of
+		tnss			= relTnss |> snd
 		syntax'			= syntax & rebuildSubtypings' tnss
 		
 		-- actually analyse, thus add (origRule)(symbol)in0 ::= form1 | form2 | ...
@@ -219,6 +220,13 @@ createRuleSyntax ts
 		ra''
 
 
+rebuildSubtypings'	:: [TypeNameSpec] -> Syntax -> Syntax
+rebuildSubtypings' tnss syntax
+	= let	tnss'			= tnss 	|> (ruleNameFor &&& get tnsSuper)		:: [(TypeName, TypeName)]
+		addRels			= tnss' |> (& uncurry addRelation) & chain		:: Lattice TypeName -> Lattice TypeName
+		in
+		syntax	& rebuildSubtypings
+			& over lattice (removeTransitive' . addRels)
 
 
 {-
@@ -240,6 +248,8 @@ analyse ts synt
 					& M.mapWithKey filterValid
 					|> refold synt
 					:: Map TypeNameSpec [AbstractSet]
+
+
 		-- remove direct cycles, e.g. "a ::= ... | a | ..."
 		-- remove trivial rules, e.g. "a ::= b"
 		(trivial, possibleArgs')
@@ -272,7 +282,8 @@ possibleSets ts syntax holeFillers' (rel, rls)
 	= let	holeFillers	= holeFillers' ||>> ruleNameFor
 		symb		= get relSymbol rel
 		inTps		= relTypesWith In rel
-		possible	= rls	|> interpretRule' ts 		-- interpret the rules abstractly
+		inArgs		= inTps & generateArgs syntax		:: [AbstractSet]
+		possible	= rls	|> (\r -> interpretRule ts r inArgs)	-- interpret the rules abstractly
 					& concat
 					|> fillHoleWith' holeFillers	-- give fancy, recognizable names to recursive calls
 					|> get possibleArgs 
@@ -342,10 +353,12 @@ prepRelation origSyntax s rel
 
 addTypeFor	:: Syntax -> Symbol -> Relation -> (Syntax, [(Relation, TypeNameSpec)]) -> (Int, (TypeName, Mode)) -> (Syntax, [(Relation, TypeNameSpec)])
 addTypeFor origSyntax symb rel (prepSyntax, newtypes) (i, (tn, mode))
-	= let	subs		= subsetsOf (get lattice origSyntax) tn & S.toList	:: [TypeName]
-		tnss		= ([tn]) |> (\tn' -> TypeNameSpec tn' symb mode i True)
+	= let	l		= get lattice origSyntax
+		subs		= subsetsOf l tn & S.toList
+					& L.delete (get bottom l)	:: [TypeName]
+		tns		=  TypeNameSpec tn symb mode i True
 		in
-		(tnss & foldr addTNS prepSyntax, zip (repeat rel) tnss ++ newtypes)
+		(addTNS tns prepSyntax, (rel, tns):newtypes)
 
 addTNS	:: TypeNameSpec -> Syntax -> Syntax
 addTNS tns s
