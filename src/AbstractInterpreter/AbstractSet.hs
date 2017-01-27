@@ -67,7 +67,7 @@ toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
 
 
 refold		:: Syntax -> [AbstractSet] -> [AbstractSet]
-refold s	= refold' s (reverseSyntax s)
+refold s	= sort . refold' s (reverseSyntax s)
 
 reverseSyntax	:: Syntax -> [([AbstractSet], Name)]
 reverseSyntax synt
@@ -127,7 +127,7 @@ eatSubexpressions s (as:rest)
 mightFoldSeq	:: AbstractSet -> AbstractSet -> Bool
 mightFoldSeq (AsSeq _ s1) (AsSeq _ s2)
  | length s1 /= length s2	= False
- | otherwise			= 1 == length (diffPoints $ transpose [s1, s2])
+ | otherwise			= 1 == zip s1 s2 & filter (uncurry (/=)) & length
 mightFoldSeq a1 a2		= True
 
 

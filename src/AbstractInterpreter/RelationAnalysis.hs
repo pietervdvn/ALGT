@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell, FlexibleInstances, MultiParamTypeClasses #-}
-module AbstractInterpreter.RelationAnalysis where
+module AbstractInterpreter.RelationAnalysis (RelationAnalysis(..), raSyntax, raIntroduced, raTrivial, analyzeRelations) where
 
 {- Analysises all Rules together -}
 
@@ -74,9 +74,14 @@ calculateInverses ra
 		recursiveForms	= M.keys introduced
 		addInversesFor	= M.keys introduced
 		ra'		= foldr (addInverseFor recursiveForms) ra addInversesFor
-		newForms	= ra' & get raIntroduced & M.keys
+		allIntro	= ra' & get raIntroduced
+		ra''		= ra' & over raSyntax (rebuildSubtypings' $ M.keys allIntro)
+		
+		newSyntax	= allIntro ||>> toBNF & M.mapKeys ruleNameFor
 		in
-		ra' & over raSyntax (rebuildSubtypings' newForms)
+		ra''	& over (raSyntax . bnf)
+				(M.union newSyntax)
+			& set raIntroduced allIntro
 
 
 addInverseFor		:: [TypeNameSpec] -> TypeNameSpec -> RelationAnalysis -> RelationAnalysis
@@ -86,9 +91,7 @@ addInverseFor recursiveForms tns ra
 		in
 		ra	& over raIntroduced (M.insert newSpec forms)
 			& over raSyntax (\syntax -> 
-				syntax 	& (addTNS' newSpec)
-					& over bnf  (M.insert (ruleNameFor newSpec) (forms |> toBNF))
-				)
+				syntax 	& addTNS newSpec)
 					
 
 inverseFor		:: [TypeNameSpec] -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet])
@@ -114,12 +117,17 @@ inverseFor recursiveForms ra positiveNameSpec
 				= positiveForms & partition doesContainRec		:: ([AbstractSet], [AbstractSet])
 
 		superT		= get tnsSuper positiveNameSpec
+
+		factorAway	= recursiveForms |> (ruleNameFor &&& get tnsSuper)	:: [(TypeName, TypeName)]
+		posAsClass	= posRecursive |> refactor' factorAway
+
 		negClassical'	= subtractAll syntax 	[generateAbstractSet syntax "" superT]
-							posClassical
+							(posAsClass ++ posClassical)
 		negRecursive	= posRecursive >>= invertRecAS nameLookups		
 		negativeForms	= negClassical' ++ negRecursive				
 		in
 		(invertSpec positiveNameSpec, negativeForms)
+
 
 
 {-
@@ -146,7 +154,7 @@ y	::= "y"
 invertRecAS	:: Map TypeName TypeNameSpec -> AbstractSet -> [AbstractSet]
 invertRecAS nameSpecLookups as
 	= do	let asSeq		= fromAsSeq' as & mapi
-		let isRecCall as	= fromMaybe False $ (fromEveryPossible as |> (`M.member` nameSpecLookups))
+		let isRecCall as	= fromMaybe False (fromEveryPossible as |> (`M.member` nameSpecLookups))
 		let getRecCall as	= (fromEveryPossible as >>= (`M.lookup` nameSpecLookups)) & fromJust
 		let fromRecCall tn	= EveryPossible (ruleNameFor tn, -1) "" (ruleNameFor tn)
 		let (toFix, classical)	= L.partition (isRecCall . snd) asSeq
@@ -158,7 +166,8 @@ invertRecAS nameSpecLookups as
 		let invertedAsSeq	= (classical ++ stayOver ++ inverted)
 						& sortOn fst
 						|> snd
-		return $ AsSeq (typeOf as, -1) invertedAsSeq
+		if length invertedAsSeq == 1 then invertedAsSeq
+			else return $ AsSeq (typeOf as, -1) invertedAsSeq
 
 
 
@@ -191,7 +200,7 @@ createRuleSyntax	:: TypeSystem -> RelationAnalysis
 createRuleSyntax ts
 	= let	-- add new, empty rules to the syntax, e.g. (origRule)(symbol)in0
 		-- keep note of (newRuleName, origRule)
-		(syntax, tnss)		= ts & prepareSyntax
+		(syntax, tnss)		= ts & prepareSyntax ||>> snd
 		syntax'			= syntax & rebuildSubtypings' tnss
 		
 		-- actually analyse, thus add (origRule)(symbol)in0 ::= form1 | form2 | ...
@@ -318,37 +327,35 @@ This does not mean every t1 == t2!
 However, relations with just one input argument will always match
 
 -}
-prepareSyntax	:: TypeSystem -> (Syntax, [TypeNameSpec])
+prepareSyntax	:: TypeSystem -> (Syntax, [(Relation, TypeNameSpec)])
 prepareSyntax ts
 	= let	s	= get tsSyntax ts in
 		foldl (prepRelation s) (s, []) (get tsRelations ts)
 
-prepRelation	:: Syntax -> (Syntax, [TypeNameSpec]) -> Relation -> (Syntax, [TypeNameSpec])
+prepRelation	:: Syntax -> (Syntax, [(Relation, TypeNameSpec)]) -> Relation -> (Syntax, [(Relation, TypeNameSpec)])
 prepRelation origSyntax s rel
 	= let	symbol	= get relSymbol rel
 		args	= get relTypesModes rel & filter ((==) In . snd) & mapi in
-		foldl (addTypeFor origSyntax symbol) s args
+		foldl (addTypeFor origSyntax symbol rel) s args
 		
 
 
-addTypeFor	:: Syntax -> Symbol -> (Syntax, [TypeNameSpec]) -> (Int, (TypeName, Mode)) -> (Syntax, [TypeNameSpec])
-addTypeFor origSyntax symb prepSyntax (i, (tn, mode))
-	= let	tns		= TypeNameSpec tn symb mode i True
+addTypeFor	:: Syntax -> Symbol -> Relation -> (Syntax, [(Relation, TypeNameSpec)]) -> (Int, (TypeName, Mode)) -> (Syntax, [(Relation, TypeNameSpec)])
+addTypeFor origSyntax symb rel (prepSyntax, newtypes) (i, (tn, mode))
+	= let	subs		= subsetsOf (get lattice origSyntax) tn & S.toList	:: [TypeName]
+		tnss		= ([tn]) |> (\tn' -> TypeNameSpec tn' symb mode i True)
 		in
-		addTNS tns prepSyntax
+		(tnss & foldr addTNS prepSyntax, zip (repeat rel) tnss ++ newtypes)
 
-addTNS'		:: TypeNameSpec -> Syntax -> Syntax
-addTNS'	tns s	= fst $ addTNS tns (s, [])
-
-addTNS	:: TypeNameSpec -> (Syntax, [TypeNameSpec]) -> (Syntax, [TypeNameSpec])
-addTNS tns (s, newTypes)
+addTNS	:: TypeNameSpec -> Syntax -> Syntax
+addTNS tns s
 	= let	tn		= get tnsSuper tns
 		newRuleN	= ruleNameFor tns
 		wsMode		= get wsModes s M.! tn -- needed for printing and completeness
 		s'		= s 	& over bnf (M.insert newRuleN [])
 					& over wsModes (M.insert newRuleN wsMode)
 		in
-		(s', tns : newTypes)
+		s'
 
 
 

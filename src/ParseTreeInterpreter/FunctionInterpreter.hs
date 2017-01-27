@@ -219,8 +219,8 @@ evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & PtSeq tp
 evaluate ctx (MParseTree pt)	= pt
 evaluate ctx (MAscription tn expr)
 				= evaluate ctx expr
-evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n(This is a bug, pietervdvn added a clause to little)\n"++
-					(ctxVars ctx & M.toList |> showVarAssgn & unlines)
+-- evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n(This is a bug, pietervdvn added a clause to little)\n"++
+-- 					(ctxVars ctx & M.toList |> showVarAssgn & unlines)
 
 showVarAssgn	:: (Name, (ParseTree, Maybe Path)) -> String
 showVarAssgn (nm, assgn)

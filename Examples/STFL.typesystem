@@ -94,6 +94,13 @@ eval(e "::" t)		= eval(e)
 eval( (v:var) )		= !error:value("Unknown variable", v)
 
 
+defaultValue		: type -> e
+defaultValue("Bool")	= "True"
+defaultValue("Int")	= 1
+defaultValue(ta "->" tr)
+			= "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
+defaultValue("(" t ")")	= defaultValue(t)
+
 dom 		: type -> type
 dom("(" T ")")	= "(" dom(T) ")"
 dom(T1 "->" T2) = T1
@@ -145,9 +152,13 @@ plus(e1, e2)	= !plus:number(e1, e2)
  b "::" "Bool" → b
 
  i:number
--------------------			[EvalCastInt]
+-------------------			[EvalAscrInt]
  i "::" "Int" → i
 
+
+ e "::" t → e
+------------------------ [EvalAscrPar]
+ e "::" ("(" t ")") → e
 
 
 ----------------			[EvalParens]
