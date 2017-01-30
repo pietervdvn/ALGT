@@ -25,9 +25,9 @@ testArgs	= [	["Test/STFL.typesystem"]
 			, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "-c", "Test/GradualizeSTFL.typesystem-changes", "--dts"]
 			, ["Test/STFL.typesystem", "--ira"]
 			, ["Test/STFL.typesystem", "--irasvg", "SyntaxIRA.svg"]
-			
-			
 			] & nub
+
+testArgs'	= mapi testArgs
 
 defaultInput	= allAssets & M.fromList	:: Input
 
@@ -47,12 +47,13 @@ runTest args
 
 createAll	
 	= do	autoCreateAssets
-		testArgs |+> createTestResult & void
+		testArgs' |+> createTestResult & void
 
 
-createTestResult	:: [String] -> IO ()
-createTestResult args
-	= do	output	<- runTest args
+createTestResult	:: (Int, [String]) -> IO ()
+createTestResult (i, args)
+	= do	putStrLn $ "Creating output for test "++show i++": "++unwords args 
+		output	<- runTest args
 		let log	= get stdOut output & unlines
 		writeFile (directoryFor args) (show output)
 		get files output |+> (\(fp, contents) -> writeFile ("src/Assets/IntegrationTests/"++fp) contents)
@@ -64,8 +65,9 @@ getTestResult args
 		let output	= read cont	:: Output
 		return output
 
-test		:: [String] -> IO ()
-test args	= do	expected	<- getTestResult args
+test		:: (Int, [String]) -> IO ()
+test (i, args)	= do	putStrLn $ "Running test "++show i++": "++unwords args 
+			expected	<- getTestResult args
 			actual		<- runTest args
 			unless (expected == actual) $ do
 			      [ "Integration test failed"
@@ -73,5 +75,6 @@ test args	= do	expected	<- getTestResult args
 				, ""
 				] & unlines & putStrLn
 
-testAll		= testArgs |+> test & void
+testAll		= do	putStrLn $ "Running "++show (length testArgs)++" tests"
+			testArgs' |+> test & void
 

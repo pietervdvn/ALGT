@@ -19,6 +19,8 @@ import System.Directory
 import System.Exit
 
 
+
+
 descriptionText	= "ALGT (Automated Language Generation Tool)- automatically parse, interpret and proof properties of aribtrary languages.\n\n"++
 			"This tool parses a 'typesystem'-file, where the syntax of your language is defined. With this, your target file is parsed."++
 			"In the typesystem file, rewrite rules (or functions) can be defined - or better, rules defining properties can be defined."++
@@ -33,7 +35,10 @@ class NeedsFiles a where
 	filesNeeded	:: a -> [FilePath]
 	
 
-data MainArgs	= MainArgs Bool (Maybe Args)
+data MainArgs	= MainArgs 
+			{ showVersionNr	:: Bool
+			, realArgs	:: Maybe Args
+			}
 
 data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
@@ -43,6 +48,7 @@ data Args = Args 	{ tsFile		:: String
 			, interpretRulesAbstract:: Bool
 			, iraSVG		:: Maybe String
 			, createSVG		:: Maybe String
+			, runTests		:: Bool
 			}
 	deriving (Show)
 instance NeedsFiles Args where
@@ -191,6 +197,9 @@ args	= Args <$> argument str
 			(metavar "SVG-PATH"
 			<> long "lsvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules"))
+		<*> switch
+			(long "test"
+			<> help "Run the integration tests")
 
 		
 

@@ -41,7 +41,7 @@ import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
 
-version	= ([0,1,10], "Total Language Analysis: Syntax (and fancy graphs!)")
+version	= ([0,1,11], "Total Language Test")
 
 
 
@@ -116,15 +116,16 @@ isolateCheck _	= emptyOutput
 
 
 
-main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
-main' args 
+main'	:: IO () -> [String] -> IO (TypeSystem, [(String, ParseTree)])
+main' testAll args 
 	= do	parsedArgs	<- parseArgs version args
+		when (runTests parsedArgs) testAll
 		runIO' parsedArgs (mainArgs parsedArgs)
 			
 
 
 mainArgs	:: Args -> Input -> Either String ((TypeSystem, [(String, ParseTree)]), Output)
-mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract iraSVG createSVG) input
+mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract iraSVG createSVG _) input
 	= do	checkInput args input & first (\missing -> error $ "MISSING FILES FOR TESTCASE "++showComma missing)
 		let tsContents	= input M.! tsFile
 		ts		<- parseTypeSystem tsContents (Just tsFile)
