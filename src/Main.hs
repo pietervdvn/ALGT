@@ -29,6 +29,7 @@ import qualified Data.Map as M
 import Data.List (intercalate, nub)
 import Data.Monoid ((<>))
 import Data.Hashable
+import Data.Bifunctor (first)
 import Options.Applicative
 
 import AbstractInterpreter.Tools
@@ -174,86 +175,107 @@ mainChanges filepath ts
 
 
 
-
 mainExFile	:: ExampleFile -> TypeSystem -> IO [(String, ParseTree)]
-mainExFile args ts 
-	= do	let noRules	= all isNothing ([symbol, function, stepByStep, ptSvg] |> (\f -> f args))
-
-
-		let targetFile	= fileName args
-		targetContents'	<- readFile targetFile
-		let targets	= (if lineByLine args then lines else (:[])) targetContents'
-
-		parseTrees		<- (targets |+> parseWith targetFile ts (parser args)) |> zip targets
-
-		parseTrees |+> ifJust' (runRule ts) (symbol args)
-		parseTrees |+> ifJust' (runFunc ts) (function args)
-		parseTrees |+> ifJust' (runStepByStep ts) (stepByStep args)
+mainExFile args ts
+		= do	contents	<- readFile $ fileName args
+			case mainExFilePure args ts contents of
+				Left errMsg	-> do	putStrLn $ "ERROR (no files written for )"++ fileName args ++": "++errMsg
+							return []
+				Right (pts, files, stdOut)
+						-> do	putStrLn $ unlines stdOut
+							files |+> uncurry writeFile
+							return pts
 		
-		parseTrees |> snd & mapi |+> ifJust' renderParseTree (ptSvg args)
 
-		when noRules $ do
-			putStrLn "# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions"
-			parseTrees |+> printDebug
-			pass
-		return parseTrees
+mainExFilePure	:: ExampleFile -> TypeSystem -> String -> Either String ([(String, ParseTree)], [(String, String)], [String])
+mainExFilePure args ts targetContents
+	= do	let noRules	= all isNothing ([symbol, function, stepByStep, ptSvg] |> (\f -> f args))
+		let targetFile	= fileName args
+		let targets	= (if lineByLine args then lines else (:[])) targetContents
+
+		parseTrees	<- (targets |+> parseWith targetFile ts (parser args)) |> zip targets
+
+		let files	= maybe [] (\fileName -> parseTrees |> snd & mapi |> renderParseTree fileName) (ptSvg args)	
+
+		let rr		= parseTrees >>= ifJustS' [] (runRule ts) (symbol args)
+		let rf		= parseTrees >>= ifJustS' [] (runFunc ts) (function args) 
+		let sbs		= parseTrees >>= ifJustS' [] (runStepByStep ts) (stepByStep args) 
+		let noRulesMsg	= if noRules then
+					("# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions":
+					(parseTrees >>= printDebug))
+					else []
+
+		let output	= rr ++ rf ++ sbs ++ noRulesMsg
+			
+		return (parseTrees, files, output)
 
 
 
+ifJustS'			:: c -> (a -> b -> c) -> Maybe a -> b -> c
+ifJustS' _ f (Just a) b		= f a b
+ifJustS' def _ Nothing _	= def
 
+ifJustS		= ifJustS' ""
 
-
-parseWith	:: FilePath -> TypeSystem -> Name -> String -> IO ParseTree
+parseWith	:: FilePath -> TypeSystem -> Name -> String -> Either String ParseTree
 parseWith file ts bnfRuleName str
-	= do	let parser	= parse $ parseRule (get tsSyntax ts) bnfRuleName
-		let parsed	= parser file str
-		either (error . show) return parsed
+	= let 	parser	= parse $ parseRule (get tsSyntax ts) bnfRuleName
+		parsed	= parser file str
+		in
+		first show $ parsed
 
 
 
 
-runRule		:: TypeSystem -> Symbol -> (String, ParseTree) -> IO ()
+runRule		:: TypeSystem -> Symbol -> (String, ParseTree) -> [String]
 runRule ts symbol (input, pt)
-	= do	let proof	= [pt] & proofThat' ts symbol	:: Either String Proof
-		let shown	= proof & showProofWithDepth input symbol
-		putStrLn shown
+	= let	proof		= proofThat' ts symbol [pt]	:: Either String Proof
+		in
+		proof & showProofWithDepth input symbol
 
-showProofWithDepth		:: String -> Symbol -> Either String Proof -> String
+showProofWithDepth		:: String -> Symbol -> Either String Proof -> [String]
 showProofWithDepth input relation (Left str)	
-	= "# Could not apply relation "++relation++" to relation the input "++input++", because: \n"++str
+	= ["# Could not apply relation "++relation++" to relation the input "++input++", because:",str]
 showProofWithDepth input relation (Right proof)
-	= "# "++input++" applied to "++relation++
-		"\n# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) ++"\n\n"++toParsable proof++"\n\n\n"
+	= ["# "++input++" applied to "++relation
+		,"# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) 
+		, ""
+		, ""
+		, toParsable proof, "", "", ""]
 
 
 
 
 
-printDebug	:: (String, ParseTree) -> IO ()
+printDebug	:: (String, ParseTree) -> [String]
 printDebug (inp, pt)
-	= do	putStrLn $ "# "++show inp++" was parsed as:"
-		putStrLn $ debug pt
+	=	["# "++show inp++" was parsed as:"
+		, debug pt]
 
 
-renderParseTree	:: Name -> (Int, ParseTree) -> IO ()
+renderParseTree	:: Name -> (Int, ParseTree) -> (String, String)
 renderParseTree nm (i, pt)
-	= do	let fileName	= nm ++ "." ++ show i ++ ".svg"
-		let conts	=  parseTreeSVG 1 terminalCS pt
-		writeFile fileName conts
+	= let 	fileName	= nm ++ "." ++ show i ++ ".svg"
+		conts	=  parseTreeSVG 1 terminalCS pt
+		in (fileName, conts)
 
-runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
+runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> [String]
 runFunc ts func (inp, pt)
- 	= do	let pt'	= evalFunc ts func [pt]
-		putStrLn $ "# "++show inp++" applied to "++func
-		putStrLn $ toParsable pt'
+ 	= let	pt'	= evalFunc ts func [pt]
+		msg	= "# "++show inp++" applied to "++func
+		in
+		[msg, toParsable pt']
 
-runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> IO ()
+runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> [String]
 runStepByStep ts func (inp, pt)
-	= do	putStrLn $ "# "++show inp++" applied repeatedly to "++func
-		evalStar ts func pt 
+	= let	msg	= "# "++show inp++" applied repeatedly to "++func
+		in
+		msg:evalStar ts func pt
 
-evalStar	:: TypeSystem -> Name -> ParseTree -> IO ()
+evalStar	:: TypeSystem -> Name -> ParseTree -> [String]
 evalStar ts funcName pt	
-	= do	putStrLn $ "\n " ++ toParsable pt
-		let pt'	= evalFunc ts funcName [pt]
-		when (pt' /= pt) $ evalStar ts funcName pt'
+	= let	msg	= toParsable pt
+		pt'	= evalFunc ts funcName [pt]
+		msgs	= if (pt' /= pt) then evalStar ts funcName pt' else []
+		in
+		msg:msgs
