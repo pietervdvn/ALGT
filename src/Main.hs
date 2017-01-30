@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import TypeSystem
@@ -38,9 +39,25 @@ import AbstractInterpreter.RuleInterpreter
 import AbstractInterpreter.Data
 import AbstractInterpreter.AbstractSet as AS
 
-import Dynamize.Test
+import Lens.Micro hiding ((&))
+import Lens.Micro.TH
+
 
 version	= ([0,1,10], "Total Language Analysis: Syntax (and fancy graphs!)")
+
+
+
+data Output = Output 
+		{ _files	:: [(String, String)]
+		, _stdOut	:: [String]
+		} deriving (Show, Ord, Eq, Read)
+
+makeLenses ''Output
+
+runOutput	:: Output -> IO ()
+runOutput (Output files stdOut)
+	= do	files |+> uncurry writeFile
+		putStrLn $ unlines stdOut
 
 
 main	:: IO ()
@@ -51,23 +68,18 @@ main	= void $ do	args	<- getArgs
 main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
 main' args 
 	= do	parsedArgs	<- parseArgs version args
-		when (rmConfig parsedArgs) (removeConfig >> putStrLn "# Config file removed")
 		mainArgs parsedArgs
 			
 
 
 mainArgs	:: Args -> IO (TypeSystem, [(String, ParseTree)])
-mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpretRulesAbstract iraSVG createSVG createHighlighting autoSaveTo _)
-	= do	config	<- getConfig
-		ts'	<- parseTypeSystemFile tsFile
+mainArgs (Args tsFile exampleFiles changeFiles dumbTS interpretAbstract interpretRulesAbstract iraSVG createSVG)
+	= do	ts'	<- parseTypeSystemFile tsFile
 		ts	<- either (error . show) return ts'
 		check ts & either error return
 		
 		checkTS ts & either putStrLn return
 
-		config'		<- mainSyntaxHighl config ts createHighlighting autoSaveTo
-		config''	<- updateHighlightings config' ts
-		when (config /= config'') $ writeConfig config''
 	
 
 		changedTs	
@@ -129,49 +141,14 @@ runFuncAbstract ts name
 
 
 
-
-
-
-
-
-
-mainSyntaxHighl	:: Config -> TypeSystem -> Maybe String -> Maybe String -> IO Config
-mainSyntaxHighl config ts (Just parserRule) (Just targetSave)
-	= do	let newConf	= ASH (get tsName ts) parserRule 0 targetSave
-		let config'	= config{autoSyntaxes = autoSyntaxes config ++ [newConf]}
-		putStrLn "# Auto syntax highlighting added"
-		return config'
-mainSyntaxHighl _ _ Nothing (Just targetSave)
-	= error "You want to add a new syntax highlighting rule; but no '--create-highlighting PARSER-RULE' flag was specified."
-mainSyntaxHighl c ts (Just parserRule) _
-	= do	putStrLn $ toParsable $ createStyleForTypeSystem ts parserRule
-		return c
-mainSyntaxHighl c _ _ _
-	= return c
-
-
-updateHighlightings 	:: Config -> TypeSystem -> IO Config
-updateHighlightings config ts
-	= do	let currentState	= hash ((get tsSyntax ts & show) ++ (get tsStyle ts & show))
-		let editState ash	= (get tsName ts == ashTsName ash) && (currentState /= ashTsHash ash)
-		autoSyntaxes' <- autoSyntaxes config |+> (\ash -> 
-			if not $ editState ash then return ash else do
-				let fp	= ashSaveTo ash ++ "/" ++ ashTsName ash ++ ".lang"
-				let contents	= toParsable $ createStyleForTypeSystem ts (ashRuleName ash)
-				putStrLn $ "# Updated syntax highlighting. You might want to restart your editor for changes to apply. Updated path: "++fp
-				writeFile fp contents
-				return ash{ashTsHash = currentState}
-			)
-		
-		return config{autoSyntaxes = nub autoSyntaxes'}
-		
-
-
 mainChanges	:: String -> TypeSystem -> IO TypeSystem
 mainChanges filepath ts
 	= do	changes'	<- parseChangesFile ts filepath
 		(changes,ts')	<- changes' & either (error . show) return
 		return ts'
+
+
+
 
 
 
@@ -181,13 +158,12 @@ mainExFile args ts
 			case mainExFilePure args ts contents of
 				Left errMsg	-> do	putStrLn $ "ERROR (no files written for )"++ fileName args ++": "++errMsg
 							return []
-				Right (pts, files, stdOut)
-						-> do	putStrLn $ unlines stdOut
-							files |+> uncurry writeFile
+				Right (pts, output)
+						-> do	runOutput output
 							return pts
 		
 
-mainExFilePure	:: ExampleFile -> TypeSystem -> String -> Either String ([(String, ParseTree)], [(String, String)], [String])
+mainExFilePure	:: ExampleFile -> TypeSystem -> String -> Either String ([(String, ParseTree)], Output)
 mainExFilePure args ts targetContents
 	= do	let noRules	= all isNothing ([symbol, function, stepByStep, ptSvg] |> (\f -> f args))
 		let targetFile	= fileName args
@@ -207,7 +183,7 @@ mainExFilePure args ts targetContents
 
 		let output	= rr ++ rf ++ sbs ++ noRulesMsg
 			
-		return (parseTrees, files, output)
+		return (parseTrees, Output files output)
 
 
 

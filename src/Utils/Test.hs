@@ -1,11 +1,12 @@
 module Utils.Test where
 
-import AbstractInterpreter.Test 
+import Main
 
-import Utils.Utils
-import Assets
 
-import TypeSystem
-import Parser.TypeSystemParser
 
-t	= testAS
+testArgs	= [	["Examples.stfl"]]
+
+
+
+runTest		:: [String] -> Output
+runTest args	= main'

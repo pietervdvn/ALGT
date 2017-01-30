@@ -38,9 +38,6 @@ data Args = Args 	{ tsFile		:: String
 			, interpretRulesAbstract:: Bool
 			, iraSVG		:: Maybe String
 			, createSVG		:: Maybe String
-			, createHighlighting	:: Maybe String
-			, autoSaveTo		:: Maybe String
-			, rmConfig		:: Bool
 			}
 	deriving (Show)
 
@@ -191,22 +188,7 @@ args	= Args <$> argument str
 			(metavar "SVG-PATH"
 			<> long "lsvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules"))
-		<*> optional (strOption  
-			(metavar "PARSER-RULE"
-			<> long "create-highlighting"
-			<> long "ch"
-			<> help "Create a syntax highlighting file for your typesystem, dump it to the terminal, with given starting rule."))
-		<*> optional (strOption
-			(metavar "SYNTAX-HIGHLIGHTING-PATH"
-			<> long "auto-sync-highlighting-to"
-			<> long "ash"
-			<> help "Saves the syntax highlighting to the specified path. This path is saved; whenever the language def changes, the syntax is updated. Use together with -ch"
-			))
-		<*> switch
-			(long "rm-config"
-			<> long "remove-config"
-			<> long "rmc"
-			<> help "Remove the config file, with auto-highlighting. Try this option if the tool doesn't work'")
+
 		
 
 mainArgs	:: Parser MainArgs
