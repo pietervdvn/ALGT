@@ -1,4 +1,4 @@
-module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), AutoSyncHighlighting(..), Config(..), getConfig, writeConfig, removeConfig)where
+module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..),  getConfig, writeConfig, removeConfig)where
 
 {-
 This module defines parsing of the arguments and reading/writing of the config file
@@ -28,6 +28,11 @@ showVersion (v, vId)	= (v |> show & intercalate ".") ++", "++show vId
 headerText v
 		= "Automated Language Generation Tool (version "++ showVersion v ++" )"
 
+
+class NeedsFiles a where
+	filesNeeded	:: a -> [FilePath]
+	
+
 data MainArgs	= MainArgs Bool (Maybe Args)
 
 data Args = Args 	{ tsFile		:: String
@@ -40,10 +45,12 @@ data Args = Args 	{ tsFile		:: String
 			, createSVG		:: Maybe String
 			}
 	deriving (Show)
+instance NeedsFiles Args where
+	filesNeeded args	= tsFile args : (changeFile args ++ (exampleFiles args >>= filesNeeded))
 
 
 data ExampleFile	= ExFileArgs
-	{ fileName	:: String
+	{ fileName	:: FilePath
 	, parser	:: Name
 	, lineByLine	:: Bool
 	, symbol	:: Maybe Symbol
@@ -52,16 +59,12 @@ data ExampleFile	= ExFileArgs
 	, ptSvg		:: Maybe Name
 	} deriving (Show)
 	
+instance NeedsFiles ExampleFile where
+	filesNeeded exfile	= [fileName exfile]
 
-data AutoSyncHighlighting = ASH
-	{ ashTsName	:: Name
-	, ashRuleName	:: Name
-	, ashTsHash	:: Int
-	, ashSaveTo	:: FilePath
-	} deriving (Show, Read, Eq)
 
 data Config	= Config 	
-	{ autoSyntaxes	:: [AutoSyncHighlighting] }
+	{ autoSyntaxes	:: [Int] }
 		deriving (Show, Read, Eq)
 
 emptyConfig

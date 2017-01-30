@@ -15,7 +15,7 @@ import Data.Either
 
 import Control.Monad
 
-import Utils.STFL
+import Utils.CreateAssets
 
 import qualified Utils.UnificationTest as UnificationTest
 

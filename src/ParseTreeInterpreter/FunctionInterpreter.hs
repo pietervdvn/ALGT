@@ -1,4 +1,4 @@
-module ParseTreeInterpreter.FunctionInterpreter where
+module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch) where
 
 {-
 This module defines an interpreter for functions. 
@@ -174,8 +174,8 @@ evaluate ctx (MCall _ "neg" True es)
 
 
 evaluate ctx (MCall _ "equal" True es)
-	= let	(tp, [e1, e2])	= asInts ctx "equal" es in
-		MInt tp (if e1 == e2 then 1 else 0)
+	= do	(tp, [e1, e2])	<- asInts ctx "equal" es
+		return $ MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
 	= let	exprs'	= exprs |> evaluate ctx & toParsable' ", "
 		msgs	= ["In evaluating a function:", exprs']
@@ -231,16 +231,18 @@ showAssgn (pt, mPath)
 		= toParsable pt++
 		maybe "" (\path -> "\tContext path is "++show path) mPath
 
+evalErr		:: Ctx -> String -> ParseTree
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
+
 asInts ctx bi exprs	
-	= let 	exprs'	= exprs |> evaluate ctx 
-				|> (\e -> if isMInt' e then e else error $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
-				|> (\(MInt _ i) -> i)
-		tp	= typeOf $ head exprs
-		tp'	= if tp == "" then error "Declare a return type, by annotating the first argument of a builtin" else tp
-		in
-		((tp', -1), exprs')
+	= do	exprs'	<- exprs |> evaluate ctx 
+				|> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
+				& allRight
+				||>> (\(MInt _ i) -> i)
+		let tp	= typeOf $ head exprs
+		tp'	<- if tp == "" then Left "Declare a return type of builtin functions: !function:type(args)" else return tp
+		return ((tp', -1), exprs')
 
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)

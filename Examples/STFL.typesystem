@@ -101,7 +101,7 @@ defaultValue(ta "->" tr)
 			= "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
 defaultValue("(" t ")")	= defaultValue(t)
 
-dom 		: type -> type
+qxdom 		: type -> type
 dom("(" T ")")	= "(" dom(T) ")"
 dom(T1 "->" T2) = T1
 

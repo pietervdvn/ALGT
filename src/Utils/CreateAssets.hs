@@ -1,4 +1,4 @@
-module Utils.CreateAssets (createAssets, createAssets') where
+module Utils.CreateAssets (createAssets, createAssets', autoCreateAssets, name) where
 
 {-
 This module defines a small tool, creating asset files
@@ -9,6 +9,7 @@ import Data.List
 import Data.Bifunctor
 import qualified Data.Map as M
 import Data.Foldable
+import Data.Char
 
 import Control.Monad
 
@@ -33,33 +34,57 @@ dirConts fp
 replacements	= M.fromList [('.', '_'), ('-', '_'), ('/', '_')]
 
 
-replace c	= M.findWithDefault c c replacements
+replace c
+	| isAlphaNum c	= M.findWithDefault c c replacements
+	| otherwise	= '_'
 
-name		:: String -> String
-name fp		= fp |> replace & ("_"++)
+name		:: String -> String -> String
+name origDir fp	= let 	repl	= fp |> replace & ("_"++)
+			in drop (1 + length origDir) repl
 
 
 header dev
 	= "module Assets where"++ (if dev then "\n\nimport System.IO.Unsafe (unsafePerformIO)" else "")
 		++"\n\n-- Automatically generated\n-- This file contains all assets, loaded via 'unsafePerformIO' or hardcoded as string, not to need IO for assets\n\n\n"
 
+
+
 fileLine	:: Bool -> FilePath -> String -> IO String
 fileLine dev origDir file
-	= do	let name'	= drop (1 + length origDir) $ name file
+	= do	let name'	=  name origDir file
 		let pragma	= if dev then "{-# NOINLINE "++name'++" #-}\n" else ""
 		let devAssgn	= "unsafePerformIO $ readFile "++show file
 		contents	<- if dev then return devAssgn else
 					fmap show (readFile file)
 		return $ pragma ++ name' ++ "\t = "++contents
 
+allAssetLine origDir fp
+	= let	key	= fp & drop (1 + length origDir) & show
+		val	= name origDir fp
+		in
+		"(" ++ key ++ ", "++ val ++ ")"
+
+allAssets	:: String -> [FilePath] -> String
+allAssets origDir fps
+	= let 	body	= fps |> allAssetLine origDir
+				& intercalate "\n\t\t\t, " 
+				& (\s -> "[" ++ s ++ "\n\t\t\t]")
+		funcN	= "allAssets = "
+		in
+		funcN ++ body ++ "\n"
+
 createAssets'	:: Bool -> FilePath -> IO String
 createAssets' dev fp
 	= do	files		<- dirConts fp
 		contents	<- files |+> fileLine dev fp
-		return $ header dev ++ unlines contents
+		let allA	= allAssets fp files
+		return $ header dev ++ allA ++ unlines contents
 
 createAssets	:: Bool -> FilePath -> FilePath -> IO ()
 createAssets dev fp target
 	= do	contents	<- createAssets' dev fp
 		writeFile target contents
 
+autoCreateAssets	:: IO ()
+autoCreateAssets
+	= createAssets False "src/Assets" "src/Assets.hs"

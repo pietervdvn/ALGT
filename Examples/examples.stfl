@@ -1,5 +1,5 @@
 True
-(\f : Int . f 5) (\i : Int . i + 1)
+(\f : Int -> Int . f 5) (\i : Int . i + 1)
 42
 1 + 2
 (True)
