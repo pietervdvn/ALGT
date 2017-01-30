@@ -13,11 +13,20 @@ import Data.List (nub)
 import Control.Monad
 
 testArgs	= [	["Test/STFL.typesystem"]
+			, ["Test/STFL.typesystem", "--dts"]
+			, ["Test/STFL.typesystem", "--lsvg", "Syntax.svg"]
+
 			, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l" ]
 			, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l", "-r", "→" ]
 			, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l", "-r", "::" ]
-			, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l"]
+			, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l", "--ptsvg", "Parsetrees"]
 			, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l" ]
+			, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "--dts"]
+			, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "-c", "Test/GradualizeSTFL.typesystem-changes", "--dts"]
+			, ["Test/STFL.typesystem", "--ira"]
+			, ["Test/STFL.typesystem", "--irasvg", "SyntaxIRA.svg"]
+			
+			
 			] & nub
 
 defaultInput	= allAssets & M.fromList	:: Input
@@ -46,7 +55,8 @@ createTestResult args
 	= do	output	<- runTest args
 		let log	= get stdOut output & unlines
 		writeFile (directoryFor args) (show output)
-		writeFile (directoryFor $ "log___":args) log
+		get files output |+> (\(fp, contents) -> writeFile ("src/Assets/IntegrationTests/"++fp) contents)
+		writeFile (directoryFor $ "log___":args) (unwords args ++"\n\n"++ log)
 
 getTestResult		:: [String] -> IO Output
 getTestResult args

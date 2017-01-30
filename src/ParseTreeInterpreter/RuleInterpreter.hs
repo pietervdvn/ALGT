@@ -15,6 +15,8 @@ import Data.Map (Map, empty, findWithDefault)
 import Data.Either
 import Data.List
 
+import Control.Monad
+
 import Lens.Micro hiding ((&))
 
 
@@ -48,11 +50,13 @@ proofThat' ts symbol args
 interpretRule	:: TypeSystem -> Rule -> [ParseTree] -> Either String Proof
 interpretRule ts r args
 	= inMsg ("While trying to intepret the rule "++get ruleName r++" with "++ toParsable' ", " args) $
-	  do	let concl@(RelationMet rel conclusionArgs)	= get ruleConcl r
-		variables	<- patternMatchInputs ts (get rulePreds r) (rel, conclusionArgs) args
+	  do	let concl@(RelationMet rel conclArgs)	= get ruleConcl r
+		variables	<- patternMatchInputs ts (get rulePreds r) (rel, conclArgs) args
 		(predicateProofs, vars')
 				<- proofPredicates ts variables (get rulePreds r)
-		let concl'	= concl |> evalExpr ts vars'
+		
+		conclArgs'	<- conclArgs |> evalExpr ts vars' & allRight
+		let concl'	= set conclusionArgs conclArgs' concl
 		return $ Proof concl' r predicateProofs
 
 
@@ -69,23 +73,24 @@ proofPredicates ts vars (pred:preds)
 
 proofPredicate	:: TypeSystem -> VariableAssignments -> [Predicate] -> Predicate -> Either String (Proof, VariableAssignments)
 proofPredicate ts vars _ (TermIsA expr typ)
-	= let	expr'	= evalExpr ts vars (MVar typ expr) in
-		if alwaysIsA (get tsSyntax ts) (typeOf expr') typ then
-			return (ProofIsA expr' typ, empty)
-			else Left ( expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ)
+	= do	expr'	<- evalExpr ts vars (MVar typ expr)
+		unless (alwaysIsA (get tsSyntax ts) (typeOf expr') typ) $ Left $
+			expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ
+		return (ProofIsA expr' typ, empty)
 proofPredicate ts vars _ (Same e1 e2)
-	= do	let e1'	= evalExpr ts vars e1
-		let e2' = evalExpr ts vars e2
-		if e1' == e2' then  return (ProofSame e1' e1 e2, vars)
-			else Left $ "Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2
+	= do	e1'	<- evalExpr ts vars e1
+		e2' 	<- evalExpr ts vars e2
+		unless (e1' == e2') $ Left $ 
+			"Equality predicate not met: "++ toParsable e1 ++ "=" ++ toCoParsable e1' ++ " /= " ++ toCoParsable e2' ++"="++toParsable e2
+		return (ProofSame e1' e1 e2, vars)
 
 proofPredicate ts vars restingPreds (Needed (RelationMet relation args))
 	= do	let inputArgs	= filterMode In relation args
-		let args'	= inputArgs |> evalExpr ts vars
+		args'		<- inputArgs |+> evalExpr ts vars
 		proof		<- proofThat ts relation args'
 		let concl	= _proofConcl proof
 		-- now, we take the 'out'-expresssions from the conclusion and pattern match those into the out of the needed
-		let toMatch	= filterMode Out relation (zip args (conclusionArgs concl))	:: [(Expression, ParseTree)]
+		let toMatch	= filterMode Out relation (zip args (get conclusionArgs concl))	:: [(Expression, ParseTree)]
 		matched		<- matchAndMerge ts restingPreds toMatch	-- this predicate might contain a context evaluation
 		return (proof, matched)
 

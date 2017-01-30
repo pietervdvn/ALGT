@@ -63,7 +63,7 @@ makeLenses ''RelationAnalysis
 
 
 analyzeRelations	:: TypeSystem -> RelationAnalysis
-analyzeRelations 	=  -- calculateInverses . 
+analyzeRelations 	=  calculateInverses . 
 				createRuleSyntax
 
 

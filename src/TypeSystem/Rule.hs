@@ -62,8 +62,8 @@ instance Refactorable RelationSymbol Predicate where
 
 
 {- A generic conclusion that can be drawn. E.g. given these parsetrees, this relation holds. -}
-data ConclusionA a	= RelationMet 	{ conclusionRel 	:: Relation
-					, conclusionArgs 	:: [a]
+data ConclusionA a	= RelationMet 	{ _conclusionRel 	:: Relation
+					, _conclusionArgs 	:: [a]
 					} deriving (Show, Ord, Eq)
 
 instance Functor ConclusionA where
@@ -108,6 +108,11 @@ newtype Rules	= Rules {_rules :: Map Symbol [Rule]}
 			deriving (Show)
 makeLenses ''Rules
 
+
+
+makeLenses ''ConclusionA
+
+
 getRulesOnName	:: Rules -> Map Name Rule
 getRulesOnName rls
 	= rls & get rules & M.elems & concat |> (get ruleName &&& id) & M.fromList
@@ -122,7 +127,7 @@ rulesOnName	= lens getRulesOnName (\_ rulesDict -> _makeRules $ M.elems rulesDic
 
 _makeRules	:: [Rule] -> Rules
 _makeRules rules
-	= let sortedRules = rules |> ((\r -> r & get ruleConcl & conclusionRel & get relSymbol) &&& id) & merge
+	= let sortedRules = rules |> ((\r -> r & get ruleConcl & get conclusionRel & get relSymbol) &&& id) & merge
 		in Rules $ M.fromList sortedRules		
 
 makeRules	:: Syntax -> [Rule] -> Either String Rules

@@ -1,4 +1,4 @@
-Test/STFL.typesystem
+Test/STFL.typesystem --lsvg Syntax.svg
 
 Warning:
   While checking the totality of function "cod":

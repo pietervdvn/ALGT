@@ -1,0 +1,617 @@
+Test/STFL.typesystem --ira
+
+Warning:
+  While checking the totality of function "cod":
+    Following calls will fall through:
+      cod("Int")
+      cod("Bool")
+  While checking the totality of function "dom":
+    Following calls will fall through:
+      dom("Int")
+      dom("Bool")
+  While checking the totality of function "eval":
+    Following calls will fall through:
+      eval(("(" "\\" var ":" type "." e ")"))
+  
+  While checking that the functions do have the strictest possible types:
+    "dom" can be typed as "typeL", instead of a "type"
+
+ Analysis for rules about (::) 
+===============================
+
+# (::) 	: e (in), type (out)	Pronounced as "type in empty context"
+
+# Known rules are
+#   TEmptyCtx
+
+Applicable to:
+  e
+Results:
+  e0 :: typeT
+  	 where "{}" : typingEnvironment ⊢ e0, typeT
+
+ Analysis of rule "TEmptyCtx" 
+------------------------------
+
+Applicable to:
+  e
+Results:
+  e0 :: typeT
+  	 where "{}" : typingEnvironment ⊢ e0, typeT
+
+
+
+
+ Analysis for rules about (==) 
+===============================
+
+# (==) 	: type (in), type (in)	Pronounced as "equals"
+
+# Known rules are
+#   EqBase
+#   EqParL
+#   EqParR
+#   EqArrow
+
+Applicable to:
+  type, type
+  ("(" type ")"), type
+  type, ("(" type ")")
+  (typeL "->" type), (typeL "->" type)
+Results:
+  type0 == type0
+  ("(" : typeL type0/1/2:1 ")" : typeL) : typeL == type1
+  	 where (recursion) type0/1/2:1 == type1
+  type0 == ("(" : typeL type1/1/2:1 ")" : typeL) : typeL
+  	 where (recursion) type0 == type1/1/2:1
+  (typeL0/0:0 "->" : type type0/0:2) : type == (typeL1/0:0 "->" : type type1/0:2) : type
+  	 where (recursion) typeL0/0:0 == typeL1/0:0, type0/0:2 == type1/0:2
+
+ Analysis of rule "EqBase" 
+---------------------------
+
+Applicable to:
+  type, type
+Results:
+  type0 == type0
+
+
+
+ Analysis of rule "EqParL" 
+---------------------------
+
+Applicable to:
+  ("(" type ")"), type
+Results:
+  ("(" : typeL type0/1/2:1 ")" : typeL) : typeL == type1
+  	 where (recursion) type0/1/2:1 == type1
+
+
+
+ Analysis of rule "EqParR" 
+---------------------------
+
+Applicable to:
+  type, ("(" type ")")
+Results:
+  type0 == ("(" : typeL type1/1/2:1 ")" : typeL) : typeL
+  	 where (recursion) type0 == type1/1/2:1
+
+
+
+ Analysis of rule "EqArrow" 
+----------------------------
+
+Applicable to:
+  (typeL "->" type), (typeL "->" type)
+Results:
+  (typeL0/0:0 "->" : type type0/0:2) : type == (typeL1/0:0 "->" : type type1/0:2) : type
+  	 where (recursion) typeL0/0:0 == typeL1/0:0, type0/0:2 == type1/0:2
+
+
+
+
+ Analysis for rules about (→) 
+==============================
+
+# (→) 	: e (in), e (out)	Pronounced as "evaluation"
+
+# Known rules are
+#   EvalCtx
+#   EvalPlus
+#   EvalAscrBool
+#   EvalAscrInt
+#   EvalAscrPar
+#   EvalParens
+#   EvalIfTrue
+#   EvalIfFalse
+#   EvalLamApp
+
+Applicable to:
+  (e "+" e)
+  (eL "+" e)
+  (e "::" type)
+  (e e)
+  (eL e)
+  ("(" "\\" var ":" type "." e ")")
+  ("If" e "Then" e "Else" e)
+  ("(" e ")")
+  (number "+" number)
+  (bool "::" "Bool")
+  (number "::" "Int")
+  (eL "::" ("(" type ")"))
+  ("If" "True" "Then" e "Else" e)
+  ("If" "False" "Then" e "Else" e)
+  (("(" "\\" var ":" type "." e ")") e)
+Results:
+  (e0/0:0$ "+" : e e0/0:2) : e → (ee1 "+" : e e0/0:2) : e
+  	 where (recursion) e0/0:0$ → ee1
+  (eL0/0:0 "+" : e e0/0:2$) : e → (eL0/0:0 "+" : e ee1) : e
+  	 where (recursion) e0/0:2$ → ee1
+  (e0/1:0$ "::" : e type0/1:2) : e → (ee1 "::" : e type0/1:2) : e
+  	 where (recursion) e0/1:0$ → ee1
+  (e0/2:0$ e0/2:1) : e → (ee1 e0/2:1) : e
+  	 where (recursion) e0/2:0$ → ee1
+  (eL0/2:0 e0/2:1$) : e → (eL0/2:0 ee1) : e
+  	 where (recursion) e0/2:1$ → ee1
+  ("(" : eL "\\" : eL var0/3/2:2 ":" : eL type0/3/2:4 "." : eL e0/3/2:6$ ")" : eL) : eL → ("(" : eL "\\" : eL var0/3/2:2 ":" : eL type0/3/2:4 "." : eL ee1 ")" : eL) : eL
+  	 where (recursion) e0/3/2:6$ → ee1
+  ("If" : eL e0/3/3:1$ "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL → ("If" : eL ee1 "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL
+  	 where (recursion) e0/3/3:1$ → ee1
+  ("If" : eL e0/3/3:1 "Then" : eL e0/3/3:3$ "Else" : eL e0/3/3:5) : eL → ("If" : eL e0/3/3:1 "Then" : eL ee1 "Else" : eL e0/3/3:5) : eL
+  	 where (recursion) e0/3/3:3$ → ee1
+  ("If" : eL e0/3/3:1 "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5$) : eL → ("If" : eL e0/3/3:1 "Then" : eL e0/3/3:3 "Else" : eL ee1) : eL
+  	 where (recursion) e0/3/3:5$ → ee1
+  ("(" : eL e0/3/4:1$ ")" : eL) : eL → ("(" : eL ee1 ")" : eL) : eL
+  	 where (recursion) e0/3/4:1$ → ee1
+  (number0/0:0/0/1 "+" : e number0/0:2) : e → number (Function call - ID not retrievable)
+  (bool0/1:0 "::" : e "Bool" : typeL) : e → bool0/1:0
+  (number0/1:0 "::" : e "Int" : typeL) : e → number0/1:0
+  (eL0/1:0 "::" : e ("(" : typeL type0/1:2/1/2:1 ")" : typeL) : typeL) : e → eL0/1:0
+  	 where (recursion) (eL0/1:0 "::" : e type0/1:2/1/2:1) : e → eL0/1:0
+  ("(" : eL e0/3/4:1 ")" : eL) : eL → e0/3/4:1
+  ("If" : eL "True" : bool "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL → e0/3/3:3
+  ("If" : eL "False" : bool "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL → e0/3/3:5
+  (("(" : eL "\\" : eL var0/2:0/2:2 ":" : eL type0/2:0/2:4 "." : eL e0/2:0/2:6 ")" : eL) : eL e0/2:1) : e → e (Function call - ID not retrievable)
+
+ Analysis of rule "EvalCtx" 
+----------------------------
+
+Applicable to:
+  (e "+" e)
+  (eL "+" e)
+  (e "::" type)
+  (e e)
+  (eL e)
+  ("(" "\\" var ":" type "." e ")")
+  ("If" e "Then" e "Else" e)
+  ("(" e ")")
+Results:
+  (e0/0:0$ "+" : e e0/0:2) : e → (ee1 "+" : e e0/0:2) : e
+  	 where (recursion) e0/0:0$ → ee1
+  (eL0/0:0 "+" : e e0/0:2$) : e → (eL0/0:0 "+" : e ee1) : e
+  	 where (recursion) e0/0:2$ → ee1
+  (e0/1:0$ "::" : e type0/1:2) : e → (ee1 "::" : e type0/1:2) : e
+  	 where (recursion) e0/1:0$ → ee1
+  (e0/2:0$ e0/2:1) : e → (ee1 e0/2:1) : e
+  	 where (recursion) e0/2:0$ → ee1
+  (eL0/2:0 e0/2:1$) : e → (eL0/2:0 ee1) : e
+  	 where (recursion) e0/2:1$ → ee1
+  ("(" : eL "\\" : eL var0/3/2:2 ":" : eL type0/3/2:4 "." : eL e0/3/2:6$ ")" : eL) : eL → ("(" : eL "\\" : eL var0/3/2:2 ":" : eL type0/3/2:4 "." : eL ee1 ")" : eL) : eL
+  	 where (recursion) e0/3/2:6$ → ee1
+  ("If" : eL e0/3/3:1$ "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL → ("If" : eL ee1 "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL
+  	 where (recursion) e0/3/3:1$ → ee1
+  ("If" : eL e0/3/3:1 "Then" : eL e0/3/3:3$ "Else" : eL e0/3/3:5) : eL → ("If" : eL e0/3/3:1 "Then" : eL ee1 "Else" : eL e0/3/3:5) : eL
+  	 where (recursion) e0/3/3:3$ → ee1
+  ("If" : eL e0/3/3:1 "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5$) : eL → ("If" : eL e0/3/3:1 "Then" : eL e0/3/3:3 "Else" : eL ee1) : eL
+  	 where (recursion) e0/3/3:5$ → ee1
+  ("(" : eL e0/3/4:1$ ")" : eL) : eL → ("(" : eL ee1 ")" : eL) : eL
+  	 where (recursion) e0/3/4:1$ → ee1
+
+
+
+ Analysis of rule "EvalPlus" 
+-----------------------------
+
+Applicable to:
+  (number "+" number)
+Results:
+  (number0/0:0/0/1 "+" : e number0/0:2) : e → number (Function call - ID not retrievable)
+
+
+
+ Analysis of rule "EvalAscrBool" 
+---------------------------------
+
+Applicable to:
+  (bool "::" "Bool")
+Results:
+  (bool0/1:0 "::" : e "Bool" : typeL) : e → bool0/1:0
+
+
+
+ Analysis of rule "EvalAscrInt" 
+--------------------------------
+
+Applicable to:
+  (number "::" "Int")
+Results:
+  (number0/1:0 "::" : e "Int" : typeL) : e → number0/1:0
+
+
+
+ Analysis of rule "EvalAscrPar" 
+--------------------------------
+
+Applicable to:
+  (eL "::" ("(" type ")"))
+Results:
+  (eL0/1:0 "::" : e ("(" : typeL type0/1:2/1/2:1 ")" : typeL) : typeL) : e → eL0/1:0
+  	 where (recursion) (eL0/1:0 "::" : e type0/1:2/1/2:1) : e → eL0/1:0
+
+
+
+ Analysis of rule "EvalParens" 
+-------------------------------
+
+Applicable to:
+  ("(" e ")")
+Results:
+  ("(" : eL e0/3/4:1 ")" : eL) : eL → e0/3/4:1
+
+
+
+ Analysis of rule "EvalIfTrue" 
+-------------------------------
+
+Applicable to:
+  ("If" "True" "Then" e "Else" e)
+Results:
+  ("If" : eL "True" : bool "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL → e0/3/3:3
+
+
+
+ Analysis of rule "EvalIfFalse" 
+--------------------------------
+
+Applicable to:
+  ("If" "False" "Then" e "Else" e)
+Results:
+  ("If" : eL "False" : bool "Then" : eL e0/3/3:3 "Else" : eL e0/3/3:5) : eL → e0/3/3:5
+
+
+
+ Analysis of rule "EvalLamApp" 
+-------------------------------
+
+Applicable to:
+  (("(" "\\" var ":" type "." e ")") e)
+Results:
+  (("(" : eL "\\" : eL var0/2:0/2:2 ":" : eL type0/2:0/2:4 "." : eL e0/2:0/2:6 ")" : eL) : eL e0/2:1) : e → e (Function call - ID not retrievable)
+
+
+
+
+ Analysis for rules about (→*) 
+===============================
+
+# (→*) 	: e (in), e (out)	Pronounced as "big step"
+
+# Known rules are
+#   BigStepCanon
+#   BigStepRec
+#   BigStepBase
+
+Applicable to:
+  e
+Results:
+  e0 →* e0
+  	 where (✓) e0
+  e0 →* ee2
+  	 where (recursion) e0 → ee1, ee1 →* ee2
+  e0 →* ee1
+  	 where e0 → ee1, (✓) ee1
+
+ Analysis of rule "BigStepCanon" 
+---------------------------------
+
+Applicable to:
+  e
+Results:
+  e0 →* e0
+  	 where (✓) e0
+
+
+
+ Analysis of rule "BigStepRec" 
+-------------------------------
+
+Applicable to:
+  e
+Results:
+  e0 →* ee2
+  	 where (recursion) e0 → ee1, ee1 →* ee2
+
+
+
+ Analysis of rule "BigStepBase" 
+--------------------------------
+
+Applicable to:
+  e
+Results:
+  e0 →* ee1
+  	 where e0 → ee1, (✓) ee1
+
+
+
+
+ Analysis for rules about (⊢) 
+==============================
+
+# (⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
+
+# Known rules are
+#   Tnumber
+#   Tbool
+#   TParens
+#   TAscr
+#   Tx
+#   TPlus
+#   TIf
+#   TLambda
+#   Tapp
+
+Applicable to:
+  typingEnvironment, number
+  typingEnvironment, bool
+  typingEnvironment, ("(" e ")")
+  typingEnvironment, (eL "::" type)
+  typingEnvironment, (eL "+" e)
+  typingEnvironment, ("If" e "Then" e "Else" e)
+  typingEnvironment, ("(" "\\" var ":" type "." e ")")
+  typingEnvironment, (eL e)
+Results:
+  typingEnvironment0 ⊢ number1, "Int" : typeL
+  typingEnvironment0 ⊢ bool1, "Bool" : typeL
+  typingEnvironment0 ⊢ ("(" : eL e1/3/4:1 ")" : eL) : eL, typeT
+  	 where (recursion) typingEnvironment0 ⊢ e1/3/4:1, typeT
+  typingEnvironment0 ⊢ (eL1/1:0 "::" : e type1/1:2) : e, typeT'
+  	 where (recursion) typingEnvironment0 ⊢ eL1/1:0, typeT', typeT' == type1/1:2
+  typingEnvironment0 ⊢ (eL1/0:0 "+" : e e1/0:2) : e, "Int" : typeL
+  	 where (recursion) typingEnvironment0 ⊢ eL1/0:0, "Int" : typeL, typingEnvironment0 ⊢ e1/0:2, "Int" : typeL
+  typingEnvironment0 ⊢ ("If" : eL e1/3/3:1 "Then" : eL e1/3/3:3 "Else" : eL e1/3/3:5) : eL, typeTl
+  	 where (recursion) typingEnvironment0 ⊢ e1/3/3:1, "Bool" : typeL, typingEnvironment0 ⊢ e1/3/3:3, typeTl, typingEnvironment0 ⊢ e1/3/3:5, typeTr, typeTl == typeTr
+  typingEnvironment0 ⊢ ("(" : eL "\\" : eL var1/3/2:2 ":" : eL type1/3/2:4 "." : eL e1/3/2:6 ")" : eL) : eL, (("(" : typeL type1/3/2:4 ")" : typeL) : typeL "->" : type typeT2) : type
+  	 where (recursion) ((var1/3/2:2 ":" : typing type1/3/2:4) : typing "," : typingEnvironment typingEnvironment0) : typingEnvironment ⊢ e1/3/2:6, typeT2
+  typingEnvironment0 ⊢ (eL1/2:0 e1/2:1) : e, type (Function call - ID not retrievable)
+  	 where (recursion) typingEnvironment0 ⊢ eL1/2:0, typeTfunc, typingEnvironment0 ⊢ e1/2:1, typeTarg, typeTarg == type (Function call - ID not retrievable)
+
+ Analysis of rule "Tnumber" 
+----------------------------
+
+Applicable to:
+  typingEnvironment, number
+Results:
+  typingEnvironment0 ⊢ number1, "Int" : typeL
+
+
+
+ Analysis of rule "Tbool" 
+--------------------------
+
+Applicable to:
+  typingEnvironment, bool
+Results:
+  typingEnvironment0 ⊢ bool1, "Bool" : typeL
+
+
+
+ Analysis of rule "TParens" 
+----------------------------
+
+Applicable to:
+  typingEnvironment, ("(" e ")")
+Results:
+  typingEnvironment0 ⊢ ("(" : eL e1/3/4:1 ")" : eL) : eL, typeT
+  	 where (recursion) typingEnvironment0 ⊢ e1/3/4:1, typeT
+
+
+
+ Analysis of rule "TAscr" 
+--------------------------
+
+Applicable to:
+  typingEnvironment, (eL "::" type)
+Results:
+  typingEnvironment0 ⊢ (eL1/1:0 "::" : e type1/1:2) : e, typeT'
+  	 where (recursion) typingEnvironment0 ⊢ eL1/1:0, typeT', typeT' == type1/1:2
+
+
+
+ Analysis of rule "Tx" 
+-----------------------
+
+Applicable to:
+
+Results:
+
+
+
+
+ Analysis of rule "TPlus" 
+--------------------------
+
+Applicable to:
+  typingEnvironment, (eL "+" e)
+Results:
+  typingEnvironment0 ⊢ (eL1/0:0 "+" : e e1/0:2) : e, "Int" : typeL
+  	 where (recursion) typingEnvironment0 ⊢ eL1/0:0, "Int" : typeL, typingEnvironment0 ⊢ e1/0:2, "Int" : typeL
+
+
+
+ Analysis of rule "TIf" 
+------------------------
+
+Applicable to:
+  typingEnvironment, ("If" e "Then" e "Else" e)
+Results:
+  typingEnvironment0 ⊢ ("If" : eL e1/3/3:1 "Then" : eL e1/3/3:3 "Else" : eL e1/3/3:5) : eL, typeTl
+  	 where (recursion) typingEnvironment0 ⊢ e1/3/3:1, "Bool" : typeL, typingEnvironment0 ⊢ e1/3/3:3, typeTl, typingEnvironment0 ⊢ e1/3/3:5, typeTr, typeTl == typeTr
+
+
+
+ Analysis of rule "TLambda" 
+----------------------------
+
+Applicable to:
+  typingEnvironment, ("(" "\\" var ":" type "." e ")")
+Results:
+  typingEnvironment0 ⊢ ("(" : eL "\\" : eL var1/3/2:2 ":" : eL type1/3/2:4 "." : eL e1/3/2:6 ")" : eL) : eL, (("(" : typeL type1/3/2:4 ")" : typeL) : typeL "->" : type typeT2) : type
+  	 where (recursion) ((var1/3/2:2 ":" : typing type1/3/2:4) : typing "," : typingEnvironment typingEnvironment0) : typingEnvironment ⊢ e1/3/2:6, typeT2
+
+
+
+ Analysis of rule "Tapp" 
+-------------------------
+
+Applicable to:
+  typingEnvironment, (eL e)
+Results:
+  typingEnvironment0 ⊢ (eL1/2:0 e1/2:1) : e, type (Function call - ID not retrievable)
+  	 where (recursion) typingEnvironment0 ⊢ eL1/2:0, typeTfunc, typingEnvironment0 ⊢ e1/2:1, typeTarg, typeTarg == type (Function call - ID not retrievable)
+
+
+
+
+ Analysis for rules about (✓) 
+==============================
+
+# (✓) 	: e (in)	Pronounced as "is canonical"
+
+# Known rules are
+#   CanonBool
+#   CanonNumber
+
+Applicable to:
+  bool
+  number
+Results:
+  (✓) bool0
+  (✓) number0
+
+ Analysis of rule "CanonBool" 
+------------------------------
+
+Applicable to:
+  bool
+Results:
+  (✓) bool0
+
+
+
+ Analysis of rule "CanonNumber" 
+--------------------------------
+
+Applicable to:
+  number
+Results:
+  (✓) number0
+
+
+
+
+ Relation analysis of STFL 
+===========================
+
+Following new types were introduced:
+  !(e)(→)in0 	(derived from e)
+  (e)(→)in0 	(derived from e)
+  !(e)(→*)in0 	(derived from e)
+  (e)(→*)in0 	(derived from e)
+  !(e)(⊢)in1 	(derived from e)
+  (e)(⊢)in1 	(derived from e)
+
+Following types were ommitted, as they turned out to coincide with some other type:
+  (e)(::)in0 	== e
+  (e)(✓)in0 	== value
+  (type)(==)in0 	== type
+  (type)(==)in1 	== type
+  (typingEnvironment)(⊢)in0 	== typingEnvironment
+
+
+ Resulting Syntax 
+------------------
+
+!(e)(→)in0       ::= value
+                 | var
+                 | !(e)(→)in0 e
+                 | !(e)(→)in0 "+" e
+                 | !(e)(→)in0 "::" type
+                 | eL !(e)(→)in0
+                 | eL "+" !(e)(→)in0
+                 | "(" !(e)(→)in0 ")"
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")"
+                 | "If" !(e)(→)in0 "Then" e "Else" e
+                 | "If" e "Then" !(e)(→)in0 "Else" e
+                 | "If" e "Then" e "Else" !(e)(→)in0
+!(e)(→*)in0      ::= !(e)(→)in0
+!(e)(⊢)in1       ::= var
+                 | !(e)(⊢)in1 (e)(⊢)in1
+                 | (e)(⊢)in1 !(e)(⊢)in1
+                 | !(e)(⊢)in1 !(e)(⊢)in1
+                 | !(e)(⊢)in1 "::" type
+                 | "(" !(e)(⊢)in1 ")"
+(e)(→)in0        ::= (e)(→)in0 e
+                 | (e)(→)in0 "+" e
+                 | (e)(→)in0 "::" type
+                 | bool "::" "Bool"
+                 | eL (e)(→)in0
+                 | eL "+" (e)(→)in0
+                 | eL "::" "(" type ")"
+                 | number "+" number
+                 | number "::" "Int"
+                 | "(" "\\" var ":" type "." e ")" e
+                 | "(" (e)(→)in0 ")"
+                 | "(" e ")"
+                 | "(" "\\" var ":" type "." (e)(→)in0 ")"
+                 | "If" (e)(→)in0 "Then" e "Else" e
+                 | "If" bool "Then" e "Else" e
+                 | "If" e "Then" (e)(→)in0 "Else" e
+                 | "If" e "Then" e "Else" (e)(→)in0
+(e)(→*)in0       ::= (e)(→)in0
+                 | value
+(e)(⊢)in1        ::= value
+                 | (e)(⊢)in1 (e)(⊢)in1
+                 | (e)(⊢)in1 "::" type
+                 | eL "+" e
+                 | "(" (e)(⊢)in1 ")"
+                 | "(" "\\" var ":" type "." e ")"
+                 | "If" e "Then" e "Else" e
+bool             ::= "True"
+                 | "False"
+e                ::= eL "+" e
+                 | eL "::" type
+                 | eL e
+                 | eL
+eL               ::= value
+                 | var
+                 | "(" "\\" var ":" type "." e ")"
+                 | "If" e "Then" e "Else" e
+                 | "(" e ")"
+number           ::= Number
+type             ::= typeL "->" type
+                 | typeL
+typeL            ::= "Int"
+                 | "Bool"
+                 | "(" type ")"
+typing           ::= var ":" type
+typingEnvironment::= typing "," typingEnvironment
+                 | "{}"
+value            ::= bool
+                 | number
+var              ::= Identifier
+
+
+
+# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships

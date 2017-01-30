@@ -16,8 +16,6 @@ import ParseTreeInterpreter.RuleInterpreter
 import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
 
-import System.Environment
-
 import Control.Monad
 import Control.Arrow ((&&&))
 
@@ -114,6 +112,7 @@ isolateCheck	:: Either String () -> Output
 isolateCheck (Left msg)
 		= Output [] [msg]
 isolateCheck _	= emptyOutput
+
 
 
 
@@ -216,15 +215,16 @@ mainExFilePure ts args input
 
 		let files	= maybe [] (\fileName -> parseTrees |> snd & mapi |> renderParseTree fileName) (ptSvg args)	
 
-		let rr		= parseTrees >>= ifJustS' [] (runRule ts) (symbol args)
-		let rf		= parseTrees >>= ifJustS' [] (runFunc ts) (function args) 
-		let sbs		= parseTrees >>= ifJustS' [] (runStepByStep ts) (stepByStep args) 
+		let rr		= parseTrees >>= ifJustS' [] (runRule ts) (symbol args)		:: [String]
+		let rf		= parseTrees |> ifJustS' (Right []) (runFunc ts) (function args)	:: [Either String [String]]
+		let sbs		= parseTrees |> ifJustS' (Right []) (runStepByStep ts) (stepByStep args) :: [Either String [String]]
 		let noRulesMsg	= if noRules then
 					("# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions":
 					(parseTrees >>= printDebug))
 					else []
 
-		let output	= rr ++ rf ++ sbs ++ noRulesMsg
+		let output'	= (rf ++ sbs) >>= either (:[]) id	:: [String]
+		let output	= rr ++ noRulesMsg
 			
 		return (parseTrees, Output files output)
 
@@ -285,23 +285,21 @@ renderParseTree nm (i, pt)
 		conts	=  parseTreeSVG 1 terminalCS pt
 		in (fileName, conts)
 
-runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> [String]
+runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> Either String [String]
 runFunc ts func (inp, pt)
- 	= let	pt'	= evalFunc ts func [pt]
-		msg	= "# "++show inp++" applied to "++func
-		in
-		[msg, toParsable pt']
+ 	= do	pt'	<- evalFunc ts func [pt]
+		let msg	= "# "++show inp++" applied to "++func
+		return [msg, toParsable pt']
 
-runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> [String]
+runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> Either String [String]
 runStepByStep ts func (inp, pt)
-	= let	msg	= "# "++show inp++" applied repeatedly to "++func
-		in
-		msg:evalStar ts func pt
+	= do	let	msg	= "# "++show inp++" applied repeatedly to "++func
+		msgs	<- evalStar ts func pt
+		return $ msg:msgs
 
-evalStar	:: TypeSystem -> Name -> ParseTree -> [String]
+evalStar	:: TypeSystem -> Name -> ParseTree -> Either String [String]
 evalStar ts funcName pt	
-	= let	msg	= toParsable pt
-		pt'	= evalFunc ts funcName [pt]
-		msgs	= if (pt' /= pt) then evalStar ts funcName pt' else []
-		in
-		msg:msgs
+	= do	let msg	= toParsable pt
+		pt'	<- evalFunc ts funcName [pt]
+		msgs	<- if (pt' /= pt) then evalStar ts funcName pt' else return []
+		return $ msg:msgs

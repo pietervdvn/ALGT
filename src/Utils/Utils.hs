@@ -58,6 +58,11 @@ class Check' info a where
 (|+>)	= forM
 
 
+(|++>)	:: (Monad m, Traversable t) => m (t a) -> (a -> m b) -> m (t b)
+(|++>) mta f
+	= do	ta	<- mta
+		ta |+> f
+
 inParens str	= "("++str++")"
 
 inHeader prefix str chr msg

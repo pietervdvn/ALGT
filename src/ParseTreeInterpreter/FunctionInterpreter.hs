@@ -15,8 +15,9 @@ import Data.Map (Map)
 import Data.Maybe
 import Data.List (intercalate, intersperse)
 import Data.Bifunctor (first)
+import Data.Either
 
-evalFunc	:: TypeSystem -> Name -> [ParseTree] -> ParseTree
+evalFunc	:: TypeSystem -> Name -> [ParseTree] -> Either String ParseTree
 evalFunc ts funcName args	
  | funcName `M.member` get tsFunctions ts
 	= let	func	= get tsFunctions ts M.! funcName in
@@ -25,7 +26,7 @@ evalFunc ts funcName args
 	= evalErr (Ctx (get tsSyntax ts) (get tsFunctions ts) M.empty []) $
 		"evalFunc with unknown function: "++funcName	
 
-evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> ParseTree
+evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> Either String ParseTree
 evalExpr ts vars
 	= evaluate (buildCtx ts vars)
 
@@ -42,25 +43,24 @@ buildCtx' ts		= buildCtx ts M.empty
 
 
 -- applies given argument to the  function. Starts by evaluating the args
-applyFunc	:: Ctx -> (Name, Function) -> [ParseTree] -> ParseTree
+applyFunc	:: Ctx -> (Name, Function) -> [ParseTree] -> Either String ParseTree
 applyFunc ctx (nm, MFunction tp clauses) args
  | length args /= length tp - 1
 	= evalErr ctx $ "Number of arguments does not match. Expected "++show (length tp - 1)++" variables, but got "++show (length args)++" arguments instead"
  | otherwise
-	= let	stackEl	= (nm, args)
-		ctx'	= ctx {ctxStack = stackEl:ctxStack ctx}
-		clauseResults	= clauses |> evalClause ctx' args & catMaybes
-		in if null clauseResults then error "Not a single clause matched, even with error injection. This is a bug!" else
-			head clauseResults
+	= do	let stackEl		= (nm, args)
+		let ctx'		= ctx {ctxStack = stackEl:ctxStack ctx}
+		let clauseResults	= clauses |> evalClause ctx' args & rights
+		when (null clauseResults) $ Left "Not a single clause matched, even with error injection. This is a bug!"
+		return $ head clauseResults
 
 
-evalClause	:: Ctx ->  [ParseTree] -> Clause -> Maybe ParseTree
+evalClause	:: Ctx ->  [ParseTree] -> Clause -> Either String ParseTree
 evalClause ctx args (MClause pats expr)
 	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctxSyntax ctx) (const True))
-					& either (const Nothing) Just
-		variables	<- mergeVarss variabless & either (const Nothing) Just
+		variables	<- mergeVarss variabless
 		let ctx'	= ctx {ctxVars = variables}
-		return $ evaluate ctx' expr
+		evaluate ctx' expr
 
 
 mergeVarss	:: [VariableAssignments] -> Either String VariableAssignments
@@ -150,26 +150,26 @@ depthFirstSearch matchMaker path pt	= matchMaker (pt, path)
 
 
 
-evaluate	:: Ctx -> Expression -> ParseTree
+evaluate	:: Ctx -> Expression -> Either String ParseTree
 evaluate ctx (MCall _ "plus" True es)
-	= let	(tp, es')	= asInts ctx "plus" es in
-		MInt tp (sum es')
+	= do	(tp, es')	<- asInts ctx "plus" es
+		return $ MInt tp (sum es')
 evaluate ctx (MCall _ "min" True es)
-	= let	(tp, [e1, e2])	= asInts ctx "min" es in
-		MInt tp (e1 - e2)
+	= do	(tp, [e1, e2])	<- asInts ctx "min" es
+		return $ MInt tp (e1 - e2)
 evaluate ctx (MCall _ "mul" True es)
-	= let	(tp, es')	= asInts ctx "mul" es in
-		MInt tp (product es')
+	= do	(tp, es')	<- asInts ctx "mul" es
+		return $ MInt tp (product es')
 evaluate ctx (MCall _ "div" True es)
-	= let	(tp, [e1, e2])	= asInts ctx "min" es in
-		MInt tp (e1 `div` e2)
+	= do	(tp, [e1, e2])	<- asInts ctx "min" es
+		return $ MInt tp (e1 `div` e2)
 evaluate ctx (MCall _ "mod" True es)
-	= let	(tp, [e1, e2])	= asInts ctx "min" es in
-		MInt tp (e1 `mod` e2)
+	= do	(tp, [e1, e2])	<- asInts ctx "min" es
+		return $ MInt tp (e1 `mod` e2)
 
 evaluate ctx (MCall _ "neg" True es)
-	= let	(tp, [e1])	= asInts ctx "neg" es in
-		MInt tp (-e1)
+	= do	(tp, [e1])	<- asInts ctx "neg" es
+		return $ MInt tp (-e1)
 
 
 
@@ -177,46 +177,47 @@ evaluate ctx (MCall _ "equal" True es)
 	= do	(tp, [e1, e2])	<- asInts ctx "equal" es
 		return $ MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
-	= let	exprs'	= exprs |> evaluate ctx & toParsable' ", "
-		msgs	= ["In evaluating a function:", exprs']
-		stack	= ctxStack ctx |> buildStackEl
-		in	error $ unlines $ stack ++ msgs
+	= do	exprs'	<- exprs |+> evaluate ctx |> toParsable' ", "
+		let msgs	= ["In evaluating a function:", exprs']
+		let stack	= ctxStack ctx |> buildStackEl
+		Left $ unlines $ stack ++ msgs
 evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
-	= case evaluate ctx identifier of
-		(MIdentifier (basetype, _) nm)
-			-> unusedIdentifier nonOverlap (Just nm) basetype
-		expr	-> unusedIdentifier nonOverlap Nothing (typeOf expr)
+	= do	evalled	<- evaluate ctx identifier
+		case evalled of
+			(MIdentifier (basetype, _) nm)
+				-> return $ unusedIdentifier nonOverlap (Just nm) basetype
+			expr	-> return $ unusedIdentifier nonOverlap Nothing (typeOf expr)
 			
 evaluate ctx (MCall _ nm True args)
 	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++ toParsable' ", " args
 
 evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctxFunctions ctx
-	= let	func	= ctxFunctions ctx M.! nm
-		args'	= args |> evaluate ctx in
+	= do	let func	= ctxFunctions ctx M.! nm
+		args'		<- args |+> evaluate ctx
 		applyFunc ctx (nm, func) args'
  | otherwise
 	= evalErr ctx $ "unknown function: "++nm	
 
 evaluate ctx (MVar _ nm)
  | nm `M.member` ctxVars ctx	
-	= fst $ ctxVars ctx M.! nm
+	= return $ fst $ ctxVars ctx M.! nm
  | otherwise			
 	= evalErr ctx $ "unkown variable "++nm
 
 evaluate ctx (MEvalContext _ nm hole)
  | nm `M.member` ctxVars ctx	
-	= let	hole'	= evaluate ctx hole
-		(context, path)	= ctxVars ctx M.! nm
-		path'	= fromMaybe (error $ nm++" was not captured using an evaluation context") path
-		in
-		replace context path' hole'
+	= do	hole'	<- evaluate ctx hole
+		let (context, path)	= ctxVars ctx M.! nm
+		path'	<- maybe (Left $ nm++" was not captured using an evaluation context") return path
+		return $ replace context path' hole'
  | otherwise			
 	= evalErr ctx $ "unkown variable (for evaluation context) "++nm
 
 
-evaluate ctx (MSeq tp vals)	= vals |> evaluate ctx & PtSeq tp
-evaluate ctx (MParseTree pt)	= pt
+evaluate ctx (MSeq tp vals)	= do	vals'	<- vals |+> evaluate ctx 
+					return $ PtSeq tp vals'
+evaluate ctx (MParseTree pt)	= return pt
 evaluate ctx (MAscription tn expr)
 				= evaluate ctx expr
 -- evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n(This is a bug, pietervdvn added a clause to little)\n"++
@@ -231,14 +232,13 @@ showAssgn (pt, mPath)
 		= toParsable pt++
 		maybe "" (\path -> "\tContext path is "++show path) mPath
 
-evalErr		:: Ctx -> String -> ParseTree
+evalErr		:: Ctx -> String -> Either String ParseTree
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
 
 asInts ctx bi exprs	
-	= do	exprs'	<- exprs |> evaluate ctx 
-				|> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
-				& allRight
+	= do	exprs'	<- exprs |+> evaluate ctx 
+				|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
 				||>> (\(MInt _ i) -> i)
 		let tp	= typeOf $ head exprs
 		tp'	<- if tp == "" then Left "Declare a return type of builtin functions: !function:type(args)" else return tp

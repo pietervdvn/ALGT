@@ -48,7 +48,7 @@ isTrivial rapp
 
 isRecursive	:: RuleApplication -> Bool
 isRecursive rapp
-	= (get conclusion rapp & conclusionRel) `elem` (get predicates rapp |> conclusionRel)
+	= (get conclusion rapp & get conclusionRel) `elem` (get predicates rapp |> get conclusionRel)
 
 
 
@@ -128,8 +128,8 @@ handlePredicate ts (Needed concl) ranalysis
 addNeeded	:: TypeSystem -> ConclusionA Expression -> RuleApplication -> RuleApplication
 addNeeded ts concl ruleApp
 	= let	assgn	= get assignment ruleApp
-		r	= conclusionRel concl
-		outs	= conclusionArgs concl & filterMode Out r
+		r	= get conclusionRel concl
+		outs	= get conclusionArgs concl & filterMode Out r
 		newVars	= (outs >>= usedVariables) & filter ((`M.notMember` assgn) . fst)
 		newVars'= newVars |> (fst &&& uncurry (generateAbstractSet (get tsSyntax ts)))
 				& M.fromList |> flip (,) Nothing	:: Assignments

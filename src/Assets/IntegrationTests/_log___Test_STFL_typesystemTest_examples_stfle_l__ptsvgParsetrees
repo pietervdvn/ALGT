@@ -1,4 +1,4 @@
-Test/STFL.typesystem
+Test/STFL.typesystem Test/examples.stfl e -l --ptsvg Parsetrees
 
 Warning:
   While checking the totality of function "cod":
