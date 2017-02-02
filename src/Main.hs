@@ -10,6 +10,7 @@ import Utils.Utils
 import Control.Monad
 
 import System.Environment
+import System.Exit
 
 import TypeSystem
 
@@ -34,9 +35,19 @@ main	= do	args	<- getArgs
 		return ()
 
 
-main'	:: [String] -> IO (TypeSystem, [(String, ParseTree)])
+main'	:: [String] -> IO ()
 main' args 
-	= do	parsedArgs	<- parseArgs version args
-		when (runTests parsedArgs) testAll
-		runIO' parsedArgs (mainArgs parsedArgs)
+	= do	(runTests, parsedArgs)	<- parseArgs version args
+		if runTests then do
+			successFull	<- testAll |> and
+			if successFull then
+				putStrLn "All clear!"
+			else
+				exitFailure 
+		else do
+			when (isNothing parsedArgs) $
+				error  "No typesystem file given. See -h"
+			let (Just parsedArgs')	= parsedArgs
+			runIO' parsedArgs' (mainArgs parsedArgs')
+			pass
 

@@ -38,6 +38,7 @@ class NeedsFiles a where
 data MainArgs	= MainArgs 
 			{ showVersionNr	:: Bool
 			, realArgs	:: Maybe Args
+			, runTests	:: Bool
 			}
 
 data Args = Args 	{ tsFile		:: String
@@ -49,7 +50,6 @@ data Args = Args 	{ tsFile		:: String
 			, interpretRules	:: [String]
 			, iraSVG		:: Maybe String
 			, createSVG		:: Maybe String
-			, runTests		:: Bool
 			}
 	deriving (Show)
 instance NeedsFiles Args where
@@ -78,17 +78,15 @@ emptyConfig
 	= Config []
 
 
-parseArgs	:: ([Int], String) -> [String] -> IO Args
+parseArgs	:: ([Int], String) -> [String] -> IO (Bool, Maybe Args)
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		MainArgs doShowVersion args	<- handleParseResult result
+		MainArgs doShowVersion args runTests
+				<- handleParseResult result
 		when doShowVersion $ do
 			putStrLn (showVersion version)
 			exitSuccess
-		when (isNothing args) $ do
-			putStrLn "No typesystem file given. See -h"
-			exitFailure
-		return $ fromJust args
+		return (runTests, args)
 
 
 
@@ -203,10 +201,6 @@ args	= Args <$> argument str
 			(metavar "SVG-PATH"
 			<> long "lsvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules"))
-		<*> switch
-			(long "test"
-			<> help "Run the integration tests")
-
 		
 
 mainArgs	:: Parser MainArgs
@@ -216,5 +210,8 @@ mainArgs
 			<> short 'v'
 			<> help "Show the version number and text")
 		<*> optional args
+		<*> switch
+			(long "test"
+			<> help "Run the integration tests")
 
 

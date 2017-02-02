@@ -54,10 +54,10 @@ Results:
 #   EqArrow
 
 Applicable to:
-  type, type
+  type
   ("(" type ")"), type
   type, ("(" type ")")
-  (typeL "->" type), (typeL "->" type)
+  (typeL "->" type)
 Results:
   type0 == type0
   ("(" : typeL type0:1 ")" : typeL) : typeL == type1
@@ -71,7 +71,7 @@ Results:
 ---------------------------
 
 Applicable to:
-  type, type
+  type
 Results:
   type0 == type0
 
@@ -103,7 +103,7 @@ Results:
 ----------------------------
 
 Applicable to:
-  (typeL "->" type), (typeL "->" type)
+  (typeL "->" type)
 Results:
   (typeL0:0 "->" : type type0:2) : type == (typeL1:0 "->" : type type1:2) : type
   	 where (recursion) typeL0:0 == typeL1:0, type0:2 == type1:2
@@ -574,10 +574,13 @@ Following types were omitted, as they turned out to be empty. They might cause '
   (var)(✓)in0
 
 !(e)(→)in0 has following subtypes:  !(eL)(→)in0
+  eL
 !(e)(⊢)in1 has following subtypes:  !(eL)(⊢)in1
+  eL
 !(eL)(→)in0 has following subtypes:  value
   var
-!(eL)(⊢)in1 has following subtypes:  var
+!(eL)(⊢)in1 has following subtypes:  value
+  var
 !(typeL)(==)in0 has following subtypes:  ɛ
 !(typeL)(==)in1 has following subtypes:  ɛ
 (e)(→)in0 has following subtypes:  (eL)(→)in0
@@ -619,25 +622,72 @@ var has following subtypes:  ɛ
                  | !(eL)(→)in0 "::" type
                  | !(eL)(→)in0 !(e)(→)in0
                  | !(eL)(→)in0
+                 | bool "+" e
+                 | var "+" e
+                 | "If" e "Then" e "Else" e "+" e
+                 | "(" e ")" "+" e
+                 | eL "+" eL "+" e
+                 | eL "+" eL "::" type
+                 | eL "+" eL e
+                 | eL "+" bool
+                 | eL "+" var
+                 | eL "+" "(" "\\" var ":" type "." e ")"
+                 | eL "+" "If" e "Then" e "Else" e
+                 | eL "+" "(" e ")"
+                 | number "::" type
+                 | var "::" type
+                 | "If" e "Then" e "Else" e "::" type
+                 | "(" e ")" "::" type
+                 | bool "::" type
+                 | eL "::" type
+                 | eL e
+                 | eL
 !(e)(⊢)in1       ::= !(eL)(⊢)in1 "+" e
                  | eL "+" !(e)(⊢)in1
                  | !(eL)(⊢)in1 "::" type
                  | !(eL)(⊢)in1 e
                  | eL !(e)(⊢)in1
                  | !(eL)(⊢)in1
+                 | eL "+" e
+                 | eL "::" type
+                 | eL e
+                 | eL
 !(eL)(→)in0      ::= value
                  | var
                  | "(" "\\" var ":" type "." !(e)(→)in0 ")"
                  | "If" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0
-!(eL)(⊢)in1      ::= var
+                 | "(" e ")"
+                 | value
+                 | var
+                 | "(" "\\" var ":" type "." e ")"
+                 | "If" eL "+" e "Then" e "Else" e
+                 | "If" eL "::" type "Then" e "Else" e
+                 | "If" eL e "Then" e "Else" e
+                 | "If" number "Then" e "Else" e
+                 | "If" var "Then" e "Else" e
+                 | "If" "(" "\\" var ":" type "." e ")" "Then" e "Else" e
+                 | "If" "If" e "Then" e "Else" e "Then" e "Else" e
+                 | "If" "(" e ")" "Then" e "Else" e
+!(eL)(⊢)in1      ::= value
+                 | var
                  | "(" "\\" var ":" type "." !(e)(⊢)in1 ")"
                  | "If" !(e)(⊢)in1 "Then" e "Else" e
                  | "If" e "Then" !(e)(⊢)in1 "Else" e
                  | "If" e "Then" e "Else" !(e)(⊢)in1
                  | "(" !(e)(⊢)in1 ")"
+                 | var
+                 | "(" "\\" var ":" type "." e ")"
+                 | "If" e "Then" e "Else" e
+                 | "(" e ")"
 !(typeL)(==)in0  ::= "Int"
                  | "Bool"
+                 | "(" type ")"
+                 | "Int"
+                 | "Bool"
 !(typeL)(==)in1  ::= "Int"
+                 | "Bool"
+                 | "(" type ")"
+                 | "Int"
                  | "Bool"
 (e)(→)in0        ::= (eL)(→)in0
                  | (eL)(→)in0 e

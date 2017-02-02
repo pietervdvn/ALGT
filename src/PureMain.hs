@@ -117,7 +117,7 @@ isolateCheck _	= emptyOutput
 
 
 mainArgs	:: Args -> Input -> Either String ((TypeSystem, [(String, ParseTree)]), Output)
-mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract interpretRules iraSVG createSVG _) input
+mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract interpretRules iraSVG createSVG) input
 	= do	checkInput args input & first (\missing -> error $ "MISSING FILES FOR TESTCASE "++showComma missing)
 		let tsContents	= input M.! tsFile
 		ts		<- parseTypeSystem tsContents (Just tsFile)
