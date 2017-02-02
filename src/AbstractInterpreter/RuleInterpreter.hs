@@ -178,7 +178,7 @@ evalPred' _ _ _	= Nothing
 instance ToString RuleAnalysis where
 	toParsable matchingForms
 		= ["Applicable to:"
-			, indent (matchingForms |> get possibleArgs ||>> eraseDetails & nub |> toParsable' ", " & unlines)
+			, indent (matchingForms |> get possibleArgs ||>> toParsable |> nub & nub |> intercalate ", " & unlines)
 			, "Results:"
 			, indent (toParsable' "\n" matchingForms)] & unlines
 

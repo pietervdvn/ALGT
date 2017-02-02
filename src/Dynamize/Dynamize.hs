@@ -48,14 +48,17 @@ import Control.Monad
 
 import Lens.Micro hiding ((&))
 
-dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> Changes
-dynamize ts rule typeErr addStuckStateRules
+dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> [Relation] -> Changes
+dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 		= let	syntax		= get tsSyntax ts
 			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule))
 			newRules	= addStuckStateRules |> calculateNewRulesFor ts typeErr & concat
+			newRules'	= addTypeErrCase |> (\rel ->
+						Rule ("Extra "++get relSymbol rel) [] $ RelationMet rel [bnfAsExpr $ Literal typeErr])
+			newRulesCh	= (newRules ++ newRules')
 						|> (\rule -> New (get ruleName rule) rule)
 			in
-			Changes "Dynamized" [changedSyntax] [] [] newRules
+			Changes "Dynamized" [changedSyntax] [] [] newRulesCh
 
 
 

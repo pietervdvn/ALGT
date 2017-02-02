@@ -117,12 +117,26 @@ subtractsTo tnss
 inverseFor		:: Map (TypeName, TypeName) TypeName -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet], [AbstractSet])
 inverseFor subtractions ra posNameSpec
 	= let	s		= get raSyntax ra
-		negNameSpec	= invertSpec posNameSpec
+		rec		= get raIntroduced ra & M.keys |> toParsable
 		derivedFrom	= get tnsSuper posNameSpec
-		ass		= derivedFrom & generateAbstractSet s "" & (:[]) >>= unfold s
+		negNameSpec	= invertSpec posNameSpec
+
+		doesContainRec as
+				= fromAsSeq' as |> fromEveryPossible 
+						& catMaybes 
+						& any (`elem` rec)		:: Bool
+
+		all		= (derivedFrom & generateAbstractSet s "" & (:[]) >>= unfold s)
+		(allRec, allClass)
+				= all & partition doesContainRec
 		-- TODO FIXME this ain't complete yet!
-		posAs		= ruleNameFor posNameSpec & generateAbstractSet s "" & (:[]) >>= unfold s
-		negs		= subtractAllWith s subtractions ass posAs
+		posAll		= ruleNameFor posNameSpec & generateAbstractSet s "" & (:[]) >>= unfold s
+		(posRec, posClass)
+				= posAll & partition doesContainRec
+		negsRec		= subtractAllWith s subtractions all posRec
+		negsClass	= subtractAll s all posClass
+		negs		= negsRec ++ negsClass
+					-- & refoldWithout s [ruleNameFor negNameSpec]
 		in
 		(negNameSpec, negs, [])
 
@@ -144,12 +158,8 @@ inverseForOld recursiveForms ra positiveNameSpec
 
 		positiveForms	= ra & get raIntroduced & (M.! positiveNameSpec)	:: [AbstractSet]
 		
-
-		doesContainRec as
-				= fromAsSeq' as |> fromEveryPossible 
-						& catMaybes 
-						& any (`elem` recursiveForms')		:: Bool
-
+		doesContainRec as	= False
+		
 		(posRecursive, posClassical)
 				= positiveForms & partition doesContainRec		:: ([AbstractSet], [AbstractSet])
 

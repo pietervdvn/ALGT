@@ -7,6 +7,8 @@ This module defines helper data structures used throughout abstract interpretati
 Think assignments, analysis data, ...
 -}
 
+import Prelude hiding (subtract)
+
 import TypeSystem
 import Utils.Utils
 import Utils.ToString
@@ -44,7 +46,8 @@ subtractArgs s args (minus:minuses)
 subtractArg	:: Syntax -> Arguments -> Arguments -> [Arguments]
 subtractArg s args minus
  | length args /= length minus	= error "Length of arguments in minus don't match; this is weird"
- | otherwise	= let	pointWise	= zip args minus |> uncurry (_subtract s M.empty)  in	
+ | otherwise	= let	pointWise	= zip args minus |> (\(e, emin) -> subtract s [e] emin)
+			in	
 			replacePointwise args pointWise
 
 type Assignments	= Map Name (AbstractSet, Maybe Path)

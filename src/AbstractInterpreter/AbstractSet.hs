@@ -1,5 +1,13 @@
  {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
-module AbstractInterpreter.AbstractSet where
+module AbstractInterpreter.AbstractSet
+		(AbstractSet(..)
+		, generateAbstractSet, generateArgs, fromExpression, toBNF
+		, unfold, unfoldFull, subtract, subtractWith, subtractAll, subtractAllWith
+		, replaceAS, getAt
+		, refold, refoldWithout
+		, isEveryPossible, fromEveryPossible, fromAsSeq, fromAsSeq'
+		, getAsName
+		, containsRule, containsRuleAS) where
 
 {-
 This module defines an abstract type tree, which represents the infinite unfolding of a BNF-rule
@@ -37,37 +45,100 @@ data AbstractSet
 
 
 
--- for unification
-instance Node AbstractSet where
-	hasChildren (AsSeq _ as)	= not $ L.null as
-	hasChildren _	= False
-	
-	getChildren (AsSeq _ as)	= as
-
-	newChildren (AsSeq mi _)	= AsSeq mi
-
-	sameSymbol (AsSeq mi0 _) (AsSeq mi1 _)	
-				= mi0 == mi1
-	sameSymbol a b		= a == b
-
-	isVar EveryPossible{}		= True
-	isVar _				= False
-
-	getName (EveryPossible _ n _)	= n
 
 
 
-toBNF			:: AbstractSet -> BNF
-toBNF (EveryPossible _ _ tp)
-			= BNFRuleCall tp
-toBNF (ConcreteLiteral mi s)
-			= Literal s
-toBNF (ConcreteIdentifier _ _)
-			= Identifier
-toBNF (ConcreteInt _ _)
-			= Number
-toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
+------------------------------------------ GENERATION -----------------------------------------------------------------
 
+
+generateAbstractSet'	:: Syntax -> Name -> TypeName -> BNF -> AbstractSet
+generateAbstractSet' s n tp
+			= _generateAbstractSet s (tp, -1) n
+
+
+
+generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
+generateAbstractSet s n tp
+			= generateAbstractSet' s n tp (BNFRuleCall tp)
+
+
+
+
+_generateAbstractSet				:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet
+_generateAbstractSet r mi n (Literal s)		= ConcreteLiteral mi s
+_generateAbstractSet r mi n Identifier		= ConcreteIdentifier mi n
+_generateAbstractSet r mi n Number		= ConcreteInt mi n
+_generateAbstractSet r mi n (BNFRuleCall tp)
+	| tp `member` getBNF r
+			= EveryPossible mi n tp
+	| otherwise	= error $ "No bnf-rule with the name " ++ tp
+_generateAbstractSet r mi n (BNFSeq bnfs)
+			= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r mi (n++":"++show i) bnf) & AsSeq mi
+
+
+
+
+fromExpression			:: Syntax -> Name -> Expression -> AbstractSet
+fromExpression s n (MParseTree (MLiteral mi l))
+				= ConcreteLiteral mi l
+fromExpression s n (MParseTree (MIdentifier mi _))
+				= ConcreteIdentifier mi n
+fromExpression s n (MParseTree (MInt mi _))
+				= ConcreteInt mi n
+fromExpression s n (MParseTree (PtSeq mi pts))
+				= pts |> MParseTree & MSeq mi & fromExpression s n 
+fromExpression s n (MVar tn _)	= generateAbstractSet s n tn
+fromExpression s n (MSeq mi exprs)
+				= mapi exprs |> (\(i, e) -> fromExpression s (n++":"++show i) e) & AsSeq mi
+fromExpression s n (MCall tn _ _ _)
+				= generateAbstractSet s n tn
+fromExpression s n (MAscription _ e)
+				= fromExpression s n e
+fromExpression s n (MEvalContext tn _ _)
+				= generateAbstractSet s n tn
+
+
+generateArgs		:: Syntax -> [TypeName] -> [AbstractSet]
+generateArgs s tps 	= tps & mapi |> (\(i, t) -> generateAbstractSet s (show i) t)
+
+
+---------------------------------------------- UNFOLDING ---------------------------------------------------------------
+
+
+unfold		:: Syntax -> AbstractSet ->  [AbstractSet]
+unfold r (EveryPossible _ n e)
+		= let	bnfs	= getBNF r ! e
+		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r (e, i) (n++"/"++show i) bnf)
+		  in choices & nub
+unfold r as	= [as]
+
+
+-- Unfolds until everything is a sequence (thus no more 'everyPossible's in the set). You'll probably end up with something infinite, so be carefull
+unfoldFull	:: Syntax -> AbstractSet -> [AbstractSet]
+unfoldFull syntax as
+	= do	as'	<- unfold syntax as
+		if isEveryPossible as' then unfoldFull syntax as'
+			else return as'
+
+-- Unfolds all "EveryPossible" in the abstractset exactly once
+unfoldAll	:: Syntax -> AbstractSet -> [AbstractSet]
+unfoldAll syntax (AsSeq mi seq)
+	= do	seq'	<- seq |> unfoldAll syntax & allCombinations
+		return $ AsSeq mi seq'
+unfoldAll syntax as@EveryPossible{}
+	= unfold syntax as
+unfoldAll syntax as
+	= [as]
+
+
+
+
+
+
+
+
+
+-------------------------------------------- FOLDING ----------------------------------------------
 
 
 
@@ -176,85 +247,7 @@ foldGroup syntax revTable ass
 
 
 
-generateAbstractSet'	:: Syntax -> Name -> TypeName -> BNF -> AbstractSet
-generateAbstractSet' s n tp
-			= _generateAbstractSet s (tp, -1) n
-
-
-
-generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
-generateAbstractSet s n tp
-			= generateAbstractSet' s n tp (BNFRuleCall tp)
-
-
-
-
-_generateAbstractSet				:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet
-_generateAbstractSet r mi n (Literal s)		= ConcreteLiteral mi s
-_generateAbstractSet r mi n Identifier		= ConcreteIdentifier mi n
-_generateAbstractSet r mi n Number		= ConcreteInt mi n
-_generateAbstractSet r mi n (BNFRuleCall tp)
-	| tp `member` getBNF r
-			= EveryPossible mi n tp
-	| otherwise	= error $ "No bnf-rule with the name " ++ tp
-_generateAbstractSet r mi n (BNFSeq bnfs)
-			= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r mi (n++":"++show i) bnf) & AsSeq mi
-
-
-
-
-fromExpression			:: Syntax -> Name -> Expression -> AbstractSet
-fromExpression s n (MParseTree (MLiteral mi l))
-				= ConcreteLiteral mi l
-fromExpression s n (MParseTree (MIdentifier mi _))
-				= ConcreteIdentifier mi n
-fromExpression s n (MParseTree (MInt mi _))
-				= ConcreteInt mi n
-fromExpression s n (MParseTree (PtSeq mi pts))
-				= pts |> MParseTree & MSeq mi & fromExpression s n 
-fromExpression s n (MVar tn _)	= generateAbstractSet s n tn
-fromExpression s n (MSeq mi exprs)
-				= mapi exprs |> (\(i, e) -> fromExpression s (n++":"++show i) e) & AsSeq mi
-fromExpression s n (MCall tn _ _ _)
-				= generateAbstractSet s n tn
-fromExpression s n (MAscription _ e)
-				= fromExpression s n e
-fromExpression s n (MEvalContext tn _ _)
-				= generateAbstractSet s n tn
-
-
-generateArgs		:: Syntax -> [TypeName] -> [AbstractSet]
-generateArgs s tps 	= tps & mapi |> (\(i, t) -> generateAbstractSet s (show i) t)
-
-
-
-unfold		:: Syntax -> AbstractSet ->  [AbstractSet]
-unfold r (EveryPossible _ n e)
-		= let	bnfs	= getBNF r ! e
-		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r (e, i) (n++"/"++show i) bnf)
-		  in choices & nub
-unfold r as	= [as]
-
-
--- Unfolds until everything is a sequence (thus no more 'everyPossible's in the set). You'll probably end up with something infinite, so be carefull
-unfoldFull	:: Syntax -> AbstractSet -> [AbstractSet]
-unfoldFull syntax as
-	= do	as'	<- unfold syntax as
-		if isEveryPossible as' then unfoldFull syntax as'
-			else return as'
-
--- Unfolds all "EveryPossible" in the abstractset exactly once
-unfoldAll	:: Syntax -> AbstractSet -> [AbstractSet]
-unfoldAll syntax (AsSeq mi seq)
-	= do	seq'	<- seq |> unfoldAll syntax & allCombinations
-		return $ AsSeq mi seq'
-unfoldAll syntax as@EveryPossible{}
-	= unfold syntax as
-unfoldAll syntax as
-	= [as]
-
-
-
+----------------------------------------------- SUBTRACTION ------------------------------------------------
 
 
 {- Given abstract sets, removes the second from this set
@@ -271,6 +264,8 @@ subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
 _subtract'	:: Syntax -> Map (TypeName, TypeName) TypeName -> AbstractSet -> AbstractSet -> [AbstractSet]
 _subtract' s k e emin
  | e == emin	= []
+ | subsetOf s e emin
+		= []
  | otherwise	= _subtract s k e emin
 
 
@@ -288,7 +283,7 @@ _subtract syntax known s@(AsSeq mi seq) smin@(AsSeq _ seqMin)
 					& replacePointwise seq
 		return $ AsSeq mi pointWise
 _subtract syntax known s minus
- | subsetOf syntax s minus	
+ | subsetOf syntax s minus
 		= []
  | isEveryPossible s && alwaysIsA' syntax minus s
 		= let	unfolded	= unfold syntax s
@@ -300,9 +295,49 @@ _subtract syntax known s minus
  | otherwise		= return s
 
 
-isSubexpressionOf	:: Syntax -> TypeName -> AbstractSet -> Bool
-isSubexpressionOf s everyPossible doesContain
-	= alwaysIsA s everyPossible (typeOf doesContain)
+
+
+-- tells wether this AS (snd arg) contains the second AS completely
+subsetOf	:: Syntax -> AbstractSet -> AbstractSet -> Bool
+subsetOf s (AsSeq _ subs) (AsSeq _ supers)
+	= zip subs supers & all (uncurry $ subsetOf s)
+subsetOf s sub super@EveryPossible{}
+	= alwaysIsA' s sub super
+subsetOf s sub@EveryPossible{} super
+	= False
+subsetOf s concreteSub concreteSuper
+	= sameStructure concreteSub concreteSuper
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------- BORING UTILS ---------------------------------------------------------
+
+
+-- for unification
+instance Node AbstractSet where
+	hasChildren (AsSeq _ as)	= not $ L.null as
+	hasChildren _	= False
+	
+	getChildren (AsSeq _ as)	= as
+
+	newChildren (AsSeq mi _)	= AsSeq mi
+
+	sameSymbol (AsSeq mi0 _) (AsSeq mi1 _)	
+				= mi0 == mi1
+	sameSymbol a b		= a == b
+
+	isVar EveryPossible{}		= True
+	isVar _				= False
+
+	getName (EveryPossible _ n _)	= n
+
 
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
@@ -322,19 +357,6 @@ subtractAll syntax
 subtractAllWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
 subtractAllWith syntax known ass minuses
 		= nub $ L.foldl (subtractWith syntax known) ass minuses
-
--- tells wether this AS contains the second AS completely
-subsetOf	:: Syntax -> AbstractSet -> AbstractSet -> Bool
-subsetOf s (AsSeq _ subs) (AsSeq _ supers)
-	= zip subs supers & all (uncurry $ subsetOf s)
-subsetOf s sub super@EveryPossible{}
-	= alwaysIsA' s sub super
-subsetOf s sub@EveryPossible{} super
-	= False
-subsetOf s concreteSub concreteSuper
-	= sameStructure concreteSub concreteSuper
-
---------------------- BORING UTILS ---------------------------------
 
 
 isEveryPossible			:: AbstractSet -> Bool
@@ -452,6 +474,18 @@ getAsName (ConcreteInt _ n)	= Just n
 getAsName (AsSeq _ _)		= Nothing
 
 
+
+
+toBNF			:: AbstractSet -> BNF
+toBNF (EveryPossible _ _ tp)
+			= BNFRuleCall tp
+toBNF (ConcreteLiteral mi s)
+			= Literal s
+toBNF (ConcreteIdentifier _ _)
+			= Identifier
+toBNF (ConcreteInt _ _)
+			= Number
+toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
 
 instance SimplyTyped AbstractSet where
 	typeOf as	= _typeOf as & either id fst

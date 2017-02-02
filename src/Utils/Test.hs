@@ -76,7 +76,7 @@ test (i, args)	= do	putStrLn $ "Running test "++show i++": "++unwords args
 			unless (expected == actual) $
 				do	putStrLn errMsg
 					writeFile (directoryFor ("log___":args) ++ ".FAILED") 
-					(unwords args ++ "\n\n" ++ log)
+						(unwords args ++ "\n\n" ++ log)
 			     
 
 testAll		= do	putStrLn $ "Running "++show (length testArgs)++" tests"

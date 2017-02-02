@@ -1,8 +1,7 @@
  {-# LANGUAGE FlexibleContexts #-}
 module Dynamize.Test where
 
-{-  -}
-
+import Prelude hiding (subtract)
 import Utils.Utils
 import Utils.ToString
 
@@ -25,7 +24,8 @@ import AbstractInterpreter.AbstractSet
 t	= t1
 
 t1	= do	let rel	= fromJust $ findRelation stfl "→"
-		let ch = dynamize stfl "e" "TYPE ERROR" [rel]
+		let rel'= fromJust $ findRelation stfl "✓"
+		let ch = dynamize stfl "e" "TYPE ERROR" [rel] [rel']
 		putStrLn $ toParsable' (16::Int) ch
 		putStrLn $ toParsable' (16::Int) $ either error id $ applyChanges ch stfl
 		putStrLn $ toParsable' (16::Int) ch
@@ -34,6 +34,8 @@ t1	= do	let rel	= fromJust $ findRelation stfl "→"
 ra	= analyzeRelations stfl
 s	= get raSyntax ra
 
+asT	= generateAbstractSet s "" "type" & (:[])
+asE	= generateAbstractSet s "" "e" & (:[])
 asEl	= generateAbstractSet s "" "eL" & unfold s & (!! 2) & (:[])
 asElArr	= generateAbstractSet s "" "(eL)(→)in0" & unfold s & (!! 1) & (:[])
 
@@ -55,4 +57,19 @@ toCoParsIO vals	= vals & sort & toCoParsable' "\n\t| " & putStrLn
 
 
 fAsSeq as	= fromAsSeq as & fromJust
+
+
+tBool		=  ConcreteLiteral miT "Bool"
+tInt		= ConcreteLiteral miT "Int"
+
+arg1		= AsSeq miE  [EveryPossible miE "bool" "bool", ConcreteLiteral miE "::", tBool]
+arg2		= AsSeq miE  [EveryPossible miE "number" "number", ConcreteLiteral miE "::", tInt]
+
+miE		= ("e", -1)
+miT		= ("typeL", -1)
+
+
+t2	= subtractAll s asE [arg1,arg2]
+t2a	= subtract s asE arg1
+t3	= subtractAll s asT [tBool,tInt]
 
