@@ -11,7 +11,6 @@ import AssetsHelper (stfl)
 
 import Changer.Changes
 
-import Data.Maybe
 import TypeSystem
 
 import AssetsHelper

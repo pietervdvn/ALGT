@@ -306,8 +306,7 @@ isSubexpressionOf s everyPossible doesContain
 
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
-subtract s ass minus
-		= subtractWith s M.empty ass minus
+subtract s	= subtractWith s M.empty
 
 subtractWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtractWith syntax known ass minus
@@ -317,13 +316,12 @@ subtractWith syntax known ass minus
 
 
 subtractAll	:: Syntax -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
-subtractAll syntax ass minus
-		= subtractAllWith syntax M.empty ass minus
+subtractAll syntax 
+		= subtractAllWith syntax M.empty
 
 subtractAllWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
 subtractAllWith syntax known ass minuses
-		= nub $ L.foldl (\ass min -> subtractWith syntax known ass min)
-			ass minuses
+		= nub $ L.foldl (subtractWith syntax known) ass minuses
 
 -- tells wether this AS contains the second AS completely
 subsetOf	:: Syntax -> AbstractSet -> AbstractSet -> Bool

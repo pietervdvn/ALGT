@@ -135,7 +135,7 @@ mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract int
 		let singleRuleAnalysises
 				= rulesToInter |> (\(rn, r) ->
 						inHeader "" ("Analysis of rule "++rn) '-' $
-							toParsable $ interpretRule' changedTs $ r)
+							toParsable $ interpretRule' changedTs r)
 		let ruleAnalysis
 				= (get tsRules' changedTs & get rules & toList |> runRuleAbstract changedTs)
 					++ [abstractRuleSyntax changedTs]

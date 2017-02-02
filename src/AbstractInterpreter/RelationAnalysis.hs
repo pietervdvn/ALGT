@@ -372,7 +372,7 @@ possibleSets ts syntax holeFillers' (rel, rls)
 	= let	holeFillers	= holeFillers' ||>> ruleNameFor
 		symb		= get relSymbol rel
 		inTps		= relTypesWith In rel
-		possible	= rls	|> (\r -> interpretRule' ts r)	-- interpret the rules abstractly
+		possible	= rls	|> (interpretRule' ts)	-- interpret the rules abstractly
 					& concat
 					|> fillHole syntax	-- give fancy, recognizable names to recursive calls
 					|> get possibleArgs 	:: [[AbstractSet]]
@@ -421,7 +421,7 @@ fillHoleForArg s r (i, as)
 		let symb	= get relSymbol r
 		let tns	= TypeNameSpec (typeOf as) symb In i True
 				& toParsable
-		return $ (name, generateAbstractSet s name tns)
+		return (name, generateAbstractSet s name tns)
 
 
 
