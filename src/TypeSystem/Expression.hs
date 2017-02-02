@@ -14,6 +14,7 @@ import Utils.ToStringExtra
 import TypeSystem.Types
 import TypeSystem.ParseTree
 import TypeSystem.Syntax
+import TypeSystem.BNF
 
 import qualified Data.Map as M
 import Data.Map (Map, singleton, empty)
@@ -21,6 +22,8 @@ import Data.Maybe
 
 import Control.Monad
 import Control.Arrow ((&&&))
+
+import Control.Monad.State as ST
 
 
 type Builtin	= Bool
@@ -103,9 +106,35 @@ expectedTyping r (MEvalContext tp fnm hole)
 expectedTyping _ (MParseTree _)	= return M.empty
 
 
+bnfAsExpr	:: BNF -> Expression
+bnfAsExpr bnf	= evalState (_bnfAsExpr bnf) (negate 1::Int)
+
+_bnfAsExpr	:: BNF -> State Int Expression
+_bnfAsExpr (Literal str)
+		= return $ MParseTree (MLiteral _mi str)
+_bnfAsExpr Identifier
+		= do	i	<- getIndex
+			return $ MVar "Identifier" ("ident"++i)
+_bnfAsExpr Number
+		= do	i	<- getIndex
+			return $ MVar "Number" ("number"++i)
+_bnfAsExpr (BNFRuleCall r)
+		= do	i	<- getIndex
+			return $ MAscription r $ MVar r (r ++ i)
+_bnfAsExpr (BNFSeq bnfs)
+		= bnfs |+> _bnfAsExpr |> MSeq _mi
+_mi	= ("", -1)
+
+
+getIndex		:: State Int String
+getIndex	= do	i	<- ST.get
+			modify (+1)
+			return $ if i < 0 then ""
+				else show i
 
 
 -------------------------------------------------- HELPERS TO MERGE CONTEXTS ACCORDING TO A SYNTAX --------------------------------------------
+
 
 -- same as mergeContext, but on a list
 mergeContexts	:: Syntax -> [Map Name TypeName] -> Either String (Map Name TypeName)

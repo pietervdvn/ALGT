@@ -24,7 +24,7 @@ import Data.Maybe
 
 import Data.Map as M
 
-version	= ([0,1,11], "Total Language Test")
+version	= ([0,1,12], "Unwinding Rules")
 
 
 

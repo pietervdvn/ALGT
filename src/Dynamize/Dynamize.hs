@@ -52,7 +52,7 @@ dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> Changes
 dynamize ts rule typeErr addStuckStateRules
 		= let	syntax		= get tsSyntax ts
 			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule))
-			newRules	= addStuckStateRules |> calculateNewRulesFor ts & concat
+			newRules	= addStuckStateRules |> calculateNewRulesFor ts typeErr & concat
 						|> (\rule -> New (get ruleName rule) rule)
 			in
 			Changes "Dynamized" [changedSyntax] [] [] newRules
@@ -60,28 +60,31 @@ dynamize ts rule typeErr addStuckStateRules
 
 
 
-calculateNewRulesFor	:: TypeSystem -> Relation -> [Rule]
-calculateNewRulesFor ts relation
+calculateNewRulesFor	:: TypeSystem -> String -> Relation -> [Rule]
+calculateNewRulesFor ts typeErr relation
 	= do	let syntax	= get tsSyntax ts
 		let symb	= get relSymbol relation
 		let ra		= analyzeRelations ts
 		(i, tps)	<- relation & relTypesWith In & mapi
 		tp		<- allSubsetsOf (get lattice syntax) tps & S.toList
 		let tns		= TypeNameSpec tp symb In i False
-		rule		<- createRulesFor ra tns
-		return $ error $ "Trying to create rules for "++toParsable  tns++" resulting in "++toParsable rule
+		let genConcl bnf
+				= RelationMet relation [ bnfAsExpr bnf , MParseTree $ MLiteral ("",-1) typeErr]
+		createRulesFor ra genConcl tns
 
 
 
-createRulesFor	:: RelationAnalysis -> TypeNameSpec -> [Rule]
-createRulesFor ra tns
+createRulesFor	:: RelationAnalysis -> (BNF -> Conclusion) -> TypeNameSpec -> [Rule]
+createRulesFor ra genConcl tns
 	= do	let syntax	= get raSyntax ra
 		let recursive	= get raIntroduced ra & M.keys |> toParsable
 		nonMatching	<- M.findWithDefault [] (toParsable tns) (get bnf syntax)
 		let isRecursive	= calledRules nonMatching
 					& any (`elem` recursive)
-		guard (not isRecursive)
-		error $ toParsable nonMatching
+		-- guard (not isRecursive)
+		let concl	= genConcl nonMatching
+		let rule	= Rule ("TErr" ++ toParsable nonMatching) [] concl
+		return rule
 
 
 
