@@ -31,17 +31,16 @@ import Data.Hashable
 import Data.Bifunctor (first)
 import Options.Applicative
 
-import AbstractInterpreter.Tools
+
 import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.Tools
 import AbstractInterpreter.Data
 import AbstractInterpreter.AbstractSet as AS
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
-
-version	= ([0,1,11], "Total Language Test")
 
 
 
@@ -74,8 +73,7 @@ checkInput fn inp
 			found	= inp & M.keys
 			missing	= files \\ found
 			in
-			if null missing then return ()
-				else Left missing
+			unless (null missing) $ Left missing
 
 runIO'		:: (NeedsFiles a) => a -> (Input -> Either String (x, Output)) -> IO x
 runIO' needsFiles f
@@ -116,16 +114,10 @@ isolateCheck _	= emptyOutput
 
 
 
-main'	:: IO () -> [String] -> IO (TypeSystem, [(String, ParseTree)])
-main' testAll args 
-	= do	parsedArgs	<- parseArgs version args
-		when (runTests parsedArgs) testAll
-		runIO' parsedArgs (mainArgs parsedArgs)
-			
 
 
 mainArgs	:: Args -> Input -> Either String ((TypeSystem, [(String, ParseTree)]), Output)
-mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract iraSVG createSVG _) input
+mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract interpretRules iraSVG createSVG _) input
 	= do	checkInput args input & first (\missing -> error $ "MISSING FILES FOR TESTCASE "++showComma missing)
 		let tsContents	= input M.! tsFile
 		ts		<- parseTypeSystem tsContents (Just tsFile)
@@ -138,13 +130,21 @@ mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract int
 		let funcAnalysis
 				= get tsFunctions changedTs & keys |> runFuncAbstract changedTs
 
+		let getRule r	= M.findWithDefault (Left $ "No such rule: "++r) r (get tsRulesOnName changedTs |> Right)
+		rulesToInter	<- interpretRules |> (id &&& getRule) |+> sndEffect
+		let singleRuleAnalysises
+				= rulesToInter |> (\(rn, r) ->
+						inHeader "" ("Analysis of rule "++rn) '-' $
+							toParsable $ interpretRule' changedTs $ r)
 		let ruleAnalysis
 				= (get tsRules' changedTs & get rules & toList |> runRuleAbstract changedTs)
-				++ [abstractRuleSyntax changedTs]
+					++ [abstractRuleSyntax changedTs]
 
 		let output    =	[ whenL dumpTS [toParsable' (24::Int) changedTs]
 				, whenL interpretAbstract funcAnalysis
-				, whenL interpretRulesAbstract ruleAnalysis] & concat
+				, whenL interpretRulesAbstract ruleAnalysis
+				, singleRuleAnalysises
+				, whenL (isJust iraSVG) ["# Generating ira-svg, hang on..."] ] & concat
 
 
 		let iraSVGFile	= (iraSVG, analyzeRelations changedTs & get raSyntax & latticeAsSVG terminalCS)
@@ -219,10 +219,9 @@ mainExFilePure ts args input
 		let rr		= parseTrees >>= ifJustS' [] (runRule ts) (symbol args)		:: [String]
 		let rf		= parseTrees |> ifJustS' (Right []) (runFunc ts) (function args)	:: [Either String [String]]
 		let sbs		= parseTrees |> ifJustS' (Right []) (runStepByStep ts) (stepByStep args) :: [Either String [String]]
-		let noRulesMsg	= if noRules then
-					("# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions":
-					(parseTrees >>= printDebug))
-					else []
+		let noRulesMsg	= whenL noRules $
+					"# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions":
+					(parseTrees >>= printDebug)
 
 		let output'	= (rf ++ sbs) >>= either (:[]) id	:: [String]
 		let output	= rr ++ noRulesMsg
@@ -249,7 +248,7 @@ parseWith file ts bnfRuleName str
 	= let 	parser	= parse $ parseRule (get tsSyntax ts) bnfRuleName
 		parsed	= parser file str
 		in
-		first show $ parsed
+		first show parsed
 
 
 
@@ -302,5 +301,5 @@ evalStar	:: TypeSystem -> Name -> ParseTree -> Either String [String]
 evalStar ts funcName pt	
 	= do	let msg	= toParsable pt
 		pt'	<- evalFunc ts funcName [pt]
-		msgs	<- if (pt' /= pt) then evalStar ts funcName pt' else return []
+		msgs	<- if pt' /= pt then evalStar ts funcName pt' else return []
 		return $ msg:msgs

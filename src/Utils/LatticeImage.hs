@@ -10,11 +10,15 @@ import qualified Data.Text as Text
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
 
+import Graphs.SearchCycles
+
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.List
 import Data.Map (Map)
 
 import Control.Arrow ((&&&))
+import Control.Monad
 
 import Lens.Micro hiding ((&))
 
@@ -56,7 +60,11 @@ latticeSVG pxFactor cs (groupsS, connectedS, connectedDashedS)
 
 lattice		:: ColorScheme -> W -> H -> [[Text]] -> [(Text, Text)] -> [(Text, Text)] -> S.Svg
 lattice cs w h groups connected connectedDashed
-	= do	let bestGroups	= bestPos w h groups (connected ++ connectedDashed)
+	= do	let graph	= (connected ++ connectedDashed) & merge & M.fromList |> S.fromList
+		let cycles	= cleanCycles graph
+		unless (null cycles) $ error $ "Cycles in lattice detected: "++show cycles
+
+		let bestGroups	= bestPos w h groups (connected ++ connectedDashed) 1000
 		let groups'	= positions w h bestGroups |> filter (not . Text.null . fst)
 		let queryPos	= M.fromList $ concat groups'
 		connected |+> uncurry (drawLineBetween cs False queryPos)
@@ -68,12 +76,14 @@ lattice cs w h groups connected connectedDashed
 
 
 
-bestPos		:: W -> H -> [[Text]] -> [(Text, Text)] -> [[Text]]
-bestPos w h groups conns
+bestPos		:: W -> H -> [[Text]] -> [(Text, Text)] -> Int -> [[Text]]
+bestPos w h groups conns ttl
+ | ttl <= 0	= groups
+ | otherwise	
 	= let	iter	= foldr (optimizeRow w h conns) groups [0..length groups - 1]
 		in
 		if iter == groups then iter
-			else bestPos w h iter conns
+			else bestPos w h iter conns (ttl-1)
 		
 
 
@@ -83,12 +93,27 @@ optimizeRow w h conns i ts
 	= let	start		= take i ts
 		(toOpt:end)	= drop i ts
 		scoreOf' row	= scoreOf w h conns (start ++ [row] ++ end)
-		optRow		= permutations toOpt {-& take 50 TODO remove this factor-} |> (scoreOf' &&& id)
-					& sortOn fst & head & snd
+		optRow		= swapTwo toOpt |> (scoreOf' &&& id) 
+					& sortOn fst & head & snd	
 		in
 		start ++ [optRow] ++ end
 		
-		
+
+
+swapTwo		:: [a] -> [[a]]
+swapTwo as
+	= do	let l	= length as - 1
+		p1	<- [0..l]
+		p2	<- [0..l]
+		let a1	= as !! p1
+		let a2	= as !! p2
+		let as'	= putAt p1 a2 $ putAt p2 a1 as
+		return as'
+
+putAt		:: Int -> a -> [a] -> [a]
+putAt i a as	= let	(head, _:tail)	= splitAt i as
+			in
+			head ++ [a] ++ tail		
 
 
 scoreOf		:: W -> H -> [(Text, Text)] -> [[Text]] -> (Int, Float)

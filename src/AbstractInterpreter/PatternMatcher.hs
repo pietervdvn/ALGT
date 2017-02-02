@@ -60,9 +60,12 @@ patternMatch syntax evalCtx@(MEvalContext tp name hole) value
 		value'			<- unfoldFull syntax value	-- contexts only work within another expression, so we already unfold. (Searchmatches might unfold more)
 		(match, pths)		<- searchMatches syntax neededType [] value'
 		pth			<- pths
-		-- we calculate assignments induced by the hole...
-		let holeName		= getName $ getAt match pth 
-		holeAssignment		<- patternMatch syntax hole (generateAbstractSet syntax (holeName++"$") neededType)
+
+		-- we calculate assignments induced by the hole-expression...
+		let replacedExpr	= getAt match pth	-- the subexpression that is thrown away
+		let holeName		= getName replacedExpr
+		let holeType		= typeOf replacedExpr
+		holeAssignment		<- patternMatch syntax hole (generateAbstractSet syntax (holeName++"$") holeType)
 		-- and calculate the form of the hole
 		let hole'		= evalExpr M.empty {-functions are not possible in the patterns anyway-} holeAssignment hole
 		let match'		= replaceAS match pth hole'
@@ -76,7 +79,17 @@ patternMatch _ pat as
 
 
 
+{-
 
+Consider
+x ::= a b | c b | d
+b ::= "B" z
+
+Given x["B" z], we want to search a possible unfolding of x, containing the possible sets, e.g.
+
+[(a b, [1]), (c b, [1]) 
+
+-}
 searchMatches	:: Syntax -> TypeName -> [TypeName] -> AbstractSet -> [(AbstractSet, [Path])]
 searchMatches syntax neededType noExpand as@(EveryPossible _ _ t)
  | alwaysIsA syntax t neededType
@@ -86,13 +99,13 @@ searchMatches syntax neededType noExpand as@(EveryPossible _ _ t)
 	= do	as'	<- unfold syntax as
 		searchMatches syntax neededType (t:noExpand) as'
 searchMatches syntax neededType noExpand (AsSeq mi seq)
-	= do	seq'	<- seq |> (\as -> if isEveryPossible as && (typeOf as & mightContainA syntax neededType) then 
-					searchMatches syntax neededType noExpand as
+	= do	seq'	<- mapi seq |> (\(i, as) -> 
+				if isEveryPossible as && (typeOf as & mightContainA syntax neededType) then 
+					searchMatches syntax neededType noExpand as ||>> (|> (i:))
 					 else [(as, [])])
 				& allCombinations	:: [[ (AbstractSet, [Path]) ]]
 		let (seq'', pthss)	= unzip seq'	:: ([AbstractSet], [ [Path] ])
-		let pths	= mapi pthss >>= (\(i, pths) -> pths |> (i:))
-		return (AsSeq mi seq'', pths)
+		return (AsSeq mi seq'', concat pthss)
 searchMatches _ _ _ _	= []
 
 		

@@ -70,6 +70,10 @@ calledRules (BNFRuleCall nm)	= [nm]
 calledRules (BNFSeq bnfs)	= bnfs >>= calledRules
 calledRules _			= []
 
+containsRule	:: TypeName ->  BNF -> Bool
+containsRule tn bnf
+		= tn `elem` calledRules bnf
+
 
 -- First call, without consumption of a character
 firstCall	:: BNF -> Maybe TypeName

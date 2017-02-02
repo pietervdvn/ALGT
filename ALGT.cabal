@@ -69,6 +69,8 @@ executable ALGT
         Utils.XML
         Dynamize.Dynamize
         Dynamize.Test
+        PureMain
+        Utils.Test
 
 
 

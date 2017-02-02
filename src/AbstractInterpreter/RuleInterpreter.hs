@@ -28,7 +28,6 @@ import Control.Arrow ((&&&))
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
-
 type AbstractConclusion 	= ConclusionA AbstractSet
 
 
@@ -51,29 +50,13 @@ isRecursive rapp
 	= (get conclusion rapp & get conclusionRel) `elem` (get predicates rapp |> get conclusionRel)
 
 
+applySubsSimple	:: Substitution AbstractSet -> RuleApplication -> RuleApplication
+applySubsSimple subs rapp
+	= rapp	& over possibleArgs 	(|> substitute subs)
+		& over assignment 	(|> first (substitute subs))
+		& over conclusion	(|> substitute subs)
+		& over predicates	(||>> substitute subs)
 
-fillHoleWith'	:: Map Relation [Name] -> RuleApplication -> RuleApplication
-fillHoleWith' assgns rapp
-		= fillHoleWith assgns rapp & either (const rapp) id
-
-fillHoleWith	:: Map Relation [Name] -> RuleApplication -> Either String RuleApplication
-fillHoleWith assignments (RuleApplication possibleArgs assignment conclusion predicates)
-	= do	subs	<- predicates |+> matchHoles assignments |> M.unions
-		let possibleArgs'	= possibleArgs	|> substitute subs
-		let assignment'		= assignment	|> first (substitute subs)
-		let conclusion'		= conclusion	|> substitute subs
-		let predicates'		= predicates	||>> substitute subs
-		return (RuleApplication possibleArgs' assignment' conclusion' predicates')
-
-
-
-matchHoles	:: Map Relation [Name] -> AbstractConclusion -> Either String (Substitution AbstractSet)
-matchHoles assignments concl@(RelationMet r args)
-	= inMsg ("While matching the holes of "++inParens (toParsable concl)) $
-	  do	let args'	= either error id $  checkExists r assignments $ "Could not find an assignment for "++show r
-		unless (all isEveryPossible args) $ Left $ "Could not match holes, "++toParsable concl++" contains structure with input/output arguments"
-		let nms		= args |> (\(EveryPossible _ n _) -> n) 
-		zip nms args' ||>> (\t -> EveryPossible (t, -1) t t) & M.fromList & return
 
 
 
@@ -81,8 +64,9 @@ matchHoles assignments concl@(RelationMet r args)
 
 
 interpretRule'	:: TypeSystem -> Rule -> RuleAnalysis
-interpretRule' ts rule@(Rule _ _ (RelationMet r _) )
-	= let	args	= generateArgs (get tsSyntax ts) (relTypesWith In r)
+interpretRule' ts rule@(Rule _ _ concl )
+	= let	argExprs	= filterMode In (get conclusionRel concl) (get conclusionArgs concl)
+		args	= mapi argExprs |> (\(i, e) -> fromExpression (get tsSyntax ts) (show i) e)
 		in
 		interpretRule ts rule args
 

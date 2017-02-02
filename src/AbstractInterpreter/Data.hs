@@ -44,7 +44,7 @@ subtractArgs s args (minus:minuses)
 subtractArg	:: Syntax -> Arguments -> Arguments -> [Arguments]
 subtractArg s args minus
  | length args /= length minus	= error "Length of arguments in minus don't match; this is weird"
- | otherwise	= let	pointWise	= zip args minus |> uncurry (_subtract s)  in	
+ | otherwise	= let	pointWise	= zip args minus |> uncurry (_subtract s M.empty)  in	
 			replacePointwise args pointWise
 
 type Assignments	= Map Name (AbstractSet, Maybe Path)

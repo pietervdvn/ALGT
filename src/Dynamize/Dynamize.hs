@@ -34,13 +34,19 @@ import Prelude hiding (subtract)
 
 import TypeSystem
 import Changer.Changes
+import Graphs.Lattice
 
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.RelationAnalysis
 
 import Data.Map as M
+import Data.List as L
+import Data.Set as S
 
 import Control.Arrow
+import Control.Monad
+
+import Lens.Micro hiding ((&))
 
 dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> Changes
 dynamize ts rule typeErr addStuckStateRules
@@ -56,23 +62,26 @@ dynamize ts rule typeErr addStuckStateRules
 
 calculateNewRulesFor	:: TypeSystem -> Relation -> [Rule]
 calculateNewRulesFor ts relation
-	= let	syntax		= get tsSyntax ts
-		symb		= get relSymbol relation
-		ra		= analyzeRelations ts
-		tps		= relation & relTypesWith In
-		in
-		error $ unlines [ "Fix rules for "++get relSymbol relation
-				, toParsable' ts ra]
+	= do	let syntax	= get tsSyntax ts
+		let symb	= get relSymbol relation
+		let ra		= analyzeRelations ts
+		(i, tps)	<- relation & relTypesWith In & mapi
+		tp		<- allSubsetsOf (get lattice syntax) tps & S.toList
+		let tns		= TypeNameSpec tp symb In i False
+		rule		<- createRulesFor ra tns
+		return $ error $ "Trying to create rules for "++toParsable  tns++" resulting in "++toParsable rule
 
 
 
-
-
-
-
-
-
-
+createRulesFor	:: RelationAnalysis -> TypeNameSpec -> [Rule]
+createRulesFor ra tns
+	= do	let syntax	= get raSyntax ra
+		let recursive	= get raIntroduced ra & M.keys |> toParsable
+		nonMatching	<- M.findWithDefault [] (toParsable tns) (get bnf syntax)
+		let isRecursive	= calledRules nonMatching
+					& any (`elem` recursive)
+		guard (not isRecursive)
+		error $ toParsable nonMatching
 
 
 

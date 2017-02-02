@@ -1,7 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Graphs.Lattice (Lattice, bottom, top, makeLattice, addElement, addRelation, asSVG,
 			subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, 
-			infimum, infimums, supremum, supremums, removeTransitive') where
+			infimum, infimums, supremum, supremums, removeTransitive',
+			debugLattice) where
 
 {-
 This module defines a finite lattice structure.
@@ -22,6 +23,8 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L
 
+import Graphs.SearchCycles
+
 import Data.Maybe
 
 import Control.Monad
@@ -41,14 +44,14 @@ data Lattice a	= Lattice
 makeLenses ''Lattice
 
 
-makeLattice	:: (Ord a) => a -> a -> Map a (Set a) -> (Lattice a, [(a, a)])
+makeLattice	:: (Show a, Ord a) => a -> a -> Map a (Set a) -> (Lattice a, [(a, a)])
 makeLattice bottom top isSubsetOf
 	= let	(lattice, unneeded)	= removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
 		lattice'		= set isSupersetOfEvery (invertDict $ get isSubsetOfEvery lattice) lattice
 		in
 		(lattice', unneeded)
 
-addElement	:: (Ord a) => a -> [a] -> [a] -> Lattice a -> (Lattice a, [(a, a)])
+addElement	:: (Show a, Ord a) => a -> [a] -> [a] -> Lattice a -> (Lattice a, [(a, a)])
 addElement newEl subsOfNew supersOfNew lattice
 	= let	cleanse ls symb	= if null ls then [symb] else ls
 		subsOfNew'	= cleanse subsOfNew (get bottom lattice)
@@ -78,12 +81,16 @@ addRelation sub super l
 
 Returns removed links
 -}
-removeTransitive	:: (Ord a) => Lattice a -> (Lattice a, [(a, a)])
+removeTransitive	:: (Show a, Ord a) => Lattice a -> (Lattice a, [(a, a)])
 removeTransitive lattice
-	= foldl removeUnneedDirectLinksFor (lattice, []) (M.keys $ get isSubsetOfEvery lattice)
+	= let 	cycles	= cleanCycles $ get isSubsetOfEvery lattice
+		errMsg	= error $ "Cycles detected in the lattice... "++show cycles
+		in if null cycles then
+			foldl removeUnneedDirectLinksFor (lattice, []) (M.keys $ get isSubsetOfEvery lattice)
+			else errMsg
 
 
-removeTransitive'	:: (Ord a) => Lattice a -> Lattice a
+removeTransitive'	:: (Show a, Ord a) => Lattice a -> Lattice a
 removeTransitive'	= fst . removeTransitive
 
 removeUnneedDirectLinksFor	:: (Ord a) => (Lattice a, [(a, a)]) -> a -> (Lattice a, [(a, a)])
@@ -111,7 +118,7 @@ allSupersetsOf lattice a
 		in
 		S.union dirSubs subs
 
--- Gives all subsets of a, thus all (named) sets which are a part of set 'a'
+-- Gives all subsets of a, thus all (named) sets which are a part of set 'a' (without a itself)
 allSubsetsOf	:: (Ord a) => Lattice a -> a -> Set a
 allSubsetsOf lattice a
 	= let	dirSups	= subsetsOf lattice a
@@ -215,4 +222,14 @@ nextQueue lattice (alreadySeen, queue)
 		(S.union alreadySeen queue', S.toList queue')
 
 
+debugLattice	:: (Ord a) => (a -> String) -> Lattice a -> String
+debugLattice show l
+	= get isSubsetOfEvery l & M.keys |> debugSubsOf show l & concat
+
+debugSubsOf	:: (Ord a) => (a -> String) -> Lattice a -> a -> String
+debugSubsOf show l a
+	= let	subs	= subsetsOf l a & S.toList |> show |> indent & unlines
+		title	= show a ++ " has following subtypes:"
+		in
+		title++subs 
 

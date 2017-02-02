@@ -12,6 +12,7 @@ import Data.List (nub)
 
 import Control.Monad
 
+
 testArgs	= [	["Test/STFL.typesystem"]
 			, ["Test/STFL.typesystem", "--dts"]
 			, ["Test/STFL.typesystem", "--lsvg", "Syntax.svg"]
@@ -24,7 +25,7 @@ testArgs	= [	["Test/STFL.typesystem"]
 			, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "--dts"]
 			, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "-c", "Test/GradualizeSTFL.typesystem-changes", "--dts"]
 			, ["Test/STFL.typesystem", "--ira"]
-			, ["Test/STFL.typesystem", "--irasvg", "SyntaxIRA.svg"]
+			-- , ["Test/STFL.typesystem", "--irasvg", "SyntaxIRA.svg"]
 			] & nub
 
 testArgs'	= mapi testArgs
@@ -41,7 +42,7 @@ directoryFor args
 
 runTest		:: [String] -> IO Output
 runTest args
-	= do	parsedArgs	<- parseArgs version args
+	= do	parsedArgs	<- parseArgs ([-1::Int], "Integration tests") args
 		let output	= mainArgs parsedArgs defaultInput |> snd & isolateFailure
 		return output
 
@@ -69,11 +70,13 @@ test		:: (Int, [String]) -> IO ()
 test (i, args)	= do	putStrLn $ "Running test "++show i++": "++unwords args 
 			expected	<- getTestResult args
 			actual		<- runTest args
-			unless (expected == actual) $ do
-			      [ "Integration test failed"
-				, "Arguments: "++unwords args
-				, ""
-				] & unlines & putStrLn
+			let log		= get stdOut actual & unlines
+			let errMsg	=  [ "Integration test failed", "Arguments: "++unwords args, ""] 
+						& unlines
+			unless (expected == actual) $
+				do	putStrLn errMsg
+					writeFile ((directoryFor $ "log___":args) ++ ".FAILED") $ (unwords args ++ "\n\n" ++ log)
+			     
 
 testAll		= do	putStrLn $ "Running "++show (length testArgs)++" tests"
 			testArgs' |+> test & void

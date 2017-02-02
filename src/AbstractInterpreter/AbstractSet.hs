@@ -12,6 +12,8 @@ import Utils.ToString
 import TypeSystem
 import Utils.Unification
 
+import Graphs.Lattice
+
 import Data.Map (Map, (!), member, fromList, toList)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -22,6 +24,8 @@ import Data.Maybe
 
 import Control.Arrow ((&&&))
 import Control.Monad
+
+import Lens.Micro hiding ((&))
 
 data AbstractSet
 	= EveryPossible MInfo Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
@@ -66,8 +70,17 @@ toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
 
 
 
+
 refold		:: Syntax -> [AbstractSet] -> [AbstractSet]
-refold s	= sort . refold' s (reverseSyntax s)
+refold s	= refoldWithout s []
+
+
+-- same as refold, but given rulenames *wont* be folded. (e.g. x ::= a | b; [a, b] will *not* fold to [x] if x is given)
+refoldWithout s dontFold as
+		= let	revTable	= reverseSyntax s
+			revTable'	= revTable & filter ((`notElem` dontFold) . snd)
+			in
+			sort $ refold' s revTable' as
 
 reverseSyntax	:: Syntax -> [([AbstractSet], Name)]
 reverseSyntax synt
@@ -110,18 +123,17 @@ eatSubexpressions	:: Syntax -> [AbstractSet] -> [AbstractSet]
 eatSubexpressions _ []	= []
 eatSubexpressions _ [as]
 			= [as]
-eatSubexpressions s (head@(EveryPossible _ _ tn):rest)
-	= let	rest'	= rest & filter (\sub -> not $ alwaysIsA s (typeOf sub) tn)
-		overShadowed	= rest' |> fromEveryPossible 
-					& catMaybes
-					& any (alwaysIsA s tn)
-		head'	= if overShadowed then [] else [head]
-		result	= head' ++ eatSubexpressions s rest'
+eatSubexpressions s ass
+	= let	l			= get lattice s
+		(everyPosss, rest)	= ass & L.partition isEveryPossible
+		everyPoss		= everyPosss |> fromEveryPossible & catMaybes
+		allSubs			= everyPoss |> allSubsetsOf l |> S.toList & concat	:: [TypeName]
+		unneeded		= allSubs ++ everyPoss
+		rest'			= rest & filter (\as -> typeOf as `notElem` unneeded) 
+		everyPossResting	= (everyPoss L.\\ allSubs)
+		everyPosss'		= everyPosss & L.filter (\as -> typeOf as `elem` everyPossResting)
 		in
-		result
-		
-eatSubexpressions s (as:rest)
-	= as : eatSubexpressions s rest
+		everyPosss' ++ rest'
 
 
 mightFoldSeq	:: AbstractSet -> AbstractSet -> Bool
@@ -158,13 +170,23 @@ foldGroup syntax revTable ass
 
 
 
-generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
-generateAbstractSet s n tp
-			= generateAbstractSet' s n tp (BNFRuleCall tp)
+
+
+
+
+
 
 generateAbstractSet'	:: Syntax -> Name -> TypeName -> BNF -> AbstractSet
 generateAbstractSet' s n tp
 			= _generateAbstractSet s (tp, -1) n
+
+
+
+generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
+generateAbstractSet s n tp
+			= generateAbstractSet' s n tp (BNFRuleCall tp)
+
+
 
 
 _generateAbstractSet				:: Syntax -> (TypeName, Int) -> Name -> BNF -> AbstractSet
@@ -178,6 +200,27 @@ _generateAbstractSet r mi n (BNFRuleCall tp)
 _generateAbstractSet r mi n (BNFSeq bnfs)
 			= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r mi (n++":"++show i) bnf) & AsSeq mi
 
+
+
+
+fromExpression			:: Syntax -> Name -> Expression -> AbstractSet
+fromExpression s n (MParseTree (MLiteral mi l))
+				= ConcreteLiteral mi l
+fromExpression s n (MParseTree (MIdentifier mi _))
+				= ConcreteIdentifier mi n
+fromExpression s n (MParseTree (MInt mi _))
+				= ConcreteInt mi n
+fromExpression s n (MParseTree (PtSeq mi pts))
+				= pts |> MParseTree & MSeq mi & fromExpression s n 
+fromExpression s n (MVar tn _)	= generateAbstractSet s n tn
+fromExpression s n (MSeq mi exprs)
+				= mapi exprs |> (\(i, e) -> fromExpression s (n++":"++show i) e) & AsSeq mi
+fromExpression s n (MCall tn _ _ _)
+				= generateAbstractSet s n tn
+fromExpression s n (MAscription _ e)
+				= fromExpression s n e
+fromExpression s n (MEvalContext tn _ _)
+				= generateAbstractSet s n tn
 
 
 generateArgs		:: Syntax -> [TypeName] -> [AbstractSet]
@@ -211,6 +254,9 @@ unfoldAll syntax as
 	= [as]
 
 
+
+
+
 {- Given abstract sets, removes the second from this set
 e.g.
 
@@ -222,25 +268,31 @@ subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
 
 -}
 
+_subtract'	:: Syntax -> Map (TypeName, TypeName) TypeName -> AbstractSet -> AbstractSet -> [AbstractSet]
+_subtract' s k e emin
+ | e == emin	= []
+ | otherwise	= _subtract s k e emin
 
 
-_subtract	:: Syntax -> AbstractSet -> AbstractSet -> [AbstractSet]
-_subtract syntax e@(EveryPossible _ _ tp) eminus@(EveryPossible _ _ tpMinus)
+_subtract	:: Syntax -> Map (TypeName, TypeName) TypeName -> AbstractSet -> AbstractSet -> [AbstractSet]
+_subtract syntax known e@(EveryPossible _ _ tp) eminus@(EveryPossible _ _ tpMinus)
+ | (tp, tpMinus) `M.member` known	= let	tn	= known M.! (tp, tpMinus) in
+						[generateAbstractSet syntax "" tn]
  | subsetOf syntax e eminus		= []
- | tp & mightContainA syntax tpMinus	= [_subtract syntax e' eminus | e' <- unfold syntax e] & concat
+ | tp & mightContainA syntax tpMinus	= [_subtract' syntax known e' eminus | e' <- unfold syntax e] & concat
  | otherwise				= return e
-_subtract syntax s@(AsSeq mi seq) smin@(AsSeq _ seqMin)
+_subtract syntax known s@(AsSeq mi seq) smin@(AsSeq _ seqMin)
  | not (sameForm seq seqMin)	= return s
  | otherwise
-	= do	pointWise	<- zip seq seqMin |> uncurry (_subtract syntax)
+	= do	pointWise	<- zip seq seqMin |> uncurry (_subtract' syntax known)
 					& replacePointwise seq
 		return $ AsSeq mi pointWise
-_subtract syntax s minus
+_subtract syntax known s minus
  | subsetOf syntax s minus	
 		= []
  | isEveryPossible s && alwaysIsA' syntax minus s
 		= let	unfolded	= unfold syntax s
-			subbedS 	= unfolded >>= (\s' -> _subtract syntax s' minus)
+			subbedS 	= unfolded >>= (\s' -> _subtract' syntax known s' minus)
 			subbedS'	= nub subbedS
 			in
 			if subbedS' == unfolded then return s else subbedS'
@@ -253,23 +305,27 @@ isSubexpressionOf s everyPossible doesContain
 	= alwaysIsA s everyPossible (typeOf doesContain)
 
 
-
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
-subtract syntax ass minus
-	= nub $ do	as	<- ass
-			_subtract syntax as minus
+subtract s ass minus
+		= subtractWith s M.empty ass minus
 
+subtractWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> AbstractSet -> [AbstractSet]
+subtractWith syntax known ass minus
+	= nub $ do	as	<- ass
+			_subtract' syntax known as minus
 
 
 
 subtractAll	:: Syntax -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
-subtractAll syntax b minus
-		= nub $ L.foldl (subtract syntax) b minus
+subtractAll syntax ass minus
+		= subtractAllWith syntax M.empty ass minus
 
+subtractAllWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
+subtractAllWith syntax known ass minuses
+		= nub $ L.foldl (\ass min -> subtractWith syntax known ass min)
+			ass minuses
 
-
-
-
+-- tells wether this AS contains the second AS completely
 subsetOf	:: Syntax -> AbstractSet -> AbstractSet -> Bool
 subsetOf s (AsSeq _ subs) (AsSeq _ supers)
 	= zip subs supers & all (uncurry $ subsetOf s)
@@ -322,7 +378,7 @@ sameForm _ _	= False
 
 sameStructure	:: AbstractSet -> AbstractSet -> Bool
 sameStructure as bs
-	= eraseDetails as == eraseDetails bs
+	= eraseTypes as == eraseTypes bs
 
 
 -- erases variable names and producing rules
@@ -340,13 +396,27 @@ eraseDetails (AsSeq mi ass)
 _eMI (tn, _)	= (tn, -1)
 
 
+eraseTypes	:: AbstractSet -> AbstractSet
+eraseTypes (EveryPossible mi _ tn)
+		= EveryPossible (_noMI mi) "" tn
+eraseTypes (ConcreteLiteral mi s)
+		= ConcreteLiteral (_noMI mi) s
+eraseTypes (ConcreteIdentifier mi _)
+		= ConcreteIdentifier (_noMI mi) ""
+eraseTypes (ConcreteInt mi _)
+		= ConcreteInt (_noMI mi) ""
+eraseTypes (AsSeq mi ass)
+		= ass |> eraseTypes & AsSeq (_noMI mi)
+_noMI _		= ("", -1)
+
+
 getAt		:: AbstractSet -> Path -> AbstractSet
 getAt as []	= as
 getAt (AsSeq mi orig) (i:rest)
  | length orig <= i
 	= error $ "Invalid getAt path: index "++show i++" to big for " ++toParsable' " " orig
  | otherwise
-	= let	(init, head:tail)	= splitAt i orig in
+	= let	(_, head:_)	= splitAt i orig in
 		getAt head rest
 getAt rest path
 	= error $ "Invalid getAt path: not a sequence, but trying to get the path "++show path++" on " ++toParsable rest
@@ -368,6 +438,22 @@ replaceAS rest path toReplace
 
 
 
+containsRuleAS	:: [TypeName] -> AbstractSet -> Bool
+containsRuleAS tns (EveryPossible _ _ tn)
+		= tn `elem` tns
+containsRuleAS tns (AsSeq _ seqs)
+		= any (containsRuleAS tns) seqs
+containsRuleAS _ _	= False
+
+
+getAsName		:: AbstractSet -> Maybe Name
+getAsName (EveryPossible _ n _)	= Just n
+getAsName (ConcreteLiteral _ _)	= Nothing
+getAsName (ConcreteIdentifier _ n)= Just n
+getAsName (ConcreteInt _ n)	= Just n
+getAsName (AsSeq _ _)		= Nothing
+
+
 
 instance SimplyTyped AbstractSet where
 	typeOf as	= _typeOf as & either id fst
@@ -377,6 +463,10 @@ _typeOf (ConcreteLiteral mi _)		= Right mi
 _typeOf (ConcreteIdentifier mi _)	= Right mi
 _typeOf (ConcreteInt mi _)		= Right mi
 _typeOf (AsSeq mi _)			= Right mi
+
+generatorOf		:: AbstractSet -> TypeName
+generatorOf (EveryPossible mi _ _)	= fst mi
+generatorOf as				= typeOf as
 
 
 instance Refactorable TypeName AbstractSet where

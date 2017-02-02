@@ -46,6 +46,7 @@ data Args = Args 	{ tsFile		:: String
 			, dumbTS		:: Bool
 			, interpretAbstract	:: Bool
 			, interpretRulesAbstract:: Bool
+			, interpretRules	:: [String]
 			, iraSVG		:: Maybe String
 			, createSVG		:: Maybe String
 			, runTests		:: Bool
@@ -189,6 +190,11 @@ args	= Args <$> argument str
 			(long "interpret-rules-abstractly"
 			<> long "ira"
 			<> help "Interpret each rule over all possible values")
+		<*> many (strOption
+			(metavar "RULE-TO-INTERPRET"
+			<> long "ir"
+			<> long "interpret-rule"
+			<> help "Only run this rule abstractly"))
 		<*> optional (strOption
 			(metavar "SVG-PATH"
 			<> long "irasvg"

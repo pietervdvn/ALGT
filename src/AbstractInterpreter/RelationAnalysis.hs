@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell, FlexibleInstances, MultiParamTypeClasses #-}
-module AbstractInterpreter.RelationAnalysis (RelationAnalysis(..), raSyntax, raIntroduced, raTrivial, analyzeRelations) where
+module AbstractInterpreter.RelationAnalysis (RelationAnalysis(..), TypeNameSpec (..), raSyntax, raIntroduced, raTrivial, raNegativeRaw, analyzeRelations) where
 
 {- Analysises all Rules together -}
 
@@ -25,11 +25,13 @@ import Control.Arrow ((&&&))
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
+import Debug.Trace
+
 data TypeNameSpec	= TypeNameSpec 
 	{ _tnsSuper	:: TypeName
 	, _tnsSymb	:: Symbol
 	, _tnsMode	:: Mode
-	, _tnsInt	:: Int
+	, _tnsInt	:: Int	-- Numbering for input, e.g. REL : x (in), x (out), x(in), x (out) will be numbered (x)(REL)in0, (x)(REL)out0, (x)(REL)in1, (x)(REL)out1
 	, _tnsPositive	:: Bool
 	} deriving (Show, Ord, Eq)
 
@@ -51,51 +53,87 @@ data RelationAnalysis	= RelationAnalysis
 	{- New syntax types introduced (the type they were based on can be found via the spec)
 		Mapping to every possible abstract set they can be
 	-}
-	, _raIntroduced	:: Map TypeNameSpec [AbstractSet]	
+	, _raIntroduced	:: Map TypeNameSpec [AbstractSet]
+	{- Syntaxes introduced, and negativated in a more raw form -}
+	, _raNegativeRaw	:: Map TypeNameSpec [AbstractSet]
 	{- Syntax rules which were introduced originally, but turned out to be another type (+ the type they turned out to be)
 	-}
 	, _raTrivial	:: Map TypeNameSpec TypeName
-	-- Syntax rules which *don't* match an input, e.g. !(e)(→)in0
-	-- , _raNegative	:: [TypeNameSpec]
+	{- Empty, and thus useless rules -}
+	, _raEmpty	:: [TypeName]
 	} deriving (Show)
 
 makeLenses ''RelationAnalysis
 
+emptyRA syntax
+		= RelationAnalysis syntax M.empty M.empty M.empty []
+
 
 analyzeRelations	:: TypeSystem -> RelationAnalysis
-analyzeRelations 	=  calculateInverses . 
-				createRuleSyntax
+analyzeRelations ts 	= createRuleSyntax ts 
+				& calculateInverses ts
 
 
 
-calculateInverses	:: RelationAnalysis -> RelationAnalysis
-calculateInverses ra	
+calculateInverses	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+calculateInverses ts ra	
 	=  let 	introduced	= get raIntroduced ra
-		recursiveForms	= M.keys introduced
-		addInversesFor	= M.keys introduced
-		ra'		= foldr (addInverseFor recursiveForms) ra addInversesFor
-		allIntro	= ra' & get raIntroduced
-		ra''		= ra' & over raSyntax (rebuildSubtypings' $ M.keys allIntro)
+		subtractions	= subtractsTo $ M.keys introduced
+		tnss		= M.keys introduced
+
 		
-		newSyntax	= allIntro ||>> toBNF & M.mapKeys ruleNameFor
-		in
-		ra''	& over (raSyntax . bnf)
-				(M.union newSyntax)
-			& set raIntroduced allIntro
+		ra'	= ra	& prepForInverses ts tnss
+				& chain (tnss |> addInverseFor subtractions)
+				& rebuildSubtypings' ts
+		
+		in ra'
+
+prepForInverses		:: TypeSystem -> [TypeNameSpec] -> RelationAnalysis -> RelationAnalysis
+prepForInverses ts tnss ra
+	= let	tnss'	= tnss |> invertSpec |> (id &&& const []) & M.fromList in
+		ra	& over raIntroduced (M.union tnss')
+			& rebuildSubtypings' ts	-- + regen syntax
 
 
-addInverseFor		:: [TypeNameSpec] -> TypeNameSpec -> RelationAnalysis -> RelationAnalysis
-addInverseFor recursiveForms tns ra 
-	= let	inv@(newSpec, forms)	= inverseFor recursiveForms ra tns
-		tnss			= get raIntroduced ra & M.keys
+
+
+addInverseFor		:: Map (TypeName, TypeName) TypeName -> TypeNameSpec -> RelationAnalysis -> RelationAnalysis
+addInverseFor subtractions tns ra 
+	= let	inv@(newSpec, forms, extraForms)
+					= inverseFor subtractions ra tns
+		tnss			= get raIntroduced ra & M.keys 
 		in
 		ra	& over raIntroduced (M.insert newSpec forms)
+			& over raNegativeRaw (M.insert newSpec extraForms)
 			& over raSyntax (\syntax -> 
 				syntax 	& addTNS newSpec)
-					
 
-inverseFor		:: [TypeNameSpec] -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet])
-inverseFor recursiveForms ra positiveNameSpec	
+
+subtractsTo		:: [TypeNameSpec] -> Map (TypeName, TypeName) TypeName
+subtractsTo tnss
+	= tnss |> ((get tnsSuper &&& ruleNameFor) &&& (ruleNameFor . invertSpec)) & M.fromList
+
+
+inverseFor		:: Map (TypeName, TypeName) TypeName -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet], [AbstractSet])
+inverseFor subtractions ra posNameSpec
+	= let	s		= get raSyntax ra
+		negNameSpec	= invertSpec posNameSpec
+		derivedFrom	= get tnsSuper posNameSpec
+		ass		= derivedFrom & generateAbstractSet s "" & (:[]) >>= unfold s
+		-- TODO FIXME this ain't complete yet!
+		posAs		= ruleNameFor posNameSpec & generateAbstractSet s "" & (:[]) >>= unfold s
+		negs		= subtractAllWith s subtractions ass posAs
+		in
+		(negNameSpec, negs, [])
+
+
+
+
+
+
+					
+inverseForOld		:: [TypeNameSpec] -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet], [AbstractSet])
+inverseForOld recursiveForms ra positiveNameSpec	
 	= let	positiveName	= ruleNameFor positiveNameSpec
 		syntax		= get raSyntax ra
 
@@ -121,18 +159,27 @@ inverseFor recursiveForms ra positiveNameSpec
 		(e)(→)in0	::= "(" (e)(→)in0 ")" | ...
 
 		This means that !(e)(→)in0 should not contain "(" e ")". We transform every "(e)(→)in0" to "e" (thus "(" e ")" ) and subtract that from the superset
-
+		
 		-}
 
 		factorAway	= recursiveForms |> (ruleNameFor &&& get tnsSuper)	:: [(TypeName, TypeName)]
-		posAsClass	= posRecursive |> refactor' factorAway
+		posAsClass	= posRecursive |> refactor' factorAway	-- rewritten forms, thus "(e)(→)in0 e" becomes "e e" here
 
 		negClassical'	= subtractAll syntax 	[generateAbstractSet syntax "" superT]
 							(posAsClass ++ posClassical)
+
 		negRecursive	= posRecursive >>= invertRecAS nameLookups		
 		negativeForms	= negClassical' ++ negRecursive				
+
+
+
+		-- some extra inverted values, for debug/dynamization
+		negClassicalExtra
+				= subtractAll syntax	[generateAbstractSet syntax "" superT]
+							posClassical
+		negName		= invertSpec positiveNameSpec
 		in
-		(invertSpec positiveNameSpec, negativeForms)
+		(negName, negativeForms, refoldWithout syntax [ruleNameFor negName] negClassicalExtra)
 
 
 
@@ -190,51 +237,115 @@ invertRecAS nameSpecLookups as
 
 
 
-
 -------------------------------------------- PREPARE RA -------------------------------------------------------------
 
-
+debugTrace	:: TypeSystem -> String -> RelationAnalysis -> String
+debugTrace ts msg ra
+	= let	ra'	= generateSyntax ts ra
+		synt	= get raSyntax ra'
+		in
+		inHeader "" msg '#' (toParsable synt)
+	 	++ inHeader "" (msg++inParens "lattice") '.' (debugLattice id $ get lattice synt)
 
 createRuleSyntax	:: TypeSystem -> RelationAnalysis
 createRuleSyntax ts
-	= let	-- add new, empty rules to the syntax, e.g. (origRule)(symbol)in0
-		-- keep note of (newRuleName, origRule)
-		(syntax, relTnss)		= ts & prepareSyntax 
-		-- while the new BNF-rules are empty, these should be declared a subtype of the rule they were derived of
-		tnss			= relTnss |> snd
-		syntax'			= syntax & rebuildSubtypings' tnss
-		
-		-- actually analyse, thus add (origRule)(symbol)in0 ::= form1 | form2 | ...
-		ra			= analyse ts syntax'
-		
-		-- rebuild subtyping-relations, for the new rules and add extra subtypings namely every (origRule)(symbol)in0 is also a origRule
-		ra'			= ra & over raSyntax
-						(rebuildSubtypings' tnss)
-		
-		-- filter out trivial rules, to neatly return
-		-- a rule is trivial if it only contains a call to another rule, e.g. " a ::= b"
-		trivialSpecs		= get raTrivial ra' & M.keys	:: [TypeNameSpec]
-		ra''			= ra' & over raIntroduced
-						(M.filterWithKey (const . not . (`elem` trivialSpecs)))
-		in
-		ra''
+	= let	tr msg ra	= {--} ra  {-}  trace (debugTrace ts msg ra) ra --}
+		ra	= prepareSyntax ts	& tr "prepped" 			-- Prepare the syntax, add empty rules for all possible forms
+				& addSubchoices ts	& tr "subs added"	-- Add extra choices, e.g. add (eL)(→)in0 as choice to (e)(→)in0
+				& rebuildSubtypings' ts	& tr "rebuild"
+				& analyse ts 		& tr "analyzed"		-- actually analyse, thus add (origRule)(symbol)in0 ::= form1 | form2 | ...
+				& refoldIntro ts	& tr "refolded"	
+				& filterTrivial ts	& tr "filtered"	
+				& rebuildSubtypings' ts	& tr "rebuild"		-- also regens the syntax
+		in ra
 
 
-rebuildSubtypings'	:: [TypeNameSpec] -> Syntax -> Syntax
-rebuildSubtypings' tnss syntax
-	= let	tnss'			= tnss 	|> (ruleNameFor &&& get tnsSuper)		:: [(TypeName, TypeName)]
-		addRels			= tnss' |> (& uncurry addRelation) & chain		:: Lattice TypeName -> Lattice TypeName
+rebuildSubtypings'	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+rebuildSubtypings' ts ra
+	= let	tnss		= get raIntroduced ra & M.keys
+					|> (ruleNameFor &&& get tnsSuper)		:: [(TypeName, TypeName)]
+		addRels		= tnss |> (& uncurry addRelation) & chain		:: Lattice TypeName -> Lattice TypeName
+		fixSyntax syntax	= syntax & rebuildSubtypings
+						& over lattice (removeTransitive' . addRels)
 		in
-		syntax	& rebuildSubtypings
-			& over lattice (removeTransitive' . addRels)
+		ra	& generateSyntax ts
+			& over raSyntax fixSyntax
+
+
+addSubchoices	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+addSubchoices ts ra
+	= let	syntax		= get raSyntax ra
+		l		= get (tsSyntax . lattice) ts
+		subsOf tns	= subsetsOf l (get tnsSuper tns) & S.toList
+					& L.delete (get bottom l)	:: [TypeName]
+		tnsSubsOf tns	= subsOf tns |> (\s -> set tnsSuper s tns)			:: [TypeNameSpec]
+		tnsSubsOf' tns	= tnsSubsOf tns |> toParsable |> generateAbstractSet syntax ""	:: [AbstractSet]
+		
+		ra'	= ra & over raIntroduced (M.mapWithKey (\tns vals -> tnsSubsOf' tns ++ vals))
+		in
+		ra'
+
+
+-- removes empty and trivial introduced forms
+filterTrivial	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+filterTrivial ts ra
+	= let	isTrivial v	= length v == 1 && (v & head & toBNF & isRuleCall)
+		(empties, (trivial, intro'))
+				= get raIntroduced ra
+					& M.partition null & over _1 M.keys
+					|> M.partition isTrivial 
+		empties'	= empties |> toParsable
+
+		-- remove trivial rules, e.g. "a ::= b"
+		trivialBNF	= trivial ||>> toBNF
+		trivialMapsTo	= trivialBNF ||>> fromRuleCall |> catMaybes |> head 
+		refactoring	= trivialBNF
+					||>> fromRuleCall 
+					|> catMaybes |> head 
+					& M.toList |> over _1 ruleNameFor :: [(TypeName, TypeName)]
+
+		raIntroduced'	= intro' |> L.filter (not . containsRuleAS empties')	-- remove choices calling empty rules
+					||>> refactor' refactoring			-- refactor away trivial rules
+
+		ra'	= ra	& over raTrivial (M.union trivialMapsTo)
+				& over raEmpty (empties' ++)
+				& set raIntroduced raIntroduced'
+				& refoldIntro ts
+		in
+		-- iterate until all empties are removed (removing a choice might render a rule trivial the next step)
+		if null trivialBNF && null empties then ra
+			else filterTrivial ts ra' 
+
+refoldIntro	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+refoldIntro ts ra
+	= ra	& over raIntroduced (M.mapWithKey 
+			(\k -> refoldWithout (get raSyntax ra) [ruleNameFor k]))
+
+
+
+generateSyntax	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+generateSyntax ts ra
+	= let	possibleArgs	= get raIntroduced ra
+					||>> toBNF	:: Map TypeNameSpec [BNF]
+		synt		= possibleArgs & M.mapKeys toParsable
+		tsSynt		= get tsSyntax ts
+		raSynt		= get raSyntax ra
+		wsModeOf tn	= M.findWithDefault (error $ "NO WSMODE FOR "++tn) tn (get wsModes raSynt)
+		wsModes'	= possibleArgs & M.mapWithKey (\k _ -> wsModeOf $ get tnsSuper k)
+					& M.mapKeys toParsable
+		in
+		ra	& set (raSyntax . bnf) (M.union synt $ get bnf tsSynt)
+			& set (raSyntax . wsModes) (M.union (get wsModes tsSynt) wsModes')
+		
 
 
 {-
 Actually adds which forms can be applied to the rules
 -}
-analyse		:: TypeSystem -> Syntax -> RelationAnalysis
-analyse ts synt
-	= let	findRel' symb	= fromJust $ findRelation ts symb	:: Relation
+analyse		:: TypeSystem -> RelationAnalysis -> RelationAnalysis
+analyse ts ra
+	= let	
+		findRel' symb	= fromJust $ findRelation ts symb	:: Relation
 		relations	= get tsRules ts & M.toList 		:: [(Name, [Rule])]
 		relations'	= relations |> over _1 findRel'		:: [(Relation, [Rule])]
 		newTypeNames	= createHoleFillFor ts			:: Map Relation [TypeNameSpec]
@@ -242,35 +353,14 @@ analyse ts synt
 		filterValid k ass	
 				= ass & filter (\as -> toBNF as /= BNFRuleCall (ruleNameFor k))
 
-		possibleArgs	= relations' |> possibleSets ts synt newTypeNames
+		possibleArgs	= relations' |> possibleSets ts (get raSyntax ra) newTypeNames
 					& M.unionsWith (++) |> nub
 					-- remove direct cycles
 					& M.mapWithKey filterValid
-					|> refold synt
 					:: Map TypeNameSpec [AbstractSet]
 
-
-		-- remove direct cycles, e.g. "a ::= ... | a | ..."
-		-- remove trivial rules, e.g. "a ::= b"
-		(trivial, possibleArgs')
-				= possibleArgs & M.partition (\v -> length v == 1 && (v & head & toBNF & isRuleCall))
-		trivialBNF	= trivial ||>> toBNF
-		trivialMapsTo	= trivialBNF ||>> fromRuleCall |> catMaybes |> head 
-		refactoring	= trivialBNF
-					||>> fromRuleCall 
-					|> catMaybes |> head 
-					& M.toList |> over _1 ruleNameFor :: [(TypeName, TypeName)]
-		
-		possibleArgsNamed	= possibleArgs' & M.mapKeys ruleNameFor ||>> toBNF
-		synt'		= synt	& over bnf (M.union possibleArgsNamed) 
-					& refactor' refactoring
-		possibleArgs''	= possibleArgs' ||>> refactor' refactoring
 		in
-		RelationAnalysis
-			synt'
-			possibleArgs''
-			trivialMapsTo
-
+		ra & over raIntroduced (M.unionWith (++) possibleArgs)
 
 
 
@@ -282,18 +372,69 @@ possibleSets ts syntax holeFillers' (rel, rls)
 	= let	holeFillers	= holeFillers' ||>> ruleNameFor
 		symb		= get relSymbol rel
 		inTps		= relTypesWith In rel
-		inArgs		= inTps & generateArgs syntax		:: [AbstractSet]
-		possible	= rls	|> (\r -> interpretRule ts r inArgs)	-- interpret the rules abstractly
+		possible	= rls	|> (\r -> interpretRule' ts r)	-- interpret the rules abstractly
 					& concat
-					|> fillHoleWith' holeFillers	-- give fancy, recognizable names to recursive calls
-					|> get possibleArgs 
-					|> mapi |> zip inTps		-- housekeeping: add indices and types to the bnfs
-					& concat
+					|> fillHole syntax	-- give fancy, recognizable names to recursive calls
+					|> get possibleArgs 	:: [[AbstractSet]]
+		possibleTyped	= possible ||>> (typeOf &&& id)
+					|> mapi & concat	:: [(Int, (TypeName, AbstractSet))]
+		possible'	= possibleTyped
 					|> unmerge3r |> merge3l	
-					|> over _1 (\(tn, i) -> TypeNameSpec tn symb In i True)	-- creation of the name
-					& merge & M.fromList 
+					|> over _1 (\(i, tn) -> TypeNameSpec tn symb In i True)	-- creation of the name
+					& merge & M.fromList
+
 		in
-		possible
+		possible'
+
+{- Lets rename recursive stuff! 
+e.g.	
+
+ cond0 --> cond1
+-------------------------------------------------------
+ If cond0 then e1 else e2 --> If cond1 then e1 else e2
+
+Gives as possible input args:
+
+ "If e:0 then e:1 else e:2" where "e:0" is applicable
+
+We replace "e:0" with (e)(-->)in0
+
+-}
+
+fillHole	:: Syntax -> RuleApplication -> RuleApplication
+fillHole s rapp	= let	subs	= get predicates rapp |> fillHoleForPred s 
+				& M.unionsWith (\v1 v2 -> if v1 == v2 then v1 else error $ "TODO/FIXME: common rules (relationanalysis): intersection of "++toParsable v1 ++ " and "++toParsable v2)
+				-- TODO what if an argument is part of multiple rules!? Now it'll only have one form! We should use the lowest commond subgroup
+			in rapp & applySubsSimple subs
+
+
+fillHoleForPred	:: Syntax -> AbstractConclusion -> Map Name AbstractSet
+fillHoleForPred s (RelationMet rel args)
+	= let	inArgs	= filterMode In rel args & mapi
+		in
+		inArgs |>  fillHoleForArg s rel & catMaybes & M.fromList
+
+
+fillHoleForArg	:: Syntax -> Relation -> (Int, AbstractSet) -> Maybe (Name, AbstractSet)
+fillHoleForArg s r (i, as)
+	= do	name	<- getAsName as
+		let symb	= get relSymbol r
+		let tns	= TypeNameSpec (typeOf as) symb In i True
+				& toParsable
+		return $ (name, generateAbstractSet s name tns)
+
+
+
+{--
+matchHoles	:: Map Relation [Name] -> AbstractConclusion -> Either String (Substitution AbstractSet)
+matchHoles assignments concl@(RelationMet r args)
+	= inMsg ("While matching the holes of "++inParens (toParsable concl)) $
+	  do	let args'	= either error id $  checkExists r assignments $ "Could not find an assignment for "++show r
+		unless (all isEveryPossible args) $ Left $ "Could not match holes, "++toParsable concl++" contains structure with input/output arguments"
+		let nms		= args |> (\(EveryPossible _ n _) -> n) 
+		zip nms args' ||>> (\t -> EveryPossible (t, -1) t t) & M.fromList & return
+
+--}
 
 
 
@@ -338,27 +479,30 @@ This does not mean every t1 == t2!
 However, relations with just one input argument will always match
 
 -}
-prepareSyntax	:: TypeSystem -> (Syntax, [(Relation, TypeNameSpec)])
+prepareSyntax	:: TypeSystem -> RelationAnalysis 
 prepareSyntax ts
-	= let	s	= get tsSyntax ts in
-		foldl (prepRelation s) (s, []) (get tsRelations ts)
+	= let	s		= get tsSyntax ts
+		(s', intro)	= foldl (prepRelation s) (s, []) (get tsRelations ts)
+		introM		= intro |> (id &&& const []) & M.fromList
+		in
+		RelationAnalysis s' introM M.empty M.empty []
 
-prepRelation	:: Syntax -> (Syntax, [(Relation, TypeNameSpec)]) -> Relation -> (Syntax, [(Relation, TypeNameSpec)])
+prepRelation	:: Syntax -> (Syntax, [TypeNameSpec]) -> Relation -> (Syntax, [TypeNameSpec])
 prepRelation origSyntax s rel
 	= let	symbol	= get relSymbol rel
-		args	= get relTypesModes rel & filter ((==) In . snd) & mapi in
+		args	= relTypesWith In rel & mapi ||>> (id &&& const In) in
 		foldl (addTypeFor origSyntax symbol rel) s args
 		
 
 
-addTypeFor	:: Syntax -> Symbol -> Relation -> (Syntax, [(Relation, TypeNameSpec)]) -> (Int, (TypeName, Mode)) -> (Syntax, [(Relation, TypeNameSpec)])
+addTypeFor	:: Syntax -> Symbol -> Relation -> (Syntax, [TypeNameSpec]) -> (Int, (TypeName, Mode)) -> (Syntax, [TypeNameSpec])
 addTypeFor origSyntax symb rel (prepSyntax, newtypes) (i, (tn, mode))
 	= let	l		= get lattice origSyntax
-		subs		= subsetsOf l tn & S.toList
+		subs		= allSubsetsOf l tn & S.toList
 					& L.delete (get bottom l)	:: [TypeName]
-		tns		=  TypeNameSpec tn symb mode i True
+		tnss		= (tn:subs) |> (\tn' -> TypeNameSpec tn' symb mode i True)
 		in
-		(addTNS tns prepSyntax, (rel, tns):newtypes)
+		(foldr addTNS prepSyntax tnss, tnss ++ newtypes)
 
 addTNS	:: TypeNameSpec -> Syntax -> Syntax
 addTNS tns s
@@ -388,6 +532,10 @@ _toString showSyntax ts ra
 			, "Following types were ommitted, as they turned out to coincide with some other type:"
 			, get raTrivial ra & M.toList |> (\(triv, super) -> toParsable triv ++ " \t== " ++ super) & unlines & indent
 			, ""
+			, "Following types were omitted, as they turned out to be empty. They might cause 'dissapearing' choices in other rules:"
+			, get raEmpty ra & unlines & indent
+			, ""
+			, debugLattice id $ get (raSyntax . lattice) ra 
 			, inHeader "" "Resulting Syntax" '-' $ showSyntax $ get raSyntax ra
 			] & unlines
 
