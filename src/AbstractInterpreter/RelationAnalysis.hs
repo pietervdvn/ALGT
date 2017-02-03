@@ -85,14 +85,14 @@ calculateInverses ts ra
 		ra'	= ra	& prepForInverses ts tnss
 				& chain (tnss |> addInverseFor subtractions)
 				& rebuildSubtypings' ts
-		
+				& refoldIntro ts
 		in ra'
 
 prepForInverses		:: TypeSystem -> [TypeNameSpec] -> RelationAnalysis -> RelationAnalysis
 prepForInverses ts tnss ra
 	= let	tnss'	= tnss |> invertSpec |> (id &&& const []) & M.fromList in
 		ra	& over raIntroduced (M.union tnss')
-			& rebuildSubtypings' ts	-- + regen syntax
+			& rebuildSubtypings' ts	-- also regenerates syntax
 
 
 
@@ -129,16 +129,13 @@ inverseFor subtractions ra posNameSpec
 		all		= (derivedFrom & generateAbstractSet s "" & (:[]) >>= unfold s)
 		(allRec, allClass)
 				= all & partition doesContainRec
-		-- TODO FIXME this ain't complete yet!
 		posAll		= ruleNameFor posNameSpec & generateAbstractSet s "" & (:[]) >>= unfold s
 		(posRec, posClass)
 				= posAll & partition doesContainRec
-		negsRec		= subtractAllWith s subtractions all posRec
 		negsClass	= subtractAll s all posClass
-		negs		= negsRec ++ negsClass
-					-- & refoldWithout s [ruleNameFor negNameSpec]
+		negs		= subtractAllWith s subtractions negsClass posRec
 		in
-		(negNameSpec, negs, [])
+		(negNameSpec, negs, negs)
 
 
 

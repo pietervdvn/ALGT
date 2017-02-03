@@ -35,11 +35,12 @@ s	= get raSyntax ra
 
 asT	= generateAbstractSet s "" "type" & (:[])
 asE	= generateAbstractSet s "" "e" & (:[])
-asEl	= generateAbstractSet s "" "eL" & unfold s & (!! 2) & (:[])
-asElArr	= generateAbstractSet s "" "(eL)(→)in0" & unfold s & (!! 1) & (:[])
+asEl	= generateAbstractSet s "" "eL" & unfold s
+asElArr	= generateAbstractSet s "" "(eL)(→)in0" & (:[])
 
 subtractions
 	= M.fromList [( ("eL", "(eL)(→)in0") ,"!(eL)(→)in0"), ( ("e", "(e)(→)in0") ,"!(e)(→)in0")]
+
 
 t0	:: IO ()
 t0	= do	putStr "asEl\n\t| "

@@ -282,16 +282,18 @@ _subtract syntax known s@(AsSeq mi seq) smin@(AsSeq _ seqMin)
 	= do	pointWise	<- zip seq seqMin |> uncurry (_subtract' syntax known)
 					& replacePointwise seq
 		return $ AsSeq mi pointWise
+_subtract syntax knowns e smin@EveryPossible{}
+	= subtractAllWith syntax knowns [e] $ unfold syntax smin
 _subtract syntax known s minus
  | subsetOf syntax s minus
-		= []
+	= []
  | isEveryPossible s && alwaysIsA' syntax minus s
-		= let	unfolded	= unfold syntax s
-			subbedS 	= unfolded >>= (\s' -> _subtract' syntax known s' minus)
-			subbedS'	= nub subbedS
-			in
-			if subbedS' == unfolded then return s else subbedS'
-				
+	= let	unfolded	= unfold syntax s
+		subbedS 	= unfolded >>= (\s' -> _subtract' syntax known s' minus)
+		subbedS'	= nub subbedS
+		in
+		if subbedS' == unfolded then return s else subbedS'
+		
  | otherwise		= return s
 
 

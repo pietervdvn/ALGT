@@ -136,9 +136,11 @@ plus(e1, e2)	= !plus:number(e1, e2)
 
 
 
+
  e0 → e1
 -----------------			[EvalCtx]
  e[e0] → e[e1]
+
 
 
  n1:number	n2:number
@@ -292,6 +294,6 @@ plus(e1, e2)	= !plus:number(e1, e2)
 # e1 :: T
 #
 #
-#           e0:T
-#(Progress) ------------------ [Progress]
+# e0:T
+# ------------------ [Progress]
 #           e0 → e1 | (~) e0

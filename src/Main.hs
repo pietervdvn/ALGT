@@ -25,7 +25,7 @@ import Data.Maybe
 
 import Data.Map as M
 
-version	= ([0,1,12], "Unwinding Rules")
+version	= ([0,1,12,0], "Unwinding Rules")
 
 
 
