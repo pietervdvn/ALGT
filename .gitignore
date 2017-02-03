@@ -20,6 +20,8 @@ cabal.project.local
 bin/*
 .bin/*
 Main
-ALGT
+ALGT-*
 .stack-work/*
 src/Assets.hs
+src/Assets/IntegrationTests/*.FAILED
+
