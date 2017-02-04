@@ -40,16 +40,22 @@ parseRules env
 
 parseRule	:: (Syntax, [Relation], Functions) -> Parser u Rule
 parseRule env
-	=rule $ _makeCtx env
+	= rule $ _makeCtx env
 
 
 
 -- expressions in rules can also use unicode and other weird stuff as identifier
 
 
-
-rule	:: Ctx -> Parser u Rule
+rule		:: Ctx -> Parser u Rule
 rule ctx
+	= do	(Property n p (MultiConclusionA concls))	<- property ctx
+		let msg	= "In rule "++ n ++":\n   Only a single conclusion is allowed. You can't make a choice here!"
+		unless (length concls == 1) $ fail msg
+		return (Rule n p $ head concls)
+
+property	:: Ctx -> Parser u Property
+property ctx
 	= do	ws
 		preds	<- try (predicate ctx `sepBy` many1 (char '\t') <* (ws >> char '\n')) 
 				<|> (ws >> return [])
@@ -58,8 +64,8 @@ rule ctx
 		ws
 		char '\n'
 		ws
-		con	<- conclusion ctx
-		let rule	= Rule nm preds con
+		con	<- multiConcl ctx
+		let rule	= Property nm preds con
 		check' (syntax ctx) rule & either error return
 		return rule
 
@@ -69,6 +75,10 @@ parseExpr ctx	= do	let notSymbols	= relSymbols ctx
 			EP.parseExpression' $ identifier' notSymbols
 
 
+
+multiConcl	:: Ctx -> Parser u (MultiConclusionA Expression)
+multiConcl ctx	= do	concls	<- conclusion ctx `sepBy` (ws >> char '|' >> ws)
+			return $ MultiConclusionA concls
 
 conclusion 	:: Ctx -> Parser u Conclusion
 conclusion ctx
