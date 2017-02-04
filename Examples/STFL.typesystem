@@ -286,14 +286,14 @@ plus(e1, e2)	= !plus:number(e1, e2)
  Ta1 "->" Tb1   ==   Ta2 "->" Tb2
 
 
-# Properties
-#============
-#
-# e0 :: T	e0 → e1
-# --------------------------	[Preservation]
-# e1 :: T
-#
-#
-# e0:T
-# ------------------ [Progress]
-#           e0 → e1 | (~) e0
+ Properties
+============
+
+ e0 :: T	 e0 → e1
+-------------------------- [Preservation]
+         e1 :: T
+
+
+         e0 :: T
+-------------------------- [Progress]
+ (✓) e0    |     e0 → e1 
