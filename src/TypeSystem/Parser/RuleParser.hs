@@ -38,11 +38,19 @@ parseRules env
 	= many $ try (nls *> rule (_makeCtx env) <* nls)
 
 
+parseProperties	:: (Syntax, [Relation], Functions) -> Parser u [Property]
+parseProperties env
+	= many $ try (nls *> property (_makeCtx env) <* nls)
+
+
+
 parseRule	:: (Syntax, [Relation], Functions) -> Parser u Rule
 parseRule env
 	= rule $ _makeCtx env
 
-
+parseProperty	:: (Syntax, [Relation], Functions) -> Parser u Property
+parseProperty env
+	= property $ _makeCtx env
 
 -- expressions in rules can also use unicode and other weird stuff as identifier
 

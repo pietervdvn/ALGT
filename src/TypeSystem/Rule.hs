@@ -194,7 +194,11 @@ makeRules s rules
 		check' s rules'
 		return rules'
 
-
+makeProperties	:: Syntax -> [Property] ->  Either String [Property]
+makeProperties s props
+	= do	checkNoDuplicates (props |> get propName) (\dups -> "Multiple properties have the name "++showComma dups)
+		props |+> check' s
+		return props
 
 
 
@@ -380,7 +384,7 @@ showPropertyWith sp sc (Property nm predicates conclusion)
 		predicates'	= predicates |> sp & intercalate "\t"
 		conclusion'	= sc conclusion
 		nm'	= " \t[" ++ nm ++ "]"
-		line	= replicate (2 + max (length' 1 predicates') (length conclusion')) '-'
+		line	= replicate (2 + max (length' 1 predicates') (length' 1 conclusion')) '-'
 		in
 		["", " " ++ predicates', line ++ " " ++ nm', " "++ conclusion'] & unlines
 

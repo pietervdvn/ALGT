@@ -151,10 +151,17 @@ typeSystemFile fp
 				header "Rules"
 				nls1
 				parseRules (syntax, rels, funcs)
-		
 		rules'	<- makeRules syntax rules & either error return
+
+		props	<- option [] $ try $ do
+				nls
+				header "Properties"
+				nls1
+				parseProperties (syntax, rels, funcs)
+		props'	<- makeProperties syntax props & either error return
+				
 		nls
 		eof
 
-		return $ TypeSystem name syntax syntaxStyle funcs rels rules'
+		return $ TypeSystem name syntax syntaxStyle funcs rels rules' props'
 
