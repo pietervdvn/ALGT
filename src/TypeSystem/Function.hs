@@ -12,6 +12,30 @@ import TypeSystem.Expression
 import Data.Map
 import Data.List (intercalate)
 
+import qualified Data.Map as M
+import Data.Map (Map)
+
+
+
+-- The assignment of names to variables
+type VariableAssignmentsA a
+		= Map Name (a, Maybe Path)	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
+
+
+
+instance (ToString a, Show a) => ToString' String (VariableAssignmentsA a) where
+	toParsable'	= _toStringVarAssgn toParsable
+	toCoParsable'	= _toStringVarAssgn toCoParsable
+	debug'		= _toStringVarAssgn debug
+	show'		= const show
+
+
+_toStringVarAssgn sPt sep vars
+	= vars & M.toList |> _showVarPair sPt & intercalate sep
+_showVarPair sPt (nm, (pt, mPath))
+	= nm ++ " --> " ++ sPt pt ++ maybe "" (\pth -> " (With a hole at "++showComma pth++")") mPath
+
+
 -- Patterns, used to deconstruct values (parsetrees) and capture variables, to calculate the end expression
 data Clause	= MClause {mecPatterns :: [Expression], mecExpr :: Expression}
 	deriving (Show, Ord, Eq)

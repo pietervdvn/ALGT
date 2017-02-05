@@ -1,3 +1,4 @@
+ {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-} 
 module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch) where
 
 {-
@@ -17,6 +18,9 @@ import Data.List (intercalate, intersperse)
 import Data.Bifunctor (first)
 import Data.Either
 
+
+type VariableAssignments	= VariableAssignmentsA ParseTree
+
 evalFunc	:: TypeSystem -> Name -> [ParseTree] -> Either String ParseTree
 evalFunc ts funcName args	
  | funcName `M.member` get tsFunctions ts
@@ -30,8 +34,6 @@ evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> Either String Par
 evalExpr ts vars
 	= evaluate (buildCtx ts vars)
 
-type VariableAssignments
-		= Map Name (ParseTree, Maybe Path)	-- If a path of numbers (indexes in the expression-tree) is given, it means a evaluation context is used
 data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
 			ctxFunctions 	:: Map Name Function,
 			ctxVars	:: VariableAssignments,

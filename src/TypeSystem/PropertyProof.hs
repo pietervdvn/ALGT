@@ -8,6 +8,8 @@ import Utils.ToString
 
 import TypeSystem.Proof
 import TypeSystem.Rule
+import TypeSystem.Function (VariableAssignmentsA)
+import TypeSystem.ParseTree
 
 import Data.Either
 
@@ -16,10 +18,13 @@ import Lens.Micro.TH
 
 data PropertyProof
 	= PredicateFailed 
-		{ _predicateProofs'	:: [Either String Proof]
+		{ _propProofAssgn	:: VariableAssignmentsA ParseTree	-- Just the input
+		, _predicateProofs'	:: [Either String Proof]
 		}	-- If a predicate failed, we don't have to actually proof
 	| PropertyProof
-		{ _predicateProofs	:: [Proof]
+		{ _propProofAssgn	:: VariableAssignmentsA ParseTree	-- The resulting assignment
+		, _predicateProofs	:: [Proof]
+		, _conclusionProvenWith	:: Int
 		, _conclusionProof	:: Proof}
 	deriving (Show)
 
@@ -35,32 +40,29 @@ instance ToString' Property PropertyProof where
 
 
 _propProofToString		:: (Predicate -> String) -> (Proof -> String) -> Property -> PropertyProof -> String
-_propProofToString sPred sProof prop (PredicateFailed predProofs)
-	= _toStringFailed sPred sProof prop predProofs
-_propProofToString sPred sProof prop (PropertyProof predProofs proof)
-	= _showSuccess sPred sProof prop (predProofs, proof)
-
-
-
-_showSuccess		:: (Predicate -> String) -> (Proof -> String) -> Property -> ([Proof], Proof) -> String
-_showSuccess sPred sProof prop (predProofs, proof)
-	= let	header	= "# Property "++get propName prop++" statisfied:"
-		predsC	= get propPreds prop
+_propProofToString sPred sProof prop (PropertyProof vars predProofs provenWith proof)
+	= let	header		= "# Property "++get propName prop++" statisfied with assignment {"++ toParsable' ", " vars ++"}\n"
+		predsC		= get propPreds prop
 		showPred (pred, proof)
-			= "# Predicate satisfied: "++sPred pred++"\n"++sProof proof
-		preamble= zip predsC predProofs |> showPred & unlines
+				= ["# Predicate satisfied:\n# "++sPred pred
+					, ""
+				  	, indent (sProof proof)] & unlines
+		preamble	= zip predsC predProofs |> showPred & unlines
+		provenConcl	= get (propConcl . multiConcls) prop !! provenWith
+		conclMsg	= ["# Satisfies a possible conclusion:\n# "++ sPred (Needed provenConcl)
+					, ""
+					, sProof proof] & unlines
 		in
-		unlines [header, preamble, "", "# Satisfies: ", sProof proof]
+		header ++ indent (unlines [preamble, "", conclMsg])
 
-_toStringFailed 	:: (Predicate -> String) -> (Proof -> String) -> Property -> [Either String Proof] -> String
-_toStringFailed sPred sProof prop preds
-	= let	header	= "# Could not proof property "++ get propName prop++", predicate failed:"
+_propProofToString sPred sProof prop (PredicateFailed vars predProofs)
+	= let	header	= "# Property "++ get propName prop++" proven by failing predicate with assignment {"++ toParsable' ", " vars ++"}:"
 		predsC	= get propPreds prop
 		failOverview
-			= preds |> either (const "# Failed: ") (const "# Success: ")
-				& zipWith (++) (predsC |> sPred )
+			= predProofs |> either (const "# Failed: ") (const "# Success: ")
+				& zipWith (flip (++)) (predsC |> sPred )
 				|> indent
-		fails	= preds |> either Right Left	
+		fails	= predProofs |> either Right Left	
 				& zip predsC
 				|> sndEffect
 				& rights
