@@ -51,8 +51,9 @@ import Lens.Micro hiding ((&))
 dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> [Relation] -> Changes
 dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 		= let	syntax		= get tsSyntax ts
+			typeErrExpr	= MParseTree $ MLiteral ("",-1) typeErr
 			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule))
-			newRules	= addStuckStateRules |> calculateNewRulesFor ts typeErr & concat
+			newRules	= addStuckStateRules |> calculateNewRulesFor ts rule typeErrExpr & concat
 			newRules'	= addTypeErrCase |> (\rel ->
 						Rule ("Extra "++get relSymbol rel) [] $ RelationMet rel [bnfAsExpr $ Literal typeErr])
 			newRulesCh	= (newRules ++ newRules')
@@ -63,8 +64,8 @@ dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 
 
 
-calculateNewRulesFor	:: TypeSystem -> String -> Relation -> [Rule]
-calculateNewRulesFor ts typeErr relation
+calculateNewRulesFor	:: TypeSystem -> TypeName -> Expression -> Relation -> [Rule]
+calculateNewRulesFor ts typeType typeErrExpr relation
 	= do	let syntax	= get tsSyntax ts
 		let symb	= get relSymbol relation
 		let ra		= analyzeRelations ts
@@ -72,7 +73,7 @@ calculateNewRulesFor ts typeErr relation
 		tp		<- allSubsetsOf (get lattice syntax) tps & S.toList
 		let tns		= TypeNameSpec tp symb In i False
 		let genConcl bnf
-				= RelationMet relation [ bnfAsExpr bnf , MParseTree $ MLiteral ("",-1) typeErr]
+				= RelationMet relation [ bnfAsExpr bnf , typeErrExpr]
 		createRulesFor ra genConcl tns
 
 
@@ -84,14 +85,17 @@ createRulesFor ra genConcl tns
 		nonMatching	<- M.findWithDefault [] (toParsable tns) (get bnf syntax)
 		let isRecursive	= calledRules nonMatching
 					& any (`elem` recursive)
-		-- guard (not isRecursive)
+		guard (not isRecursive)
 		let concl	= genConcl nonMatching
 		let rule	= Rule ("TErr" ++ toParsable nonMatching) [] concl
 		return rule
 
 
-
-
+-- TODO introduce this guy
+recursiveRule	:: Expression -> Relation -> TypeName -> Rule
+recursiveRule errExpr relation tn
+	= let	concl	= RelationMet relation [MEvalContext tn tn $ MVar tn (tn++"0"), errExpr] in
+		Rule "TErrCtx" [Needed $ RelationMet relation [MVar tn (tn++"0"), errExpr]] concl
 
 
 

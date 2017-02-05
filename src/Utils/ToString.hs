@@ -55,4 +55,9 @@ instance (Show a, ToString a) => ToString' String [a] where
 
 
 
+printPars	:: (ToString a) => a -> IO ()
+printPars a	= putStrLn $ toParsable a
+
+printPars'	:: (ToString' x a) => x -> a -> IO ()
+printPars' x a	= putStrLn $ toParsable' x a
 	

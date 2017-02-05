@@ -17,6 +17,7 @@ import TypeSystem.Function as TypeSystem
 import TypeSystem.Relation as TypeSystem
 import TypeSystem.Rule as TypeSystem
 import TypeSystem.Proof as TypeSystem
+import TypeSystem.PropertyProof as TypeSystem
 
 import TypeSystem.TypeSystem as TypeSystem
 

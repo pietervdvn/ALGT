@@ -85,7 +85,8 @@ calculateInverses ts ra
 		ra'	= ra	& prepForInverses ts tnss
 				& chain (tnss |> addInverseFor subtractions)
 				& rebuildSubtypings' ts
-				& refoldIntro ts
+				-- & refoldIntro ts
+				& rebuildSubtypings' ts
 		in ra'
 
 prepForInverses		:: TypeSystem -> [TypeNameSpec] -> RelationAnalysis -> RelationAnalysis

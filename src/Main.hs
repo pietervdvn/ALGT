@@ -25,6 +25,8 @@ import Data.Maybe
 
 import Data.Map as M
 
+import ParseTreeInterpreter.PropertyProver
+
 version	= ([0,1,12,0], "Unwinding Rules")
 
 

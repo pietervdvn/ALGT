@@ -1,4 +1,4 @@
-module Utils.Test (recreateTest, testAll, recreateAllTests) where
+module Utils.Test (recreateTest, testAll, recreateAllTests, recreateTests) where
 
 import Utils.Utils
 import Utils.ArgumentParser
@@ -55,6 +55,9 @@ recreateAllTests
 
 recreateTest i
 	= (i, testArgs !! i) & createTestResult
+
+recreateTests is
+	= is |+> recreateTest & void
 
 
 createTestResult	:: (Int, [String]) -> IO ()

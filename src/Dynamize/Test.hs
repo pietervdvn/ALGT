@@ -20,7 +20,6 @@ import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.AbstractSet
 
 
-t	= t1
 
 t1	= do	let rel	= fromJust $ findRelation stfl "→"
 		let rel'= fromJust $ findRelation stfl "✓"
@@ -36,7 +35,8 @@ s	= get raSyntax ra
 asT	= generateAbstractSet s "" "type" & (:[])
 asE	= generateAbstractSet s "" "e" & (:[])
 asEl	= generateAbstractSet s "" "eL" & unfold s
-asElArr	= generateAbstractSet s "" "(eL)(→)in0" & (:[])
+asEArr	= generateAbstractSet s "" "(e)(→)in0" & (:[])
+asElArr	= generateAbstractSet s "" "(e)(→)in0" & (:[])
 
 subtractions
 	= M.fromList [( ("eL", "(eL)(→)in0") ,"!(eL)(→)in0"), ( ("e", "(e)(→)in0") ,"!(e)(→)in0")]
@@ -49,6 +49,16 @@ t0	= do	putStr "asEl\n\t| "
 		toParsIO asElArr
 		putStr "asEl - asElArr:\n\t| "
 		subtractAllWith s subtractions asEl asElArr
+			& toParsIO
+
+
+t0e	:: IO ()
+t0e	= do	putStr "asE\n\t| "
+		toParsIO asE
+		putStr "asEArr\n\t| "
+		toParsIO asEArr
+		putStr "asE - asEArr:\n\t| "
+		subtractAllWith s subtractions asE asEArr
 			& toParsIO
 
 toParsIO vals	= vals & sort & toParsable' "\n\t| " & putStrLn

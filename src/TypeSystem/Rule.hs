@@ -87,7 +87,7 @@ instance Refactorable RelationSymbol (ConclusionA a) where
 
 
 -- A choice of conclusion, used for properties
-data MultiConclusionA a	= MultiConclusionA [ ConclusionA a ]
+data MultiConclusionA a	= MultiConclusionA { _multiConcls	:: [ ConclusionA a ]}
 	deriving (Show, Ord, Eq)
 
 instance Functor MultiConclusionA where
@@ -153,7 +153,7 @@ makeLenses ''ConclusionA
 makeLenses ''Rule
 makeLenses ''Property
 makeLenses ''Rules
-
+makeLenses ''MultiConclusionA
 
 
 _ruleAsProp	:: Rule -> Property
