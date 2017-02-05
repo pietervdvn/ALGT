@@ -23,24 +23,6 @@ import Data.Either
 import Control.Monad
 
 
--- TODO remove test code
-import AssetsHelper
-tProps	= stfl & get tsProps
-tProp0	= tProps !! 0
-tProp1	= tProps !! 1
-
-
-pt	= PtSeq ("e", 0) [MInt ("number", 0) 20
-		, MLiteral ("e", 0) "+"
-		, MInt ("number", 0) 22]
-
-testProp prop
-	= do	let eithPropProof	= testPropOn stfl prop $ M.singleton "e0" (pt, Nothing)
-		either putStrLn (printPars' prop) eithPropProof
-t'	= testProp tProp0
-t	= testProp tProp1
-
-
 
 {- If a predicate fails, a 'failed predicate proof' is returned (by Left).
  If all succeed, these are returned.

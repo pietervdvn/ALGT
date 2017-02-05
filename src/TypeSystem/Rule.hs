@@ -163,7 +163,7 @@ _ruleAsProp (Rule rel pred concl)
 _propAsRule	:: Property -> Rule
 _propAsRule (Property rel pred (MultiConclusionA [concl]))
 		= Rule rel pred concl
-_propAsRule _	= error $ "Trying to convert a property to a rule, but the number of conclusions doesn't match"
+_propAsRule _	= error "Trying to convert a property to a rule, but the number of conclusions doesn't match"
 
 
 

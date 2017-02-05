@@ -9,11 +9,10 @@ import Utils.ToString
 import TypeSystem.Types
 import TypeSystem.Expression
 
+import qualified Data.Map as M
 import Data.Map
 import Data.List (intercalate)
 
-import qualified Data.Map as M
-import Data.Map (Map)
 
 
 

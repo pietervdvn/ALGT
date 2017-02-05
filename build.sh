@@ -4,6 +4,11 @@
 cd src
 hlint *.hs */*.hs
 ./searchTodo.sh
+
+cd Assets/IntegrationTests
+rm *.FAILED
+cd ../..
+
 echo "createAssets False \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
 cd ..
 
