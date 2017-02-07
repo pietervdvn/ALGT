@@ -27,7 +27,7 @@ import Data.Map as M
 
 import ParseTreeInterpreter.PropertyTester
 
-version	= ([0,1,13], "Total Property Check")
+version	= ([0,1,13,1], "Total Property Check: no ɛ types from builtins")
 
 
 

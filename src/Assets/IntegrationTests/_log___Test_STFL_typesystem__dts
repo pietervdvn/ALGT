@@ -251,14 +251,9 @@ subs(x, y, z)            = z
  Γ ⊢ n, "Int"
 
 
- 
----------------------  	[TboolT]
- Γ ⊢ "True", "Bool"
-
-
- 
-----------------------  	[TboolF]
- Γ ⊢ "False", "Bool"
+ b: bool
+----------------  	[Tbool]
+ Γ ⊢ b, "Bool"
 
 
  Γ ⊢ e, T

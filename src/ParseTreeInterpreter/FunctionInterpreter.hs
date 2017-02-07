@@ -150,14 +150,6 @@ depthFirstSearch matchMaker path pt@(PtSeq _ values)
 depthFirstSearch matchMaker path pt	= matchMaker (pt, path)
 
 
-_applyIntFunction	:: Ctx -> TypeName -> Name -> (Int, [Int] -> Int) -> [Expression] -> Either String ParseTree
-_applyIntFunction ctx tp funcName (minimumNeeded, f) es
-	= do	is	<- asInts ctx funcName es
-		when (length es < minimumNeeded) $ Left $ "Builtin integer function '!" ++ funcName++"' needs at least "++show minimumNeeded++" arguments"
-		return $ MInt (tp, 0) (f is)
-
-_applyIntFunction' ctx tp funcName f
-	= _applyIntFunction ctx tp funcName (0, f)
 
 evaluate	:: Ctx -> Expression -> Either String ParseTree
 evaluate ctx (MCall tp "plus" True es)
@@ -238,11 +230,18 @@ evalErr		:: Ctx -> String -> Either String ParseTree
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
 
+_applyIntFunction	:: Ctx -> TypeName -> Name -> (Int, [Int] -> Int) -> [Expression] -> Either String ParseTree
+_applyIntFunction ctx tp funcName (minimumNeeded, f) es
+	= do	is	<- asInts ctx funcName es
+		when (length es < minimumNeeded) $ Left $ "Builtin integer function '!" ++ funcName++"' needs at least "++show minimumNeeded++" arguments"
+		return $ MInt (tp, 0) (f is)
+
+_applyIntFunction' ctx tp funcName f
+	= _applyIntFunction ctx tp funcName (0, f)
 asInts ctx bi exprs	
-	= do	exprs'	<- exprs |+> evaluate ctx 
-				|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
-				||>> (\(MInt _ i) -> i)
-		return exprs'
+	= exprs |+> evaluate ctx 
+		|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
+		||>> (\(MInt _ i) -> i)
 
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)

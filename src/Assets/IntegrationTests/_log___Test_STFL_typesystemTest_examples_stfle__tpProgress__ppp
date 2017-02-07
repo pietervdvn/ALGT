@@ -19,16 +19,16 @@ Warning:
  Test/examples.stfl 
 ====================
 
-[█-- (0/1) Testing 'Progress' on input True
-Property Progress holds for given examples                                      
+Property Progress holds for given examples
 Property successfull
 # Property Progress statisfied with assignment {T --> Bool, e0 --> True}
   # Predicate satisfied:
   # e0 :: T
   
-    --------------- [TboolT]
+    True : bool
+    --------------- [Tbool]
     {} ⊢ True, Bool
-    ------------------------ [TEmptyCtx]
+    ----------------------- [TEmptyCtx]
     True :: Bool
   
   

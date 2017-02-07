@@ -325,14 +325,9 @@ subs(x, y, z)            = z
  Γ ⊢ e1 e2, cod(Tfunc)
 
 
- 
-----------------------  	[TboolF]
- Γ ⊢ "False", "Bool"
-
-
- 
----------------------  	[TboolT]
- Γ ⊢ "True", "Bool"
+ b: bool
+----------------  	[Tbool]
+ Γ ⊢ b, "Bool"
 
 
  n: number

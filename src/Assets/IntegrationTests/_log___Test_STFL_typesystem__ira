@@ -345,8 +345,7 @@ Results:
 
 # Known rules are
 #   Tnumber
-#   TboolT
-#   TboolF
+#   Tbool
 #   TParens
 #   TAscr
 #   Tx
@@ -357,8 +356,7 @@ Results:
 
 Applicable to:
   typingEnvironment, number
-  typingEnvironment, "True"
-  typingEnvironment, "False"
+  typingEnvironment, bool
   typingEnvironment, ("(" e ")")
   typingEnvironment, (eL "::" type)
   typingEnvironment, (eL "+" e)
@@ -367,8 +365,7 @@ Applicable to:
   typingEnvironment, (eL e)
 Results:
   typingEnvironment0 ⊢ number1, "Int" : typeL
-  typingEnvironment0 ⊢ "True" : bool, "Bool" : typeL
-  typingEnvironment0 ⊢ "False" : bool, "Bool" : typeL
+  typingEnvironment0 ⊢ bool1, "Bool" : typeL
   typingEnvironment0 ⊢ ("(" : eL e1:1 ")" : eL) : eL, typeT
   	 where (recursion) typingEnvironment0 ⊢ e1:1, typeT
   typingEnvironment0 ⊢ (eL1:0 "::" : e type1:2) : e, typeT'
@@ -392,23 +389,13 @@ Results:
 
 
 
- Analysis of rule "TboolT" 
----------------------------
+ Analysis of rule "Tbool" 
+--------------------------
 
 Applicable to:
-  typingEnvironment, "True"
+  typingEnvironment, bool
 Results:
-  typingEnvironment0 ⊢ "True" : bool, "Bool" : typeL
-
-
-
- Analysis of rule "TboolF" 
----------------------------
-
-Applicable to:
-  typingEnvironment, "False"
-Results:
-  typingEnvironment0 ⊢ "False" : bool, "Bool" : typeL
+  typingEnvironment0 ⊢ bool1, "Bool" : typeL
 
 
 

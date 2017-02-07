@@ -19,5 +19,4 @@ Warning:
  Test/examples.stfl 
 ====================
 
-[█-- (0/1) Testing 'Progress' on input True
-Property Progress holds for given examples                                      
+Property Progress holds for given examples

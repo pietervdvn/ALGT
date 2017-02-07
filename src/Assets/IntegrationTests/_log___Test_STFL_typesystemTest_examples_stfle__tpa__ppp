@@ -19,8 +19,7 @@ Warning:
  Test/examples.stfl 
 ====================
 
-[█-- (0/1) Testing 'Preservation' on input True
-Property Preservation holds for given examples                                  
+Property Preservation holds for given examples
 Property successfull
 # Property Preservation proven by failing predicate with assignment {e0 --> True}:
   # Success: e0 :: T
@@ -46,16 +45,16 @@ Property successfull
       Could not match "If" "False" "Then" e1 "Else" e2 /= "True"
     While trying to intepret the rule EvalLamApp with True:
       Could not match ("(" "\\" var ":" type "." e ")") arg /= "True"
-[█-- (0/1) Testing 'Progress' on input True
-Property Progress holds for given examples                                      
+Property Progress holds for given examples
 Property successfull
 # Property Progress statisfied with assignment {T --> Bool, e0 --> True}
   # Predicate satisfied:
   # e0 :: T
   
-    --------------- [TboolT]
+    True : bool
+    --------------- [Tbool]
     {} ⊢ True, Bool
-    ------------------------ [TEmptyCtx]
+    ----------------------- [TEmptyCtx]
     True :: Bool
   
   
@@ -68,16 +67,16 @@ Property successfull
   (✓) True
   
   
-[█-- (0/1) Testing 'Termination' on input True
-Property Termination holds for given examples                                   
+Property Termination holds for given examples
 Property successfull
 # Property Termination statisfied with assignment {T --> Bool, e --> True}
   # Predicate satisfied:
   # e :: T
   
-    --------------- [TboolT]
+    True : bool
+    --------------- [Tbool]
     {} ⊢ True, Bool
-    ------------------------ [TEmptyCtx]
+    ----------------------- [TEmptyCtx]
     True :: Bool
   
   

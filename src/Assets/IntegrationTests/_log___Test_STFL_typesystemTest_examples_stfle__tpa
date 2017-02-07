@@ -19,9 +19,6 @@ Warning:
  Test/examples.stfl 
 ====================
 
-[█-- (0/1) Testing 'Preservation' on input True
-Property Preservation holds for given examples                                  
-[█-- (0/1) Testing 'Progress' on input True
-Property Progress holds for given examples                                      
-[█-- (0/1) Testing 'Termination' on input True
-Property Termination holds for given examples                                   
+Property Preservation holds for given examples
+Property Progress holds for given examples
+Property Termination holds for given examples
