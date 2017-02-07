@@ -41,7 +41,6 @@ Results:
 
 
 
-
  Analysis for rules about (==) 
 ===============================
 
@@ -107,7 +106,6 @@ Applicable to:
 Results:
   (typeL0:0 "->" : type type0:2) : type == (typeL1:0 "->" : type type1:2) : type
   	 where (recursion) typeL0:0 == typeL1:0, type0:2 == type1:2
-
 
 
 
@@ -287,7 +285,6 @@ Results:
 
 
 
-
  Analysis for rules about (→*) 
 ===============================
 
@@ -341,7 +338,6 @@ Results:
 
 
 
-
  Analysis for rules about (⊢) 
 ==============================
 
@@ -349,7 +345,8 @@ Results:
 
 # Known rules are
 #   Tnumber
-#   Tbool
+#   TboolT
+#   TboolF
 #   TParens
 #   TAscr
 #   Tx
@@ -360,7 +357,8 @@ Results:
 
 Applicable to:
   typingEnvironment, number
-  typingEnvironment, bool
+  typingEnvironment, "True"
+  typingEnvironment, "False"
   typingEnvironment, ("(" e ")")
   typingEnvironment, (eL "::" type)
   typingEnvironment, (eL "+" e)
@@ -369,7 +367,8 @@ Applicable to:
   typingEnvironment, (eL e)
 Results:
   typingEnvironment0 ⊢ number1, "Int" : typeL
-  typingEnvironment0 ⊢ bool1, "Bool" : typeL
+  typingEnvironment0 ⊢ "True" : bool, "Bool" : typeL
+  typingEnvironment0 ⊢ "False" : bool, "Bool" : typeL
   typingEnvironment0 ⊢ ("(" : eL e1:1 ")" : eL) : eL, typeT
   	 where (recursion) typingEnvironment0 ⊢ e1:1, typeT
   typingEnvironment0 ⊢ (eL1:0 "::" : e type1:2) : e, typeT'
@@ -393,13 +392,23 @@ Results:
 
 
 
- Analysis of rule "Tbool" 
---------------------------
+ Analysis of rule "TboolT" 
+---------------------------
 
 Applicable to:
-  typingEnvironment, bool
+  typingEnvironment, "True"
 Results:
-  typingEnvironment0 ⊢ bool1, "Bool" : typeL
+  typingEnvironment0 ⊢ "True" : bool, "Bool" : typeL
+
+
+
+ Analysis of rule "TboolF" 
+---------------------------
+
+Applicable to:
+  typingEnvironment, "False"
+Results:
+  typingEnvironment0 ⊢ "False" : bool, "Bool" : typeL
 
 
 
@@ -479,7 +488,6 @@ Results:
 
 
 
-
  Analysis for rules about (✓) 
 ==============================
 
@@ -513,7 +521,6 @@ Applicable to:
   number
 Results:
   (✓) number0
-
 
 
 

@@ -251,9 +251,14 @@ subs(x, y, z)            = z
  Γ ⊢ n, "Int"
 
 
- b: bool
-----------------  	[Tbool]
- Γ ⊢ b, "Bool"
+ 
+---------------------  	[TboolT]
+ Γ ⊢ "True", "Bool"
+
+
+ 
+----------------------  	[TboolF]
+ Γ ⊢ "False", "Bool"
 
 
  Γ ⊢ e, T
@@ -349,5 +354,9 @@ subs(x, y, z)            = z
 ---------------------------  	[Progress]
  (✓) e0 	| e0 → e1
 
+
+ e :: T
+---------  	[Termination]
+ e →* v
 
 

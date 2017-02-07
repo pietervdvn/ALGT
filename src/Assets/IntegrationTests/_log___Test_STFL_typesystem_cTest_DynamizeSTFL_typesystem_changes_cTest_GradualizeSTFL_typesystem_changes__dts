@@ -345,9 +345,14 @@ subs(x, y, z)            = z
  Γ ⊢ e1 e2, cod(Tfunc)
 
 
- b: bool
-----------------  	[Tbool]
- Γ ⊢ b, "Bool"
+ 
+----------------------  	[TboolF]
+ Γ ⊢ "False", "Bool"
+
+
+ 
+---------------------  	[TboolT]
+ Γ ⊢ "True", "Bool"
 
 
  n: number
@@ -400,5 +405,9 @@ subs(x, y, z)            = z
 ---------------------------  	[Progress]
  (✓) e0 	| e0 → e1
 
+
+ e :: T
+---------  	[Termination]
+ e →* v
 
 

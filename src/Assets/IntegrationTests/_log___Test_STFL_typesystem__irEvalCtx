@@ -48,4 +48,3 @@ Results:
   ("(" : eL e0/3/4:1$ ")" : eL) : eL → ("(" : eL ee1 ")" : eL) : eL
   	 where (recursion) e0/3/4:1$ → ee1
 
-

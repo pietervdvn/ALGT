@@ -15,6 +15,10 @@ Warning:
   
   While checking that the functions do have the strictest possible types:
     "dom" can be typed as "typeL", instead of a "type"
+                                                                                
+ Test/examples.stfl 
+====================
+
 # You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions
 # "True" was parsed as:
 "True": bool.0
