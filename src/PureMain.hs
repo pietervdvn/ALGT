@@ -294,7 +294,7 @@ testPropertyOn verbose ts tp pts property
 		let allClear	= results |> snd & and
 		let msg		= if allClear then "Property "++nm++" holds for given examples"
 					else "Property "++nm++" broken"
-		let progressBar	= fancyString' True msg proofs (pts |> fst |> prepMsg)
+		let progressBar	= if length pts <= 1 then msg else fancyString' True msg proofs (pts |> fst |> prepMsg)
 
 		return (progressBar:results')
 
@@ -371,7 +371,7 @@ renderParseTree nm (i, pt)
 runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> Either String [String]
 runFunc ts func (inp, pt)
  	= do	pt'	<- evalFunc ts func [pt]
-		let msg	= "# "++show inp++" applied to "++func
+		let msg	= "\n# "++show inp++" applied to "++func
 		return [msg, toParsable pt']
 
 runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> Either String [String]
