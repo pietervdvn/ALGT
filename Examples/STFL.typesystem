@@ -220,14 +220,10 @@ plus(e1, e2)	= !plus:number(e1, e2)
  Γ ⊢ n, "Int"
 
 
+ b:bool
+----------------	[Tbool]
+ Γ ⊢ b, "Bool"
 
-----------------	[TboolT]
- Γ ⊢ "True", "Bool"
-
-
-
-----------------	[TboolF]
- Γ ⊢ "False", "Bool"
 
 
  Γ ⊢ e, T
