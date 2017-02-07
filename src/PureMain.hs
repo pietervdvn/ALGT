@@ -11,10 +11,19 @@ import Utils.ParseTreeImage
 
 import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem.Parser.TypeSystemParser (parseTypeSystem)
+
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
+import ParseTreeInterpreter.PropertyTester
+
 import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
+
+import AbstractInterpreter.RelationAnalysis
+import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.Tools
+import AbstractInterpreter.Data
+import AbstractInterpreter.AbstractSet as AS
 
 import Control.Monad
 import Control.Arrow ((&&&))
@@ -26,17 +35,12 @@ import Data.Either
 import Data.Map (Map, fromList, keys, toList)
 import qualified Data.Map as M
 import Data.List (intercalate, nub, (\\))
+import qualified Data.List as L
 import Data.Monoid ((<>))
 import Data.Hashable
 import Data.Bifunctor (first)
 import Options.Applicative
 
-
-import AbstractInterpreter.RelationAnalysis
-import AbstractInterpreter.RuleInterpreter
-import AbstractInterpreter.Tools
-import AbstractInterpreter.Data
-import AbstractInterpreter.AbstractSet as AS
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
@@ -54,12 +58,18 @@ instance Monoid Output where
 	mappend	(Output f1 o1) (Output f2 o2)
 		= Output (f1 ++ f2) (o1 ++ o2) 
 
+
+removeCarriageReturns	:: Output -> Output
+removeCarriageReturns output
+	= output & over stdOut (>>= lines) & over stdOut (|> (\l -> l & reverse & takeWhile (/='\r') & reverse)) 
+
 emptyOutput	= Output [] []
 
 runOutput	:: Output -> IO ()
 runOutput (Output files stdOut)
-	= do	files |+> uncurry writeFile
-		putStrLn $ unlines stdOut
+	= do	(stdOut >>= lines) |+> putStrLn
+		files |+> uncurry writeFile
+		pass
 
 type Input	= Map FilePath String
 
@@ -127,6 +137,7 @@ mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract int
 
 		changedTs	<- mainChanges ts changeFiles input	:: Either String TypeSystem
 
+
 		let funcAnalysis
 				= get tsFunctions changedTs & keys |> runFuncAbstract changedTs
 
@@ -153,7 +164,7 @@ mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract int
 		let files	= [iraSVGFile, createSVGFile] |> fstEffect & catMaybes
 		
 		let (parseTrees, outputs)
-			 	= exampleFiles	|> (\exF -> mainExFilePure changedTs exF input)
+			 	= exampleFiles	|> mainExFilePure input changedTs
 						|> isolateFailure' []
 						& unzip
 		let out		= warnings:Output files output : outputs
@@ -205,28 +216,100 @@ mainChange filepath ts input
 
 
 
-mainExFilePure	:: TypeSystem -> ExampleFile -> Input -> Either String ([(String, ParseTree)], Output)
-mainExFilePure ts args input
-	= do	let targetFile	= fileName args
-		let fileContent	= input M.! fileName args
-		let noRules	= all isNothing ([symbol, function, stepByStep, ptSvg] |> (\f -> f args))
-		let targets	= (if lineByLine args then lines else (:[])) fileContent
+mainExFilePure	:: Input -> TypeSystem -> ExampleFile -> Either String ([(String, ParseTree)], Output)
+mainExFilePure input ts args
+	= let	targetFile	= fileName args
+		fileContent	= input M.! fileName args
+		targets		= (if lineByLine args then filter (/= "") . lines else (:[])) fileContent
+		parsed		= targets |> parseWith targetFile ts (parser args)	:: [Either String ParseTree]
+		progressBar	= "Loading "++ targetFile ++ "..." ++ fancyString' True "" parsed []
+		eithOutput	= inMsg progressBar $
+				  do	pts		<- parsed & sequence |> zip targets 
+					let output	= mainExFileHandlePts ts args pts
+					return (pts, output & over stdOut (onHead (progressBar ++)))
+					
+		in
+		eithOutput
 
-		parseTrees	<- (targets |+> parseWith targetFile ts (parser args)) |> zip targets
 
-		let files	= maybe [] (\fileName -> parseTrees |> snd & mapi |> renderParseTree fileName) (ptSvg args)	
+mainExFileHandlePts	:: TypeSystem -> ExampleFile -> [(String, ParseTree)] -> Output
+mainExFileHandlePts ts args parseTrees
+	= let	targetFile	= fileName args
+		actionSpecified
+				= testAllProps args ||
+					any isJust ([symbol, function, stepByStep, testProp, ptSvg] |> (\f -> f args))
 
-		let rr		= parseTrees >>= ifJustS' [] (runRule ts) (symbol args)		:: [String]
-		let rf		= parseTrees |> ifJustS' (Right []) (runFunc ts) (function args)	:: [Either String [String]]
-		let sbs		= parseTrees |> ifJustS' (Right []) (runStepByStep ts) (stepByStep args) :: [Either String [String]]
-		let noRulesMsg	= whenL noRules $
+		files	= maybe [] (\fileName -> parseTrees |> snd & mapi |> renderParseTree fileName) (ptSvg args)	
+
+		isolateLeft	= either (:[]) id 		:: Either String [String] -> [String]
+		rr		= parseTrees >>= ifJustS' [] (runRule ts) (symbol args)				:: [String]
+		rf		= parseTrees |> ifJustS' (Right []) (runFunc ts) (function args)	
+					>>= isolateLeft	:: [String]
+		sbs		= parseTrees |> ifJustS' (Right []) (runStepByStep ts) (stepByStep args)	
+					>>= isolateLeft	:: [String]
+		props	= maybe (Right []) (testPropertyOn' (verbose args) ts (parser args) parseTrees) (testProp args)
+					& isolateLeft :: [String]
+		allProps	= get tsProps ts |> testPropertyOn (verbose args) ts (parser args) parseTrees 
+					>>= isolateLeft	:: [String]
+
+		allProps'	= if testAllProps args then allProps else []
+
+		noRulesMsg	= whenL (not actionSpecified) $
 					"# You didn't specify an action to perform, we'll just dump the parsetrees. See -h how to run functions":
 					(parseTrees >>= printDebug)
 
-		let output'	= (rf ++ sbs) >>= either (:[]) id	:: [String]
-		let output	= rr ++ noRulesMsg
-			
-		return (parseTrees, Output files output)
+		output	= sbs ++ rf ++ rr ++ allProps' ++ props ++ noRulesMsg
+		output'	= onHead (inHeader "" targetFile '=') output
+		
+		in Output files output'
+
+
+testPropertyOn'	:: Bool -> TypeSystem -> TypeName -> [(String, ParseTree)] -> Name -> Either String [String]
+testPropertyOn' verbose ts tp pts nm
+	= do	property	<- ts & get tsProps |> (get propName &&& id) 
+					& L.lookup nm & maybe (Left $ "No property "++show nm++" found") Right
+		testPropertyOn verbose ts tp pts property
+		
+
+
+testPropertyOn	:: Bool -> TypeSystem -> TypeName -> [(String, ParseTree)] -> Property -> Either String [String]
+testPropertyOn verbose ts tp pts property
+	= do	let needed	= neededVars property
+		let nm		= get propName property
+		let errMsg	= "Properties tested against examples should have exactly one input, of type "++ tp ++" (as this is the used parser)"
+					++", however, the property "++nm++" needs inputs "
+					++"{"++ (needed |> (\(n, t) -> n ++ " :" ++ t) & intercalate ", ")  ++"}"
+		unless (length needed == 1) $ Left errMsg
+		let [(n, t)]	= needed
+		unless (t == tp) $ Left errMsg
+
+
+		let proofs	= pts |> testProperty ts property n
+		let max		= show $ length pts
+		let prepMsg inp
+				= "Testing '"++nm++"' on input "++inp++" "
+		let results	= proofs & if verbose then id else filter (not . snd)	-- if not verbose: hide success by default
+		
+		let results'	= results >>= fst
+		let allClear	= results |> snd & and
+		let msg		= if allClear then "Property "++nm++" holds for given examples"
+					else "Property "++nm++" broken"
+		let progressBar	= fancyString' True msg proofs (pts |> fst |> prepMsg)
+
+		return (progressBar:(results'))
+
+
+testProperty	:: TypeSystem -> Property -> Name -> (String, ParseTree) -> ([String], Bool)
+testProperty ts property exprName (input, pt)
+	= let 	eithStrProp	= testPropOn ts property (M.singleton exprName (pt, Nothing))
+		in
+		either
+			(\fail	-> (["Property failed!", fail], False))
+			(\proof -> (["Property successfull", toParsable' property proof], True))
+			eithStrProp
+
+
+
 
 
 
@@ -303,3 +386,7 @@ evalStar ts funcName pt
 		pt'	<- evalFunc ts funcName [pt]
 		msgs	<- if pt' /= pt then evalStar ts funcName pt' else return []
 		return $ msg:msgs
+
+
+
+

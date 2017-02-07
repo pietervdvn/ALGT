@@ -63,6 +63,9 @@ data ExampleFile	= ExFileArgs
 	, symbol	:: Maybe Symbol
 	, function	:: Maybe Name
 	, stepByStep	:: Maybe Name
+	, testProp	:: Maybe Name
+	, testAllProps	:: Bool
+	, verbose	:: Bool
 	, ptSvg		:: Maybe Name
 	} deriving (Show)
 	
@@ -134,8 +137,8 @@ targetFile
 			<> help "Filepath of the target programming language"
 			<> action "file")
 		<*> argument str
-			(metavar "PARSER-RULE"
-			<> help "Parse the target program with this bnf-parser")
+			(metavar "PARSE-TYPE"
+			<> help "Parse the target program with this bnf-rule as type")
 		<*> switch
 			(long "line-by-line"
 			<> short 'l'
@@ -156,6 +159,21 @@ targetFile
 			<> short 's'
 			<> help "Apply the given function, step by step, until the result of the function is the same as the input"
 			))
+		<*> optional (strOption
+			(metavar "PROPERTY"
+			<> long "test-property"
+			<> long "tp"
+			<> help "Tests the given property on all the examples. The property should take exactly one PARSER-TYPE argument. Only reports failures (unless with ppp)"))
+		<*> switch
+			(long "test-all-properties"
+			<> long "tap"
+			<> long "tp*"
+			<> long "tpa"
+			<> help "Tests all properties on all the examples. The property should take exactly one PARSER-TYPE argument. Only reports failures (unless with ppp)")
+		<*> switch
+			(long "print-property-proofs"
+			<> long "ppp"
+			<> help "With 'test-property' and 'test-all-properties': print full proofs of each application of the properties")		
 		<*> optional (strOption
 			(metavar "svg-name"
 			<> long "parstree-svg"

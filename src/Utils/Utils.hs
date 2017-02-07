@@ -69,7 +69,10 @@ inHeader prefix str chr msg
 	= let	title	= " "++str++" "
 		line	= title |> const chr
 		in
-		["", prefix ++ title, prefix ++ line, "", msg] & unlines
+		unlines $ if msg == "" then ["", prefix ++ title, prefix ++ line] 
+				else ["", prefix ++ title, prefix ++ line, "", msg]
+
+
 
 inHeader' s
 	= inHeader "" s '='
@@ -213,6 +216,11 @@ replaceN i a (h:as)
 
 
 
+onHead		:: (a -> a) -> [a] -> [a]
+onHead f []	= []
+onHead f (a:as)	= f a : as
+
+
 replacePointwise	:: [a] -> [[a]] -> [[a]]
 replacePointwise origs pointwise
 	= do	i	<- [0..length pointwise -1]
@@ -311,3 +319,62 @@ translateRegex	:: String -> String
 translateRegex str
 	= str >>= (\c -> if c `elem` specialChars then "\\"++[c] else [c])
 
+
+
+
+bar		:: Bool -> Int -> Int -> String -> Int -> String
+bar withCounter width total msg' current
+ | total < current
+	= bar withCounter width current msg' total
+ | otherwise
+	= let 	current'= fromIntegral current	:: Float
+		total'	= fromIntegral total	:: Float
+		width'	= fromIntegral width	:: Float
+		perc'	= (current' / total') * (width' - 2)
+		perc	= round perc'
+		max	= show total
+		counter	= " (" ++ padL (length max) ' ' (show current) ++ "/" ++ max ++ ") "
+		msg	= "--"++take (width - 2) ( if withCounter then counter++ msg' else msg')
+		preMsg	= take perc msg
+		postMsg	= drop perc msg
+		bars	= take perc $ preMsg ++ repeat '-'
+		conts	= bars++"█"++postMsg++repeat ' '	in
+		"["++ take (width-2) conts ++"]"
+
+
+{- Ugly hack. 
+
+Consider a list of values [a], with associated message.
+An a takes some time to evaluate.
+We'd like to show a fancy bar, showing progress.
+
+Solution: 
+let msg = fancyString"endMessage" [(someA, "Calculating first a"), (someOtherA, "Calculationg second a")]
+putStrLn msg
+
+As fancyString "endMessage" [(someA, "Calculating first a"), (someOtherA, "Calculationg second a")]
+evaluates to (as, "[0%   ]\r[--50%  ]\rendMessage", we'll get a fancy bar!)
+
+
+-}
+fancyString	:: String -> [a] -> [String] -> String
+fancyString endMsg [] _
+	= "\r" ++ endMsg
+fancyString endMsg as []
+	= fancyString endMsg as [""]
+fancyString endMsg (a:as) (msg:msgs)
+	= let	msg'	= seq a msg
+		restMsg	= fancyString endMsg as msgs
+		in
+		"\r" ++ msg'++ restMsg
+
+
+fancyString'	:: Bool -> String -> [a] -> [String] -> String
+fancyString' withCounter endMsg as msgs
+	= let	l	= length as
+		msgs'	= padR l "" msgs 
+		prepTuple (i, msg)
+			= bar withCounter 80 l msg i
+		endMsg'	= padR 80 ' ' endMsg
+		in
+		fancyString endMsg' as (mapi msgs' |> prepTuple)

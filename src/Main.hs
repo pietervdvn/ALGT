@@ -25,9 +25,9 @@ import Data.Maybe
 
 import Data.Map as M
 
-import ParseTreeInterpreter.PropertyProver
+import ParseTreeInterpreter.PropertyTester
 
-version	= ([0,1,12,0], "Unwinding Rules")
+version	= ([0,1,13], "Total Property Check")
 
 
 

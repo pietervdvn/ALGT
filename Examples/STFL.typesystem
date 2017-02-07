@@ -220,10 +220,14 @@ plus(e1, e2)	= !plus:number(e1, e2)
  Γ ⊢ n, "Int"
 
 
- b:bool
-----------------	[Tbool]
- Γ ⊢ b, "Bool"
 
+----------------	[TboolT]
+ Γ ⊢ "True", "Bool"
+
+
+
+----------------	[TboolF]
+ Γ ⊢ "False", "Bool"
 
 
  Γ ⊢ e, T
@@ -297,3 +301,13 @@ plus(e1, e2)	= !plus:number(e1, e2)
          e0 :: T
 -------------------------- [Progress]
  (✓) e0    |     e0 → e1 
+
+
+
+# STFL can't contain loops (or recursion), so will always terminate
+
+ 
+ e :: T
+-------- [Termination]
+ e →* v 
+

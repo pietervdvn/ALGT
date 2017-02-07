@@ -1,4 +1,4 @@
-module ParseTreeInterpreter.PropertyProver where
+module ParseTreeInterpreter.PropertyTester where
 
 {- 
 Tests a given property against the given parsetrees.

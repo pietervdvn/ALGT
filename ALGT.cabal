@@ -71,7 +71,7 @@ executable ALGT
         Dynamize.Test
         PureMain
         Utils.Test
-        ParseTreeInterpreter.PropertyProver
+        ParseTreeInterpreter.PropertyTester
         TypeSystem.PropertyProof
 
 

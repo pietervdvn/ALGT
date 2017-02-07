@@ -71,10 +71,6 @@ _genMatch styling tp i regex
 
 
 
-onHead		:: (a -> a) -> [a] -> [a]
-onHead f []	= []
-onHead f (a:as)	= f a : as
-
 createStyleFor	:: Syntax -> SyntaxStyle -> TypeName -> Int -> BNF -> [StyleContext]
 createStyleFor syntax styling tp i (BNFRuleCall nm)
 	= [Container (tp++"-"++show i) Nothing Nothing (styleFor styling (tp, i)) [Ref nm]]
