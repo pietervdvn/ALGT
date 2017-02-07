@@ -150,34 +150,34 @@ depthFirstSearch matchMaker path pt@(PtSeq _ values)
 depthFirstSearch matchMaker path pt	= matchMaker (pt, path)
 
 
+_applyIntFunction	:: Ctx -> TypeName -> Name -> (Int, [Int] -> Int) -> [Expression] -> Either String ParseTree
+_applyIntFunction ctx tp funcName (minimumNeeded, f) es
+	= do	is	<- asInts ctx funcName es
+		when (length es < minimumNeeded) $ Left $ "Builtin integer function '!" ++ funcName++"' needs at least "++show minimumNeeded++" arguments"
+		return $ MInt (tp, 0) (f is)
 
+_applyIntFunction' ctx tp funcName f
+	= _applyIntFunction ctx tp funcName (0, f)
 
 evaluate	:: Ctx -> Expression -> Either String ParseTree
-evaluate ctx (MCall _ "plus" True es)
-	= do	(tp, es')	<- asInts ctx "plus" es
-		return $ MInt tp (sum es')
-evaluate ctx (MCall _ "min" True es)
-	= do	(tp, [e1, e2])	<- asInts ctx "min" es
-		return $ MInt tp (e1 - e2)
-evaluate ctx (MCall _ "mul" True es)
-	= do	(tp, es')	<- asInts ctx "mul" es
-		return $ MInt tp (product es')
-evaluate ctx (MCall _ "div" True es)
-	= do	(tp, [e1, e2])	<- asInts ctx "min" es
-		return $ MInt tp (e1 `div` e2)
-evaluate ctx (MCall _ "mod" True es)
-	= do	(tp, [e1, e2])	<- asInts ctx "min" es
-		return $ MInt tp (e1 `mod` e2)
+evaluate ctx (MCall tp "plus" True es)
+	= _applyIntFunction' ctx tp "plus" sum es
+evaluate ctx (MCall tp "min" True es)
+	= _applyIntFunction ctx tp "min" (1, \(i:is) -> i - sum is) es
+evaluate ctx (MCall tp "mul" True es)
+	= _applyIntFunction' ctx tp "mul" product es
+evaluate ctx (MCall tp "div" True es)
+	= _applyIntFunction ctx tp "div" (1, \(i:is) -> i `div` product is) es
+evaluate ctx (MCall tp "mod" True es)
+	= _applyIntFunction ctx tp "mod" (1, \(i:is) -> i `mod` product is) es
 
-evaluate ctx (MCall _ "neg" True es)
-	= do	(tp, [e1])	<- asInts ctx "neg" es
-		return $ MInt tp (-e1)
+evaluate ctx (MCall tp "neg" True es)
+	= _applyIntFunction ctx tp "neg" (1, \(i:_) -> -i) es
+
+evaluate ctx (MCall tp "equal" True es)
+	= _applyIntFunction ctx tp "equal" (2, \(i:is) -> if all (==i) is then 1 else 0) es
 
 
-
-evaluate ctx (MCall _ "equal" True es)
-	= do	(tp, [e1, e2])	<- asInts ctx "equal" es
-		return $ MInt tp (if e1 == e2 then 1 else 0)
 evaluate ctx (MCall _ "error" True exprs)
 	= do	exprs'	<- exprs |+> evaluate ctx |> toParsable' ", "
 		let msgs	= ["In evaluating a function:", exprs']
@@ -242,9 +242,7 @@ asInts ctx bi exprs
 	= do	exprs'	<- exprs |+> evaluate ctx 
 				|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
 				||>> (\(MInt _ i) -> i)
-		let tp	= typeOf $ head exprs
-		tp'	<- if tp == "" then Left "Declare a return type of builtin functions: !function:type(args)" else return tp
-		return ((tp', -1), exprs')
+		return exprs'
 
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)
