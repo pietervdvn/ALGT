@@ -95,17 +95,17 @@ test skipSlow (i, args)
 			putStrLn "\r[   S   ]"
 			return True
 		else do
-		expected	<- getTestResult args
-		actual		<- runTest args
-		let log		= get stdOut actual & unlines
-		let errMsg	= "\r[ FAILS ]"
-		let success	= expected == actual
-		if success then putStr "\r[   ✓   ]"
-			else do	putStr errMsg
-				writeFile (directoryFor ("log___":args) ++ ".FAILED") 
-					(unwords args ++ "\n\n" ++ log)
-		putStrLn ""
-		return success
+			expected	<- getTestResult args
+			actual		<- runTest args
+			let log		= get stdOut actual & unlines
+			let errMsg	= "\r[ FAILS ]"
+			let success	= expected == actual
+			if success then putStr "\r[   ✓   ]"
+				else do	putStr errMsg
+					writeFile (directoryFor ("log___":args) ++ ".FAILED") 
+						(unwords args ++ "\n\n" ++ log)
+			putStrLn ""
+			return success
 			     
 
 testAll' skip	= do	putStrLn $ "Running "++show (length testArgs)++" tests"

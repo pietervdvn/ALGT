@@ -1,6 +1,6 @@
 name:                ALGT
-version:             0.1.12
-synopsis:            Simple project template from stack
+version:             0.1.13
+synopsis:            Automated Language Generation Tool - Create your programming language
 description:         Please see README.md
 homepage:            https://github.com/pietervdvn/ALGT#readme
 license:             BSD3
@@ -22,21 +22,25 @@ executable ALGT
   other-modules:       
         AbstractInterpreter.AbstractSet
         AbstractInterpreter.Data
-        AbstractInterpreter.RelationAnalysis
         AbstractInterpreter.FunctionInterpreter
         AbstractInterpreter.MinimalTypes
         AbstractInterpreter.PatternMatcher
+        AbstractInterpreter.RelationAnalysis
         AbstractInterpreter.RuleInterpreter
         AbstractInterpreter.Tools
-        AssetsHelper
         Assets
+        AssetsHelper
         Changer.Changes
         Changer.ChangesParser
+        Dynamize.Dynamize
+        Dynamize.Test
         Graphs.Lattice
         Graphs.PathFinder
         Graphs.SearchCycles
         ParseTreeInterpreter.FunctionInterpreter
+        ParseTreeInterpreter.PropertyTester
         ParseTreeInterpreter.RuleInterpreter
+        PureMain
         SyntaxHighlighting.Highlighting
         TypeSystem
         TypeSystem.BNF
@@ -51,6 +55,7 @@ executable ALGT
         TypeSystem.Parser.TargetLanguageParser
         TypeSystem.Parser.TypeSystemParser
         TypeSystem.Proof
+        TypeSystem.PropertyProof
         TypeSystem.Relation
         TypeSystem.Rule
         TypeSystem.Syntax
@@ -62,17 +67,13 @@ executable ALGT
         Utils.Image
         Utils.LatticeImage
         Utils.ParseTreeImage
+        Utils.Test
         Utils.ToString
         Utils.ToStringExtra
         Utils.Unification
         Utils.Utils
         Utils.XML
-        Dynamize.Dynamize
-        Dynamize.Test
-        PureMain
-        Utils.Test
-        ParseTreeInterpreter.PropertyTester
-        TypeSystem.PropertyProof
+
 
 
 
