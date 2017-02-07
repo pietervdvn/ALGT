@@ -296,7 +296,7 @@ testPropertyOn verbose ts tp pts property
 					else "Property "++nm++" broken"
 		let progressBar	= fancyString' True msg proofs (pts |> fst |> prepMsg)
 
-		return (progressBar:(results'))
+		return (progressBar:results')
 
 
 testProperty	:: TypeSystem -> Property -> Name -> (String, ParseTree) -> ([String], Bool)
