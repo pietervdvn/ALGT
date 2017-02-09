@@ -1,7 +1,10 @@
 True
-(\f : Int -> Int . f 5) (\i : Int . i + 1)
+False
+If True Then False Else True
+If (If True Then False Else True) Then False Else True
 42
 1 + 2
+(\f : Int -> Int . f 5) (\i : Int . i + 1)
 (True)
 False :: Bool
 ( True )

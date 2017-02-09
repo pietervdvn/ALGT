@@ -1,0 +1,24 @@
+Test/STFL.language Test/examples.stfl e --tpa
+
+Warning:
+  While checking the totality of function "cod":
+    Following calls will fall through:
+      cod("Int")
+      cod("Bool")
+  While checking the totality of function "dom":
+    Following calls will fall through:
+      dom("Int")
+      dom("Bool")
+  While checking the totality of function "eval":
+    Following calls will fall through:
+      eval(("(" "\\" var ":" type "." e ")"))
+  
+  While checking that the functions do have the strictest possible types:
+    "dom" can be typed as "typeL", instead of a "type"
+                                                                                
+ Test/examples.stfl 
+====================
+
+Property Preservation holds for given examples
+Property Progress holds for given examples
+Property Termination holds for given examples

@@ -1,11 +1,11 @@
  
- STFL # A simply typed lambda function language
-************************************************
+ STFL 
+******
+
+# A simply typed lambda function language
 
 # Can be executed (dynamically) with → (one step) or →* (bigstep)
 # Can be typed with ::
-
-
 
  Syntax
 ========

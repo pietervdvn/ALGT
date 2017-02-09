@@ -15,24 +15,24 @@ import Control.Monad
 
 
 
-testArgs      = [ ["Test/STFL.typesystem"]
-		, ["Test/STFL.typesystem", "--dts"]
-		, ["Test/STFL.typesystem", "--lsvg", "Syntax.svg"]
+testArgs      = [ ["Test/STFL.language"]
+		, ["Test/STFL.language", "--dlf"]
+		, ["Test/STFL.language", "--lsvg", "Syntax.svg"]
 
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l" ]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l", "-r", "→" ]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l", "-r", "::" ]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l", "--ptsvg", "Parsetrees"]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "-l" ]
-		, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "--dts"]
-		, ["Test/STFL.typesystem", "-c", "Test/DynamizeSTFL.typesystem-changes", "-c", "Test/GradualizeSTFL.typesystem-changes", "--dts"]
-		, ["Test/STFL.typesystem", "--ira"]
-		, ["Test/STFL.typesystem", "--irasvg", "SyntaxIRA.svg"]
-		, ["Test/STFL.typesystem", "--ir", "EvalCtx"]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "--tp", "Progress" ]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "--tpa" ]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "--tp", "Progress", "--ppp" ]
-		, ["Test/STFL.typesystem", "Test/examples.stfl", "e", "--tpa", "--ppp" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "-r", "→" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "-r", "::" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--ptsvg", "Parsetrees"]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
+		, ["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "--dlf"]
+		, ["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "-c", "Test/GradualizeSTFL.language-changes", "--dlf"]
+		, ["Test/STFL.language", "--ira"]
+		, ["Test/STFL.language", "--irasvg", "SyntaxIRA.svg"]
+		, ["Test/STFL.language", "--ir", "EvalCtx"]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tp", "Progress" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tpa" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tp", "Progress", "--ppp" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tpa", "--ppp" ]
 		] & nub
 
 

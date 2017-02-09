@@ -22,8 +22,8 @@ import System.Exit
 
 
 descriptionText	= "ALGT (Automated Language Generation Tool)- automatically parse, interpret and proof properties of aribtrary languages.\n\n"++
-			"This tool parses a 'typesystem'-file, where the syntax of your language is defined. With this, your target file is parsed."++
-			"In the typesystem file, rewrite rules (or functions) can be defined - or better, rules defining properties can be defined."++
+			"This tool parses a '.language'-file, where the syntax of your language is defined. With this, your target file is parsed."++
+			"In the language file, rewrite rules (or functions) can be defined - or better, rules defining properties can be defined."++
 			"These can be applied to your target language to interpret, typecheck or proof some other property."
 
 showVersion (v, vId)	= (v |> show & intercalate ".") ++", "++show vId
@@ -184,19 +184,19 @@ targetFile
 
 args	:: Parser Args
 args	= Args <$> argument str
-			(metavar "TYPESYSTEM-FILE"
-			<> help "FilePath of the typesystem-file"
+			(metavar "LANGUAGE-FILE"
+			<> help "FilePath of the language-file"
 			<> action "file")
 		<*> many targetFile
 		<*> many (strOption
-			(metavar "TYPESYSTEM-CHANGES-FILE"
+			(metavar "LANGUAGE-CHANGES-FILE"
 			<> long "changes"
 			<> short 'c'
 			<> help "Apply the given changes to the type-system file. These changes are applied before any other action"
 			))
 		<*> switch
-			(long "dump-typesystem"
-			<> long "dts"
+			(long "dump-language-file"
+			<> long "dlf"
 			<> help "Dump the parsed type system, usefull for debugging purposes")
 		<*> switch
 			(long "interpret-abstractly"

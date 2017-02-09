@@ -20,8 +20,8 @@ import Control.Monad
 dirConts	:: FilePath -> IO [FilePath]
 dirConts fp 
 	= do	files	<- getDirectoryContents fp 
-		let files'	= files & delete "." & delete ".." |> ((fp++"/") ++)
-		print files'
+		let files'	= files & filter (not . ("." `isPrefixOf`))
+					|> ((fp++"/") ++)
 		mode		<- files' |+> doesDirectoryExist	:: IO [Bool]
 		let (directories', normalFiles')	
 				=  zip files' mode & partition snd 	:: ([(FilePath, Bool)], [(FilePath, Bool)])
@@ -76,6 +76,7 @@ allAssets origDir fps
 createAssets'	:: Bool -> FilePath -> IO String
 createAssets' dev fp
 	= do	files		<- dirConts fp
+		putStrLn $ "Creating assets for:\n"++(files |> ("   "++) & intercalate "\n")
 		contents	<- files |+> fileLine dev fp
 		let allA	= allAssets fp files
 		return $ header dev ++ allA ++ unlines contents
