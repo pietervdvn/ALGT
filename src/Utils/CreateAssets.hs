@@ -1,4 +1,4 @@
-module Utils.CreateAssets (createAssets, createAssets', autoCreateAssets, name) where
+module Utils.CreateAssets (createAssets, createAssets', autoCreateAssets, name, dirConts) where
 
 {-
 This module defines a small tool, creating asset files

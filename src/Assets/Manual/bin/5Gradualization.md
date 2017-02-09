@@ -1,0 +1,3 @@
+
+ Dynamization and gradualization
+=================================

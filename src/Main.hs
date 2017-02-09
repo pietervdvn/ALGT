@@ -6,6 +6,7 @@ import Utils.CreateAssets as M
 import Utils.ArgumentParser
 
 import Utils.Utils
+import Utils.Version (version)
 
 import Control.Monad
 
@@ -26,8 +27,8 @@ import Data.Maybe
 import Data.Map as M
 
 import ParseTreeInterpreter.PropertyTester
+import Utils.ManualPreprocessor
 
-version	= ([0,1,13,1], "Total Property Check: no ɛ types from builtins")
 
 
 
