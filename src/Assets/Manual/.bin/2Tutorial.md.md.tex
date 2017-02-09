@@ -1,0 +1,63 @@
+\section{Tutorial: developing a simple programming
+language}\label{tutorial-developing-a-simple-programming-language}
+
+We will develop a programming language which can work with booleans and
+integers. Apart from doing basic arithmetic, we can apply anonymous
+functions on them.
+
+Example programs, and the value they become, are
+
+\begin{longtable}[c]{@{}ll@{}}
+\caption{Example programs and their outcome}\tabularnewline
+\toprule
+Program & Evaluates to\tabularnewline
+\midrule
+\endfirsthead
+\toprule
+Program & Evaluates to\tabularnewline
+\midrule
+\endhead
+\texttt{True} & \texttt{True}\tabularnewline
+\texttt{1} & \texttt{1}\tabularnewline
+\texttt{24\ +\ 18} & \texttt{42}\tabularnewline
+`If True Then 1 Else & 2\texttt{`1}\tabularnewline
+\texttt{1\ +\ (2\ +\ 3)} & \texttt{6}\tabularnewline
+`(\textbackslash{} x : Int . x + 1 & ) 41\texttt{`42}\tabularnewline
+\bottomrule
+\end{longtable}
+
+The expression \texttt{(\textbackslash{}x\ :\ Int\ .\ x\ +\ 1)} is a
+\emph{lambda expression}. This is an anonymous function, taking one
+argument - named x- of type \texttt{Int}. When applied (e.g.
+\texttt{(\textbackslash{}x\ :\ Int\ .\ x\ +\ 1)\ 41}, the expression
+right of the \texttt{.} is returned, with the variable \texttt{x}
+substituted by the argument, becoming \texttt{41\ +\ 1}.
+
+\subsection{Setting up a .language}\label{setting-up-a-.language}
+
+A language is declared inside a \texttt{.language} file \footnote{Actually,
+  the extension doesn't matter at all.}. Create \texttt{STFL.language},
+and put a title in it:
+
+`
+
+\subsection{Declaring the syntax}\label{declaring-the-syntax}
+
+For a full reference on syntax, see the
+\protect\hyperlink{syntax}{reference manual on syntax}
+
+A program is nothing more then a string of a specific form. To describe
+strings of an arbitrary structure, \emph{BNF} \footnote{Backus-Naur-form,
+  as introduced by John Backus in the ALGOL60-report. TODO reference}
+can be used.
+
+Consider all possible boolean forms: \texttt{True} and \texttt{False}.
+
+\subsection{Functions}\label{functions}
+
+\subsection{Relations and Rules}\label{relations-and-rules}
+
+\subsection{Properties}\label{properties}
+
+\subsection{Recap: used command line
+arguments}\label{recap-used-command-line-arguments}
