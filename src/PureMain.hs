@@ -11,6 +11,7 @@ import Utils.ParseTreeImage
 
 import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem.Parser.TypeSystemParser (parseTypeSystem)
+import TypeSystem.Parser.ParsingUtils (ws)
 
 import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.RuleInterpreter
@@ -124,7 +125,7 @@ isolateCheck _	= emptyOutput
 
 
 
-
+svgColors	= whiteCS
 
 mainArgs	:: Args -> Input -> Either String ((TypeSystem, [(String, ParseTree)]), Output)
 mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract interpretRulesAbstract interpretRules iraSVG createSVG) input
@@ -158,9 +159,9 @@ mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract int
 				, whenL (isJust iraSVG) ["# Generating ira-svg, hang on..."] ] & concat
 
 
-		let iraSVGFile	= (iraSVG, analyzeRelations changedTs & get raSyntax & latticeAsSVG terminalCS)
+		let iraSVGFile	= (iraSVG, analyzeRelations changedTs & get raSyntax & latticeAsSVG svgColors)
 		let createSVGFile
-				= (createSVG, changedTs & get tsSyntax & latticeAsSVG terminalCS)
+				= (createSVG, changedTs & get tsSyntax & latticeAsSVG svgColors)
 		let files	= [iraSVGFile, createSVGFile] |> fstEffect & catMaybes
 		
 		let (parseTrees, outputs)
@@ -328,7 +329,7 @@ whenL True as	= as
 
 parseWith	:: FilePath -> TypeSystem -> Name -> String -> Either String ParseTree
 parseWith file ts bnfRuleName str
-	= let 	parser	= parse $ parseRule (get tsSyntax ts) bnfRuleName
+	= let 	parser	= parse (parseSyntax (get tsSyntax ts) bnfRuleName <* ws <* eof)
 		parsed	= parser file str
 		in
 		first show parsed
@@ -365,7 +366,7 @@ printDebug (inp, pt)
 renderParseTree	:: Name -> (Int, ParseTree) -> (String, String)
 renderParseTree nm (i, pt)
 	= let 	fileName	= nm ++ "." ++ show i ++ ".svg"
-		conts	=  parseTreeSVG 1 terminalCS pt
+		conts	=  parseTreeSVG 1 svgColors pt
 		in (fileName, conts)
 
 runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> Either String [String]

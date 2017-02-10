@@ -1,0 +1,12 @@
+ Options
+*********
+
+# Options syntax in the manual
+
+ Syntax
+========
+
+line		::= Number
+par		::= "[" | "]"
+optionBody	::= par line ".." par | par line ".." line par | line 
+option		//= optionBody | "indent" 

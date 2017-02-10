@@ -73,7 +73,7 @@ executable ALGT
         Utils.Unification
         Utils.Utils
         Utils.XML
-
+        Utils.ManualPreprocessor
 
 
 

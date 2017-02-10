@@ -1,0 +1,7 @@
+ Recursive
+***********
+
+ Syntax
+========
+
+expr	::= "Int" | expr

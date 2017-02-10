@@ -19,13 +19,13 @@ import qualified Data.Map as M
 
 ------------------------ Syntax: Actually parsed stuff -------------------------
 
-parseRule	:: Syntax -> Name -> Parser u ParseTree
-parseRule syntax nm
-	= parseRule' syntax nm IgnoreWS
+parseSyntax	:: Syntax -> Name -> Parser u ParseTree
+parseSyntax syntax nm
+	= parseSyntax' syntax nm IgnoreWS
 
 
-parseRule'	:: Syntax -> Name -> WSMode -> Parser u ParseTree
-parseRule' bnf@(BNFRules rules wsModes _) nm wsModeParent
+parseSyntax'	:: Syntax -> Name -> WSMode -> Parser u ParseTree
+parseSyntax' bnf@(BNFRules rules wsModes _) nm wsModeParent
  | nm `M.notMember` rules	
 		= fail $ "The BNF-syntax-rule "++nm++" is not defined in the syntax of your typesystem. Try one of "++show (bnfNames bnf)
  | otherwise	= do	let choices	= zip (rules M.! nm) [0..]
@@ -62,7 +62,7 @@ parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
 			tail	<- bnfs |+> parsePart' rules tp wsMode 
 			return $ PtSeq tp $ head:tail
 parsePart rules _ wsMode (BNFRuleCall nm)
-		= parseRule rules nm
+		= parseSyntax rules nm
 
 
 

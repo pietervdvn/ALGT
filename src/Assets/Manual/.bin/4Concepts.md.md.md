@@ -1,5 +1,0 @@
-
- Used concepts and algorithms
-==============================
-
-

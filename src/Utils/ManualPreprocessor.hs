@@ -5,7 +5,11 @@ module Utils.ManualPreprocessor where
 import System.Directory
 import System.Process
 
+import System.IO.Unsafe
+
 import Utils.Utils
+import Utils.ArgumentParser
+import Utils.ToString
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.List
@@ -16,19 +20,32 @@ import Data.Time.Calendar
  
 import Utils.CreateAssets
 import Assets
+import AssetsHelper
+import PureMain
+
+import Text.Parsec
+import TypeSystem
+import TypeSystem.Parser.TargetLanguageParser
+
+import Control.Arrow
+
+import Control.Concurrent
+import Debug.Trace
+
+import Lens.Micro hiding ((&))
 
 buildVariables	:: Map String String
 buildVariables
       = [ ("version", version & fst |> show & intercalate ".")
 	, ("versionmsg", version & snd)
-	] & M.fromList
+	] & M.fromList 
 
 
-manualAssets	
-	= allAssets & filter (("Manual/Files/" `isPrefixOf`) . fst)
-
-
-
+manualAssets	:: IO (Map String String)
+manualAssets
+	= do	let files	= allAssets |> fst & filter ("Manual/Files/" `isPrefixOf`)
+		contents	<- files |> (drop (length "Manual/Files/") &&&  readFile . ("src/Assets/"++)) |+> sndEffect
+		contents & M.fromList & return
 
 
 
@@ -38,7 +55,8 @@ buildVariablesIO
 	= do	(y,m,d)	<- getCurrentTime >>= return . toGregorian . utctDay
 		let date	= show y ++ "-"++show m ++ "-" ++ show d
 		let dict'	= [("date", date)] & M.fromList
-		return $ M.union dict' buildVariables
+		assets	<- manualAssets
+		return $ M.unions [dict', assets, buildVariables]
 
 
 
@@ -52,30 +70,101 @@ buildVariablesIO
 
 
 
-
+genArg		:: Map String String -> String -> Either String (String, Map String String)
+genArg vars ('$':'$':str)
+	= do	let (name, (action, _))
+				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
+					|> options
+		value		<- checkExists name vars ("No variable $$"++name)
+		return (name, M.singleton name $ action value)
+genArg _ str
+	= return (str, M.empty)
 
 
 
 preprocess	:: Map String String -> String -> Either String String
 preprocess _ []	= return ""
+preprocess vars ('$':'$':'(':str)
+	= do	let (args, (action, rest))
+				= break (==')') str 
+					|> tail
+					|> options
+		
+		(args', input)	<- args & words |> genArg vars & allRight |> unzip
+		let (_, Just parsedArgs)
+				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor tests") args'
+		
+
+		let output	= mainArgs parsedArgs (M.unions input) |> snd 
+					& isolateFailure
+					& removeCarriageReturns
+					& get stdOut & unlines
+
+		rest'	<- preprocess vars rest
+		return (action output ++ rest')
 preprocess vars ('$':'$':str)
-	= do	let (name, rest)= break (not . isAlpha) str
-		let name'	= name |> toLower 
-		value		<- checkExists name' vars ("No variable $$"++name')
+	= do	let (name, (action, rest))
+				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
+					|> options
+		value		<- checkExists name vars ("No variable $$"++name)
 		rest'		<- preprocess vars rest
-		return (value ++ rest')
+		return (action value ++ rest')
 preprocess vars (ch:str)
 	= do	rest	<- preprocess vars str
 		return $ ch:rest
+
+
+options	:: String -> (String -> String, String)
+
+options ('!':'i':'n':'d':'e':'n':'t':rest)
+	= let	(action, rest')	= options rest
+		in
+		(\str -> str & action & lines |> ("    "++) & intercalate "\n", rest')
+options ('!':rest)
+	= let	(option, str)	= break (not . (`elem` "0123456789[].")) rest
+		pt	= parse (parseSyntax optionsSyntax "option") "Assets/Manual/Options.language" option
+				& either (error . show) id
+		action	= matchOptionBody pt
+		(action', str')	= options str
+		in (action' . action, str')
+options str
+	= (id, str)
+
+
+matchOptionBody	:: ParseTree -> String -> String
+matchOptionBody (PtSeq _ [parO, MInt _ i, MLiteral _ "..", MInt _ j, parC]) str
+	= let	i'	= if inclusivePar parO then i-1 else i
+		j'	= if not $ inclusivePar parC then j else j-1
+		in
+		str & lines & take j' & drop i' & unlines
+matchOptionBody (PtSeq _ [parO, MInt _ i, MLiteral _ "..", parC]) str
+	= let	i'	= if inclusivePar parO then i-1 else i
+		action	= if not $ inclusivePar parC then id else init
+		in
+		str & lines & action & drop i' & intercalate "\n"
+
+matchOptionBody (MInt _ i) str
+	= let	lined	= lines str in
+		if i <= length lined then lined !! (i-1)
+			else error $ "To little lines to get nr "++show i++" out of\n"++(str & lines & mapi |> (\(i, l) -> padR 3 ' ' (show $ 1 + i) ++ l) & unlines)
+matchOptionBody pt str
+	= error $ "Can't handle option "++toParsable pt
+
+
+inclusivePar	:: ParseTree -> Bool
+inclusivePar (MLiteral _ "[")	= True
+inclusivePar (MLiteral _ "]")	= False
+
 
 
 preprocessTo	:: FilePath -> FilePath -> IO ()
 preprocessTo inp outp
 	= do	str		<- readFile inp
 		vars		<- buildVariablesIO
+		putStr $ "Processing "++inp++"..."
 		let str'	= preprocess vars str & either error id
 		writeFile outp str'
-		putStrLn $ "Processed "++inp++" and saved it as "++outp
+		putStrLn $ "\rProcessed "++inp++" and saved it as "++outp
 
 preprocessDir	:: FilePath -> (FilePath -> FilePath) -> IO ()
 preprocessDir fp destination
@@ -86,14 +175,40 @@ preprocessDir fp destination
 
 
 
+outputFile	:: FilePath -> FilePath
+outputFile fp
+	= let	(name, path)	= fp & reverse & break (=='/')
+					& mapBoth reverse
+		in path++".bin/"++name
+
 autoPreprocess	:: IO ()
 autoPreprocess
 	= do	preprocessDir "src/Assets/Manual" outputFile
 		runCommand "src/Assets/Manual/build.sh"
 		pass
 
-outputFile	:: FilePath -> FilePath
-outputFile fp
-	= let	(name, path)	= fp & reverse & break (=='/')
-					& mapBoth reverse
-		in path++".bin/"++name
+contentsChanged	:: FilePath -> IO (Map FilePath UTCTime)
+contentsChanged fp
+	= do	files	<- dirConts fp
+		files |> (id &&& getModificationTime) |+> sndEffect
+			|> M.fromList
+
+
+autoRecreate'	:: Map FilePath UTCTime ->  IO ()
+autoRecreate' lastEdits
+	= do	lastEdits'	<- contentsChanged "src/Assets/Manual"
+		let millisecs	= 750
+		if lastEdits == lastEdits' then do
+			putStr "\r - "
+			threadDelay $ millisecs * 250
+			putStr "\r \\ "
+			threadDelay $ millisecs * 250
+			putStr "\r | "
+			threadDelay $ millisecs * 250
+			putStr "\r / "
+			threadDelay $ millisecs * 250
+		else
+			autoPreprocess
+		autoRecreate' lastEdits'
+
+autoRecreate	= autoRecreate' M.empty

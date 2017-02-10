@@ -1,4 +1,4 @@
-module Utils.Test (recreateTest, testAll, testFast, recreateAllTests, recreateTests, recreateTestsFast) where
+module Utils.Test (runTest, recreateTest, testAll, testFast, recreateAllTests, recreateTests, recreateTestsFast) where
 
 import Utils.Utils
 import Utils.ArgumentParser
@@ -29,10 +29,11 @@ testArgs      = [ ["Test/STFL.language"]
 		, ["Test/STFL.language", "--ira"]
 		, ["Test/STFL.language", "--irasvg", "SyntaxIRA.svg"]
 		, ["Test/STFL.language", "--ir", "EvalCtx"]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tp", "Progress" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tpa" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tp", "Progress", "--ppp" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "--tpa", "--ppp" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l",  "--tp", "Progress" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tp", "Progress", "--ppp" ]
+		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa", "--ppp" ]
+		, ["Test/Recursive.language", "--dlf"]
 		] & nub
 
 

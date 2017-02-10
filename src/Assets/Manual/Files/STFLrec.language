@@ -1,0 +1,16 @@
+ 
+ STFL 
+******
+
+# A Simply Typed Functional Language
+
+ Syntax
+========
+
+bool	::= "True" | "False"
+int	::= Number
+expr	::= "If" expr "Then" expr "Else" expr
+		| bool
+		| int
+		| expr "+" expr
+

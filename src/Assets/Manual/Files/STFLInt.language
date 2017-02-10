@@ -7,21 +7,12 @@
  Syntax
 ========
 
-basetype::= "Bool" | "Int"
-type	::= basetype "->" type | basetype
-
 bool	::= "True" | "False"
 int	::= Number
-var	::= Identifier
 
 expr	::= term "+" expr
 		| term
-		| term expr
-
-
 term	::= "If" expr "Then" expr "Else" expr
-		| "(" "\\" var ":" type "." expr ")"
 		| bool
 		| int
-		| var
 

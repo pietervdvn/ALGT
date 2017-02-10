@@ -146,8 +146,11 @@ allRight_ eithers
 		= eithers & filter isLeft & allRight >> return ()
 
 
-indent []	= []
-indent msg	= msg & lines |> ("  "++) & unlines & init
+indent		= indentWith "  "
+
+indentWith _ []	= []
+indentWith str msg	
+		= msg & lines |> (str++) & unlines & init
 
 -- Stack message for Either Monad
 inMsg		:: String -> Either String a -> Either String a

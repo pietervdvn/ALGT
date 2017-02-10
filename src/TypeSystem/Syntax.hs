@@ -283,8 +283,7 @@ makeSyntax	:: [(Name, ([BNF], WSMode))] -> Either String Syntax
 makeSyntax vals
 	= do	let bnfs	= vals & M.fromList |> fst ||>> normalize
 		let bnfr	= BNFRules bnfs (M.fromList $ vals ||>> snd) (asLattice bnfs)
-		[checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times"),
-			check bnfr] & allRight_
+		checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times")
 		return bnfr
 
 
@@ -320,7 +319,10 @@ checkUnknownRuleCall bnfs' (n, asts)
 
 instance Check Syntax where
 	check syntax	= inMsg "While checking the syntax:" $
-		  		allRight_ (checkLeftRecursion syntax:checkAllUnique syntax:(syntax & getBNF & M.toList |> check' syntax))
+		  		allRight_ $
+					[checkLeftRecursion syntax
+					, checkAllUnique syntax
+					] ++ (syntax & getBNF & M.toList |> check' syntax)
 
 
 checkLeftRecursion	:: Syntax -> Either String ()

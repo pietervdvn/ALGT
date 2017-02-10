@@ -83,7 +83,7 @@ instance ToString' ShowParens ParseTree where
 	debug' _ (MLiteral ti s)	= show s ++ showTI ti
 	debug' _ (MIdentifier ti i)	= show i ++ showTI ti
 	debug' _ (MInt ti i)		= show i ++ showTI ti
-	debug' p (PtSeq ti exprs)	= showTI ti ++ "\n" ++ (exprs |> debug' p & unlines & indent)
+	debug' p (PtSeq ti exprs)	= "+ " ++ tail (showTI ti) ++ "\n" ++ (exprs |> debug' p & unlines & indentWith "|  ")
 
 instance ToString ParseTree where
 	toParsable	= toParsable' NotOnRoot

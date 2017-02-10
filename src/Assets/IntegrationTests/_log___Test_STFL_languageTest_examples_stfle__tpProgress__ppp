@@ -15,29 +15,7 @@ Warning:
   
   While checking that the functions do have the strictest possible types:
     "dom" can be typed as "typeL", instead of a "type"
-                                                                                
- Test/examples.stfl 
-====================
-
-Property Progress holds for given examples
-Property successfull
-# Property Progress statisfied with assignment {T --> Bool, e0 --> True}
-  # Predicate satisfied:
-  # e0 :: T
-  
-    True : bool
-    --------------- [Tbool]
-    {} ⊢ True, Bool
-    ----------------------- [TEmptyCtx]
-    True :: Bool
-  
-  
-  
-  # Satisfies a possible conclusion:
-  # (✓) e0
-  
-  True : bool
-  ----------- [CanonBool]
-  (✓) True
-  
-  
+                                                                                :
+  "Test/examples.stfl" (line 1, column 5):
+  unexpected '\n'
+  expecting end of input

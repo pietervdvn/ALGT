@@ -1,0 +1,1 @@
+Output {_files = [], _stdOut = ["While checking the syntax::","  Potential infinite left recursion detected in the syntax. Left cycles are:","      expr -> expr","  "]}

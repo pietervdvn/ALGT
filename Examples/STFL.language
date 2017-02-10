@@ -2,13 +2,14 @@
  STFL 
 ******
 
-# A simply typed lambda function language
-
-# Can be executed (dynamically) with → (one step) or →* (bigstep)
-# Can be typed with ::
+# A Simply Typed Function Language
 
  Syntax
 ========
+
+bool	::= "True" | "False"
+
+
 
 # Types
 typeL	::= "Int" | "Bool" | "(" type ")"
@@ -16,10 +17,8 @@ type	::= typeL "->" type | typeL
 
 
 
-# builtins values
 var	::= Identifier
 number	::= Number
-bool	::= "True" | "False"
 value	::= bool | number
 
 e	::= eL "+" e 
