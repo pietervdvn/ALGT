@@ -15,7 +15,9 @@ import Utils.ToString
 
 import Utils.Unification
 
-import AbstractInterpreter.AbstractSet as As
+import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.ASSubtract as As
+
 
 import Data.List
 import Data.Map (Map, (!), keys, intersection)
@@ -109,20 +111,20 @@ smallestOf syntax a b
 
 evalExpr	:: Map Name TypeName -> Assignments -> Expression -> AbstractSet
 evalExpr _ assgns (MParseTree (MLiteral mi token))
-		= ConcreteLiteral mi token
+		= ConcreteLiteral (fst mi) token
 evalExpr _ assgns (MParseTree (MIdentifier mi nm))
-		= ConcreteLiteral mi nm
+		= ConcreteLiteral (fst mi) nm
 evalExpr _ assgns (MParseTree (MInt mi i))
-		= ConcreteLiteral mi (show i)
+		= ConcreteLiteral (fst mi) (show i)
 evalExpr _ assgns (MParseTree seq@(PtSeq mi _))
-		= ConcreteLiteral mi (show seq)
+		= ConcreteLiteral (fst mi) (show seq)
 evalExpr _ assgns (MVar _ n)
 		= fromMaybe (error $ "Unknown variable: "++show n) (findAssignment n assgns) & fst
 evalExpr f _ (MCall defType n builtin _)
 		= let tp = if builtin then defType else M.findWithDefault (error $ "AbstractInterpreter.Data: evalExpr: function not found: "++ n) n f in
-			EveryPossible (tp, -1) " (Function call - ID not retrievable)" tp
+			EveryPossible tp " (Function call - ID not retrievable)" tp
 evalExpr f assgns (MSeq mi exprs)
-		= exprs |> evalExpr f assgns & AsSeq mi
+		= exprs |> evalExpr f assgns & AsSeq (fst mi)
 evalExpr f assgns (MAscription t e)
 		= let	e'	= evalExpr f assgns e in
 			if typeOf e' == t then e' else error "Ascription failed"
@@ -135,7 +137,7 @@ evalExpr f assgns (MEvalContext _ nm hole)
 
 ------------------------------------- ANALYSIS ------------------------------------------------------------
 
-
+-- TODO Split this of to function analysis
 data Analysis	= Analysis 
 		{ _results	:: Map Int (Map Arguments AbstractSet)	-- clausenr, arguments --> value
 		, _leftOvers	:: Map Int (Set Arguments, Bool)	-- Unhandled cases before starting pattern i; -1 indicates fallthrough. The boolean represents 'Uses equality and might not match, despite having the correct form'

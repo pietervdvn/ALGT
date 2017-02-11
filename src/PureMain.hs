@@ -21,7 +21,7 @@ import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
 
 import AbstractInterpreter.RelationAnalysis
-import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.RuleAnalysis
 import AbstractInterpreter.Tools
 import AbstractInterpreter.Data
 import AbstractInterpreter.AbstractSet as AS

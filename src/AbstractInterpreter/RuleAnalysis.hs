@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TemplateHaskell #-}
-module AbstractInterpreter.RuleInterpreter where
+module AbstractInterpreter.RuleAnalysis where
 
 {-
 This module defines an abstract intperpreter for Rules
@@ -14,7 +14,7 @@ import Utils.Unification
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.Data
 import AbstractInterpreter.PatternMatcher
-import AbstractInterpreter.FunctionInterpreter
+import AbstractInterpreter.FunctionAnalysis
 
 import Data.List
 import qualified Data.Map as M

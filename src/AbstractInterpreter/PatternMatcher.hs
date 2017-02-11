@@ -62,7 +62,7 @@ patternMatch syntax evalCtx@(MEvalContext tp name hole) value
 		pth			<- pths
 
 		-- we calculate assignments induced by the hole-expression...
-		let replacedExpr	= getAt match pth	-- the subexpression that is thrown away
+		let replacedExpr	= getAsAt match pth	-- the subexpression that is thrown away
 		let holeName		= getName replacedExpr
 		let holeType		= typeOf replacedExpr
 		holeAssignment		<- patternMatch syntax hole (generateAbstractSet syntax (holeName++"$") holeType)

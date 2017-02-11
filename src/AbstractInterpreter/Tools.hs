@@ -10,8 +10,8 @@ import Utils.ToString
 
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.Data
-import AbstractInterpreter.FunctionInterpreter
-import AbstractInterpreter.RuleInterpreter as RI
+import AbstractInterpreter.FunctionAnalysis
+import AbstractInterpreter.RuleAnalysis as RI
 import AbstractInterpreter.MinimalTypes
 
 import Data.Map (Map, (!))

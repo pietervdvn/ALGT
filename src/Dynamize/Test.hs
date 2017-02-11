@@ -18,6 +18,7 @@ import Data.Maybe
 
 import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.ASSubtract
 
 
 
@@ -75,8 +76,8 @@ tInt		= ConcreteLiteral miT "Int"
 arg1		= AsSeq miE  [EveryPossible miE "bool" "bool", ConcreteLiteral miE "::", tBool]
 arg2		= AsSeq miE  [EveryPossible miE "number" "number", ConcreteLiteral miE "::", tInt]
 
-miE		= ("e", -1)
-miT		= ("typeL", -1)
+miE		= "e"
+miT		= "typeL"
 
 
 t2	= subtractAll s asE [arg1,arg2]

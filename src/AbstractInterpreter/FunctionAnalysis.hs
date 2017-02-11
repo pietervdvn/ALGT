@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module AbstractInterpreter.FunctionInterpreter where
+module AbstractInterpreter.FunctionAnalysis where
 
 {-
 This module executes functions on an abstract representation of the set

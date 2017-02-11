@@ -20,7 +20,7 @@ import TypeSystem
 import Dynamize.Test
 import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.AbstractSet
-import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.RuleAnalysis
 
 import Data.Maybe
 

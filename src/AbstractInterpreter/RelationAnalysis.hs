@@ -11,8 +11,9 @@ import Utils.ToString
 
 import Graphs.Lattice
 
-import AbstractInterpreter.AbstractSet as AS
-import AbstractInterpreter.RuleInterpreter
+import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.ASSubtract as AS
+import AbstractInterpreter.RuleAnalysis
 
 import Data.Map (Map)
 import qualified Data.Map as M
@@ -217,7 +218,7 @@ invertRecAS nameSpecLookups as
 	= do	let asSeq		= fromAsSeq' as & mapi
 		let isRecCall as	= fromMaybe False (fromEveryPossible as |> (`M.member` nameSpecLookups))
 		let getRecCall as	= (fromEveryPossible as >>= (`M.lookup` nameSpecLookups)) & fromJust
-		let fromRecCall tn	= EveryPossible (ruleNameFor tn, -1) "" (ruleNameFor tn)
+		let fromRecCall tn	= EveryPossible (ruleNameFor tn) "" (ruleNameFor tn)
 		let (toFix, classical)	= L.partition (isRecCall . snd) asSeq
 		toInvert		<- tail $ subsequences toFix	-- tail: we don't need the empty inverse
 		let stayOver		= toFix & filter (`notElem` toInvert)
@@ -228,7 +229,7 @@ invertRecAS nameSpecLookups as
 						& sortOn fst
 						|> snd
 		if length invertedAsSeq == 1 then invertedAsSeq
-			else return $ AsSeq (typeOf as, -1) invertedAsSeq
+			else return $ AsSeq (typeOf as) invertedAsSeq
 
 
 

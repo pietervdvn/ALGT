@@ -22,11 +22,11 @@ executable ALGT
   other-modules:       
         AbstractInterpreter.AbstractSet
         AbstractInterpreter.Data
-        AbstractInterpreter.FunctionInterpreter
+        AbstractInterpreter.FunctionAnalysis
         AbstractInterpreter.MinimalTypes
         AbstractInterpreter.PatternMatcher
         AbstractInterpreter.RelationAnalysis
-        AbstractInterpreter.RuleInterpreter
+        AbstractInterpreter.RuleAnalysis
         AbstractInterpreter.Tools
         Assets
         AssetsHelper
