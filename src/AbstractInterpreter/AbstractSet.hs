@@ -50,7 +50,6 @@ data AbstractSet
 type Arguments	= [AbstractSet]
 
 
-
 ------------------------------------------ GENERATION -----------------------------------------------------------------
 
 generateArgs		:: Syntax -> [TypeName] -> [AbstractSet]

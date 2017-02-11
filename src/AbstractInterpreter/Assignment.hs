@@ -1,10 +1,10 @@
 {-# LANGUAGE FlexibleContexts, TemplateHaskell, TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
-module AbstractInterpreter.Data where
+module AbstractInterpreter.Assignment where
 
 
 {-
-This module defines helper data structures used throughout abstract interpretation.
-Think assignments, analysis data, ...
+
+Assignments {Name --> AbstractSet, Path} + stuff that can be done with it
 -}
 
 import Prelude hiding (subtract)
@@ -32,12 +32,7 @@ import Lens.Micro.TH
 import Control.Arrow ((&&&))
 import Control.Monad
 
--------------------- ASSIGNMENT ----------------------------------
-
-
-
 type Assignments	= VariableAssignmentsA AbstractSet
-
 
 
 mergeAssgnss	:: Syntax -> [Assignments] -> [Assignments]

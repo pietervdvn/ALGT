@@ -12,7 +12,7 @@ import Utils.ToString
 import Utils.Unification
 
 import AbstractInterpreter.AbstractSet
-import AbstractInterpreter.Data
+import AbstractInterpreter.Assignment
 import AbstractInterpreter.PatternMatcher
 import AbstractInterpreter.FunctionAnalysis
 

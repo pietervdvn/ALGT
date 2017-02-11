@@ -8,7 +8,7 @@ import TypeSystem
 import Utils.Utils
 
 import AbstractInterpreter.AbstractSet
-import AbstractInterpreter.Data
+import AbstractInterpreter.Assignment
 import AbstractInterpreter.FunctionAnalysis
 
 import qualified Data.Map as M

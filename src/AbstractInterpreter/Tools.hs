@@ -9,7 +9,7 @@ import Utils.Utils
 import Utils.ToString
 
 import AbstractInterpreter.AbstractSet
-import AbstractInterpreter.Data
+import AbstractInterpreter.Assignment
 import AbstractInterpreter.FunctionAnalysis
 import AbstractInterpreter.RuleAnalysis as RI
 import AbstractInterpreter.MinimalTypes

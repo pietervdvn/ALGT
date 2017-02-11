@@ -21,7 +21,8 @@ executable ALGT
   build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative >= 0.13, directory, microlens, microlens-th, text, blaze-svg, hashable, time, process
   other-modules:       
         AbstractInterpreter.AbstractSet
-        AbstractInterpreter.Data
+        AbstractInterpreter.AbstractInterpreter
+        AbstractInterpreter.Assignment
         AbstractInterpreter.FunctionAnalysis
         AbstractInterpreter.MinimalTypes
         AbstractInterpreter.PatternMatcher

@@ -20,12 +20,7 @@ import ParseTreeInterpreter.PropertyTester
 import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
 
-import AbstractInterpreter.RelationAnalysis
-import AbstractInterpreter.RuleAnalysis
-import AbstractInterpreter.Tools
-import AbstractInterpreter.FunctionAnalysis
-import AbstractInterpreter.Data
-import AbstractInterpreter.AbstractSet as AS
+import AbstractInterpreter.AbstractInterpreter
 
 import Control.Monad
 import Control.Arrow ((&&&))

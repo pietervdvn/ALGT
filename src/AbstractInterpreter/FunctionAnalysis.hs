@@ -11,7 +11,7 @@ import Utils.ToString
 
 
 import Prelude hiding (subtract)
-import AbstractInterpreter.Data
+import AbstractInterpreter.Assignment
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.ASSubtract
 
@@ -118,28 +118,39 @@ analyzeClauseWith syntax functionReturns (i, MClause patterns expr) args
 
 
 instance ToString' (Name, Int, Function) FunctionAnalysis where
-	toParsable' (funcName, width, MFunction t clauses) (FunctionAnalysis analysises fallthroughs)	
+	toParsable' 	= _toStringFunctionAnalysis toParsable' toParsable'
+	toCoParsable' 	= _toStringFunctionAnalysis toCoParsable' toCoParsable'
+	debug' 		= _toStringFunctionAnalysis debug' debug'
+	show'	 	= const show
+
+
+_toStringFunctionAnalysis cats argsts (funcName, width, MFunction t clauses) (FunctionAnalysis analysises fallthroughs)	
 		= inHeader "" ("Analysis of "++funcName++" : "++intercalate " -> " t) '-' $ unlines
-			[zip clauses analysises |> (\(c, ca) -> toParsable' (funcName, width, c) ca) & unlines
-			, inHeader "" "Falthrough" '-' (fallthroughs & S.toList |> toParsable' ", " |> inParens & unlines)]
+			[zip clauses analysises |> (\(c, ca) -> cats (funcName, width, c) ca) & unlines
+			, inHeader "" "Falthrough" '-' (fallthroughs & S.toList |> argsts ", " |> inParens & unlines)]
 
 
 instance ToString' (Name, Int, Clause) ClauseAnalysis where
-	toParsable' (fn, w, clause) (ClauseAnalysis clauseI equality inputs results)
-		= inHeader "" ("Analysis of clause "++show clauseI) '.' $ unlines
-			[ "Clause: "
-			, toParsable' (fn, w) clause & indent
-			, ""
-			, "Possible inputs at this point: "
-			, inputs & S.toList |> toParsable' ", " |> inParens |> indent |> ("#"++) & unlines
-			, ""
-			, "Possible results: "
-			, results & M.toList |> showRes clauseI & unlines
-			, if equality then
-				"This clause uses equality in the patterns and might not match. No arguments are thus used in this abstract interpretation.\n"
-				else ""
-			]
+	toParsable' 	= _toStringClauseAnalysis toParsable' toParsable'
+	toCoParsable'	= _toStringClauseAnalysis toCoParsable' toCoParsable'
+	debug'		= _toStringClauseAnalysis debug' debug'
+	show'		= const show
+	
 
+_toStringClauseAnalysis cts argsts (fn, w, clause) (ClauseAnalysis clauseI equality inputs results)
+	= inHeader "" ("Analysis of clause "++show clauseI) '.' $ unlines
+		[ "Clause: "
+		, cts (fn, w) clause & indent
+		, ""
+		, "Possible inputs at this point: "
+		, inputs & S.toList |> argsts ", " |> inParens |> indent |> ("#"++) & unlines
+		, ""
+		, "Possible results: "
+		, results & M.toList |> showRes clauseI & unlines
+		, if equality then
+			"This clause uses equality in the patterns and might not match. No arguments are thus used in this abstract interpretation.\n"
+			else ""
+		]
 
 
 showRes	:: Int -> (Arguments, AbstractSet) -> String
