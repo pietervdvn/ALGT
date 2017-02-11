@@ -13,6 +13,8 @@ import Utils.ToString
 import Prelude hiding (subtract)
 import AbstractInterpreter.Data
 import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.ASSubtract
+
 import AbstractInterpreter.PatternMatcher
 
 
@@ -107,8 +109,8 @@ analyzeClauseWith syntax functionReturns (i, MClause patterns expr) args
 	= M.fromList $ 
 	  do	assgn	<- zip patterns args |> uncurry (patternMatch syntax)
 					& allCombinations |> mergeAssgnss syntax & concat
-		let filledPats	= patterns |> evalExpr functionReturns assgn	:: Arguments
-		let filledExpr	= evalExpr functionReturns assgn expr	:: AbstractSet
+		let filledPats	= patterns |> evalExpr functionReturns assgn & allRight & either error id	:: Arguments
+		let filledExpr	= evalExpr functionReturns assgn expr & either error id	:: AbstractSet
 		return (filledPats, filledExpr)
 
 

@@ -68,6 +68,7 @@ patternMatch syntax evalCtx@(MEvalContext tp name hole) value
 		holeAssignment		<- patternMatch syntax hole (generateAbstractSet syntax (holeName++"$") holeType)
 		-- and calculate the form of the hole
 		let hole'		= evalExpr M.empty {-functions are not possible in the patterns anyway-} holeAssignment hole
+						& either error id
 		let match'		= replaceAS match pth hole'
 		let ctxAssignment	= M.singleton name (match', Just pth)
 		mergeAssgns syntax holeAssignment ctxAssignment

@@ -1,4 +1,4 @@
-module AbstractInterpreter.ASSubtract (subtract, subtractWith, subtractAll, subtractAllWith) where
+module AbstractInterpreter.ASSubtract (subtract, subtractWith, subtractAll, subtractAllWith, subtractArg, subtractArgs) where
 
 {- This module defines `subset of` and `subtract` for abstract set, + examples against STFL-}
 
@@ -28,6 +28,26 @@ subtractAll syntax
 subtractAllWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
 subtractAllWith syntax known ass minuses
 		= nub $ L.foldl (subtractWith syntax known) ass minuses
+
+
+subtractArgs	:: Syntax -> Arguments -> [Arguments] -> [Arguments]
+subtractArgs s args []
+		= [args]
+subtractArgs s args (minus:minuses)
+		= do	args'	<- subtractArg s args minus
+			subtractArgs s args' minuses
+
+
+subtractArg	:: Syntax -> Arguments -> Arguments -> [Arguments]
+subtractArg s args minus
+ | length args /= length minus	= error "Length of arguments in minus don't match; this is weird"
+ | otherwise	= let	pointWise	= zip args minus |> (\(e, emin) -> subtract s [e] emin)
+			in	
+			replacePointwise args pointWise
+
+
+-------------------------------------------------------- Actual subtraction algorithm  ----------------------------------------------------
+
 
 
 _subtract'	:: Syntax -> Map (TypeName, TypeName) TypeName -> AbstractSet -> AbstractSet -> [AbstractSet]

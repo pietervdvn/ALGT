@@ -1,6 +1,6 @@
  {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
 module AbstractInterpreter.AbstractSet
-		(AbstractSet(..)
+		(AbstractSet(..), Arguments
 		, generateAbstractSet, generateArgs, fromExpression, toBNF
 		, unfold, unfoldFull
 		, replaceAS, getAsAt
@@ -46,6 +46,8 @@ data AbstractSet
 
 
 
+
+type Arguments	= [AbstractSet]
 
 
 

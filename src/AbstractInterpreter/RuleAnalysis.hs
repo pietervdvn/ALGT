@@ -161,8 +161,8 @@ buildUnifyPred ts (e0, e1) assgn
 
 
 evalExpr'	:: TypeSystem -> Assignments -> Expression -> AbstractSet
-evalExpr' ts
-	= evalExpr (get tsFunctions ts |> typesOf |> last) 
+evalExpr' ts assgn e
+	= evalExpr (get tsFunctions ts |> typesOf |> last) assgn e & either error id
 
 
 evalConcl'	:: TypeSystem -> Assignments -> Conclusion -> AbstractConclusion

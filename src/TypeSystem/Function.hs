@@ -35,6 +35,12 @@ _showVarPair sPt (nm, (pt, mPath))
 	= nm ++ " --> " ++ sPt pt ++ maybe "" (\pth -> " (With a hole at "++showComma pth++")") mPath
 
 
+
+findAssignment		:: Name -> VariableAssignmentsA a -> Maybe (a, Maybe [Int])
+findAssignment		= M.lookup
+
+
+
 -- Patterns, used to deconstruct values (parsetrees) and capture variables, to calculate the end expression
 data Clause	= MClause {mecPatterns :: [Expression], mecExpr :: Expression}
 	deriving (Show, Ord, Eq)

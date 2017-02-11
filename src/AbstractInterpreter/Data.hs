@@ -30,44 +30,14 @@ import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
 import Control.Arrow ((&&&))
+import Control.Monad
 
 -------------------- ASSIGNMENT ----------------------------------
 
-type Arguments	= [AbstractSet]
 
 
+type Assignments	= VariableAssignmentsA AbstractSet
 
-subtractArgs	:: Syntax -> Arguments -> [Arguments] -> [Arguments]
-subtractArgs s args []
-		= [args]
-subtractArgs s args (minus:minuses)
-		= do	args'	<- subtractArg s args minus
-			subtractArgs s args' minuses
-
-
-subtractArg	:: Syntax -> Arguments -> Arguments -> [Arguments]
-subtractArg s args minus
- | length args /= length minus	= error "Length of arguments in minus don't match; this is weird"
- | otherwise	= let	pointWise	= zip args minus |> (\(e, emin) -> subtract s [e] emin)
-			in	
-			replacePointwise args pointWise
-
-type Assignments	= Map Name (AbstractSet, Maybe Path)
-
-instance ToString' Int Assignments where
-	toParsable'	= _toString toParsable
-	toCoParsable'	= _toString toCoParsable
-	debug'		= _toString debug
-	show' _		= show
-
-_toString	:: (AbstractSet -> String) -> Int -> Assignments -> String
-_toString showAs i dict
-	= dict & M.toList |> (\(nm, (as, mPath)) -> padR i ' ' nm ++ " --> " ++ showAs as) & unlines
-
-
-
-findAssignment		:: Name -> Assignments -> Maybe (AbstractSet, Maybe [Int])
-findAssignment		= M.lookup
 
 
 mergeAssgnss	:: Syntax -> [Assignments] -> [Assignments]
@@ -106,32 +76,34 @@ smallestOf syntax a b
  | otherwise			= Nothing 
 
 
+evalExpr f assgns e
+	= inMsg ("While abstractly evaluating the expression "++toParsable e) $ _evalExpr f assgns e
 
 
-
-evalExpr	:: Map Name TypeName -> Assignments -> Expression -> AbstractSet
-evalExpr _ assgns (MParseTree (MLiteral mi token))
-		= ConcreteLiteral (fst mi) token
-evalExpr _ assgns (MParseTree (MIdentifier mi nm))
-		= ConcreteLiteral (fst mi) nm
-evalExpr _ assgns (MParseTree (MInt mi i))
-		= ConcreteLiteral (fst mi) (show i)
-evalExpr _ assgns (MParseTree seq@(PtSeq mi _))
-		= ConcreteLiteral (fst mi) (show seq)
-evalExpr _ assgns (MVar _ n)
-		= fromMaybe (error $ "Unknown variable: "++show n) (findAssignment n assgns) & fst
-evalExpr f _ (MCall defType n builtin _)
-		= let tp = if builtin then defType else M.findWithDefault (error $ "AbstractInterpreter.Data: evalExpr: function not found: "++ n) n f in
-			EveryPossible tp " (Function call - ID not retrievable)" tp
-evalExpr f assgns (MSeq mi exprs)
-		= exprs |> evalExpr f assgns & AsSeq (fst mi)
-evalExpr f assgns (MAscription t e)
-		= let	e'	= evalExpr f assgns e in
-			if typeOf e' == t then e' else error "Ascription failed"
-evalExpr f assgns (MEvalContext _ nm hole)	
-		= let	(ctx, Just path)	= fromMaybe (error $ "Unknwown variable"++show nm) $ findAssignment nm assgns
-			hole'			= evalExpr f assgns hole
-			in
-			replaceAS ctx path hole'
+_evalExpr	:: Map Name TypeName -> Assignments -> Expression -> Either String AbstractSet
+_evalExpr _ assgns (MParseTree (MLiteral mi token))
+		= return $ ConcreteLiteral (fst mi) token
+_evalExpr _ assgns (MParseTree (MIdentifier mi nm))
+		= return $ ConcreteLiteral (fst mi) nm
+_evalExpr _ assgns (MParseTree (MInt mi i))
+		= return $ ConcreteLiteral (fst mi) (show i)
+_evalExpr _ assgns (MParseTree seq@(PtSeq mi _))
+		= return $ ConcreteLiteral (fst mi) (show seq)
+_evalExpr _ assgns (MVar _ n)
+		= checkExists n assgns ("Unknown variable: "++show n) |> fst
+_evalExpr f _ (MCall defType n builtin _)
+		= do	tp <- if builtin then return defType 
+				else checkExists n f $ "AbstractInterpreter.Data: _evalExpr: function not found: "++ n
+			return $ EveryPossible tp " (Function call - ID not retrievable)" tp
+_evalExpr f assgns (MSeq mi exprs)
+		= exprs |+> _evalExpr f assgns |> AsSeq (fst mi)
+_evalExpr f assgns (MAscription t e)
+		= do	e'	<- _evalExpr f assgns e
+			unless (typeOf e' == t) $ Left $ "Ascription of "++toParsable e++" as "++t ++ " failed"
+			return e'
+_evalExpr f assgns (MEvalContext _ nm hole)	
+		= do	(ctx, Just path)	<- checkExists nm assgns $ "Unknwown variable"++show nm
+			hole'			<- _evalExpr f assgns hole
+			return $ replaceAS ctx path hole'
 
 
