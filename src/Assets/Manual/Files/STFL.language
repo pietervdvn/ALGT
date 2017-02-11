@@ -7,7 +7,7 @@
  Syntax
 ========
 
-basetype::= "Bool" | "Int"
+basetype::= "Bool" | "Int" | "(" type ")"
 type	::= basetype "->" type | basetype
 
 bool	::= "True" | "False"
@@ -15,13 +15,28 @@ int	::= Number
 var	::= Identifier
 
 expr	::= term "+" expr
-		| term
-		| term expr
+	| term
+	| term expr
 
 
 term	::= "If" expr "Then" expr "Else" expr
-		| "(" "\\" var ":" type "." expr ")"
-		| bool
-		| int
-		| var
+	| "(" "\\" var ":" type "." expr ")"
+	| bool
+	| int
+	| var
 
+
+
+ Functions
+===========
+
+
+domain 				: type -> type
+domain("(" T ")")		= domain(T)
+domain(("(" T1 ")") "->" T2)	= T1
+domain(T1 "->" T2)		= T1
+
+codomain 			: type -> type
+codomain("(" T ")")		= codomain(T)
+codomain(("(" T1 ")") "->" T2) 	= T2
+codomain(T1 "->" T2)		= T2

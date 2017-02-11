@@ -11,8 +11,8 @@ bool	::= "True" | "False"
 int	::= Number
 
 expr	::= term "+" expr
-		| term
+	| term
 term	::= "If" expr "Then" expr "Else" expr
-		| bool
-		| int
+	| bool
+	| int
 

@@ -10,7 +10,7 @@
 bool	::= "True" | "False"
 int	::= Number
 expr	::= "If" expr "Then" expr "Else" expr
-		| bool
-		| int
-		| expr "+" expr
+	| bool
+	| int
+	| expr "+" expr
 

@@ -26,6 +26,8 @@ import PureMain
 import Text.Parsec
 import TypeSystem
 import TypeSystem.Parser.TargetLanguageParser
+import qualified TypeSystem.Parser.BNFParser as BNFParser
+import qualified TypeSystem.Parser.ParsingUtils as ParsingUtils
 
 import Control.Arrow
 
@@ -38,7 +40,26 @@ buildVariables	:: Map String String
 buildVariables
       = [ ("version", version & fst |> show & intercalate ".")
 	, ("versionmsg", version & snd)
+	, ("builtinEscapes", BNFParser.builtinEscapes	
+				|> over (_1 . _1) (\c -> '\\':[c])
+				& makeTable)
+	, ("wsModeInfo", BNFParser.wsModeInfo & makeTable)
+	, ("whitespace", ParsingUtils.whitespace |> (:[]) |> show |> verbatim & intercalate ",")
+	, ("builtinSyntax", BNFParser.builtinSyntax |> over _1 fst |> unmerge3r
+			|> (\(bnf, expl, regex) -> verbatim bnf ++ "|" ++ expl ++ "|" ++ verbatim regex)
+			& unlines)
 	] & M.fromList 
+
+
+
+makeTable	:: [((String, a), String)] -> String
+makeTable vals
+	= vals |> over _1 fst |> escapedTable & unlines
+
+escapedTable	:: (String, String) -> String
+escapedTable (inp, expl)
+	= padR 16 ' ' (verbatim inp) ++ expl
+
 
 
 manualAssets	:: IO (Map String String)
@@ -60,8 +81,8 @@ buildVariablesIO
 
 
 
-
-
+verbatim	:: String -> String
+verbatim str	= "`" ++ str ++ "`"
 
 
 
@@ -119,7 +140,7 @@ options	:: String -> (String -> String, String)
 options ('!':'i':'n':'d':'e':'n':'t':rest)
 	= let	(action, rest')	= options rest
 		in
-		(\str -> str & action & lines |> ("    "++) & intercalate "\n", rest')
+		(\str -> str & action & lines |> ("        "++) & intercalate "\n", rest')
 options ('!':rest)
 	= let	(option, str)	= break (not . (`elem` "0123456789[].")) rest
 		pt	= parse (parseSyntax optionsSyntax "option") "Assets/Manual/Options.language" option
@@ -198,15 +219,15 @@ autoRecreate'	:: Map FilePath UTCTime ->  IO ()
 autoRecreate' lastEdits
 	= do	lastEdits'	<- contentsChanged "src/Assets/Manual"
 		let millisecs	= 750
+		-- let animation	= ["|","/","-","\\"] 
+		let animations	= ["    .","    . ","  .  "," .   ",".    "] 
+		let animation	= animations ++ reverse animations
+
+		let animation'	= animation |> ("\r "++)
+		let frameLength	= 1000 `div` (length animation')
 		if lastEdits == lastEdits' then do
-			putStr "\r - "
-			threadDelay $ millisecs * 250
-			putStr "\r \\ "
-			threadDelay $ millisecs * 250
-			putStr "\r | "
-			threadDelay $ millisecs * 250
-			putStr "\r / "
-			threadDelay $ millisecs * 250
+			animation' |+> (\frame -> threadDelay (frameLength*millisecs) >> putStr frame)
+			pass
 		else
 			autoPreprocess
 		autoRecreate' lastEdits'

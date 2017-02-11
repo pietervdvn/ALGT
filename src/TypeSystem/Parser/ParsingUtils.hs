@@ -18,10 +18,10 @@ uppers	= ['A'..'Z']
 whitespace = [' ','\t']
 
 builtinRelations	
-	= [ (":", "parsetree generated with")
-	  , ("=", "equals")
-	  , ("|", "choice")
-	  , (",","argument separation")
+	= [ (":", "Parsetree generated with")
+	  , ("=", "Equals")
+	  , ("|", "Choice")
+	  , (",", "Argument separation")
 	  , ("[", "Context open")
 	  , ("]", "Context close")
 	  , ("(", "Parenthese open")

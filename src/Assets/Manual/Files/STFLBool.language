@@ -9,4 +9,4 @@
 
 bool	::= "True" | "False"
 expr	::= "If" expr "Then" expr "Else" expr
-		| bool
+	| bool
