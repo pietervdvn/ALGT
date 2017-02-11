@@ -17,41 +17,46 @@ import Data.Map (Map, (!), mapWithKey, differenceWith)
 import Data.Maybe
 
 -- same as strictestTypes, but only returns the types that can be stricter
-stricterTypes	:: Syntax -> Functions -> Map Name TypeName
-stricterTypes s f
+stricterTypes	:: TypeSystem -> Functions -> Map Name TypeName
+stricterTypes ts f
 	= let	orig		= f |> typesOf |> last
-		strictest	= strictestTypes s f
+		strictest	= strictestTypes ts f
 		in
 		differenceWith (\orig strictest -> if orig == strictest then Nothing else Just strictest) orig strictest
 
 
-strictestTypes	:: Syntax -> Functions -> Map Name TypeName
-strictestTypes syntax functions
+strictestTypes	:: TypeSystem -> Functions -> Map Name TypeName
+strictestTypes ts functions
 	= let	startTypes	= functions |> const bottomSymbol
 		origTypes	= functions |> typesOf |> last
 		in
-		searchStrictest syntax origTypes functions startTypes
+		searchStrictest ts origTypes functions startTypes
 
 
-searchStrictest		:: Syntax -> Map Name TypeName -> Functions -> Map Name TypeName -> Map Name TypeName
-searchStrictest s backup f state
-	= let	state'	= step s backup f state in
-		if state == state' then state else searchStrictest s backup f state'
+searchStrictest		:: TypeSystem -> Map Name TypeName -> Functions -> Map Name TypeName -> Map Name TypeName
+searchStrictest ts backup f state
+	= let	state'	= step ts backup f state in
+		if state == state' then state else searchStrictest ts backup f state'
 
 
-step		:: Syntax -> Map Name TypeName -> Functions -> Map Name TypeName -> Map Name TypeName
-step s backup functions state
-	= let	minimalTypes	= functions |> minimalTypeOf s state	:: Map Name (Maybe TypeName)
+step		:: TypeSystem -> Map Name TypeName -> Functions -> Map Name TypeName -> Map Name TypeName
+step ts backup functions state
+	= let	minimalTypes	= functions |> minimalTypeOf ts state	:: Map Name (Maybe TypeName)
 		minimalTypes'	= minimalTypes & mapWithKey (\k v -> fromMaybe (backup ! k) v)
 		in
 		minimalTypes'
 
 
-minimalTypeOf	:: Syntax -> Map Name TypeName -> Function -> Maybe TypeName
-minimalTypeOf s funcSigns f
-	= let	args		= typesOf f & init |> generateAbstractSet s "_"
-		analysis	= interpretFunction s funcSigns f args
-		tps		= analysis & get results & M.elems |> M.elems & concat |> typeOf & filter (/= bottomSymbol) & L.nub
+minimalTypeOf	:: TypeSystem -> Map Name TypeName -> Function -> Maybe TypeName
+minimalTypeOf ts funcSigns f
+	= let	s		= get tsSyntax ts
+		args		= typesOf f & init |> generateAbstractSet s "_"
+		analysis	= analyzeFunctionWith ts funcSigns f args
+		tps		= analysis & get clauseAnalysises
+					|> get results
+					|> M.elems & concat
+					|> typeOf
+					& L.nub
 		in
 		biggestCommonType' s tps
 

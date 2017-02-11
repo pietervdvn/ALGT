@@ -23,6 +23,7 @@ import SyntaxHighlighting.Highlighting
 import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.RuleAnalysis
 import AbstractInterpreter.Tools
+import AbstractInterpreter.FunctionAnalysis
 import AbstractInterpreter.Data
 import AbstractInterpreter.AbstractSet as AS
 
@@ -140,7 +141,7 @@ mainArgs args@(Args tsFile exampleFiles changeFiles dumpTS interpretAbstract int
 
 
 		let funcAnalysis
-				= get tsFunctions changedTs & keys |> runFuncAbstract changedTs
+				= get tsFunctions changedTs & keys |> runFuncAbstract changedTs |> either id id
 
 		let getRule r	= M.findWithDefault (Left $ "No such rule: "++r) r (get tsRulesOnName changedTs |> Right)
 		rulesToInter	<- interpretRules |> (id &&& getRule) |+> sndEffect
@@ -195,9 +196,13 @@ abstractRuleSyntax ts
 	= let ra	= analyzeRelations ts in
 		toParsable' ts ra ++ "\n# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
 
-runFuncAbstract	:: TypeSystem -> Name -> String
+runFuncAbstract	:: TypeSystem -> Name -> Either String String
 runFuncAbstract ts name
-	= inHeader "" ("Abstract interpretation of "++show name) '-' $ toParsable $ interpretFunction ts name
+	= do	func		<- checkExists name (get tsFunctions ts) $ "No such function: "++name
+		let analysis	= analyzeFunction' ts func
+		let msg		= inHeader "" ("Abstract interpretation of "++show name) '-' $
+					toParsable' (name, 24::Int, func) analysis
+		return msg
 		
 
 

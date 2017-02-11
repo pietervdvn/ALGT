@@ -24,26 +24,23 @@ import Data.Maybe
 import Control.Monad
 import Control.Arrow ((&&&))
 
-interpretFunction	:: TypeSystem -> Name -> Analysis
-interpretFunction ts n
-	= interpretFunction' (get tsSyntax ts) (get tsFunctions ts |> typesOf |> last)	(get tsFunctions ts ! n)
-
 
 
 
 
 checkTS	ts
-	=  [checkTotality ts, checkStrictestTypes ts] & allRight_ & inMsg "Warning"
+	= let 	fs		= get tsFunctions ts
+		analysises	= fs |> analyzeFunction' ts	:: Map Name FunctionAnalysis
+		in
+		[checkTotality ts analysises, checkDeadClauses ts analysises, checkStrictestTypes ts] & allRight_ & inMsg "Warning"
 
-checkTotality	:: TypeSystem -> Either String ()
-checkTotality ts
-	= do	let fs		= get tsFunctions ts
-		let fsTps	= fs |> typesOf |> last
-		let syntax	= get tsSyntax ts
-		let analysises	= fs |> interpretFunction' syntax fsTps	:: Map Name Analysis
-		let leftOvers	= analysises |> leftOver & M.filter (not . null) & M.toList
+checkTotality	:: TypeSystem -> Map Name FunctionAnalysis -> Either String ()
+checkTotality ts analysises
+	= do	let syntax	= get tsSyntax ts
+		let leftOvers	= analysises |> get functionLeftOvers
+					& M.filter (not . S.null) & M.toList
+									:: [(Name, Set Arguments)]
 		leftOvers |> totalityErr & allRight_
-		analysises & M.toList |> checkDeadClauses ts & allRight_
 
 
 
@@ -53,27 +50,35 @@ totalityErr (nm, over)
 	  inMsg "Following calls will fall through" $ do
 	 	let msgs	= over & S.toList |> toParsable' ", " |> inParens |> (nm++) & unlines
 		Left msgs
-		
 
-checkDeadClauses	:: TypeSystem -> (Name, Analysis) -> Either String ()
-checkDeadClauses ts (nm, analysis)
-	= inMsg ("While checking liveability of every clause in function "++show nm) $ 
-	  inMsg "Some clauses will never match:" $ do
-		let deadClauses	= analysis & get results & M.filter M.null & M.keys
-		let clauses	= ts & get tsFunctions & (M.! nm) & getClauses	:: [Clause]
-		let deadClauses'= deadClauses |> (show &&& (!!) clauses)	:: [(String, Clause)]
-		let msgs	= deadClauses' ||>> toParsable' (nm, 30:: Int)
-					||>> ("   "++)
-					|> uncurry (++)
-		unless (null deadClauses) $ Left $ unlines msgs
-	  
+
+
+checkDeadClauses	:: TypeSystem -> Map Name FunctionAnalysis -> Either String ()
+checkDeadClauses ts analysises
+	= analysises & M.toList |> checkDeadClausesFor ts & allRight_
+
+
+checkDeadClausesFor	:: TypeSystem -> (Name, FunctionAnalysis) -> Either String ()
+checkDeadClausesFor ts (nm, analysis)
+	= do	let f	= get tsFunctions ts ! nm
+		inMsg ("While checking liveability of every clause in function "++show nm) $ 
+			analysis & get clauseAnalysises |> checkDeadClause (nm, f) & allRight_
+
+
+checkDeadClause	:: (Name, Function) -> ClauseAnalysis -> Either String ()
+checkDeadClause (nm, MFunction _ clauses) ca
+	= let 	isDead	= ca & get results & M.null
+		clause	= clauses !! get clauseIndex ca
+		msg	= toParsable' (nm, 24::Int) clause ++ " will never match anything, as the possible arguments are already consumed"
+		in
+	  	when isDead $ Left msg
 
 
 
 checkStrictestTypes	:: TypeSystem -> Either String ()
 checkStrictestTypes ts
 	= inMsg "While checking that the functions do have the strictest possible types" $
-	  do	let stricter 	= stricterTypes (get tsSyntax ts) (get tsFunctions ts) & M.toList
+	  do	let stricter 	= stricterTypes ts (get tsFunctions ts) & M.toList
 		let origType n	= (get tsFunctions ts ! n) & typesOf & last
 		stricter |> (\(nm, tp) -> show nm++" can be typed as "++show tp++", instead of a "++show (origType nm)) |> Left & allRight_
 		
