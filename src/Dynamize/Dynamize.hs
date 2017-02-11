@@ -85,7 +85,7 @@ createRulesFor ra genConcl tns
 		nonMatching	<- M.findWithDefault [] (toParsable tns) (get bnf syntax)
 		let isRecursive	= calledRules nonMatching
 					& any (`elem` recursive)
-		guard (not isRecursive)
+		-- guard (not isRecursive)
 		let concl	= genConcl nonMatching
 		let rule	= Rule ("TErr" ++ toParsable nonMatching) [] concl
 		return rule

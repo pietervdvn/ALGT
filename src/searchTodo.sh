@@ -1,7 +1,13 @@
 #! /bin/bash
-# we drop the first two lines, as these are the todo in the stdDef
-find | grep "\.hs$" | grep -v "dist" | xargs grep "TODO" | grep -v "StdDef.hs"
-echo -e "\nNumber of todos: "
-find | grep "\.hs$" | grep -v "dist" | xargs grep "TODO" | grep -v "StdDef.hs"| wc -l
+TOTAL="0"
+for CODE in "TODO" "FIXME"
+do
+	./search.sh $CODE
+	echo -e "\nTOTAL $CODE: "
+	FOUND=`./search.sh $CODE | wc -l`
+	echo $FOUND
+	TOTAL=$TOTAL"+"$FOUND
+done
 
-find | grep "\.hs$" | grep -v "dist" | xargs grep "PICKUP"
+TOTAL=`echo $TOTAL | bc`
+echo "All issues: $TOTAL"

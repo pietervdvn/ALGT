@@ -73,7 +73,7 @@ manualAssets
 
 buildVariablesIO	:: IO (Map String String)
 buildVariablesIO
-	= do	(y,m,d)	<- getCurrentTime >>= return . toGregorian . utctDay
+	= do	(y,m,d)	<- getCurrentTime |> (toGregorian . utctDay)
 		let date	= show y ++ "-"++show m ++ "-" ++ show d
 		let dict'	= [("date", date)] & M.fromList
 		assets	<- manualAssets
@@ -142,7 +142,7 @@ options ('!':'i':'n':'d':'e':'n':'t':rest)
 		in
 		(\str -> str & action & lines |> ("        "++) & intercalate "\n", rest')
 options ('!':rest)
-	= let	(option, str)	= break (not . (`elem` "0123456789[].")) rest
+	= let	(option, str)	= span (`elem` "0123456789[].") rest
 		pt	= parse (parseSyntax optionsSyntax "option") "Assets/Manual/Options.language" option
 				& either (error . show) id
 		action	= matchOptionBody pt
@@ -224,7 +224,7 @@ autoRecreate' lastEdits
 		let animation	= animations ++ reverse animations
 
 		let animation'	= animation |> ("\r "++)
-		let frameLength	= 1000 `div` (length animation')
+		let frameLength	= 1000 `div` length animation'
 		if lastEdits == lastEdits' then do
 			animation' |+> (\frame -> threadDelay (frameLength*millisecs) >> putStr frame)
 			pass
