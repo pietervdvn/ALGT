@@ -1,13 +1,5 @@
  {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
-module AbstractInterpreter.AbstractSet
-		(AbstractSet(..), Arguments
-		, generateAbstractSet, generateArgs, fromExpression, toBNF
-		, unfold, unfoldFull
-		, replaceAS, getAsAt
-		, refold, refoldWithout
-		, isEveryPossible, fromEveryPossible, fromAsSeq, fromAsSeq'
-		, getAsName
-		, containsRule, containsRuleAS) where
+module AbstractInterpreter.AbstractSet where
 
 {-
 This module defines an abstract type tree, which represents the infinite unfolding of a BNF-rule
@@ -347,6 +339,8 @@ fromAsSeq' as			= fromMaybe [as] $ fromAsSeq as
 overAsName	:: (Name -> Name) -> AbstractSet -> AbstractSet
 overAsName f (EveryPossible gen n tn)
 		= EveryPossible gen (f n) tn
+overAsName f (ConcreteLiteral gen n)
+		= ConcreteLiteral gen $ f n
 overAsName f (ConcreteIdentifier gen n)
 		= ConcreteIdentifier gen $ f n
 overAsName f (ConcreteInt gen n)
@@ -386,12 +380,16 @@ generatorOf as				= typeOf as
 overGenerator	:: (GeneratingType -> GeneratingType) -> AbstractSet -> AbstractSet
 overGenerator f (EveryPossible gen n tn)
 		= EveryPossible (f gen) n tn
+overGenerator f (ConcreteLiteral gen n)
+		= ConcreteLiteral (f gen) n
 overGenerator f (ConcreteIdentifier gen n)
 		= ConcreteIdentifier (f gen) n
 overGenerator f (ConcreteInt gen n)
 		= ConcreteInt (f gen) n
 overGenerator f (AsSeq gen ass)
 		= ass |> overGenerator f & AsSeq (f gen)
+
+
 
 
 
