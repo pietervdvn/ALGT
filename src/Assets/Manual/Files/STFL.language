@@ -15,8 +15,8 @@ int	::= Number
 var	::= Identifier
 
 expr	::= term "+" expr
-	| term
 	| term expr
+	| term
 
 
 term	::= "If" expr "Then" expr "Else" expr

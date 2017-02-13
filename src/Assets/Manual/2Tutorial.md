@@ -6,7 +6,7 @@
 ### Domain and codomain
 
 It'll come in handy later on to be able to calculate the _domain_ and _codomain_ of a function type.
-The _domain_ of a function is the type it can handle as output.
+The _domain_ of a function is the type it can handle as input.
 The _codomain_ of a function is the type it gives as output.
 
 :Examples of domain and codomain
@@ -39,17 +39,17 @@ So, what is going on here? Let's first take a look to the first line:
 
 $$STFL.language!indent!34
 
-The `domain` is the name of the functions. The `type -> type` indicates what syntactic form is taken as input (a `type`) before the `->` and what is given as output (again a `type`). [^ISMETA]
+The `domain` is the name of the function. The `type -> type` indicates what syntactic form is taken as input (a `type`) before the `->` and what is given as output (again a `type`). [^ISMETA]
 
-![Relevant XKCD (by Randall Munroe)](hofstadter.png){width=100%}
+![Relevant XKCD (by Randall Munroe, #917)](hofstadter.png){width=100%}
 
 
-[^ISMETA]: You probably noticed the similarity between the types declared in our own STFL and this declaration. Also see [Randall Munroe's work on meta stuff](https://www.xkcd.com/917/)
+[^ISMETA]: You probably noticed the similarity between the types declared in our own STFL and this declaration.]
 
 
 ### Pattern matching
 
-Now, let's have look at the line of the function:
+Let's have look at the body of the function:
 
 $$STFL.language!indent!37
 
