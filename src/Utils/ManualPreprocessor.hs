@@ -13,6 +13,7 @@ import Utils.ToString
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.List
+import Data.Maybe
 import Data.Char
 import Utils.Version
 import Data.Time.Clock
@@ -48,6 +49,11 @@ buildVariables
 	, ("builtinSyntax", BNFParser.builtinSyntax |> over _1 fst |> unmerge3r
 			|> (\(bnf, expl, regex) -> verbatim bnf ++ "|" ++ expl ++ "|" ++ verbatim regex)
 			& unlines)
+	, ("regexIdentifier", BNFParser.builtinSyntax 
+		|> over _1 fst
+		& lookup "Identifier" 
+		& fromMaybe (error $ "BUG in manualpreprocessor: no Identifier")
+		& snd)
 	] & M.fromList 
 
 
