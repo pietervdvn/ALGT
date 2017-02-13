@@ -33,7 +33,7 @@ data AbstractSet
 	| ConcreteLiteral 	GeneratingType String
 	| ConcreteIdentifier 	GeneratingType Name
 	| ConcreteInt 		GeneratingType Name
-	| AsSeq 		GeneratingType [AbstractSet]		-- Sequence
+	| AsSeq 		GeneratingType Int [AbstractSet]		-- Sequence, generated with choice
 	deriving (Ord, Eq, Show)
 
 
@@ -49,25 +49,27 @@ generateArgs s tps 	= tps & mapi |> (\(i, t) -> generateAbstractSet s (show i) t
 
 generateAbstractSet	:: Syntax -> Name -> TypeName -> AbstractSet
 generateAbstractSet s n tp
-			= generateAbstractSet' s n tp (BNFRuleCall tp)
+			= generateAbstractSet' s n tp (error "Should not be used", BNFRuleCall tp)
 
 
-generateAbstractSet'	:: Syntax -> Name -> TypeName -> BNF -> AbstractSet
+generateAbstractSet'	:: Syntax -> Name -> TypeName -> (Int, BNF) -> AbstractSet
 generateAbstractSet' s n tp bnf
 			= _generateAbstractSet s tp n bnf
 
 
 
-_generateAbstractSet					:: Syntax -> TypeName -> Name -> BNF -> AbstractSet
-_generateAbstractSet r generator n (Literal s)		= ConcreteLiteral generator s
-_generateAbstractSet r generator n Identifier		= ConcreteIdentifier generator n
-_generateAbstractSet r generator n Number		= ConcreteInt generator n
-_generateAbstractSet r generator n (BNFRuleCall tp)
+_generateAbstractSet					:: Syntax -> TypeName -> Name -> (Int, BNF) -> AbstractSet
+_generateAbstractSet r generator n (_, Literal s)	= ConcreteLiteral generator s
+_generateAbstractSet r generator n (_, Identifier)	= ConcreteIdentifier generator n
+_generateAbstractSet r generator n (_, Number)		= ConcreteInt generator n
+_generateAbstractSet r generator n (_, BNFRuleCall tp)
 	| tp `member` getBNF r
 			= EveryPossible generator n tp
 	| otherwise	= error $ "No bnf-rule with the name " ++ tp
-_generateAbstractSet r generator n (BNFSeq bnfs)
-			= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r generator (n++":"++show i) bnf) & AsSeq generator
+_generateAbstractSet r generator n (choice, BNFSeq bnfs)
+			= mapi bnfs
+				|> (\(i, bnf) -> _generateAbstractSet r generator (n++":"++show i) (choice, bnf))
+				& AsSeq generator choice
 
 
 
@@ -82,8 +84,9 @@ fromExpression s n (MParseTree (MInt mi _))
 fromExpression s n (MParseTree (PtSeq mi pts))
 				= pts |> MParseTree & MSeq mi & fromExpression s n 
 fromExpression s n (MVar tn _)	= generateAbstractSet s n tn
-fromExpression s n (MSeq mi exprs)
-				= mapi exprs |> (\(i, e) -> fromExpression s (n++":"++show i) e) & AsSeq (fst mi)
+fromExpression s n (MSeq (tn, i) exprs)
+ | i < 0			= error $ "AbstractSet: fromexpression: invalid MSeq choice number: "++show i
+ | otherwise			= mapi exprs |> (\(i, e) -> fromExpression s (n++":"++show i) e) & AsSeq tn i
 fromExpression s n (MCall tn _ _ _)
 				= generateAbstractSet s n tn
 fromExpression s n (MAscription _ e)
@@ -98,7 +101,7 @@ fromExpression s n (MEvalContext tn _ _)
 unfold		:: Syntax -> AbstractSet ->  [AbstractSet]
 unfold r (EveryPossible _ n e)
 		= let	bnfs	= getBNF r ! e
-		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r e (n++"/"++show i) bnf)
+		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r e (n++"/"++show i) (i, bnf))
 		  in choices & nub
 unfold r as	= [as]
 
@@ -112,9 +115,9 @@ unfoldFull syntax as
 
 -- Unfolds all "EveryPossible" in the abstractset exactly once
 unfoldAll	:: Syntax -> AbstractSet -> [AbstractSet]
-unfoldAll syntax (AsSeq mi seq)
+unfoldAll syntax (AsSeq gen i seq)
 	= do	seq'	<- seq |> unfoldAll syntax & allCombinations
-		return $ AsSeq mi seq'
+		return $ AsSeq gen i seq'
 unfoldAll syntax as@EveryPossible{}
 	= unfold syntax as
 unfoldAll syntax as
@@ -147,7 +150,8 @@ refoldWithout s dontFold as
 
 reverseSyntax	:: Syntax -> [([AbstractSet], Name)]
 reverseSyntax synt
-	= let prepBNFs tp bnfs	= bnfs	|> generateAbstractSet' synt "" tp
+	= let prepBNFs tp bnfs	= bnfs	& mapi
+					|> generateAbstractSet' synt "" tp
 					|> eraseNames
 					& sort in
 	  synt	& get bnf 
@@ -200,8 +204,9 @@ eatSubexpressions s ass
 
 
 mightFoldSeq	:: AbstractSet -> AbstractSet -> Bool
-mightFoldSeq (AsSeq _ s1) (AsSeq _ s2)
- | length s1 /= length s2	= False
+mightFoldSeq (AsSeq _ i s1) (AsSeq _ j s2)
+ | length s1 /= length s2
+	|| i /= j		= False
  | otherwise			= 1 == zip s1 s2 & filter (uncurry (/=)) & length
 mightFoldSeq a1 a2		= True
 
@@ -218,8 +223,11 @@ foldGroup _ _ [as]		= [as]
 foldGroup syntax revTable ass
  | not $ all isAsSeq ass	= ass
 	-- All 'details' have been erased, and the entire group has the same structure
-	-- In other words, all are a sequence with only differences on e.g. "True" 
- | otherwise	= do	let tp		= typeOf $ head ass
+	-- In other words, all are a sequence with only differences on one point 
+ | otherwise	= do	let allSame	= ass |> (typeOf &&& getSeqNumber) & nub & length & (==1)
+			unless allSame $ error $ "foldGroup: weird combination, not all types and choices are the same"
+			let tp		= typeOf $ head ass
+			let choice	= getSeqNumber $ head ass
 			let seqqed	= ass 	|> fromAsSeq & catMaybes & transpose
 										:: [[AbstractSet]]
 			let diffPts	= diffPoints seqqed			:: [Int]
@@ -229,7 +237,7 @@ foldGroup syntax revTable ass
 				let i		= head diffPts
 				a		<- (seqqed !! i) & refold' syntax revTable	:: [AbstractSet]
 				let mergedSeq	= take i seqqed' ++ [a] ++ drop (i + 1) seqqed'
-				return $ AsSeq tp mergedSeq
+				return $ AsSeq tp choice mergedSeq
 
 --------------------------------------------------------- FROM ABSTRACT SET --------------------------------------------------
 
@@ -243,7 +251,7 @@ toBNF (ConcreteIdentifier _ _)
 			= Identifier
 toBNF (ConcreteInt _ _)
 			= Number
-toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
+toBNF (AsSeq _ _ ass)	= ass |> toBNF & BNFSeq
 
 
 
@@ -255,16 +263,16 @@ toBNF (AsSeq _ ass)	= ass |> toBNF & BNFSeq
 
 -- for unification
 instance Node AbstractSet where
-	hasChildren (AsSeq _ as)	= not $ L.null as
+	hasChildren (AsSeq _ _ as)	= not $ L.null as
 	hasChildren _	= False
 	
-	getChildren (AsSeq _ as)	= as
+	getChildren (AsSeq _ _ as)	= as
 
-	newChildren (AsSeq mi _)	= AsSeq mi
+	newChildren (AsSeq gen i _)	= AsSeq gen i
 
-	sameSymbol (AsSeq mi0 _) (AsSeq mi1 _)	
-				= mi0 == mi1
-	sameSymbol a b		= a == b
+	sameSymbol (AsSeq gen0 i0 _) (AsSeq gen1 i1 _)	
+					= gen0 == gen1 && i0 == i1
+	sameSymbol a b			= a == b
 
 	isVar EveryPossible{}		= True
 	isVar _				= False
@@ -273,16 +281,9 @@ instance Node AbstractSet where
 
 
 
--- Simple heuristic if it is worth it to subtract two abstract sequences
-sameForm	:: [AbstractSet] -> [AbstractSet] -> Bool
-sameForm [] []	= True
-sameForm (a:as) (b:bs)
- | isConcrete a && isConcrete b	= sameStructure a b
- | otherwise			= sameForm as bs
-sameForm _ _	= False
 
 
-
+-- Have the abstractSet - trees the same structure? 
 sameStructure	:: AbstractSet -> AbstractSet -> Bool
 sameStructure as bs
 	= eraseDetails as == eraseDetails bs
@@ -327,8 +328,11 @@ isAsSeq _			= False
 
 
 fromAsSeq			:: AbstractSet -> Maybe [AbstractSet]
-fromAsSeq (AsSeq _ seq)		= Just seq
+fromAsSeq (AsSeq _ _ seq)	= Just seq
 fromAsSeq _			= Nothing
+
+getSeqNumber			:: AbstractSet -> Int
+getSeqNumber (AsSeq _ i _)	= i
 
 fromAsSeq'			:: AbstractSet -> [AbstractSet]
 fromAsSeq' as			= fromMaybe [as] $ fromAsSeq as
@@ -339,14 +343,14 @@ fromAsSeq' as			= fromMaybe [as] $ fromAsSeq as
 overAsName	:: (Name -> Name) -> AbstractSet -> AbstractSet
 overAsName f (EveryPossible gen n tn)
 		= EveryPossible gen (f n) tn
-overAsName f (ConcreteLiteral gen n)
-		= ConcreteLiteral gen $ f n
+overAsName f (ConcreteLiteral gen s)
+		= ConcreteLiteral gen s	-- Literals don't have a name!
 overAsName f (ConcreteIdentifier gen n)
 		= ConcreteIdentifier gen $ f n
 overAsName f (ConcreteInt gen n)
 		= ConcreteInt gen $ f n
-overAsName f (AsSeq gen ass)
-		= ass |> overAsName f & AsSeq gen
+overAsName f (AsSeq gen i ass)
+		= ass |> overAsName f & AsSeq gen i
 
 
 getAsName	:: AbstractSet -> Maybe Name
@@ -358,7 +362,7 @@ getAsName (ConcreteIdentifier _ n)
 		= Just n
 getAsName (ConcreteInt _ n)
 		= Just n
-getAsName (AsSeq _ _)		
+getAsName (AsSeq _ _ _)		
 		= Nothing
 
 
@@ -368,7 +372,7 @@ instance SimplyTyped AbstractSet where
 	typeOf (ConcreteLiteral gen _)		= gen
 	typeOf (ConcreteIdentifier gen _)	= gen
 	typeOf (ConcreteInt gen _)		= gen
-	typeOf (AsSeq gen _)			= gen
+	typeOf (AsSeq gen _ _)			= gen
 
 generatorOf		:: AbstractSet -> TypeName
 generatorOf (EveryPossible gen _ _)	= gen
@@ -386,8 +390,8 @@ overGenerator f (ConcreteIdentifier gen n)
 		= ConcreteIdentifier (f gen) n
 overGenerator f (ConcreteInt gen n)
 		= ConcreteInt (f gen) n
-overGenerator f (AsSeq gen ass)
-		= ass |> overGenerator f & AsSeq (f gen)
+overGenerator f (AsSeq gen i ass)
+		= ass |> overGenerator f & AsSeq (f gen) i
 
 
 
@@ -396,7 +400,7 @@ overGenerator f (AsSeq gen ass)
 
 getAsAt		:: AbstractSet -> Path -> AbstractSet
 getAsAt as []	= as
-getAsAt (AsSeq mi orig) (i:rest)
+getAsAt (AsSeq _ _ orig) (i:rest)
  | length orig <= i
 	= error $ "Invalid getAsAt path: index "++show i++" to big for " ++toParsable' " " orig
  | otherwise
@@ -409,13 +413,13 @@ getAsAt rest path
 
 replaceAS	:: AbstractSet -> Path -> AbstractSet -> AbstractSet
 replaceAS _ [] toPlace	= toPlace
-replaceAS (AsSeq mi orig) (i:rest) toPlace
+replaceAS (AsSeq gen choice orig) (i:rest) toPlace
  | length orig <= i
 	= error $ "Invalid substitution path: index "++show i++" to big for " ++toParsable' " " orig
  | otherwise
 	= let	(init, head:tail)	= splitAt i orig
 		head'		= replaceAS head rest toPlace in
-		(init ++ (head':tail)) & AsSeq mi
+		(init ++ (head':tail)) & AsSeq gen choice
 replaceAS rest path toReplace
 	= error $ "Invalid substitution path: not a sequence, but trying to execute the path "++show path++" on " ++toParsable rest
 
@@ -427,7 +431,7 @@ replaceAS rest path toReplace
 containsRuleAS	:: [TypeName] -> AbstractSet -> Bool
 containsRuleAS tns (EveryPossible _ _ tn)
 		= tn `elem` tns
-containsRuleAS tns (AsSeq _ seqs)
+containsRuleAS tns (AsSeq _ _ seqs)
 		= any (containsRuleAS tns) seqs
 containsRuleAS _ _	= False
 
@@ -446,8 +450,8 @@ containsRuleAS _ _	= False
 instance Refactorable TypeName AbstractSet where
 	refactor ftn (EveryPossible gen n tn)
 			= EveryPossible (ftn gen) n (ftn tn)
-	refactor ftn (AsSeq gen seq)
-			= seq |> refactor ftn & AsSeq (ftn gen) 
+	refactor ftn (AsSeq gen i seq)
+			= seq |> refactor ftn & AsSeq (ftn gen) i
 	refactor ftn as	= overGenerator ftn as
 
 
@@ -456,13 +460,13 @@ instance ToString AbstractSet where
 	toParsable (ConcreteLiteral _ s)	= show s
 	toParsable (ConcreteIdentifier _ nm)	= "Identifier"
 	toParsable (ConcreteInt _ nm)		= "Number"
-	toParsable (AsSeq _ ass)		= ass |> toParsable & unwords & inParens
+	toParsable (AsSeq _ _ ass)		= ass |> toParsable & unwords & inParens
 	
 	toCoParsable as@(EveryPossible _ n tp)		= tp++n
 	toCoParsable as@(ConcreteLiteral _ s)		= show s ++ _to as
 	toCoParsable as@(ConcreteIdentifier _ nm)	= "Identifier"++nm ++ _to as
 	toCoParsable as@(ConcreteInt _ nm)		= "Number"++nm ++ _to as
-	toCoParsable as@(AsSeq _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as
+	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as
 
 
 	debug	= show

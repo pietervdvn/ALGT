@@ -11,5 +11,3 @@ And as last, the 'dynamize' and 'gradualize' options are explained in depth, as 
 
 This documentation is about version **$$version** (`$$versionmsg`), generated on $$date .
 
-
-

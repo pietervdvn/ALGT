@@ -38,7 +38,7 @@ patternMatch r (MParseTree (MIdentifier _ s1)) (ConcreteIdentifier _ n)
 	= returnE
 patternMatch r (MParseTree (PtSeq mi pts)) pt
 	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
-patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ seq2)
+patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ _ seq2)
  | length seq1 /= length seq2	= returnF $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++toParsable s2
  | otherwise			
 	= do	somePossibleMatch	<- zip seq1 seq2 |+> uncurry (patternMatch r)
@@ -99,14 +99,14 @@ searchMatches syntax neededType noExpand as@(EveryPossible _ _ t)
  | otherwise		
 	= do	as'	<- unfold syntax as
 		searchMatches syntax neededType (t:noExpand) as'
-searchMatches syntax neededType noExpand (AsSeq mi seq)
+searchMatches syntax neededType noExpand (AsSeq gen i seq)
 	= do	seq'	<- mapi seq |> (\(i, as) -> 
 				if isEveryPossible as && (typeOf as & mightContainA syntax neededType) then 
 					searchMatches syntax neededType noExpand as ||>> (|> (i:))
 					 else [(as, [])])
 				& allCombinations	:: [[ (AbstractSet, [Path]) ]]
 		let (seq'', pthss)	= unzip seq'	:: ([AbstractSet], [ [Path] ])
-		return (AsSeq mi seq'', concat pthss)
+		return (AsSeq gen i seq'', concat pthss)
 searchMatches _ _ _ _	= []
 
 		

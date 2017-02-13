@@ -90,8 +90,10 @@ _evalExpr f _ (MCall defType n builtin _)
 		= do	tp <- if builtin then return defType 
 				else checkExists n f $ "AbstractInterpreter.Data: _evalExpr: function not found: "++ n
 			return $ EveryPossible tp " (Function call - ID not retrievable)" tp
-_evalExpr f assgns (MSeq mi exprs)
-		= exprs |+> _evalExpr f assgns |> AsSeq (fst mi)
+_evalExpr f assgns (MSeq (gen, i) exprs)
+ | i < 0	= error $ "AbstractInterpreter/Assignemnt: evalExpr: invalid bnf-choice: "++show i
+ | otherwise
+		= exprs |+> _evalExpr f assgns |> AsSeq gen i
 _evalExpr f assgns (MAscription t e)
 		= do	e'	<- _evalExpr f assgns e
 			unless (typeOf e' == t) $ Left $ "Ascription of "++toParsable e++" as "++t ++ " failed"

@@ -229,7 +229,7 @@ invertRecAS nameSpecLookups as
 						& sortOn fst
 						|> snd
 		if length invertedAsSeq == 1 then invertedAsSeq
-			else return $ AsSeq (typeOf as) invertedAsSeq
+			else return $ AsSeq (typeOf as) (error $ "Inverted sequences can't be subtracted with, convert them first to BNF") invertedAsSeq
 
 
 
