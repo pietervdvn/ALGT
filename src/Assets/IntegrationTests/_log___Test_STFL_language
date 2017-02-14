@@ -3,15 +3,17 @@ Test/STFL.language
 Warning:
   While checking the totality of function "cod":
     Following calls will fall through:
-      cod("Int")
       cod("Bool")
+      cod("Int")
   While checking the totality of function "dom":
     Following calls will fall through:
-      dom("Int")
       dom("Bool")
+      dom("Int")
   While checking the totality of function "eval":
     Following calls will fall through:
       eval(("(" "\\" var ":" type "." e ")"))
   
-  While checking that the functions do have the strictest possible types:
-    "dom" can be typed as "typeL", instead of a "type"
+  While checking liveability of every clause in function "subs":
+    subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
+  
+ # Language file parsed. No action specified, see -h or --manual to specify other options

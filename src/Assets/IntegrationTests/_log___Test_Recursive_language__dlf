@@ -1,6 +1,7 @@
 Test/Recursive.language --dlf
 
-While checking the syntax::
-  Potential infinite left recursion detected in the syntax. Left cycles are:
-      expr -> expr
-  
+Error:
+  While checking the syntax::
+    Potential infinite left recursion detected in the syntax. Left cycles are:
+        expr -> expr
+    

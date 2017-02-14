@@ -3,22 +3,19 @@ Test/STFL.language Test/examples.stfl e -l -r →
 Warning:
   While checking the totality of function "cod":
     Following calls will fall through:
-      cod("Int")
       cod("Bool")
+      cod("Int")
   While checking the totality of function "dom":
     Following calls will fall through:
-      dom("Int")
       dom("Bool")
+      dom("Int")
   While checking the totality of function "eval":
     Following calls will fall through:
       eval(("(" "\\" var ":" type "." e ")"))
   
-  While checking that the functions do have the strictest possible types:
-    "dom" can be typed as "typeL", instead of a "type"
-                                                                                
- Test/examples.stfl 
-====================
-
+  While checking liveability of every clause in function "subs":
+    subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
+  
 # Could not apply relation → to relation the input True, because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:
@@ -63,14 +60,26 @@ While trying to proof that (→) is applicable to "False":
     Could not match ("(" "\\" var ":" type "." e ")") arg /= "False"
 # If True Then False Else True applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ------------------------------------ [EvalIfTrue]
 If True Then False Else True → False
+
+
+
+
 # If (If True Then False Else True) Then False Else True applied to →
 # Proof weight: 2, proof depth: 2
+
+
 ------------------------------------ [EvalIfTrue]
 If True Then False Else True → False
 -------------------------------------------------------------------------------------------------- [EvalCtx]
 If (( (If True Then False Else True) )) Then False Else True → If (( False )) Then False Else True
+
+
+
+
 # Could not apply relation → to relation the input 42, because:
 While trying to proof that (→) is applicable to "42":
   Not a single rule matched:
@@ -94,32 +103,68 @@ While trying to proof that (→) is applicable to "42":
     Could not match ("(" "\\" var ":" type "." e ")") arg /= 42
 # 1 + 2 applied to →
 # Proof weight: 3, proof depth: 2
+
+
 1 : number    2 : number
 ------------------------ [EvalPlus]
 1 + 2 → 3
+
+
+
+
 # (\f : Int -> Int . f 5) (\i : Int . i + 1) applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ---------------------------------------------------------------------------------------- [EvalLamApp]
 (( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )) → (( \ i : Int . (i + 1) )) 5
+
+
+
+
 # (True) applied to →
 # Proof weight: 1, proof depth: 1
+
+
 --------------- [EvalParens]
 ( True ) → True
+
+
+
+
 # False :: Bool applied to →
 # Proof weight: 2, proof depth: 2
+
+
 False : bool
 --------------------- [EvalAscrBool]
 False :: Bool → False
+
+
+
+
 # ( True ) applied to →
 # Proof weight: 1, proof depth: 1
+
+
 --------------- [EvalParens]
 ( True ) → True
+
+
+
+
 # (If True Then True Else True) :: Bool applied to →
 # Proof weight: 2, proof depth: 2
+
+
 ---------------------------------- [EvalIfTrue]
 If True Then True Else True → True
 ---------------------------------------------------------------- [EvalCtx]
 (( (If True Then True Else True) )) :: Bool → (( True )) :: Bool
+
+
+
+
 # Could not apply relation → to relation the input True, because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:
@@ -143,65 +188,137 @@ While trying to proof that (→) is applicable to "True":
     Could not match ("(" "\\" var ":" type "." e ")") arg /= "True"
 # (False) applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ----------------- [EvalParens]
 ( False ) → False
+
+
+
+
 # True :: Bool applied to →
 # Proof weight: 2, proof depth: 2
+
+
 True : bool
 ------------------- [EvalAscrBool]
 True :: Bool → True
+
+
+
+
 # If True Then 42 Else 43 applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ---------------------------- [EvalIfTrue]
 If True Then 42 Else 43 → 42
+
+
+
+
 # If False Then 23 Else 44 applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ----------------------------- [EvalIfFalse]
 If False Then 23 Else 44 → 44
+
+
+
+
 # 5 + 6 applied to →
 # Proof weight: 3, proof depth: 2
+
+
 5 : number    6 : number
 ------------------------ [EvalPlus]
 5 + 6 → 11
+
+
+
+
 # 5 + 6 + 7 applied to →
 # Proof weight: 4, proof depth: 3
+
+
 6 : number    7 : number
 ------------------------ [EvalPlus]
 6 + 7 → 13
 ------------------------- [EvalCtx]
 5 + (6 + 7) → 5 + 13
+
+
+
+
 # (\x : Int . x + 1) 5 applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ----------------------------------- [EvalLamApp]
 (( \ x : Int . (x + 1) )) 5 → 5 + 1
+
+
+
+
 # If (If True Then False Else True) Then 123456 Else 42 applied to →
 # Proof weight: 2, proof depth: 2
+
+
 ------------------------------------ [EvalIfTrue]
 If True Then False Else True → False
 ------------------------------------------------------------------------------------------------ [EvalCtx]
 If (( (If True Then False Else True) )) Then 123456 Else 42 → If (( False )) Then 123456 Else 42
+
+
+
+
 # 5 + (6 + 7) applied to →
 # Proof weight: 4, proof depth: 3
+
+
 6 : number    7 : number
 ------------------------ [EvalPlus]
 6 + 7 → 13
 ------------------------- [EvalCtx]
 5 + (( (6 + 7) )) → 5 + (( 13 ))
+
+
+
+
 # (5 + 6) + (7 + 8) applied to →
 # Proof weight: 4, proof depth: 3
+
+
 5 : number    6 : number
 ------------------------ [EvalPlus]
 5 + 6 → 11
 -------------------------------------------------------- [EvalCtx]
 (( (5 + 6) )) + (( (7 + 8) )) → (( 11 )) + (( (7 + 8) ))
+
+
+
+
 # 5 + (6 + (7 + 8)) applied to →
 # Proof weight: 4, proof depth: 3
+
+
 7 : number    8 : number
 ------------------------ [EvalPlus]
 7 + 8 → 15
 -------------------------------------------------------- [EvalCtx]
 5 + (( (6 + (( (7 + 8) ))) )) → 5 + (( (6 + (( 15 ))) ))
+
+
+
+
 # (\x : Int . x + 1) True applied to →
 # Proof weight: 1, proof depth: 1
+
+
 ----------------------------------------- [EvalLamApp]
 (( \ x : Int . (x + 1) )) True → True + 1
+
+
+
+

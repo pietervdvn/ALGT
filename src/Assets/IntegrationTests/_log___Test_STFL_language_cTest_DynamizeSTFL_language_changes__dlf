@@ -3,18 +3,20 @@ Test/STFL.language -c Test/DynamizeSTFL.language-changes --dlf
 Warning:
   While checking the totality of function "cod":
     Following calls will fall through:
-      cod("Int")
       cod("Bool")
+      cod("Int")
   While checking the totality of function "dom":
     Following calls will fall through:
-      dom("Int")
       dom("Bool")
+      dom("Int")
   While checking the totality of function "eval":
     Following calls will fall through:
+      eval("TYPE ERROR")
       eval(("(" "\\" var ":" type "." e ")"))
   
-  While checking that the functions do have the strictest possible types:
-    "dom" can be typed as "typeL", instead of a "type"
+  While checking liveability of every clause in function "subs":
+    subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
+  
 
   Dynamized STFL 
  ****************
@@ -69,7 +71,7 @@ var	 -> "identifier"
 ===========
 
 cod                      : type -> type
-cod("(" T ")")           = "(" cod(T) ")"
+cod("(" T ")")           = cod(T)
 cod(T1 "->" T2)          = T2
 
 
@@ -81,7 +83,7 @@ defaultValue("(" t ")")  = defaultValue(t)
 
 
 dom                      : type -> type
-dom("(" T ")")           = "(" dom(T) ")"
+dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
 
 
