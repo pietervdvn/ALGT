@@ -28,16 +28,16 @@ Now, let's define these functions!
 
 We add a new header to _STFL.language_:
 
-$$STFL.language![30..32]!indent
+$$STFL.language![30..32]!file
 
 In this function section, we can define the function _dom_ in the following way:
 
-$$STFL.language!indent!34
-$$STFL.language!indent!37
+$$STFL.language!34!file
+$$STFL.language!37!file
 
 So, what is going on here? Let's first take a look to the first line:
 
-$$STFL.language!indent!34
+$$STFL.language!34!file
 
 The `domain` is the name of the function. The `type -> type` indicates what syntactic form is taken as input (a `type`) before the `->` and what is given as output (again a `type`). [^ISMETA]
 
@@ -51,7 +51,7 @@ The `domain` is the name of the function. The `type -> type` indicates what synt
 
 Let's have look at the body of the function:
 
-$$STFL.language!indent!37
+$$STFL.language!37!file
 
 
 ![Pattern matching in action](TypeTrees0annot.png)

@@ -1,0 +1,12 @@
+ 
+ STFL 
+******
+
+# A Simply Typed Functional Language
+
+ Syntax
+========
+
+bool	::= "True" | "False"
+expr	::= "If" bool "Then" bool "Else" bool
+	| bool

@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 module PureMain where
 
 import TypeSystem
@@ -60,7 +59,7 @@ mainPure args
 		ts		<- parseTypeSystem tsContents (Just $ tsFile args)
 					& first show & liftEith
 		changedTs	<- foldM mainChange ts (changeFiles args)
-		check   changedTs & liftEith
+		check   changedTs & inMsg "Error" & liftEith
 		checkTS changedTs & isolateCheck
 
 		mainPureOn args changedTs
@@ -70,11 +69,11 @@ mainPure args
 mainPureOn	:: Args -> TypeSystem -> PureIO ()
 mainPureOn args ts
       = [ ioIf' dumpTS			$ putStrLn $ toParsable' (24::Int) ts
-	, (\args -> 			  exampleFiles args 	     |+> mainExFilePure   ts & void)
+	, \args -> 			  exampleFiles args 	     |+> mainExFilePure ts   & void
 	, ioIf' interpretAbstract	$ (get tsFunctions ts & keys |+> runFuncAbstract  ts & void)
-	, (\args ->			  interpretFunctionAbs args  |+> runFuncAbstract  ts & void)
-	, ioIf' interpretRulesAbstract	$ (get tsRules ts & M.toList |+> runRuleAbstract  ts & void)
-	, (\args -> 			  interpretRules args	     |+> runRuleAbstract' ts & void)
+	, \args ->			  interpretFunctionAbs args  |+> runFuncAbstract  ts & void
+	, ioIf' interpretRulesAbstract	$ abstractRuleSyntax (isJust $ iraSVG args) ts
+	, \args -> 			  interpretRules args	     |+> runRuleAbstract' ts & void
 	, ioIfJust' subtypingSVG	$ saveSubtypingSVG (get tsSyntax ts)
 	, ioIfJust' iraSVG		$ saveSubtypingSVG (analyzeRelations ts & get raSyntax)
 	, ioIf' (not . actionSpecified)	$ putStrLn " # Language file parsed. No action specified, see -h or --manual to specify other options"
@@ -125,7 +124,9 @@ runFuncAbstract ts name
 
 saveSubtypingSVG:: Syntax -> Name -> PureIO ()
 saveSubtypingSVG s fp
-	= s & latticeAsSVG svgColors & writeFile fp
+	= let	fp'	= if ".svg" `L.isSuffixOf` fp then fp else fp ++ ".svg"
+		in
+		s & latticeAsSVG svgColors & writeFile fp'
 
 
 
@@ -154,10 +155,11 @@ mainChange ts filepath
 
 mainExFilePure	:: TypeSystem -> ExampleFile -> PureIO [(String, ParseTree)]
 mainExFilePure ts args
-	= do	let path	= fileName args
+	= isolateFailure [] $ 
+	  do	let path	= fileName args
 		contents	<- readFile path
 		let inputs	= (if lineByLine args then filter (/= "") . lines else (:[])) contents
-		parsed		<- inputs |> parseWith path ts (parser args) & allRight & liftEith
+		parsed		<- inputs |> parseWith path ts (parser args) |+> liftEith
 		let parsed'	= zip inputs parsed
 		handleExampleFile ts (parser args) args parsed'
 		return parsed'
@@ -184,7 +186,7 @@ handleExampleFile ts parsedWith exFile pts
 		, ioIf' testAllProps 	$ testAllProperties (verbose exFile) ts parsedWith pts
 		, ioIfJust' ptSvg	$ renderParseTree `onAll` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
-					$ (pts |+> printDebug & void)
+					(pts |+> printDebug & void)
 		] |+> (exFile &) & void
 
 
@@ -264,7 +266,8 @@ printDebug (inp, pt)
 
 renderParseTree	:: Name -> (Int, ParseTree) -> PureIO ()
 renderParseTree nm (i, pt)
-	= do 	let fileName	= nm ++ "." ++ show i ++ ".svg"
+	= do 	let nm'		= if ".svg" `L.isSuffixOf` nm then nm & reverse & drop 4 & reverse else nm
+		let fileName	= nm' ++"_"++ show i ++ ".svg"
 		let conts	=  parseTreeSVG 1 svgColors pt
 		writeFile fileName conts
 

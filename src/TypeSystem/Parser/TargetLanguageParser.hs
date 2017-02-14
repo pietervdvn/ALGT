@@ -6,6 +6,7 @@ This module interprets a BNF-AST datastructure to parse the target language to a
 
 import Utils.Utils
 import TypeSystem.Parser.ParsingUtils
+import TypeSystem.Parser.BNFParser (bnfLiteral)
 
 import Control.Arrow ((&&&))
 
@@ -55,6 +56,14 @@ parsePart _ tp _ Identifier
 		= identifier |> MIdentifier tp
 parsePart _ tp _ Number
 		= number |> MInt tp
+parsePart _ tp _ Lower
+		= oneOf lowers |> (:[]) |> MLiteral tp
+parsePart _ tp _ Upper
+		= oneOf uppers |> (:[]) |> MLiteral tp
+parsePart _ tp _ Digit
+		= oneOf digits |> (:[]) |> MLiteral tp
+parsePart _ tp _ String
+		= bnfLiteral |> MLiteral tp
 parsePart rules tp wsMode (BNFSeq [bnf])
 		= parsePart rules tp wsMode bnf
 parsePart rules tp wsMode (BNFSeq (bnf:bnfs))

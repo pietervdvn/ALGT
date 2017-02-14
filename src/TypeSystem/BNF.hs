@@ -19,6 +19,10 @@ import Data.Maybe
 
 data BNF 	= Literal String	-- Literally parse 'String'
 		| Identifier		-- Parse an identifier
+		| Lower			-- Lowercase letter
+		| Upper
+		| Digit
+		| String		-- Double-quote delimited string
 		| Number		-- Parse a number
 		| BNFRuleCall Name	-- Parse the rule with the given name
 		| BNFSeq [BNF]	-- Sequence of parts
@@ -112,6 +116,9 @@ toStr			:: (BNF -> String) -> BNF -> String
 toStr _ (Literal str)	= show str
 toStr _ Identifier	= "Identifier"
 toStr _ Number		= "Number"
+toStr _ Lower		= "Lower"
+toStr _ Upper		= "Upper"
+toStr _ String		= "String"
 toStr _ (BNFRuleCall n)	= n
 toStr f (BNFSeq asts)	= asts |> f & unwords
 

@@ -8,17 +8,30 @@
 
 A language is defined in a `.language`-file. It starts (optionally) with a title:
 
-	 Language Name
-	***************
+\begin{lstlisting}
+
+ Language Name
+***************
+
+\end{lstlisting}
 
 Comments start with a `#` and can appear quasi everywhere.
 
-        # This is a comment
+\begin{lstlisting}
+
+# This is a comment
+\end{lstlisting}
 
 Syntax, functions, relations, ... are all defined in their own sections:
 
-	 Syntax
-	========
+
+\begin{lstlisting}
+
+ Syntax
+========
+
+\end{lstlisting}
+
 
 A section header starts with an upper case, is underlined with `=` and followed by a blank line.
 
@@ -29,13 +42,18 @@ A section header starts with an upper case, is underlined with `=` and followed 
 
 All syntax is defined in the `Syntax` section. It consists out of `BNF`-rules, of the form
 
-	name	::= "literal" | choice | seq1 seq2
+\begin{lstlisting}
+name	::= "literal" | choice | seq1 seq2
 
+\end{lstlisting}
 
 Choices might be written on multiple lines, as long as at least one tab precedes them:
 
-	name	::= choice1 | choice2
-		| choice3
+\begin{lstlisting}
+name	::= choice1 | choice2
+	| choice3
+
+\end{lstlisting}
 
 ### Literals
 
@@ -53,9 +71,11 @@ $$builtinEscapes
 Rules are parsed __left to right__, in other words, choices are tried in order. No backtracking happens when a choice is made; the parser is a _recursive descent parser_.
 This has two drawbacks: left recursion results in an infinite loop and the ordering of choices does matter.
 
-	expr	::= int | int "+" int	# Doesn't work
-	expr	::= int "+" int | int	# Correct
-	expr	::= expr "+" int	# Left recursion, error message.
+\begin{lstlisting}
+expr	::= int | int "+" int	# Doesn't work
+expr	::= int "+" int | int	# Correct
+expr	::= expr "+" int	# Left recursion, error message.
+\end{lstlisting}
 
 
 ### Builtin syntactic forms

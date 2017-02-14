@@ -356,13 +356,13 @@ overAsName f (AsSeq gen i ass)
 getAsName	:: AbstractSet -> Maybe Name
 getAsName (EveryPossible _ n _)
 		= Just n
-getAsName (ConcreteLiteral{})
+getAsName ConcreteLiteral{}
 		= Nothing
 getAsName (ConcreteIdentifier _ n)
 		= Just n
 getAsName (ConcreteInt _ n)
 		= Just n
-getAsName (AsSeq{})		
+getAsName AsSeq{}	
 		= Nothing
 
 

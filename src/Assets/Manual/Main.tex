@@ -1,6 +1,6 @@
 \documentclass{article}
 \usepackage{hyperref}
-
+\usepackage{listings}
 
 % For pandoc
 \providecommand{\tightlist}{%
@@ -8,21 +8,42 @@
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{color}
+
+\definecolor{gray}{rgb}{0.9,0.9,0.9}
+\definecolor{black}{rgb}{0,0,0}
+\definecolor{white}{rgb}{1,1,1}
+
+\lstset{
+  backgroundcolor=\color{gray},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  basicstyle=\footnotesize\ttfamily,
+  frame=l
+}
+
+\lstdefinestyle{terminal}{
+  basicstyle=\footnotesize\ttfamily\color{white},
+  backgroundcolor=\color{black},
+  frame=single
+}
+
 
 
 \begin{document}
 
+\title{ALGT - The manual}
+\author{Pieter Vander Vennet}
+\date{}
+\maketitle
 
-
-% \tableofcontents
-% \input{0Introduction.tex}
-% \input{1Overview.tex}
+\tableofcontents
+\input{0Introduction.tex}
+\input{1Overview.tex}
 \input{2.0Tut-Intro.tex}
 \input{2.1Tut-Syntax.tex}
 \input{2Tutorial.tex}
-% \input{3ReferenceManual.tex}
-% \input{4Concepts.tex}
-% \input{5Gradualization.tex}
+\input{3ReferenceManual.tex}
+\input{4Concepts.tex}
+\input{5Gradualization.tex}
 
 \end{document}
 

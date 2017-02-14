@@ -4,7 +4,6 @@ module Utils.ManualPreprocessor where
 
 import System.Directory
 import System.Process
-
 import System.IO.Unsafe
 
 import Utils.Utils
@@ -32,6 +31,7 @@ import qualified TypeSystem.Parser.BNFParser as BNFParser
 import qualified TypeSystem.Parser.ParsingUtils as ParsingUtils
 
 import Control.Arrow
+import Control.Monad
 
 import Control.Concurrent
 import Debug.Trace
@@ -100,58 +100,96 @@ verbatim str	= "`" ++ str ++ "`"
 
 
 
-genArg		:: Map String String -> String -> Either String (String, Map String String)
+genArg		:: Map String String -> String -> IO (String, Map String String)
 genArg vars ('$':'$':str)
 	= do	let (name, (action, _))
 				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
 					|> options
-		value		<- checkExists name vars ("No variable $$"++name)
+		value		<- checkExists name vars ("No variable $$"++name) & either fail return
 		return (name, M.singleton name $ action value)
 genArg _ str
 	= return (str, M.empty)
 
 
+genArgs		:: Map String String -> String -> IO ([String], Map String String)
+genArgs vars str
+	= str & words |+> genArg vars |> unzip ||>> M.unions
 
-preprocess	:: Map String String -> String -> Either String String
-preprocess _ []	= return ""
-preprocess vars ('$':'$':'(':str)
+
+
+preprocess	:: (FilePath -> FilePath) -> Map String String -> String -> IO String
+preprocess _ _ []	= return ""
+preprocess target vars ('$':'$':'(':str)
 	= do	let (args, (action, rest))
 				= break (==')') str 
 					|> tail
 					|> options
 		
-		(args', input)	<- args & words |> genArg vars & allRight |> unzip
+		(args', input)	<- genArgs vars args
 		let (_, Just parsedArgs)
 				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor tests") args'
 		
 
 		let output	= mainPure parsedArgs
-					& runPureOutput (M.unions input)
+					& runPureOutput input
 					& removeCarriageReturns
 					& get stdOut & unlines
 
-		rest'	<- preprocess vars rest
-		return (action output ++ rest')
-preprocess vars ('$':'$':str)
+		rest'	<- preprocess target vars rest
+		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\\end{lstlisting}"
+		return (output & action & wrapFile ++ rest')
+preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
+	= do	let (args, (action, rest))
+				= break (==')') str 
+					|> tail
+					|> options
+		
+		(args', input)	<- genArgs vars args
+		let (_, Just parsedArgs)
+				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor svgs") args'
+
+		let output	= mainPure parsedArgs
+					& runPure input
+					& inMsg ("While generating the svg with "++args)
+					& either error snd
+		
+		let svgs	= output & get files
+					& M.toList
+		svgs |+> (\(n, v) -> 
+			do	fileExists	<- doesFileExist n
+				unless fileExists $ writeFile (destination n) v
+				putStrLn $ if fileExists then "Already exists " ++ destination n else  "Saved "++destination n
+				)
+		let dropExt s	= if ".svg" `isSuffixOf` s then s & reverse & drop 4 & reverse else error $ "File without svg extension: "++s
+		let named	= svgs |> fst |> (\n -> "("++ dropExt n++".png)") & concat
+
+		rest'	<- preprocess destination vars rest
+		return (action named ++ rest')
+
+preprocess target vars ('$':'$':str)
 	= do	let (name, (action, rest))
 				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
 					|> options
-		value		<- checkExists name vars ("No variable $$"++name)
-		rest'		<- preprocess vars rest
+		value		<- checkExists name vars ("No variable $$"++name) & either error return
+		rest'		<- preprocess target vars rest
 		return (action value ++ rest')
-preprocess vars (ch:str)
-	= do	rest	<- preprocess vars str
+preprocess target vars (ch:str)
+	= do	rest	<- preprocess target vars str
 		return $ ch:rest
 
 
 options	:: String -> (String -> String, String)
-
 options ('!':'i':'n':'d':'e':'n':'t':rest)
 	= let	(action, rest')	= options rest
 		in
 		(\str -> str & action & lines |> ("        "++) & intercalate "\n", rest')
+options('!':'f':'i':'l':'e':rest)
+	= let	(action, rest')	= options rest
+		wrapFile str	= "\\begin{lstlisting}\n"++str++"\\end{lstlisting}\n"
+		in
+		(\str -> str & wrapFile & action, rest')
 options ('!':rest)
-	= let	(option, str)	= span (`elem` "0123456789[].") rest
+	= let	(option, str)	= span (`elem` "0123456789[].,") rest
 		pt	= parse (parseSyntax optionsSyntax "option") "Assets/Manual/Options.language" option
 				& either (error . show) id
 		action	= matchOptionBody pt
@@ -162,6 +200,11 @@ options str
 
 
 matchOptionBody	:: ParseTree -> String -> String
+matchOptionBody (PtSeq _ [body, MLiteral _ ",", body']) str
+	= let	action	= matchOptionBody body
+		action'	= matchOptionBody body'
+		in
+		action str ++ "\n" ++ action' str
 matchOptionBody (PtSeq _ [parO, MInt _ i, MLiteral _ "..", MInt _ j, parC]) str
 	= let	i'	= if inclusivePar parO then i-1 else i
 		j'	= if not $ inclusivePar parC then j else j-1
@@ -187,22 +230,26 @@ inclusivePar (MLiteral _ "]")	= False
 
 
 
-preprocessTo	:: FilePath -> FilePath -> IO ()
-preprocessTo inp outp
+preprocessTo	:: FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
+preprocessTo inp destination svgDestination
 	= do	str		<- readFile inp
 		vars		<- buildVariablesIO
 		putStr $ "Processing "++inp++"..."
-		let str'	= preprocess vars str & either error id
-		writeFile outp str'
-		putStrLn $ "\rProcessed "++inp++" and saved it as "++outp
+		str'		<- preprocess svgDestination vars str
+		writeFile (destination inp) str'
+		putStrLn $ "\rProcessed "++inp++" and saved it as "++destination inp
 
-preprocessDir	:: FilePath -> (FilePath -> FilePath) -> IO ()
-preprocessDir fp destination
+
+preprocessDir	:: FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
+preprocessDir fp destination svgDestination
 	= do	contents	<- dirConts fp
 		let contents'	= contents & filter (".md" `isSuffixOf`)
-		contents' |+> (\fp -> preprocessTo fp (destination fp))
+		contents' |+> (\fp -> preprocessTo fp destination svgDestination)
 		pass		 
 
+outputFile'	:: FilePath -> FilePath -> FilePath
+outputFile' path name
+	= path++".bin/"++name
 
 
 outputFile	:: FilePath -> FilePath
@@ -213,14 +260,16 @@ outputFile fp
 
 autoPreprocess	:: IO ()
 autoPreprocess
-	= do	preprocessDir "src/Assets/Manual" outputFile
+	= do	preprocessDir "src/Assets/Manual" outputFile (outputFile' "src/Assets/Manual/")
 		runCommand "src/Assets/Manual/build.sh"
 		pass
 
 contentsChanged	:: FilePath -> IO (Map FilePath UTCTime)
 contentsChanged fp
 	= do	files	<- dirConts fp
-		files |> (id &&& getModificationTime) |+> sndEffect
+		files 	& filter (not . (".bin" `isInfixOf`))
+			& filter (not . ("ALGT_Manual.pdf" `isSuffixOf`))
+			|> (id &&& getModificationTime) |+> sndEffect
 			|> M.fromList
 
 

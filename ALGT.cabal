@@ -75,6 +75,11 @@ executable ALGT
         Utils.Utils
         Utils.XML
         Utils.ManualPreprocessor
+        AbstractInterpreter.ASSubtract
+        Utils.PureIO
+        Utils.Tests
+        Utils.UnificationTest
+        Utils.Version
 
 
 

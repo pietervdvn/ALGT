@@ -8,5 +8,6 @@
 
 line		::= Number
 par		::= "[" | "]"
-optionBody	::= par line ".." par | par line ".." line par | line 
-option		//= optionBody | "indent" 
+optionBody	::= par line ".." par | par line ".." line par | line
+commaOptBody	::= optionBody "," commaOptBody | optionBody
+option		//= commaOptBody | "indent" 
