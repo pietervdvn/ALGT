@@ -5,6 +5,7 @@ import Utils.Test
 import Utils.Tests
 import Utils.CreateAssets as M
 import Utils.ArgumentParser
+import Utils.PureIO hiding (writeFile, putStrLn)
 
 import Utils.Utils
 import Utils.Version (version)
@@ -36,7 +37,6 @@ import Utils.ManualPreprocessor
 main	:: IO ()
 main	= do	args	<- getArgs
 		main' args
-		return ()
 
 
 main'	:: [String] -> IO ()
@@ -52,6 +52,8 @@ main' args
 			when (isNothing parsedArgs) $
 				error  "No typesystem file given. See -h"
 			let (Just parsedArgs')	= parsedArgs
-			runIO' parsedArgs' (mainArgs parsedArgs')
-			pass
+			runIO' parsedArgs' (mainPure parsedArgs')
+
+
+
 

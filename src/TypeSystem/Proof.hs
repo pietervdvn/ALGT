@@ -123,3 +123,15 @@ showProofWith opts (Proof concl proverRule predicates)
 		line'	= line ++ name
 		in
 		(preds ++ [line', concl'])
+
+
+
+showProofWithDepth		:: String -> Symbol -> Either String Proof -> String
+showProofWithDepth input relation (Left str)	
+	= ["# Could not apply relation "++relation++" to relation the input "++input++", because:",str] & unlines
+showProofWithDepth input relation (Right proof)
+	= ["# "++input++" applied to "++relation
+		,"# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) 
+		, ""
+		, ""
+		, toParsable proof, "", "", ""] & unlines

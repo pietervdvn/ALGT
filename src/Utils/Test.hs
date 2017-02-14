@@ -3,6 +3,7 @@ module Utils.Test (runTest, recreateTest, testAll, testFast, recreateAllTests, r
 import Utils.Utils
 import Utils.ArgumentParser
 import PureMain
+import Utils.PureIO hiding (writeFile, readFile, putStrLn)
 
 import Assets (allAssets)
 import Utils.CreateAssets
@@ -63,7 +64,9 @@ runTest		:: [String] -> IO Output
 runTest args
 	= do	(_, Just parsedArgs)
 				<- parseArgs ([-1::Int], "Integration tests") args
-		let output	= mainArgs parsedArgs defaultInput |> snd & isolateFailure
+		let output
+			= mainPure parsedArgs
+				& runPureOutput defaultInput
 		return $ removeCarriageReturns output
 
 recreateAllTests	
@@ -87,7 +90,7 @@ createTestResult (i, args)
 		output	<- runTest args
 		let log	= get stdOut output & unlines
 		writeFile (directoryFor args) (show output)
-		get files output |+> (\(fp, contents) -> writeFile ("src/Assets/IntegrationTests/"++fp) contents)
+		get files output & M.toList |+> (\(fp, contents) -> writeFile ("src/Assets/IntegrationTests/"++fp) contents)
 		writeFile (directoryFor $ "log___":args) (unwords args ++"\n\n"++ log)
 
 getTestResult		:: [String] -> IO Output

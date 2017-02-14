@@ -227,7 +227,7 @@ onHead f (a:as)	= f a : as
 -- Replaces each element of origs by a choice of pointwise. If a pointwise is empty, the original element is returned
 replacePointwise	:: [a] -> [[a]] -> [[a]]
 replacePointwise origs pointwise
-	= do	i	<- [0..length pointwise -1]
+	= do	i	<- [0..length origs -1]
 		ai'	<- pointwise !! i
 		return $ replaceN i ai' origs
 

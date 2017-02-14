@@ -1,4 +1,4 @@
-module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..),  getConfig, writeConfig, removeConfig)where
+module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..),  getConfig, writeConfig, removeConfig, actionSpecified)where
 
 {-
 This module defines parsing of the arguments and reading/writing of the config file
@@ -6,6 +6,7 @@ This module defines parsing of the arguments and reading/writing of the config f
 
 import TypeSystem
 import Utils.Utils
+import Utils.PureIO hiding (writeFile, readFile, putStrLn)
 
 import Data.Monoid ((<>))
 import Data.List (intercalate)
@@ -34,9 +35,9 @@ headerText v
 		= "Automated Language Generation Tool (version "++ showVersion v ++" )"
 
 
-class NeedsFiles a where
-	filesNeeded	:: a -> [FilePath]
-	
+class ActionSpecified a where
+	actionSpecified	:: a -> Bool
+
 
 data MainArgs	= MainArgs 
 			{ showVersionNr	:: Bool
@@ -45,26 +46,39 @@ data MainArgs	= MainArgs
 			, runTests	:: Bool
 			}
 
+instance ActionSpecified MainArgs where
+	actionSpecified args
+		= [realArgs] |> (args &) |> isJust & or
+			|| [showVersionNr, manual, runTests] |> (args &) & or
+
 data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
-			, changeFile		:: [FilePath]
-			, dumbTS		:: Bool
+			, changeFiles		:: [FilePath]
+			, dumpTS		:: Bool
 			, interpretAbstract	:: Bool
+			, interpretFunctionAbs	:: [String]
 			, interpretRulesAbstract:: Bool
 			, interpretRules	:: [String]
+			, subtypingSVG		:: Maybe String
 			, iraSVG		:: Maybe String
-			, createSVG		:: Maybe String
 			}
 	deriving (Show)
-instance NeedsFiles Args where
-	filesNeeded args	= tsFile args : (changeFile args ++ (exampleFiles args >>= filesNeeded))
 
+instance NeedsFiles Args where
+	filesNeeded args	= tsFile args : (changeFiles args ++ (exampleFiles args >>= filesNeeded))
+
+instance ActionSpecified Args where
+	actionSpecified args
+		= [interpretFunctionAbs, interpretRules] 		|> (args &) |> (not . null) & or
+		  	|| [exampleFiles]				|> (args &) |> (not . null) & or
+			|| [subtypingSVG, iraSVG] 			|> (args &) |> isJust & or
+			|| [dumpTS, interpretAbstract, interpretRulesAbstract]	|> (args &) & or
 
 data ExampleFile	= ExFileArgs
 	{ fileName	:: FilePath
 	, parser	:: Name
 	, lineByLine	:: Bool
-	, symbol	:: Maybe Symbol
+	, ruleSymbol	:: Maybe Symbol
 	, function	:: Maybe Name
 	, stepByStep	:: Maybe Name
 	, testProp	:: Maybe Name
@@ -72,6 +86,13 @@ data ExampleFile	= ExFileArgs
 	, verbose	:: Bool
 	, ptSvg		:: Maybe Name
 	} deriving (Show)
+
+
+instance ActionSpecified ExampleFile where
+	actionSpecified args
+		= [testAllProps] |> (args &) & or
+			|| ([ruleSymbol, function, stepByStep, testProp, ptSvg] |> (args &) |> isJust & or)
+
 	
 instance NeedsFiles ExampleFile where
 	filesNeeded exfile	= [fileName exfile]
@@ -210,6 +231,11 @@ args	= Args <$> argument str
 			(long "interpret-abstractly"
 			<> long "ia"
 			<> help "Interpret each function over all possible values")
+		<*> many (strOption
+			(metavar "FUNCTION-TO-INTERPRET"
+			<> long "ifa"
+			<> long "interpret-function-abstract"
+			<> help "Interpret a single function abstractly"))
 		<*> switch
 			(long "interpret-rules-abstractly"
 			<> long "ira"
@@ -221,12 +247,12 @@ args	= Args <$> argument str
 			<> help "Only run this rule abstractly"))
 		<*> optional (strOption
 			(metavar "SVG-PATH"
-			<> long "irasvg"
-			<> help "Create a SVG of the subset relationship between BNF-rules of the rules"))
-		<*> optional (strOption
-			(metavar "SVG-PATH"
 			<> long "lsvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules"))
+		<*> optional (strOption
+			(metavar "SVG-PATH"
+			<> long "irasvg"
+			<> help "Create a SVG of the subset relationship between BNF-rules, created by the abstract rule analysises"))
 		
 
 mainArgs	:: Parser MainArgs

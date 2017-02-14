@@ -10,6 +10,7 @@ import System.IO.Unsafe
 import Utils.Utils
 import Utils.ArgumentParser
 import Utils.ToString
+import Utils.PureIO hiding (writeFile, readFile, putStrLn)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.List
@@ -55,6 +56,8 @@ buildVariables
 		& fromMaybe (error "BUG in manualpreprocessor: no Identifier regex for builtin")
 		& snd)
 	] & M.fromList 
+
+
 
 
 
@@ -122,8 +125,8 @@ preprocess vars ('$':'$':'(':str)
 				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor tests") args'
 		
 
-		let output	= mainArgs parsedArgs (M.unions input) |> snd 
-					& isolateFailure
+		let output	= mainPure parsedArgs
+					& runPureOutput (M.unions input)
 					& removeCarriageReturns
 					& get stdOut & unlines
 
