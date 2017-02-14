@@ -28,6 +28,9 @@ import Lens.Micro.TH
 
 import Debug.Trace
 
+
+-------------------------------------------- TYPENAMESPEC ---------------------------------------------
+
 data TypeNameSpec	= TypeNameSpec 
 	{ _tnsSuper	:: TypeName
 	, _tnsSymb	:: Symbol
@@ -48,6 +51,9 @@ ruleNameFor (TypeNameSpec tn symbol mode i isPositive)
 		baseName & (if isPositive then id else ("!"++))
 
 
+
+
+-------------------------------------------- RELATIONANALYSIS DATA DEF ---------------------------------------------
 
 data RelationAnalysis	= RelationAnalysis
 	{ _raSyntax	:: Syntax	-- New syntax, with somewhat changed subtyping relationships!
@@ -70,24 +76,28 @@ emptyRA syntax
 		= RelationAnalysis syntax M.empty M.empty M.empty []
 
 
+-------------------------------------------- ANALYSIS ---------------------------------------------
+
+
 analyzeRelations	:: TypeSystem -> RelationAnalysis
 analyzeRelations ts 	= createRuleSyntax ts 
 				& calculateInverses ts
 
+-------------------------------------------- INVERSION CALCULATION ---------------------------------------------
 
 
 calculateInverses	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
 calculateInverses ts ra	
 	=  let 	introduced	= get raIntroduced ra
-		subtractions	= subtractsTo $ M.keys introduced
+		subtractions	= subtractsTo $ M.keys introduced	-- { e - (e)(→)in0 = !(e)(→)in0, ... }
 		tnss		= M.keys introduced
-
 		
 		ra'	= ra	& prepForInverses ts tnss
 				& chain (tnss |> addInverseFor subtractions)
+				-- & filterTrivial ts
 				& rebuildSubtypings' ts
 				-- & refoldIntro ts
-				& rebuildSubtypings' ts
+				-- & rebuildSubtypings' ts
 		in ra'
 
 prepForInverses		:: TypeSystem -> [TypeNameSpec] -> RelationAnalysis -> RelationAnalysis
@@ -107,8 +117,6 @@ addInverseFor subtractions tns ra
 		in
 		ra	& over raIntroduced (M.insert newSpec forms)
 			& over raNegativeRaw (M.insert newSpec extraForms)
-			& over raSyntax (\syntax -> 
-				syntax 	& addTNS newSpec)
 
 
 subtractsTo		:: [TypeNameSpec] -> Map (TypeName, TypeName) TypeName
@@ -128,16 +136,26 @@ inverseFor subtractions ra posNameSpec
 						& catMaybes 
 						& any (`elem` rec)		:: Bool
 
-		all		= (derivedFrom & generateAbstractSet s "" & (:[]) >>= unfold s)
-		(allRec, allClass)
-				= all & partition doesContainRec
-		posAll		= ruleNameFor posNameSpec & generateAbstractSet s "" & (:[]) >>= unfold s
+		all		= derivedFrom & generateAbstractSet s "" & unfold s
+		posAll		= ruleNameFor posNameSpec & generateAbstractSet s "" & unfold s
 		(posRec, posClass)
 				= posAll & partition doesContainRec
 		negsClass	= subtractAll s all posClass
 		negs		= subtractAllWith s subtractions negsClass posRec
+
+		show'		= toCoParsable' "\n\t | "
+		debugMsg	= ["Calculating inverse:"
+					, toParsable negNameSpec
+					, "All:      "++show' all
+					, "PosRec:   "++show' posRec
+					, "PosClass: "++show' posClass
+					, "NegClass: "++show' negsClass
+					, "negs:     "++show' negs
+					] & unlines
+
 		in
-		(negNameSpec, negs, negs)
+		trace debugMsg
+			(negNameSpec, negs, negs)
 
 
 
@@ -229,7 +247,7 @@ invertRecAS nameSpecLookups as
 						& sortOn fst
 						|> snd
 		if length invertedAsSeq == 1 then invertedAsSeq
-			else return $ AsSeq (typeOf as) (error $ "Inverted sequences can't be subtracted with, convert them first to BNF") invertedAsSeq
+			else return $ AsSeq (typeOf as) (error "Inverted sequences can't be subtracted with, convert them first to BNF") invertedAsSeq
 
 
 

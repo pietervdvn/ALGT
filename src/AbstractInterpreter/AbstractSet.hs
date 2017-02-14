@@ -53,8 +53,8 @@ generateAbstractSet s n tp
 
 
 generateAbstractSet'	:: Syntax -> Name -> TypeName -> (Int, BNF) -> AbstractSet
-generateAbstractSet' s n tp bnf
-			= _generateAbstractSet s tp n bnf
+generateAbstractSet' s n tp
+			= _generateAbstractSet s tp n
 
 
 
@@ -225,7 +225,7 @@ foldGroup syntax revTable ass
 	-- All 'details' have been erased, and the entire group has the same structure
 	-- In other words, all are a sequence with only differences on one point 
  | otherwise	= do	let allSame	= ass |> (typeOf &&& getSeqNumber) & nub & length & (==1)
-			unless allSame $ error $ "foldGroup: weird combination, not all types and choices are the same"
+			unless allSame $ error "foldGroup: weird combination, not all types and choices are the same"
 			let tp		= typeOf $ head ass
 			let choice	= getSeqNumber $ head ass
 			let seqqed	= ass 	|> fromAsSeq & catMaybes & transpose
@@ -356,13 +356,13 @@ overAsName f (AsSeq gen i ass)
 getAsName	:: AbstractSet -> Maybe Name
 getAsName (EveryPossible _ n _)
 		= Just n
-getAsName (ConcreteLiteral _ _)
+getAsName (ConcreteLiteral{})
 		= Nothing
 getAsName (ConcreteIdentifier _ n)
 		= Just n
 getAsName (ConcreteInt _ n)
 		= Just n
-getAsName (AsSeq _ _ _)		
+getAsName (AsSeq{})		
 		= Nothing
 
 
@@ -466,11 +466,11 @@ instance ToString AbstractSet where
 	toCoParsable as@(ConcreteLiteral _ s)		= show s ++ _to as
 	toCoParsable as@(ConcreteIdentifier _ nm)	= "Identifier"++nm ++ _to as
 	toCoParsable as@(ConcreteInt _ nm)		= "Number"++nm ++ _to as
-	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as
+	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as ++ "(gen: "++generatorOf as++"/"++show (getSeqNumber as)++")"
 
 
 	debug	= show
-_to as	= " : "++typeOf as
+_to as	= "::"++typeOf as
 
 
 

@@ -15,7 +15,8 @@ import Data.Map (Map, member, (!))
 
 import qualified Data.Map as M
 
-import Debug.Trace
+
+
 
 
 
@@ -55,7 +56,7 @@ subtractArg s args minus
 -------------------------------------------------------- Actual subtraction algorithm  ----------------------------------------------------
 
 
-{- Given abstract sets, removes the second from this set
+{- Given abstract sets, removes the second from this setXxX
 e.g.
 
 a	::= "x" | "y" | b
@@ -88,13 +89,13 @@ _subtract s k e@EveryPossible{} emin	-- e is no subset of emin, emin is (at most
  	= do	e'	<- unfold s e
 		_subtract' s k e' emin
 _subtract s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin)
- | gen == genMin && choice == choiceMin
-	= do	let diffPoints	= ((get bnf s ! gen) !! choice)
-					& fromSeq'
+	-- If the bnf-choice generating it is the same, then we roll! We should lookup, for the case of an identical choice in different rules
+ | getPrototype s gen choice == getPrototype s genMin choiceMin
+	= do	let diffPoints	= getPrototype s gen choice
 					|> isRuleCall	:: [Bool]
 		-- Only where rulecalls are in the prototype, we can subtract. The rest should be the same anyway
 		let subbedSeq'	=  zip3 diffPoints seq seqMin
-					|> (\(isDiffPoint, e', eMin') -> if isDiffPoint then _subtract' s k e' eMin' else [e']) 
+					|> (\(isDiffPoint, e', eMin') -> if isDiffPoint then _subtract' s k e' eMin' else []) 
 					:: [[AbstractSet]]
 		seq'		<- replacePointwise seq subbedSeq'	:: [[AbstractSet]]
 		return $ AsSeq gen choice seq'
@@ -105,6 +106,12 @@ _subtract s k e eMin
 		= [e]	-- only concrete values/seqs are left. These should be totally equal to be able to subtract... but these are already filtered by _subtract'
 
 
+	
+
+getPrototype	:: Syntax -> TypeName -> Int -> [BNF]
+getPrototype s tn choice
+	= let 	bnfseq	= fromSeq' $ (get bnf s ! tn) !! choice in
+		bnfseq |> (\bnf -> if isRuleCall bnf then BNFRuleCall "" else bnf)
 
 {-
 
@@ -144,11 +151,14 @@ isSubsetOf _ concreteSub concreteSuper
 	-- At this point, only concrete values are left. (Literals, Identifiers and Int's, or perhaps a single AsSeq)
 	= sameStructure concreteSub concreteSuper
 		
-{-
-
-a	::= "a"
-
-isSubsetOf a "a" = True
 
 
--}
+
+
+
+------------------------ TESTS ------------------------
+
+
+
+
+
