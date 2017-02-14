@@ -121,7 +121,7 @@ typeSystemFile fp
 				nls
 				header "Syntax"
 				nls1
-				many (try (nls >> bnfRule)) 
+				many (try (nls >> parseBnfRule)) 
 
 		syntax	<- makeSyntax bnfs & either error return
 

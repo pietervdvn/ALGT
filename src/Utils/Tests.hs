@@ -6,42 +6,88 @@ This module defines some tests
 
 import TypeSystem
 import Utils.Utils
-import Utils.TypeSystemToString
+
 import Utils.ToString
-import Utils.Test
 
 import Data.Map hiding (null)
+import qualified Data.Map as M
 import Data.Either
+import Data.List
 
+import TypeSystem.Parser.BNFParser
 import Control.Monad
 
-import Utils.CreateAssets
+import Text.Parsec
+
+import AssetsHelper
 
 import qualified Utils.UnificationTest as UnificationTest
 
-
-stflSyntax = BNFRules $ fromList [("bool",[Literal "True",Literal "False"]),("e",[BNFSeq [BNFRuleCall "eL",Literal "+",BNFRuleCall "e"],BNFSeq [BNFRuleCall "eL",Literal "::",BNFRuleCall "type"],BNFSeq [BNFRuleCall "eL",BNFRuleCall "e"],BNFRuleCall "eL"]),("eL",[BNFRuleCall "number",BNFRuleCall "bool",BNFRuleCall "var",BNFSeq [Literal "(",Literal "\\",BNFRuleCall "var",Literal ":",BNFRuleCall "type",Literal ".",BNFRuleCall "e",Literal ")"],BNFSeq [Literal "If",BNFRuleCall "e",Literal "Then",BNFRuleCall "e",Literal "Else",BNFRuleCall "e"],BNFSeq [Literal "(",BNFRuleCall "e",Literal ")"]]),("number",[Number]),("type",[BNFSeq [BNFRuleCall "typeL",Literal "->",BNFRuleCall "type"],BNFRuleCall "typeL"]),("typeL",[Literal "Int",Literal "Bool",BNFSeq [Literal "(",BNFRuleCall "type",Literal ")"]]),("typing",[BNFSeq [BNFRuleCall "var",Literal "::",BNFRuleCall "type"]]),("typingContext",[BNFSeq [BNFRuleCall "typing",Literal ",",BNFRuleCall "typingContext"],Literal ";"]),("var",[Identifier])]
-
-
-
-testSyntax = BNFRules $ fromList [("a", [BNFRuleCall "b"])
-			, ("b", [Literal "b"])]
+import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.ASSubtract as AS
 
 
+subTestSynt   = [ "bool ::= \"True\" | \"False\""
+		, "number ::= \"0\""
+		, "val ::= bool | number"
+		, "type ::= \"Bool\" | \"Int\""
+		, "ascr ::= val \"::\" type"
+		, "expr ::= \"If\" expr \"Then\" expr | val"
+		] |> parse parseBnfRule "integration tests" |> either (error . show) id
+		& makeSyntax
+		& either error id
+
+
+ascr		= generateAbstractSet subTestSynt "" "ascr"
+val		= generateAbstractSet subTestSynt "" "val"
+bool		= generateAbstractSet subTestSynt "" "bool"
+expr		= generateAbstractSet subTestSynt "" "expr"
+
+boolT		= ConcreteLiteral "type" "Bool"
+boolAscr	= AsSeq "ascr" 0 [bool, ConcreteLiteral "ascr" "::", boolT]
+validIf		= AsSeq "expr" 0 [ConcreteLiteral "expr" "If", bool, ConcreteLiteral "expr" "Then", expr]
+
+s0		= AS.subtract subTestSynt [val] bool
+s0e		= ["number"]
+s1		= AS.subtract subTestSynt [ascr] bool
+s1e		= ["ascr"]
+s2		= AS.subtract subTestSynt [ascr] boolAscr
+s2e		= ["(number \"::\" type)","(val \"::\" \"Int\")"]
+s3		= AS.subtract subTestSynt [expr]  validIf
+s3e		= ["(\"If\" (\"If\" expr \"Then\" expr) \"Then\" expr)","(\"If\" number \"Then\" expr)","val"]
+s4		= AS.subtractWith subTestSynt (M.singleton ("expr", "val") "ascr") [expr] val 
+s4e		= ["ascr"]
 
 
 
-t0	= guard (alwaysIsA testSyntax "a" "b")
+stests	= [(s0, s0e), (s1, s1e), (s2, s2e), (s3, s3e), (s4, s4e)]
+
+testSubs	= stests |> uncurry testS
+
+testS s sexp	= s |> toParsable & sort == sort sexp
+
+
+
+testSyntax = makeSyntax	[ ("a", ([BNFRuleCall "b"], IgnoreWS))
+			, ("b", ([Literal "b"] , IgnoreWS))
+			] & either error id
+
+
+
+t0	= guard (not $ alwaysIsA testSyntax "a" "b")
 t1	= guard (alwaysIsA testSyntax "b" "a")
 t2	= guard (alwaysIsA stflSyntax "typeL" "type")
 t3	= guard (not $ alwaysIsA stflSyntax "type" "typeL")
-t4	= unless UnificationTest.tests $ Left "Unification tests failed"
+t4	= UnificationTest.tests |> inMsg "Unificationtests" & allRight_
 
 f0	= Left ()
 
 
 f	= [f0] & rights & null & flip (assert Left) "Some failer went wrong"
 
-tests	= [f, t0,t1, t2, t3, t4] & allRight_
+unitTest= [f, t0,t1, t2, t3, t4, guard (and testSubs)] & allRight_
 
-ta	= tests
+unitTestsOK
+	= isRight unitTest
+
+

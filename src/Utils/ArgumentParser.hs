@@ -18,6 +18,9 @@ import Options.Applicative
 import System.Directory
 import System.Exit
 
+import Assets
+import qualified Data.ByteString as B
+
 
 
 
@@ -37,6 +40,7 @@ class NeedsFiles a where
 
 data MainArgs	= MainArgs 
 			{ showVersionNr	:: Bool
+			, manual	:: Bool
 			, realArgs	:: Maybe Args
 			, runTests	:: Bool
 			}
@@ -84,10 +88,14 @@ emptyConfig
 parseArgs	:: ([Int], String) -> [String] -> IO (Bool, Maybe Args)
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		MainArgs doShowVersion args runTests
+		MainArgs doShowVersion saveMan args runTests
 				<- handleParseResult result
 		when doShowVersion $ do
 			putStrLn (showVersion version)
+			exitSuccess
+		when saveMan $ do
+			B.writeFile "ALGT_Manual.pdf" _Manual_ALGT_Manual_pdf
+			putStrLn "Manual saved as ALGT_Manual.pdf"
 			exitSuccess
 		return (runTests, args)
 
@@ -227,6 +235,9 @@ mainArgs
 			(long "version"
 			<> short 'v'
 			<> help "Show the version number and text")
+		<*> switch
+			(long "manual"
+			<> help "Save the manual file (pdf) to given path")
 		<*> optional args
 		<*> switch
 			(long "test"

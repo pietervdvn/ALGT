@@ -30,4 +30,4 @@ do
 
 done
 pdflatex -halt-on-error Main.tex | sed "s/^/LATEX: /g"
-cp Main.pdf ../../../..
+cp Main.pdf ../ALGT_Manual.pdf

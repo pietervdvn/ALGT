@@ -61,7 +61,7 @@ changes' pa pb	= many $ try (nls *> ws *> change' pa pb <* ws)
 
 
 syntaxChange	:: Parser u (DefaultChange TypeName ([BNF], WSMode))
-syntaxChange   = try (bnfRule |> uncurry Override) 
+syntaxChange   = try (parseBnfRule |> uncurry Override) 
 		<|> (do	name	<- identifier
 			wsMode	<- inWs parseWSMode
 			string "..."
@@ -136,7 +136,7 @@ changesFile ts0 name
 				nls
 				header "New Syntax"
 				nls1
-				many (try (nls >> bnfRule)) 
+				many (try (nls >> parseBnfRule)) 
 
 
 		bnfCh	<- option [] $ try $ do

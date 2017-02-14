@@ -15,6 +15,14 @@ import Control.Monad
 
 
 
+import Utils.Tests
+
+
+
+
+
+
+
 testArgs      = [ ["Test/STFL.language"]
 		, ["Test/STFL.language", "--dlf"]
 		, ["Test/STFL.language", "--lsvg", "Syntax.svg"]
@@ -109,8 +117,10 @@ test skipSlow (i, args)
 			return success
 			     
 
-testAll' skip	= do	putStrLn $ "Running "++show (length testArgs)++" tests"
-			testArgs' |+> test skip
+testAll' skip	= do	putStrLn $ "Unit tests passed: "++show unitTestsOK
+			putStrLn $ "Running "++show (length testArgs)++" tests"
+			t	<- testArgs' |+> test skip
+			return $ unitTestsOK:t
 
 testAll		= testAll' False
 testFast	= testAll' True & void

@@ -1,7 +1,8 @@
-module Main (module M, main) where
+module Main (main) where
 
-import PureMain as M
-import Utils.Test as M
+import PureMain
+import Utils.Test
+import Utils.Tests
 import Utils.CreateAssets as M
 import Utils.ArgumentParser
 

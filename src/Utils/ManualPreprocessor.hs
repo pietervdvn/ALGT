@@ -52,7 +52,7 @@ buildVariables
 	, ("regexIdentifier", BNFParser.builtinSyntax 
 		|> over _1 fst
 		& lookup "Identifier" 
-		& fromMaybe (error $ "BUG in manualpreprocessor: no Identifier")
+		& fromMaybe (error "BUG in manualpreprocessor: no Identifier regex for builtin")
 		& snd)
 	] & M.fromList 
 

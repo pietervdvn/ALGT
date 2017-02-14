@@ -79,7 +79,7 @@ bnfLine	= bnfExpr' `sepBy` try (nls *> ws *>  string "|" <* ws)
 
 parseWSMode	= wsModeInfo |> fst |> uncurry prs & foldl1 (<|>)
 
-bnfRule
+parseBnfRule
 	= do	ws
 		name	<- identifier
 		ws

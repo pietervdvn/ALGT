@@ -26,3 +26,4 @@ src/Assets.hs
 src/Assets/IntegrationTests/*.FAILED
 src/Assets/Manual/.bin/*
 Main.pdf
+ALGT_Manual.pdf
