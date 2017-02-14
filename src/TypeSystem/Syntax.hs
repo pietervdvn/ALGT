@@ -23,7 +23,7 @@ import Data.Set (Set)
 import Data.Maybe
 import Data.List as L
 
-import Lens.Micro hiding ((&))
+import Lens.Micro hiding ((&), both)
 import Lens.Micro.TH
 
 import Control.Monad
@@ -65,12 +65,12 @@ getFullSyntax s
 
 fromFullSyntax	:: Map TypeName ([BNF], WSMode) -> Syntax
 fromFullSyntax dict
-	= BNFRules (dict |> fst) (dict |> snd) (dict |> fst & asLattice)
+	= BNFRules (dict |> fst) (dict |> snd) (dict |> fst & asLattice')
 
 
 rebuildSubtypings	:: Syntax -> Syntax
 rebuildSubtypings s
-		= set lattice (get bnf s & asLattice) s
+		= set lattice (get bnf s & asLattice') s
 
 fullSyntax	:: Lens' Syntax (Map TypeName ([BNF], WSMode))
 fullSyntax	= lens getFullSyntax (const fromFullSyntax)
@@ -79,7 +79,7 @@ instance Refactorable TypeName Syntax where
 	refactor ftn (BNFRules bnfs ws _)
 		= let	bnfs'	= bnfs ||>> refactor ftn & M.mapKeys ftn
 			ws'	= M.mapKeys ftn ws
-			lattice'	= asLattice bnfs'
+			lattice'	= asLattice' bnfs'
 			in
 			BNFRules bnfs' ws' lattice'
 
@@ -88,14 +88,17 @@ instance Refactorable TypeName Syntax where
 topSymbol	= ".*"
 bottomSymbol	= "ɛ"
 
-asLattice	:: Map Name [BNF] -> Lattice TypeName
+
+asLattice'	= fst . asLattice
+
+asLattice	:: Map Name [BNF] -> (Lattice TypeName, [(TypeName, TypeName)])
 asLattice syntax
 	= let	relations	= syntax ||>> fromRuleCall |> catMaybes
 					|> S.fromList & invertDict	:: Map Name (Set Name)
 		nms		= syntax & M.keys
 		topBottom	= M.fromList ((bottomSymbol, S.fromList nms): zip nms (repeat $ S.singleton topSymbol))
 		relations'	= M.unionWith S.union relations topBottom
-		in fst $ makeLattice bottomSymbol topSymbol relations' 
+		in makeLattice bottomSymbol topSymbol relations' 
 
 latticeAsSVG	:: ColorScheme -> Syntax -> String
 latticeAsSVG cs s
@@ -282,7 +285,7 @@ inline' syntax
 makeSyntax	:: [(Name, ([BNF], WSMode))] -> Either String Syntax
 makeSyntax vals
 	= do	let bnfs	= vals & M.fromList |> fst ||>> normalize
-		let bnfr	= BNFRules bnfs (M.fromList $ vals ||>> snd) (asLattice bnfs)
+		let bnfr	= BNFRules bnfs (M.fromList $ vals ||>> snd) (asLattice' bnfs)
 		checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times")
 		return bnfr
 
@@ -315,13 +318,15 @@ checkUnknownRuleCall bnfs' (n, asts)
 				assert Left (null unknowns) $ "Unknown type "++showComma unknowns
 			) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs'))
 		pass		
-			
+	
+
 
 instance Check Syntax where
 	check syntax	= inMsg "While checking the syntax:" $
 		  		allRight_ $
 					[checkLeftRecursion syntax
 					, checkAllUnique syntax
+					, checkUnneededTransitive syntax
 					] ++ (syntax & getBNF & M.toList |> check' syntax)
 
 
@@ -347,6 +352,13 @@ checkAllUnique syntax
 		duplicates |> uncurry msg |> Left & allRight_		 
 
 
+checkUnneededTransitive	:: Syntax -> Either String ()
+checkUnneededTransitive s
+	= inMsg "While checking for unneeded transitivity in the subtyping relationship" $
+	  do	let unneeded	= s & get bnf & asLattice & snd
+					& filter (both (not . (`elem` [topSymbol, bottomSymbol])))
+		let msg		= unneeded |> (\(tsup, tsub) -> "Every "++show tsub ++" is a "++show tsup++", but this is already known") & unlines & indent
+		unless (null unneeded) $ Left msg
 
 
 ---------------------------- TO STRING and other helpers ------------------------------
