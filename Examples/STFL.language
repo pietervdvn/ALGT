@@ -36,6 +36,7 @@ typing			::= var ":" type
 typingEnvironment	::= typing "," typingEnvironment | "{}"
 
 
+
  Syntax Style
 ==============
 

@@ -337,7 +337,7 @@ checkLeftRecursion bnfs
 	= do	let cycles	= leftRecursions bnfs
 		let msg cycle	= cycle & intercalate " -> "
 		let msgs	= cycles |> msg |> ("    "++) & unlines
-		assert Left (null cycles) ("Potential infinite left recursion detected in the syntax. Left cycles are:\n"++msgs)
+		assert Left (null cycles) ("Potential infinite left recursion detected in the syntax.\nLeft cycles are:\n"++msgs)
 
 
 checkAllUnique		:: Syntax -> Either String ()
@@ -360,39 +360,60 @@ checkUnneededTransitive s
 	= inMsg "While checking for unneeded transitivity in the subtyping relationship" $
 	  do	let unneeded	= s & get bnf & asLattice & snd
 					& filter (both (not . (`elem` [topSymbol, bottomSymbol])))
-		let msg		= unneeded |> (\(tsup, tsub) -> "Every "++show tsub ++" is a "++show tsup++", but this is already known. Please remove this choice.") 
+		let msg		= unneeded |> (\(tsup, tsub) -> 
+					"Every "++show tsub ++" is a "++show tsup++", but this is already known.\nPlease remove this choice.") 
 					& unlines
 		unless (null unneeded) $ Left msg
 
 
 checkDeadChoices	:: Syntax -> Either String ()
 checkDeadChoices s
-	= get bnf s & M.toList |> checkDeadChoice & allRight_
+	= get bnf s & M.toList |> checkDeadChoice s & allRight_
 
 
-checkDeadChoice	:: (Name, [BNF]) -> Either String ()
-checkDeadChoice (nm, bnfs)
+checkDeadChoice	:: Syntax -> (Name, [BNF]) -> Either String ()
+checkDeadChoice s (nm, bnfs)
 	= inMsg ("While checking for dead choices in "++nm) $ do
-		let dead	= deadChoices bnfs
-		let msgFor dead consumer
+		let dead	= deadChoices s bnfs
+		let msgFor dead killer
 				= [ "The choice '"++toParsable dead++"' will never be parsed."
-					, "The previous choice '"++toParsable consumer++"' will already consume a part of it."
+					, "The previous choice '"++toParsable killer++"' will already consume a part of it."
 					, "Swap them and you'll be fine." ] & unlines
 		let msg		= dead |> uncurry msgFor
 					& unlines
 		unless (null dead) $ Left msg 
 
 
--- TODO This check probably can a lot better and more rigorous (but this will already catch 90% of those errors, so)
-deadChoices	:: [BNF] -> [(BNF, BNF)]
-deadChoices []	= []
-deadChoices bnfs
-		= let	lst		= last bnfs & fromSeq'
-			consumers	= bnfs & init |> fromSeq' & filter (`isPrefixOf` lst)
-						|> (const lst &&& id) |> onBoth (normalize . BNFSeq)
-			rest		= deadChoices $ init bnfs
+deadChoices	:: Syntax -> [BNF] -> [(BNF, BNF)]
+deadChoices s []	= []
+deadChoices s [bnf]	= []
+deadChoices s bnfs
+		= let	victim		= last bnfs
+			killers		= bnfs & init
+						|> (getsKilledBy s victim &&& id)
+						& filter fst |> snd
+			rest		= deadChoices s $ init bnfs
 			in
-			consumers ++ rest
+			(zip (repeat victim) killers) ++ rest
+
+
+getsKilledBy	:: Syntax -> BNF -> BNF -> Bool
+getsKilledBy s victim killer
+	= let	victim'	= fromSeq' victim	-- e.g. value eL e
+		killer'	= fromSeq' killer	-- e.g. eL e
+		
+		prefixIsSub	= zip victim' killer'
+					|> uncurry (bnfAlwaysIsA s)
+					& and
+		in
+		length victim' >= length killer' && prefixIsSub	
+
+
+bnfAlwaysIsA	:: Syntax -> BNF -> BNF -> Bool
+bnfAlwaysIsA s (BNFRuleCall tpSub) (BNFRuleCall tpSup)
+		= alwaysIsA s tpSub tpSup
+bnfAlwaysIsA _ bnf0 bnf1
+		= bnf0 == bnf1
 
 
 ---------------------------- TO STRING and other helpers ------------------------------
