@@ -352,7 +352,14 @@ checkAllUnique syntax
 		
 		let msg bnf tns	="The bnf sequence "++toParsable bnf ++ " is presented as a choice in multiple rule declarations, "
 					++"namely "++showComma tns++". Please, separate them of into a new rule"
-		duplicates |> uncurry msg |> Left & allRight_		 
+		duplicates |> uncurry msg |> Left & allRight_	
+
+
+checkNoCommonSubsets	:: Syntax -> Name -> Either String ()
+checkNoCommonSubsets s ruleToCheck
+	= do	bnfs	<- checkExists ruleToCheck (get bnf s) $ "No rule with name "++ruleToCheck++" found"
+		-- TODO check this!
+		error "hi"		
 
 
 checkUnneededTransitive	:: Syntax -> Either String ()

@@ -231,3 +231,25 @@ instance ToString Expression where
 isMeta str	= "{-#" ++ str ++ "#-}"
 
 
+
+expressionExamples	:: [(Expression, String, String, String)]
+expressionExamples
+      = [ (MVar "syntactic_rule" "x", 
+		"Variable","Captures the argument as the name. If multiple are used in the same pattern, the captured arguments should be the same or the match fails.", 
+		"Recalls the parsetree associated with this variable")
+	, (_int 42, "Number", "Argument should be exactly this number", "This number")
+	, (_lit "Token", "Literal", "Argument should be exactly this string", "This string")
+	, (MCall "resultType" "func" False [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],
+		"Function call", "Don't do this", "Evaluate this function") {- TODO allow functions in pattern matches?-}
+	, (MCall "type" "func" True [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],
+		"Builtin function call", "Don't do this", "Evaluate this builtin function, let it return a `type`")
+	, (MAscription "type" $ MVar "" "expr or pattern", "Ascription", "Check that the argument is an element of `type`", "Checks that an expression is of a type. Bit useless")
+	, (MEvalContext "tn" "e" $ MVar "" "expr or pattern", "Evaluation context",
+		"Matches the parsetree with `e`, searches a subpart in it matching `pattern`", "Replugs `expr` at the same place in `e`. Only works if `e` was created with an evaluation context")
+	, (MSeq ("",0) [MVar "" "a", _lit "b", MSeq ("", 0) [MVar "" "nested"]],
+		"Sequence", "Splits the parse tree in the appropriate parts, pattern matches the subparts", "Builds the parse tree")
+	]
+
+_lit str	= MLiteral ("sr", 0) str & MParseTree
+_int i		= MInt ("sr", 0) i & MParseTree
+
