@@ -107,9 +107,10 @@ _subtract' debug s k e emin
 		 -}
 	= trace' debug "not alwaysIsA shortcut" e emin [e]
  | otherwise		
-	= let	debug'	= debug || 
+	= let	{-debug'	= debug || 
 			(toParsable e == "(\"If\" (\"(\" e \")\") \"Then\" e \"Else\" e)" && 
-				toParsable emin == "(\"If\" (e)(→)in0 \"Then\" e \"Else\" e)")
+				toParsable emin == "(\"If\" (e)(→)in0 \"Then\" e \"Else\" e)")-}
+		debug'	= debug
 		subbed	= _subtract debug' s k e emin 
 		in
 		if debug' then trace ("\n> Subtraction of "++toParsable e++" - "++toParsable emin++" gave: \n" ++ toParsable' "\n\t| " subbed)

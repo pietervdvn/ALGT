@@ -183,8 +183,7 @@ inverseFor subtractions ra posNameSpec
 					] & unlines
 
 		in
-		trace debugMsg
-			(negNameSpec, negs, negs)
+		(negNameSpec, negs, negs)
 
 
 
