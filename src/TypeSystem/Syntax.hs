@@ -1,4 +1,4 @@
- {-# LANGUAGE TemplateHaskell, FlexibleInstances, MultiParamTypeClasses #-}
+ {-# LANGUAGE TemplateHaskell, FlexibleInstances, MultiParamTypeClasses, FlexibleContexts #-}
 
 module TypeSystem.Syntax where
 
@@ -327,6 +327,7 @@ instance Check Syntax where
 		  		allRight_ $
 					[checkLeftRecursion syntax
 					, checkAllUnique syntax
+					, checkNoCommonSubsets syntax
 					, checkUnneededTransitive syntax
 					, checkDeadChoices syntax
 					] ++ (syntax & getBNF & M.toList |> check' syntax)
@@ -355,12 +356,39 @@ checkAllUnique syntax
 		duplicates |> uncurry msg |> Left & allRight_	
 
 
-checkNoCommonSubsets	:: Syntax -> Name -> Either String ()
-checkNoCommonSubsets s ruleToCheck
-	= do	bnfs	<- checkExists ruleToCheck (get bnf s) $ "No rule with name "++ruleToCheck++" found"
-		-- TODO check this!
-		error "hi"		
+getBNFSFor		:: Syntax -> Name -> Either String [BNF]
+getBNFSFor s n	= checkExists n (get bnf s) $ "No rule with name "++n++" found"
 
+
+checkNoCommonSubsets	:: Syntax -> Either String ()
+checkNoCommonSubsets s
+	= do	common	<- commonSubsets s (get bnf s & M.keys)
+		let msg n0 n1 common
+			= "Syntactic forms "++n0 ++" and "++n1++" both have a common subset of choices.\n"
+				++ "Please, separate these into a new rule.\n"
+				++ "Common choices are: "++toParsable' " | " common
+		common |> uncurry3 msg |> Left & allRight_
+
+
+commonSubsets	:: Syntax -> [Name] -> Either String [(TypeName, TypeName, [BNF])]
+commonSubsets _ []	= return []
+commonSubsets _ [nm]	= return []
+commonSubsets s (nm:nms)
+	= do	nmComm	<- nms |+> commonSubsetsBetween s nm |> catMaybes
+		rest	<- commonSubsets s nms
+		return $ nmComm ++ rest
+		
+
+commonSubsetsBetween	:: Syntax -> TypeName -> TypeName -> Either String (Maybe (TypeName, TypeName, [BNF]))
+commonSubsetsBetween s ruleToCheck against
+	= do	bnfs	<- getBNFSFor s ruleToCheck 
+		bnfs'	<- getBNFSFor s against
+		-- we check that this rule (bnfs) do not have a set in common (with more then one element)
+		let common	= L.intersect bnfs bnfs'
+		if length common > 1 then return $ Just (ruleToCheck, against, common)
+			else return Nothing
+{-			
+-}
 
 checkUnneededTransitive	:: Syntax -> Either String ()
 checkUnneededTransitive s

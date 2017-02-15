@@ -180,6 +180,10 @@ snd3 (_, b, _)	= b
 trd3		:: (a, b, c) -> c
 trd3 (_, _, c)	= c
 
+uncurry3	:: (a -> b -> c -> d) -> (a, b, c) -> d
+uncurry3 f (a, b, c)
+		= f a b c
+
 
 dropFst3		:: (a, b, c) -> (b, c)
 dropFst3 (_, b, c)	= (b, c)
