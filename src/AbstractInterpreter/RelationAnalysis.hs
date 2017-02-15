@@ -1,5 +1,7 @@
  {-# LANGUAGE TemplateHaskell, FlexibleInstances, MultiParamTypeClasses #-}
-module AbstractInterpreter.RelationAnalysis (RelationAnalysis(..), TypeNameSpec (..), raSyntax, raIntroduced, raTrivial, raNegativeRaw, analyzeRelations) where
+module AbstractInterpreter.RelationAnalysis (RelationAnalysis(..), TypeNameSpec (..), 
+		raSyntax, raIntroduced, raTrivial, raNegativeRaw, analyzeRelations,
+		tnsSuper) where
 
 {- Analysises all Rules together -}
 

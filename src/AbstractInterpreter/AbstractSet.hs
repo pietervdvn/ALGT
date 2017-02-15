@@ -262,6 +262,9 @@ toBNF (AsSeq _ _ ass)	= ass |> toBNF & BNFSeq
 
 
 
+-- TODO to Expression, use it at dynamize
+
+
 
 
 ---------------------------------------------------------- BORING UTILS ---------------------------------------------------------
@@ -343,6 +346,9 @@ getSeqNumber (AsSeq _ i _)	= i
 fromAsSeq'			:: AbstractSet -> [AbstractSet]
 fromAsSeq' as			= fromMaybe [as] $ fromAsSeq as
 
+packAsSeq			:: TypeName -> Int -> [AbstractSet] -> AbstractSet
+packAsSeq _ _ [as]		= as
+packAsSeq gen i as		= AsSeq gen i as
 
 
 -- Recursively edits all names
