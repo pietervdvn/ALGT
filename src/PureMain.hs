@@ -70,7 +70,7 @@ mainPureOn	:: Args -> TypeSystem -> PureIO ()
 mainPureOn args ts
       = [ ioIf' dumpTS			$ putStrLn $ toParsable' (24::Int) ts
 	, \args -> 			  exampleFiles args 	     |+> mainExFilePure ts   & void
-	, ioIf' interpretAbstract	$ (get tsFunctions ts & keys |+> runFuncAbstract  ts & void)
+	, ioIf' interpretAbstract	  (get tsFunctions ts & keys |+> runFuncAbstract  ts & void)
 	, \args ->			  interpretFunctionAbs args  |+> runFuncAbstract  ts & void
 	, ioIf' interpretRulesAbstract	$ abstractRuleSyntax (isJust $ iraSVG args) ts
 	, \args -> 			  interpretRules args	     |+> runRuleAbstract' ts & void
@@ -112,7 +112,7 @@ runRuleAbstract ts (s, rules)
 abstractRuleSyntax	:: Bool -> TypeSystem -> PureIO ()
 abstractRuleSyntax irasvg ts	
 	= do	putStrLn $ toParsable' ts $ analyzeRelations ts
-		unless irasvg $ putStrLn $ "# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
+		unless irasvg $ putStrLn "# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
 
 runFuncAbstract	:: TypeSystem -> Name -> PureIO ()
 runFuncAbstract ts name

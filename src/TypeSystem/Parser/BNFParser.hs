@@ -45,7 +45,7 @@ builtinSyntax	=
 	, (("Lower", Lower), ("Matches a lowercase letter", "[a-z]"))
 	, (("Upper", Upper), ("Matches an uppercase letter", "[A-Z]"))
 	, (("Digit", Digit), ("Matches an digit", "[0-9]"))
-	, (("String", String), ("Matches a double quote delimted string", "\"([^\"]|\\\"|\\\\)*\""))
+	, (("String", String), ("Matches a double quote delimted string", "\"([^\"\\]|\\\"|\\\\)*\""))
 	]
 
 

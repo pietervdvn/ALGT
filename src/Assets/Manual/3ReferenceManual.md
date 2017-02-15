@@ -72,9 +72,14 @@ Rules are parsed __left to right__, in other words, choices are tried in order. 
 This has two drawbacks: left recursion results in an infinite loop and the ordering of choices does matter.
 
 \begin{lstlisting}
-expr	::= int | int "+" int	# Doesn't work
-expr	::= int "+" int | int	# Correct
-expr	::= expr "+" int	# Left recursion, error message.
+# Left recursion, error message.
+expr	::= expr "+" int
+
+# `int` already consumes a part of `int + int`, error message
+expr	::= int | int "+" int
+
+# Correct
+expr	::= int "+" int | int
 \end{lstlisting}
 
 

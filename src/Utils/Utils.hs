@@ -197,6 +197,7 @@ unmerge3r		:: (a, (b, c)) -> (a, b, c)
 unmerge3r (a, (b, c))	= (a, b, c) 
 
 mapBoth f (a, a')	= (f a, f a')
+onBoth			= mapBoth
 
 both f (a, a')		= f a && f a'
 

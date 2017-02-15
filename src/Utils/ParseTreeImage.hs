@@ -51,8 +51,8 @@ parseTreeSVG factor cs pt
 					& M.fromList
 		connections	= get conns state
 		svg	= do	S.rect ! A.width (intValue w) ! A.height (intValue h) ! A.fill (stringValue $ get bg cs)
-				points |+> renderPoint cs
 				connections |+> uncurry (drawLineBetween cs False pointsDict)
+				points |+> renderPoint cs
 				pass
 		in 
 		packageSVG (w*factor, h*factor) (w, h) svg

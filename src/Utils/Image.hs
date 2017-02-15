@@ -119,12 +119,8 @@ annotatedDot cs under (nm, (x, y))
 		let rW	= round $ fromIntegral (fs * nml) * 0.65
 		let offsetY	= if under then fs `div` 2 else negate 2 * fs
 		unless (Text.null nm) $ do 
-			S.rect ! A.x (intValue $ x - rW `div` 2)
-				! A.y (intValue $ y + offsetY ) 
-				! A.width (intValue rW)
-				! A.height (intValue $ fs + fs `div` 2)
-				! A.fill (stringValue $ get bg cs)
-				! A.fillOpacity "0.5"
+			[(-8, "1.0"), (-6, "0.9"), (-4, "0.75"), (-3, "0.5"), (-2,"0.25"), (0, "0.1")]
+				|+> uncurry (drawRect cs (x - rW `div` 2) (y + offsetY) rW (fs + fs `div` 2) )
 			S.text_ ! A.x (intValue x)
 				! A.y (intValue $ y + fs + offsetY) 
 				! A.fontSize (intValue fs)
@@ -133,5 +129,16 @@ annotatedDot cs under (nm, (x, y))
 				! A.fill (stringValue $ get fg cs)
 				$ S.text  nm
 		S.circle ! A.r (intValue $ get dotSize cs) ! A.cx (intValue x) ! A.cy (intValue y) ! A.fill (stringValue $ get fg cs)
+
+
+drawRect	:: ColorScheme -> X -> Y -> W -> H -> Int ->  String -> S.Svg
+drawRect cs x y w h border opacity
+	= do	S.rect	! A.x 		(intValue $ x-border)
+			! A.y 		(intValue $ y-border)
+			! A.width 	(intValue $ w+2*border)
+			! A.height 	(intValue $ h+2*border)
+			! A.fill 	(stringValue $ get bg cs)
+			! A.fillOpacity	(stringValue opacity)
+			-- ! A.stroke	(stringValue "#00ff00")
 
 

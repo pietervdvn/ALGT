@@ -23,7 +23,7 @@ value	::= bool | number
 
 e	::= eL "+" e 
 	| eL "::" type 
-	| eL e 
+	| eL e
 	| eL
 
 eL	::= value 

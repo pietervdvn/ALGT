@@ -27,6 +27,7 @@ import Lens.Micro hiding ((&), both)
 import Lens.Micro.TH
 
 import Control.Monad
+import Control.Arrow ((&&&))
 
 {-Represents a syntax: the name of the rule + possible parseways -}
 data Syntax	= BNFRules 
@@ -322,11 +323,12 @@ checkUnknownRuleCall bnfs' (n, asts)
 
 
 instance Check Syntax where
-	check syntax	= inMsg "While checking the syntax:" $
+	check syntax	= inMsg "While checking the syntax" $
 		  		allRight_ $
 					[checkLeftRecursion syntax
 					, checkAllUnique syntax
 					, checkUnneededTransitive syntax
+					, checkDeadChoices syntax
 					] ++ (syntax & getBNF & M.toList |> check' syntax)
 
 
@@ -348,7 +350,8 @@ checkAllUnique syntax
 						:: [(BNF, [TypeName])]
 		let duplicates	= lookupT & filter ((<) 1 . length . snd)
 		
-		let msg bnf tns	="The bnf sequence "++toParsable bnf ++ " is presented as a choice in multiple rule declarations, namely "++showComma tns++". Please, separate them of into a new rule"
+		let msg bnf tns	="The bnf sequence "++toParsable bnf ++ " is presented as a choice in multiple rule declarations, "
+					++"namely "++showComma tns++". Please, separate them of into a new rule"
 		duplicates |> uncurry msg |> Left & allRight_		 
 
 
@@ -357,8 +360,39 @@ checkUnneededTransitive s
 	= inMsg "While checking for unneeded transitivity in the subtyping relationship" $
 	  do	let unneeded	= s & get bnf & asLattice & snd
 					& filter (both (not . (`elem` [topSymbol, bottomSymbol])))
-		let msg		= unneeded |> (\(tsup, tsub) -> "Every "++show tsub ++" is a "++show tsup++", but this is already known") & unlines & indent
+		let msg		= unneeded |> (\(tsup, tsub) -> "Every "++show tsub ++" is a "++show tsup++", but this is already known. Please remove this choice.") 
+					& unlines
 		unless (null unneeded) $ Left msg
+
+
+checkDeadChoices	:: Syntax -> Either String ()
+checkDeadChoices s
+	= get bnf s & M.toList |> checkDeadChoice & allRight_
+
+
+checkDeadChoice	:: (Name, [BNF]) -> Either String ()
+checkDeadChoice (nm, bnfs)
+	= inMsg ("While checking for dead choices in "++nm) $ do
+		let dead	= deadChoices bnfs
+		let msgFor dead consumer
+				= [ "The choice '"++toParsable dead++"' will never be parsed."
+					, "The previous choice '"++toParsable consumer++"' will already consume a part of it."
+					, "Swap them and you'll be fine." ] & unlines
+		let msg		= dead |> uncurry msgFor
+					& unlines
+		unless (null dead) $ Left msg 
+
+
+-- TODO This check probably can a lot better and more rigorous (but this will already catch 90% of those errors, so)
+deadChoices	:: [BNF] -> [(BNF, BNF)]
+deadChoices []	= []
+deadChoices bnfs
+		= let	lst		= last bnfs & fromSeq'
+			consumers	= bnfs & init |> fromSeq' & filter (`isPrefixOf` lst)
+						|> (const lst &&& id) |> onBoth (normalize . BNFSeq)
+			rest		= deadChoices $ init bnfs
+			in
+			consumers ++ rest
 
 
 ---------------------------- TO STRING and other helpers ------------------------------
