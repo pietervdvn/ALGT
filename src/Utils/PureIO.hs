@@ -46,7 +46,9 @@ emptyOutput	= Output M.empty []
 runOutput	:: Output -> IO ()
 runOutput (Output files stdOut)
 	= do	(stdOut >>= lines) |+> IO.putStrLn
-		files & M.toList |+> uncurry IO.writeFile
+		let files'	= files & M.toList
+		unless (null files') $ IO.putStrLn $ fancyString' True "" files' (files & M.keys |> ("Rendering file "++))
+		files' |+> uncurry IO.writeFile
 		pass
 
 type Input	= Map FilePath String

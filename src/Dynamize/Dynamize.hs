@@ -90,19 +90,3 @@ createRulesFor ra genConcl tns
 		let rule	= Rule ("TErr" ++ toParsable nonMatching) [] concl
 		return rule
 
-
--- TODO introduce this guy
-recursiveRule	:: Expression -> Relation -> TypeName -> Rule
-recursiveRule errExpr relation tn
-	= let	concl	= RelationMet relation [MEvalContext tn tn $ MVar tn (tn++"0"), errExpr] in
-		Rule "TErrCtx" [Needed $ RelationMet relation [MVar tn (tn++"0"), errExpr]] concl
-
-
-
-
-
-
-
-
-
-

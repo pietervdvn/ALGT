@@ -22,6 +22,7 @@ import qualified Data.Set as S
 import Data.List as L
 import Data.Maybe
 import Control.Arrow ((&&&))
+import Control.Monad
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
@@ -89,16 +90,15 @@ analyzeRelations ts 	= createRuleSyntax ts
 calculateInverses	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
 calculateInverses ts ra	
 	=  let 	introduced	= get raIntroduced ra
-		subtractions	= subtractsTo $ M.keys introduced	-- { e - (e)(→)in0 = !(e)(→)in0, ... }
 		tnss		= M.keys introduced
+		ra'		= ra	& prepForInverses ts tnss
+		-- { e - (e)(→)in0 = !(e)(→)in0, ... }
+		subtractions	= M.keys introduced & subtractsTo (get raSyntax ra')
+				--	& M.toList |> (\((e, emin), v) -> e ++ "\t- "++ emin ++"\t= "++toParsable' "" v) & unlines & error 
 		
-		ra'	= ra	& prepForInverses ts tnss
-				& chain (tnss |> addInverseFor subtractions)
-				-- & filterTrivial ts
+		in ra'		& chain (tnss |> addInverseFor subtractions)
+				& filterTrivial ts	-- includes refold
 				& rebuildSubtypings' ts
-				-- & refoldIntro ts
-				-- & rebuildSubtypings' ts
-		in ra'
 
 prepForInverses		:: TypeSystem -> [TypeNameSpec] -> RelationAnalysis -> RelationAnalysis
 prepForInverses ts tnss ra
@@ -109,7 +109,7 @@ prepForInverses ts tnss ra
 
 
 
-addInverseFor		:: Map (TypeName, TypeName) TypeName -> TypeNameSpec -> RelationAnalysis -> RelationAnalysis
+addInverseFor		:: Map (TypeName, TypeName) [AbstractSet] -> TypeNameSpec -> RelationAnalysis -> RelationAnalysis
 addInverseFor subtractions tns ra 
 	= let	inv@(newSpec, forms, extraForms)
 					= inverseFor subtractions ra tns
@@ -119,12 +119,41 @@ addInverseFor subtractions tns ra
 			& over raNegativeRaw (M.insert newSpec extraForms)
 
 
-subtractsTo		:: [TypeNameSpec] -> Map (TypeName, TypeName) TypeName
-subtractsTo tnss
-	= tnss |> ((get tnsSuper &&& ruleNameFor) &&& (ruleNameFor . invertSpec)) & M.fromList
+subtractsTo		:: Syntax -> [TypeNameSpec] -> Map (TypeName, TypeName) [AbstractSet]
+subtractsTo syntax tnss
+	= let	-- All rules from the form (e, (e)(→)in0)  --> [!(e)(→)in0]
+		baseSubs	= tnss |> ((get tnsSuper &&& ruleNameFor) &&& (ruleNameFor . invertSpec)) & M.fromList
+					|> generateAbstractSet syntax "" |> (:[])
+		-- All rules of the form (eL, (e)(→)in0 -->  [] xor [!(eL)(→)in0]), where eL is every subtype of e
+		-- If (eL)(→)in0 is an element of (e)(→)in0, then [!(eL)(→)in0] is given, [] otherwise
+		subRules	= (tnss >>= subtractsToSubrule syntax) & M.fromList
+		in M.union baseSubs subRules
 
 
-inverseFor		:: Map (TypeName, TypeName) TypeName -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet], [AbstractSet])
+subtractsToSubrule	:: Syntax -> TypeNameSpec -> [((TypeName, TypeName), [AbstractSet])]
+subtractsToSubrule s tns
+	= do	subtype		<- allSubsetsOf (get lattice s) (get tnsSuper tns) & S.toList
+		guard (subtype /= bottomSymbol)
+		let tnsSub	= tns & set tnsSuper subtype
+
+		{-
+		e	::= ...
+			| eL
+
+		(e)(→)	::= ...
+			| (eL)(→)
+
+		If this is the case, eL - (e)(→) = !(e)(→)
+		If this is not the case, eL - (e)(→) = eL. It's thus no use adding it to the subtractsTo
+
+		-}
+		let isContained	= alwaysIsA s (ruleNameFor tnsSub) (ruleNameFor tns)
+		guard isContained
+		let tnsSubNeg	= invertSpec tnsSub & ruleNameFor & generateAbstractSet s ""
+		return ((subtype, ruleNameFor tns), [tnsSubNeg])
+
+
+inverseFor		:: Map (TypeName, TypeName) [AbstractSet] -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet], [AbstractSet])
 inverseFor subtractions ra posNameSpec
 	= let	s		= get raSyntax ra
 		rec		= get raIntroduced ra & M.keys |> toParsable
@@ -143,9 +172,9 @@ inverseFor subtractions ra posNameSpec
 		negsClass	= subtractAll s all posClass
 		negs		= subtractAllWith s subtractions negsClass posRec
 
-		show'		= toCoParsable' "\n\t | "
-		debugMsg	= ["Calculating inverse:"
-					, toParsable negNameSpec
+		show'		= toParsable' "\n\t | "
+		-- to use with Debug.trace
+		debugMsg	= ["Calculating inverse for "++ toParsable negNameSpec
 					, "All:      "++show' all
 					, "PosRec:   "++show' posRec
 					, "PosClass: "++show' posClass
@@ -340,7 +369,7 @@ filterTrivial ts ra
 				& refoldIntro ts
 		in
 		-- iterate until all empties are removed (removing a choice might render a rule trivial the next step)
-		if null trivialBNF && null empties then ra
+		if null trivialBNF && null empties then ra'
 			else filterTrivial ts ra' 
 
 refoldIntro	:: TypeSystem -> RelationAnalysis -> RelationAnalysis
@@ -449,21 +478,6 @@ fillHoleForArg s r (i, as)
 		let tns	= TypeNameSpec (typeOf as) symb In i True
 				& toParsable
 		return (name, generateAbstractSet s name tns)
-
-
-
-{--
-matchHoles	:: Map Relation [Name] -> AbstractConclusion -> Either String (Substitution AbstractSet)
-matchHoles assignments concl@(RelationMet r args)
-	= inMsg ("While matching the holes of "++inParens (toParsable concl)) $
-	  do	let args'	= either error id $  checkExists r assignments $ "Could not find an assignment for "++show r
-		unless (all isEveryPossible args) $ Left $ "Could not match holes, "++toParsable concl++" contains structure with input/output arguments"
-		let nms		= args |> (\(EveryPossible _ n _) -> n) 
-		zip nms args' ||>> (\t -> EveryPossible (t, -1) t t) & M.fromList & return
-
---}
-
-
 
 {-
 Creates the dictionary {Relation -> [These Rules are generated by it]}

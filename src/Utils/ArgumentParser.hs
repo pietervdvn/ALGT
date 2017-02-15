@@ -61,6 +61,7 @@ data Args = Args 	{ tsFile		:: String
 			, interpretRules	:: [String]
 			, subtypingSVG		:: Maybe String
 			, iraSVG		:: Maybe String
+			, dynamizeTS		:: Bool
 			}
 	deriving (Show)
 
@@ -253,6 +254,9 @@ args	= Args <$> argument str
 			(metavar "SVG-PATH"
 			<> long "irasvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules, created by the abstract rule analysises"))
+		<*> switch(
+			long "dynamize"
+			<> help "Create a change file that dynamizes the static relation")
 		
 
 mainArgs	:: Parser MainArgs

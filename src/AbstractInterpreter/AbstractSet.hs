@@ -75,14 +75,8 @@ _generateAbstractSet r generator n (choice, BNFSeq bnfs)
 
 
 fromExpression			:: Syntax -> Name -> Expression -> AbstractSet
-fromExpression s n (MParseTree (MLiteral mi l))
-				= ConcreteLiteral (fst mi) l
-fromExpression s n (MParseTree (MIdentifier mi _))
-				= ConcreteIdentifier (fst mi) n
-fromExpression s n (MParseTree (MInt mi _))
-				= ConcreteInt (fst mi) n
-fromExpression s n (MParseTree (PtSeq mi pts))
-				= pts |> MParseTree & MSeq mi & fromExpression s n 
+fromExpression _ n (MParseTree pt)
+				= fromParseTree n pt
 fromExpression s n (MVar tn _)	= generateAbstractSet s n tn
 fromExpression s n (MSeq (tn, i) exprs)
  | i < 0			= error $ "AbstractSet: fromexpression: invalid MSeq choice number: "++show i
@@ -94,6 +88,18 @@ fromExpression s n (MAscription _ e)
 fromExpression s n (MEvalContext tn _ _)
 				= generateAbstractSet s n tn
 
+
+
+fromParseTree			:: Name -> ParseTree -> AbstractSet
+fromParseTree _ (MLiteral mi l)
+				= ConcreteLiteral (fst mi) l
+fromParseTree n (MIdentifier mi _)
+				= ConcreteIdentifier (fst mi) n
+fromParseTree n (MInt mi _)
+				= ConcreteInt (fst mi) n
+fromParseTree n (PtSeq (gen, i) pts)
+				= mapi pts |> (\(i, pt) -> fromParseTree (n++":"++show i) pt)
+					& AsSeq gen i
 
 ---------------------------------------------- UNFOLDING ---------------------------------------------------------------
 

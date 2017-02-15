@@ -67,7 +67,7 @@ checkDeadClausesFor ts (nm, analysis)
 
 checkDeadClause	:: (Name, Function) -> ClauseAnalysis -> Either String ()
 checkDeadClause (nm, MFunction _ clauses) ca
-	= let 	isDead	= ca & get results & M.null
+	= let 	isDead	= (ca & get results & M.null)
 		clause	= clauses !! get clauseIndex ca
 		msg	= toParsable' (nm, 24::Int) clause ++ " will never match anything, as the possible arguments are already consumed"
 		in

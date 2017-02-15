@@ -387,8 +387,6 @@ commonSubsetsBetween s ruleToCheck against
 		let common	= L.intersect bnfs bnfs'
 		if length common > 1 then return $ Just (ruleToCheck, against, common)
 			else return Nothing
-{-			
--}
 
 checkUnneededTransitive	:: Syntax -> Either String ()
 checkUnneededTransitive s

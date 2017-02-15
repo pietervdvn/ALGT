@@ -55,6 +55,14 @@ buildVariables
 		& lookup "Identifier" 
 		& fromMaybe (error "BUG in manualpreprocessor: no Identifier regex for builtin")
 		& snd)
+	, ("expressionExamples", TypeSystem.expressionExamples
+			|> (\(e, n, pat, expr) -> [verbatim (toParsable e), n, expr]
+				& intercalate " | " )
+			& unlines)
+	, ("patternExamples", TypeSystem.expressionExamples
+			|> (\(e, n, pat, expr) -> [verbatim (toParsable e), pat]
+				& intercalate " | " )
+			& unlines)
 	] & M.fromList 
 
 
@@ -269,6 +277,7 @@ contentsChanged fp
 	= do	files	<- dirConts fp
 		files 	& filter (not . (".bin" `isInfixOf`))
 			& filter (not . ("ALGT_Manual.pdf" `isSuffixOf`))
+			& filter (not . ("ALGT_Manual_Focus.pdf" `isSuffixOf`))
 			|> (id &&& getModificationTime) |+> sndEffect
 			|> M.fromList
 

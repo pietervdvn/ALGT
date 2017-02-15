@@ -59,7 +59,7 @@ applyFunc ctx (nm, MFunction tp clauses) args
 
 evalClause	:: Ctx ->  [ParseTree] -> Clause -> Either String ParseTree
 evalClause ctx args (MClause pats expr)
-	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctxSyntax ctx) (const True))
+	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctxSyntax ctx) (const True))	-- TODO use lookahead here for eval contexts in functions
 		variables	<- mergeVarss variabless
 		let ctx'	= ctx {ctxVars = variables}
 		evaluate ctx' expr

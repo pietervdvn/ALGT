@@ -228,8 +228,9 @@ debugLattice show l
 
 debugSubsOf	:: (Ord a) => (a -> String) -> Lattice a -> a -> String
 debugSubsOf show l a
-	= let	subs	= subsetsOf l a & S.toList |> show |> indent & unlines
+	= let	subs	= subsetsOf l a & S.toList & filter (/= get bottom l)
+		subs'	= subs |> show |> indent & unlines
 		title	= show a ++ " has following subtypes:"
 		in
-		title++subs 
+		if null subs then "" else title++subs'
 

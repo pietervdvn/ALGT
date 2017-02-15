@@ -43,6 +43,7 @@ testArgs      = [ ["Test/STFL.language"]
 		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tp", "Progress", "--ppp" ]
 		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa", "--ppp" ]
 		, ["Test/Recursive.language", "--dlf"]
+		, ["Test/CommonSubset.language", "--dlf"]
 		] & nub
 
 

@@ -17,24 +17,32 @@ import qualified Data.Map as M
 
 
 
-
+import Debug.Trace -- TODO
 
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtract s	= subtractWith s M.empty
 
-subtractWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> AbstractSet -> [AbstractSet]
-subtractWith syntax known ass minus
+subtractWith	:: Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [AbstractSet] -> AbstractSet -> [AbstractSet]
+subtractWith
+	= _subtractWith False
+
+_subtractWith	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [AbstractSet] -> AbstractSet -> [AbstractSet]
+_subtractWith debug syntax known ass minus
 	= nub $ do	as	<- ass
-			_subtract' syntax known as minus
+			_subtract' debug syntax known as minus
+
 
 subtractAll	:: Syntax -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
 subtractAll syntax 
 		= subtractAllWith syntax M.empty
 
-subtractAllWith	:: Syntax -> Map (TypeName, TypeName) TypeName -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
-subtractAllWith syntax known ass minuses
-		= nub $ L.foldl (subtractWith syntax known) ass minuses
+subtractAllWith	:: Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
+subtractAllWith = _subtractAllWith False
+
+_subtractAllWith	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
+_subtractAllWith debug syntax known ass minuses
+		= nub $ L.foldl (_subtractWith debug syntax known) ass minuses
 
 
 subtractArgs	:: Syntax -> Arguments -> [Arguments] -> [Arguments]
@@ -69,41 +77,73 @@ subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
 
 -}
 
-_subtract'	:: Syntax -> Map (TypeName, TypeName) TypeName -> AbstractSet -> AbstractSet -> [AbstractSet]
-_subtract' s k e emin
+trace' debug msg e emin
+	= let msg'	= ">> "++msg++" with:\n"
+				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
+				++"   eL = "++toParsable emin++"\t: "++typeOf emin
+		in if debug then trace msg' else id
+
+
+_subtract'	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
+_subtract' debug s k e emin
  | isEveryPossible e && isEveryPossible emin
 	&& (typeOf e, typeOf emin) `member` k	
-			= [generateAbstractSet s "" (k ! (typeOf e, typeOf emin))]
+			= k ! (typeOf e, typeOf emin)
  | e == emin		= []
  | isSubsetOf s e emin	= []
  | not (alwaysIsA' s emin e)
 	-- the type of emin is no subset of the type of e; this means that emin can never be a part of e; implying we don't have to do anything
-			= [e]
- | otherwise		= _subtract s k e emin
+	&& ((typeOf e, typeOf emin) `M.notMember` k)
+	{- This is a special check, added for the relation analysis.
+		Normally, emin is not a subset of e, and wouldn't be able to make a dent in it.
+		However, the relation analysis duplicates choices:
+
+			eL		::= "(" e ")" | ...
+			(eL)(→)	::= "(" e ")" | ...
+		Without necessarly adding a correct subtyping relationship... However, these cases are added in the 'known subtractionslist'.
+		eL - (e)(→)	= [!(eL)(→)]	means that (e)(→) does contain (eL)(→) and subtraction is usefull
+		eL - (e)(→)	= [eL]	means that (e)(→) does *not* contain (eL)(→) (and it won't be in the known dict)
+
+		 -}
+	= trace' debug "not alwaysIsA shortcut" e emin [e]
+ | otherwise		
+	= let	debug'	= debug || 
+			(toParsable e == "(\"If\" (\"(\" e \")\") \"Then\" e \"Else\" e)" && 
+				toParsable emin == "(\"If\" (e)(→)in0 \"Then\" e \"Else\" e)")
+		subbed	= _subtract debug' s k e emin 
+		in
+		if debug' then trace ("\n> Subtraction of "++toParsable e++" - "++toParsable emin++" gave: \n" ++ toParsable' "\n\t| " subbed)
+				subbed
+			else subbed
 
 
-
-
-_subtract	:: Syntax -> Map (TypeName, TypeName) TypeName -> AbstractSet -> AbstractSet -> [AbstractSet]
-_subtract s k e@EveryPossible{} emin	-- e is no subset of emin, emin is (at most) a possible form of emin
- 	= do	e'	<- unfold s e
-		_subtract' s k e' emin
-_subtract s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin)
+_subtract	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
+_subtract debug s k e@EveryPossible{} emin	-- e is no subset of emin, emin is (at most) a possible form of emin
+ 	= trace' debug "Case 0 left everyPossible" e emin $
+	  do	e'	<- unfold s e
+		_subtract' debug s k e' emin
+_subtract debug s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin)
 	-- If the bnf-choice generating it is the same, then we roll! We should lookup, for the case of an identical choice in different rules
  | getPrototype s gen choice == getPrototype s genMin choiceMin
-	= do	let diffPoints	= getPrototype s gen choice
+	= trace' debug ("Case 1, 2 matching seqs") e emin $
+	  do	let diffPoints	= getPrototype s gen choice
 					|> isRuleCall	:: [Bool]
 		-- Only where rulecalls are in the prototype, we can subtract. The rest should be the same anyway
 		let subbedSeq'	=  zip3 diffPoints seq seqMin
-					|> (\(isDiffPoint, e', eMin') -> if isDiffPoint then _subtract' s k e' eMin' else []) 
+					|> (\(isDiffPoint, e', eMin') -> if isDiffPoint then _subtract' debug s k e' eMin' else []) 
 					:: [[AbstractSet]]
 		seq'		<- replacePointwise seq subbedSeq'	:: [[AbstractSet]]
 		return $ AsSeq gen choice seq'
- | otherwise	= [e]
-_subtract s k e eMin@EveryPossible{}
-		= [e]	-- Because not `e isSubsetOf eMin`, thus eMin can never change e
-_subtract s k e eMin
-		= [e]	-- only concrete values/seqs are left. These should be totally equal to be able to subtract... but these are already filtered by _subtract'
+ | otherwise	= trace' debug "Case 1.1: seqs no match" e emin [e]
+_subtract debug s k e emin@EveryPossible{}
+ | (typeOf e, typeOf emin) `member` k
+		= trace' debug "Case 2.0: right everyPossible no match special case" e emin $ _subtractAllWith debug s k [e] (unfold s emin)
+
+ | otherwise
+	-- Because not `e isSubsetOf eMin`, thus eMin can never change e
+		= trace' debug "Case 2: right EveryPossible no match" e emin [e]
+_subtract debug s k e emin
+		= trace' debug "Case 3: leftovers" e emin [e]	-- only concrete values/seqs are left. These should be totally equal to be able to subtract... but these are already filtered by _subtract'
 
 
 	
