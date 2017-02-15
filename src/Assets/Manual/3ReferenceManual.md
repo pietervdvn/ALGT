@@ -78,6 +78,8 @@ expr	::= expr "+" int
 # `int` already consumes a part of `int + int`, error message
 expr	::= int | int "+" int
 
+# Common part extraction, error message
+
 # Correct
 expr	::= int "+" int | int
 \end{lstlisting}
@@ -153,6 +155,54 @@ This gives rise to the following behaviour:
  Functions
 -----------
 
+### Patterns and expressions
+
+| Expr			| Name		|  As expression						
+|:----------------------|:--------------|:-------------------------------------
+$$expressionExamples
+
+| Expr				| As pattern			
+|:------------------------------|:---------------------------------------------
+$$patternExamples
+
+
+
+
+### Typechecking
+
+
+#### Equality
+
+\begin{lstlisting}
+
+ Syntax
+========
+
+a 	::= ...
+b	::= ...
+c	::= a | b | d
+
+ Functions
+===========
+
+f	: a -> b -> c
+f(x, x)	= x
+\end{lstlisting}
+
+When equality checks are used in the pattern matching, the variable will be typed as the smallest common supertype of both types.
+If such a supertype does not exist, an error message is given.
+
+Note that using a supertype might be a little _too_ loose, but won't normally happen in real-world examples.
+
+In the given example, `x` will be typed as `c`, the common super type. In this example, `x` might also be a `d`, while this is not possible for the input.
+This can be solved by splitting of `a | b` as a new rule.
+
+
+### Totality- and liveabilitychecks
+
+### Higher order functions and currying?
+
+Are not possible for now (v $$version). Perhaps in a future version or when someone really needs it and begs for it.
 
 
  Relations and Rules

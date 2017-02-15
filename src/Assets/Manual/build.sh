@@ -29,5 +29,13 @@ do
 	done
 
 done
+
+pdflatex -halt-on-error Focus.tex | sed "s/^/LATEX-FOCUS: /g"
+cp Focus.pdf ../ALGT_Manual_Focus.pdf
+
+
+
 pdflatex -halt-on-error Main.tex | sed "s/^/LATEX: /g"
 cp Main.pdf ../ALGT_Manual.pdf
+
+

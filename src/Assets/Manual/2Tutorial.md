@@ -1,8 +1,5 @@
 
 
- Functions
------------
-
 ### Domain and codomain
 
 It'll come in handy later on to be able to calculate the _domain_ and _codomain_ of a function type.
@@ -44,7 +41,6 @@ The `domain` is the name of the function. The `type -> type` indicates what synt
 ![Relevant XKCD (by Randall Munroe, #917)](hofstadter.png){width=100%}
 
 
-[^ISMETA]: You probably noticed the similarity between the types declared in our own STFL and this declaration.]
 
 
 ### Pattern matching
