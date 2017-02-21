@@ -7,20 +7,31 @@
 ================
 
 
-typeL 	::= ... | "?"
+Rename type to gtype
+Rename typeL to gtypeL
+
+gtypeL 	::= ... | "?"
 
 
 
  Function Changes
 ==================
 
-dom		: type -> type
+dom		: gtype -> gtype
 ...
 dom("?")	= "?"
 
-cod		: type -> type
+cod		: gtype -> gtype
 ...
 cod("?")	= "?"
+
+
+equate		: gtype -> gtype -> gtype
+...
+equate("?", t)	= t
+equate(t, "?")	= t
+equate(t11 "->" t12, t21 "->" t22)
+		= equate(t11, t21) "->" equate(t12, t22)
 
 
  Relation Changes
@@ -40,14 +51,16 @@ Rename (==) to (~), pronounced as "is consistent"
   T ~ "?"
 
 
+
+
 ------------------  	[EvalCastUnkown]
  e "::" "?" → e
 
  
 
- (✓) arg	(arg "::" type) → arg'
+ (✓) arg	(arg "::" gtype) → arg'
 ------------------------------------------------------------	[EvalLamApp']
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+ ("(" "\\" var ":" gtype "." e ")") arg → subs(var, arg', e)
 
 
 

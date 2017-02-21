@@ -114,6 +114,11 @@ plus		: number -> e -> number
 plus(e1, e2)	= !plus:number(e1, e2)
 
 
+equate		: type -> type -> type
+equate(T, T)	= T
+
+
+
  Relations
 ===========
 
@@ -121,7 +126,7 @@ plus(e1, e2)	= !plus:number(e1, e2)
 # one can refer to rewrite rules/functions earlier on
 
 (→)	: e (in), e (out)	Pronounced as "evaluation"
-(→*)	: e (in), e (out)	Pronounced as "big step"
+(→*)	: e (in), value (out)	Pronounced as "big step"
 (✓)	: e (in)		Pronounced as "is canonical"
 
 (⊢)	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"

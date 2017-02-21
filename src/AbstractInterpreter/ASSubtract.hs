@@ -1,4 +1,4 @@
-module AbstractInterpreter.ASSubtract (subtract, subtractWith, subtractAll, subtractAllWith, subtractArg, subtractArgs) where
+module AbstractInterpreter.ASSubtract (subtract, subtractWith, subtractAll, subtractAllWith, subtractArg, subtractArgs, _subtractAllWith) where
 
 {- This module defines `subset of` and `subtract` for abstract set, + examples against STFL-}
 
@@ -41,8 +41,14 @@ subtractAllWith	:: Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [Abstract
 subtractAllWith = _subtractAllWith False
 
 _subtractAllWith	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
-_subtractAllWith debug syntax known ass minuses
-		= nub $ L.foldl (_subtractWith debug syntax known) ass minuses
+_subtractAllWith debug syntax known ass []
+		= ass
+_subtractAllWith debug syntax known ass (minus:minuses)
+		= let	ass'	= (if debug then trace ("Subtract all with: "++toParsable' ", " ass++" - "++toParsable' ", "minuses) else id)
+					_subtractWith debug syntax known ass minus
+			in
+			_subtractAllWith debug syntax known ass' minuses
+
 
 
 subtractArgs	:: Syntax -> Arguments -> [Arguments] -> [Arguments]
@@ -80,7 +86,7 @@ subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
 trace' debug msg e emin
 	= let msg'	= ">> "++msg++" with:\n"
 				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
-				++"   eL = "++toParsable emin++"\t: "++typeOf emin
+				++"   emin = "++toParsable emin++"\t: "++typeOf emin
 		in if debug then trace msg' else id
 
 
@@ -88,9 +94,12 @@ _subtract'	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> Abstra
 _subtract' debug s k e emin
  | isEveryPossible e && isEveryPossible emin
 	&& (typeOf e, typeOf emin) `member` k	
-			= k ! (typeOf e, typeOf emin)
- | e == emin		= []
- | isSubsetOf s e emin	= []
+			= let 	result	= k ! (typeOf e, typeOf emin) in
+				trace' debug ("In the special known set, becoming: "++toParsable' " | " result) e emin $  
+					result
+ | e == emin		= trace' debug "Shortcut equality" e emin []
+ | isSubsetOf s e emin
+		= trace' debug "Shortcut isSubsetOf" e emin []
  | not (alwaysIsA' s emin e)
 	-- the type of emin is no subset of the type of e; this means that emin can never be a part of e; implying we don't have to do anything
 	&& ((typeOf e, typeOf emin) `M.notMember` k)
@@ -121,8 +130,10 @@ _subtract' debug s k e emin
 _subtract	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
 _subtract debug s k e@EveryPossible{} emin	-- e is no subset of emin, emin is (at most) a possible form of emin
  	= trace' debug "Case 0 left everyPossible" e emin $
-	  do	e'	<- unfold s e
-		_subtract' debug s k e' emin
+	  let	unfolded	= unfold s e
+		subbed		= [_subtract' debug s k e' emin | e' <- unfolded] & concat
+		-- if nothing has changed, just return [e]
+		in if unfolded == subbed then [e] else subbed
 _subtract debug s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin)
 	-- If the bnf-choice generating it is the same, then we roll! We should lookup, for the case of an identical choice in different rules
  | getPrototype s gen choice == getPrototype s genMin choiceMin
@@ -138,7 +149,8 @@ _subtract debug s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin
  | otherwise	= trace' debug "Case 1.1: seqs no match" e emin [e]
 _subtract debug s k e emin@EveryPossible{}
  | (typeOf e, typeOf emin) `member` k
-		= trace' debug "Case 2.0: right everyPossible no match special case" e emin $ _subtractAllWith debug s k [e] (unfold s emin)
+		= if head (typeOf e) == '!' then trace' True "FAILED ASSERTION" e emin $ error "ASSERTION FAILED: No negative form should be expanded"
+			else trace' debug "Case 2.0: right everyPossible no match special case" e emin $ _subtractAllWith debug s k [e] (unfold s emin)
 
  | otherwise
 	-- Because not `e isSubsetOf eMin`, thus eMin can never change e

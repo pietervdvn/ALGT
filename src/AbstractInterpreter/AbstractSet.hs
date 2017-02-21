@@ -24,6 +24,7 @@ import Data.Maybe
 
 import Control.Arrow ((&&&))
 import Control.Monad
+import Control.Monad.State hiding (get)
 
 import Lens.Micro hiding ((&))
 
@@ -262,8 +263,41 @@ toBNF (AsSeq _ _ ass)	= ass |> toBNF & BNFSeq
 
 
 
--- TODO to Expression, use it at dynamize
 
+toExpression		:: Syntax -> AbstractSet -> Expression
+toExpression s as		
+	= evalState (_toExpression s (typeOf as) (typeOf as, error "No choice number given") as) M.empty
+
+
+_toExpression		:: Syntax -> TypeName -> (TypeName, Int) -> AbstractSet -> State (Map TypeName Int) Expression
+_toExpression _ exp (genWith, _) (EveryPossible _ _ tp)
+  	= do	nm	<- _getName tp
+		let var	= MVar tp nm
+		if tp == exp then return var else
+			-- expected type is bigger than actual type: ascription
+			return $ MAscription tp $ var
+_toExpression _ _ mi (ConcreteLiteral _ str)
+	= return $ MParseTree $ MLiteral mi str
+_toExpression _ _ mi (ConcreteIdentifier genTp _)
+	= do	nm	<- _getName genTp
+		return $ MVar genTp nm
+_toExpression _ _ mi (ConcreteInt genTp _)
+	= do	nm	<- _getName genTp
+		return $ MVar genTp nm
+
+_toExpression s _ _ (AsSeq gen choice seq)
+	= do	let prototype	= (get bnf s ! gen !! choice) & fromSeq'	:: [BNF]
+		let prototypeNms	= prototype |> fromRuleCall |> fromJust	:: [TypeName]
+		zip prototypeNms seq
+			|+> (\(bnf, as) -> 
+				_toExpression s bnf (gen, choice) as)
+			|> MSeq (gen, choice)
+
+_getName		:: TypeName -> State (Map TypeName Int) Name
+_getName tn
+	= do	i	<- gets (M.findWithDefault 0 tn)
+		modify (M.insert tn (i+1))
+		return $ if i == 0 then tn else tn ++ show i
 
 
 
@@ -437,6 +471,14 @@ replaceAS rest path toReplace
 
 
 
+searchPathAS	:: (AbstractSet -> Bool) -> AbstractSet -> [Path]
+searchPathAS pred as@(AsSeq g i seq)
+	= let	rest	= mapi seq
+				>>= (\(i, as) -> searchPathAS pred as |> (i:))
+		in
+		if pred as then []:rest else rest
+searchPathAS pred as
+	= [ [] | pred as] 
 
 
 

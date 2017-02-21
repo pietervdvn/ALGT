@@ -238,14 +238,14 @@ args	= Args <$> argument str
 			<> long "interpret-function-abstract"
 			<> help "Interpret a single function abstractly"))
 		<*> switch
-			(long "interpret-rules-abstractly"
+			(long "interpret-relations-abstractly"
 			<> long "ira"
-			<> help "Interpret each rule over all possible values")
+			<> help "Interpret each relation over all possible values")
 		<*> many (strOption
-			(metavar "RULE-TO-INTERPRET"
+			(metavar "RELATION-TO-INTERPRET"
 			<> long "ir"
-			<> long "interpret-rule"
-			<> help "Only run this rule abstractly"))
+			<> long "interpret-relation"
+			<> help "Only run this relation abstractly"))
 		<*> optional (strOption
 			(metavar "SVG-PATH"
 			<> long "lsvg"

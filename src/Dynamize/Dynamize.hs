@@ -37,6 +37,7 @@ import Changer.Changes
 import Graphs.Lattice
 
 import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.ASSubtract
 import AbstractInterpreter.RelationAnalysis
 
 import Data.Map as M
@@ -49,12 +50,15 @@ import Control.Monad
 
 import Lens.Micro hiding ((&))
 
+import Debug.Trace
+
 dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> [Relation] -> Changes
 dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 		= let	syntax		= get tsSyntax ts
 			typeErrExpr	= MParseTree $ MLiteral ("",-1) typeErr
 			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule))
-			newRules	= addStuckStateRules |> calculateNewRulesFor ts rule typeErrExpr & concat
+			ra		= analyzeRelations ts
+			newRules	= addStuckStateRules |> calculateNewRulesFor ts ra rule typeErrExpr & concat & nub
 			newRules'	= addTypeErrCase |> (\rel ->
 						Rule ("Extra "++get relSymbol rel) [] $ RelationMet rel [bnfAsExpr $ Literal typeErr])
 			newRulesCh	= (newRules ++ newRules')
@@ -62,70 +66,69 @@ dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 			in
 			Changes "Dynamized" [changedSyntax] [] [] newRulesCh
 
+trace'		:: String -> [()]
+trace' msg	= pass -- trace (">> Dynamizing: "++msg) $ pass
 
 
-
-calculateNewRulesFor	:: TypeSystem -> TypeName -> Expression -> Relation -> [Rule]
-calculateNewRulesFor ts typeType typeErrExpr relation
-	= do	let syntax	= get tsSyntax ts
-		let symb	= get relSymbol relation
-		let ra		= analyzeRelations ts
-		(i, tps)	<- relation & relTypesWith In & mapi
-		tp		<- allSubsetsOf (get lattice syntax) tps & S.toList
-		let tns		= TypeNameSpec tp symb In i False
-		let genConcl bnf
-				= RelationMet relation [ bnfAsExpr bnf , typeErrExpr]
-		createRulesFor ra genConcl typeErrExpr tns
-
-
-
-createRulesFor	:: RelationAnalysis -> (BNF -> Conclusion) -> Expression -> TypeNameSpec -> [Rule]
-createRulesFor ra genConcl typeErr tns
-	= do	let syntax	= get raSyntax ra
+calculateNewRulesFor	:: TypeSystem -> RelationAnalysis -> TypeName -> Expression -> Relation -> [Rule]
+calculateNewRulesFor ts ra exprType typeErrExpr relation
+	= do	trace' $ "exprType: "++exprType++", relation to get fix stucks: "++get relSymbol relation
+		
 		let raIntro	= get raIntroduced ra
-		let recursive	= get raIntroduced ra & M.keys 
-					|> (toParsable &&& get tnsSuper)
-					& M.fromList	:: Map TypeName TypeName
-		
-		guard (tns `M.member` raIntro)
-		nonMatchingAS	<- raIntro ! tns
+		let s		= get raSyntax ra
+		let createStuckRule'
+				= createStuckRule s relation typeErrExpr
 
-		let seq		= fromAsSeq' nonMatchingAS
-		
-		let recursiveIndexes
-				= seq |> (\as ->  fromEveryPossible as |> (`M.member` recursive) & fromMaybe False)	-- is it a recursive call?
-					-- FIXME fromEveryPossible: there might be a sequence there as well, withrecursive stuff. 
-					& zip seq						-- add the originals again
-					& mapi 							-- number
-					& L.filter (snd . snd)					-- Only keep the recursive stuff					
-					|> over _2 (fromJust . fromEveryPossible . fst)		-- get the calling recursive type
-					|> over _2 (recursive !)				-- Lookup the 'original' type, what the TNS was derived of
-		
-		seq'	<- if L.null recursiveIndexes then [seq]
-					else seq & replacePoints ra recursiveIndexes typeErr
+		-- Projects derived names onto their original name, e.g. !(eL)(→)in0 --> eL; (eL)(→)in0 --> eL; ...
+		let tnsToSuper	= raIntro & M.keys |> (toParsable &&& get tnsSuper)
+					& M.fromList
 
+		-- The tns of nonmatching forms
+		let tns		= TypeNameSpec exprType (get relSymbol relation) In 0 False
 
+		trace' $ "TNS is "++toParsable tns
+		let nonMatchingASS	= (ra & get raIntroduced) ! tns
 
-		let nonMatchingAS'	= packAsSeq (generatorOf nonMatchingAS) (getSeqNumber nonMatchingAS) seq'
-
-		let nonMatchingBNF	= toBNF nonMatchingAS'
-		let rule	= Rule ("TErr "++toParsable nonMatchingAS) [] $ genConcl nonMatchingBNF
-		return rule
+		-- Subtypes of nonMatchingAS, should be substituted with "TYPE-ERR" once too (and should be expanded to create rules for too)
+		let extraForms	= nonMatchingASS |> fromEveryPossible & catMaybes
+		trace' $ "Extra forms :" ++ showComma extraForms
+		let tnsToSuper'	= M.union tnsToSuper (extraForms |> (id &&& id) & M.fromList)
 		
 
+		let extraRules	= [calculateNewRulesFor ts ra (tnsToSuper ! extraForm) typeErrExpr relation
+					| extraForm <- extraForms, extraForm `M.member` tnsToSuper] & concat
 
-replacePoints	:: RelationAnalysis -> [(Int, TypeName)] -> Expression -> [AbstractSet] -> [[AbstractSet]]
-replacePoints ra recIndexSupers typeErr seq
-	= do	let s		= get raSyntax ra
-		let seq'	= L.foldl (\sq (i, tn) -> replaceN i (generateAbstractSet s "" tn) sq) seq recIndexSupers
-		(i, _)		<- recIndexSupers
-		let seq''	= replaceN i (fromExpression s "" typeErr) seq'
-		return seq''
-			-- error $ toParsable' " " seq ++"   -->   "++ toParsable' " " seq' ++"   -->   " ++ toParsable' " " seq''
+		-- these subtypes should not be added as rules, but expanded
+		nonMatchingAS	<- subtractAll s nonMatchingASS (extraForms |> generateAbstractSet s "")
 
 
+ 		trace' $ toParsable nonMatchingAS
+		let isRecursiveCall as	= fromEveryPossible as |> (`M.member` tnsToSuper') & fromMaybe False
+		let recursivePaths	= searchPathAS isRecursiveCall nonMatchingAS
+		trace' $ show recursivePaths
+
+		if L.null recursivePaths then createStuckRule' nonMatchingAS:extraRules	-- no recursive forms, we return it 'as is'
+		else do
+			-- we replace each recursive form by it's parent, as '!(e)(→) is not a valid syntactic form
+			let nonMatchingAS'	= L.foldl (\as path -> replacePathByParent s path tnsToSuper' as) nonMatchingAS recursivePaths
+			trace' ("Non matching as subsed: "++toParsable nonMatchingAS')
+			path			<- recursivePaths
+			let nonMatching		= replaceAS nonMatchingAS' path (fromExpression s "" typeErrExpr)
+			createStuckRule' nonMatching:extraRules
+		
 
 
 
+createStuckRule	:: Syntax -> Relation -> Expression -> AbstractSet -> Rule
+createStuckRule s rel typeErr as
+	= Rule ("Type Error: "++toParsable as) [] $ RelationMet rel [toExpression s as, typeErr]
 
 
+
+replacePathByParent	:: Syntax -> Path -> Map TypeName TypeName -> AbstractSet -> AbstractSet
+replacePathByParent s p tnsToSuper as
+	= let	recName		= getAsAt as p & fromEveryPossible & fromJust	:: TypeName
+		wantedName	= tnsToSuper ! recName				:: TypeName
+		wantedAS	= generateAbstractSet s "" wantedName		:: AbstractSet
+		in
+		replaceAS as p wantedAS

@@ -157,7 +157,7 @@ editFunction syntax False nm old@(MFunction tOld clauses) new@(MFunction tNew cl
 	= do	-- check for *type equality*
 		unless (tOld == tNew) $ Left $ "Types don't match. Expected type: "++ intercalate " -> " tOld ++
 			", actual type: "++ intercalate " -> " tNew
-		return $ MFunction tNew $ clauses ++ clauses'
+		return $ MFunction tNew $ (init clauses) ++ clauses'
 		
 
 

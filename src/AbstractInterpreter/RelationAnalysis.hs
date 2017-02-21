@@ -1,6 +1,6 @@
  {-# LANGUAGE TemplateHaskell, FlexibleInstances, MultiParamTypeClasses #-}
 module AbstractInterpreter.RelationAnalysis (RelationAnalysis(..), TypeNameSpec (..), 
-		raSyntax, raIntroduced, raTrivial, raNegativeRaw, analyzeRelations,
+		raSyntax, raIntroduced, raTrivial, analyzeRelations,
 		tnsSuper) where
 
 {- Analysises all Rules together -}
@@ -64,8 +64,6 @@ data RelationAnalysis	= RelationAnalysis
 		Mapping to every possible abstract set they can be
 	-}
 	, _raIntroduced	:: Map TypeNameSpec [AbstractSet]
-	{- Syntaxes introduced, and negativated in a more raw form -}
-	, _raNegativeRaw	:: Map TypeNameSpec [AbstractSet]
 	{- Syntax rules which were introduced originally, but turned out to be another type (+ the type they turned out to be)
 	-}
 	, _raTrivial	:: Map TypeNameSpec TypeName
@@ -76,7 +74,7 @@ data RelationAnalysis	= RelationAnalysis
 makeLenses ''RelationAnalysis
 
 emptyRA syntax
-		= RelationAnalysis syntax M.empty M.empty M.empty []
+		= RelationAnalysis syntax M.empty M.empty []
 
 
 -------------------------------------------- ANALYSIS ---------------------------------------------
@@ -113,12 +111,11 @@ prepForInverses ts tnss ra
 
 addInverseFor		:: Map (TypeName, TypeName) [AbstractSet] -> TypeNameSpec -> RelationAnalysis -> RelationAnalysis
 addInverseFor subtractions tns ra 
-	= let	inv@(newSpec, forms, extraForms)
+	= let	inv@(newSpec, forms)
 					= inverseFor subtractions ra tns
 		tnss			= get raIntroduced ra & M.keys 
 		in
 		ra	& over raIntroduced (M.insert newSpec forms)
-			& over raNegativeRaw (M.insert newSpec extraForms)
 
 
 subtractsTo		:: Syntax -> [TypeNameSpec] -> Map (TypeName, TypeName) [AbstractSet]
@@ -155,7 +152,7 @@ subtractsToSubrule s tns
 		return ((subtype, ruleNameFor tns), [tnsSubNeg])
 
 
-inverseFor		:: Map (TypeName, TypeName) [AbstractSet] -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet], [AbstractSet])
+inverseFor		:: Map (TypeName, TypeName) [AbstractSet] -> RelationAnalysis -> TypeNameSpec -> (TypeNameSpec, [AbstractSet])
 inverseFor subtractions ra posNameSpec
 	= let	s		= get raSyntax ra
 		rec		= get raIntroduced ra & M.keys |> toParsable
@@ -169,24 +166,32 @@ inverseFor subtractions ra posNameSpec
 
 		all		= derivedFrom & generateAbstractSet s "" & unfold s
 		posAll		= ruleNameFor posNameSpec & generateAbstractSet s "" & unfold s
-		(posRec, posClass)
-				= posAll & partition doesContainRec
-		negsClass	= subtractAll s all posClass
-		negs		= subtractAllWith s subtractions negsClass posRec
+		(posRec', posClass)
+				= posAll & partition (\as -> doesContainRec as)
+		(posRecPure, posRec) 
+				= posRec' & partition isEveryPossible
 
+		{- Positive, pure rulecalls are done as last, to avoid expansion of !(someform), as these will be empty for the moment -}
+
+		negsClass	= subtractAll s all posClass
+		negs'		= subtractAllWith s subtractions negsClass posRec
+		negs		= subtractAllWith s subtractions negs' posRecPure
+
+		test		= _subtractAllWith True s subtractions [last negsClass] posRec
 		show'		= toParsable' "\n\t | "
 		-- to use with Debug.trace
-		debugMsg	= ["Calculating inverse for "++ toParsable negNameSpec
+		debugMsg	= ["Calculating inverse "++ toParsable negNameSpec
 					, "All:      "++show' all
 					, "PosRec:   "++show' posRec
 					, "PosClass: "++show' posClass
 					, "NegClass: "++show' negsClass
+					, "negs'     "++show' negs'
 					, "negs:     "++show' negs
 					] & unlines
 
 		in
-		(negNameSpec, negs, negs)
-
+		-- trace debugMsg
+		(negNameSpec, negs)
 
 
 
@@ -527,7 +532,7 @@ prepareSyntax ts
 		(s', intro)	= foldl (prepRelation s) (s, []) (get tsRelations ts)
 		introM		= intro |> (id &&& const []) & M.fromList
 		in
-		RelationAnalysis s' introM M.empty M.empty []
+		RelationAnalysis s' introM M.empty []
 
 prepRelation	:: Syntax -> (Syntax, [TypeNameSpec]) -> Relation -> (Syntax, [TypeNameSpec])
 prepRelation origSyntax s rel
