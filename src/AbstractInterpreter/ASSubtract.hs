@@ -1,4 +1,4 @@
-module AbstractInterpreter.ASSubtract (subtract, subtractWith, subtractAll, subtractAllWith, subtractArg, subtractArgs, _subtractAllWith) where
+module AbstractInterpreter.ASSubtract (subtract, subtractWith, subtractAll, subtractAllWith, subtractArg, subtractArgs, _subtractAllWith, _subtractWith) where
 
 {- This module defines `subset of` and `subtract` for abstract set, + examples against STFL-}
 
@@ -29,8 +29,9 @@ subtractWith
 
 _subtractWith	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 _subtractWith debug syntax known ass minus
-	= nub $ do	as	<- ass
-			_subtract' debug syntax known as minus
+	= nub $ do	as		<- ass
+			let subbed = _subtract' debug syntax known as minus
+			trace' debug ("Result: "++toParsable' ", " subbed) as minus subbed
 
 
 subtractAll	:: Syntax -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
@@ -100,21 +101,6 @@ _subtract' debug s k e emin
  | e == emin		= trace' debug "Shortcut equality" e emin []
  | isSubsetOf s e emin
 		= trace' debug "Shortcut isSubsetOf" e emin []
- | not (alwaysIsA' s emin e)
-	-- the type of emin is no subset of the type of e; this means that emin can never be a part of e; implying we don't have to do anything
-	&& ((typeOf e, typeOf emin) `M.notMember` k)
-	{- This is a special check, added for the relation analysis.
-		Normally, emin is not a subset of e, and wouldn't be able to make a dent in it.
-		However, the relation analysis duplicates choices:
-
-			eL		::= "(" e ")" | ...
-			(eL)(→)	::= "(" e ")" | ...
-		Without necessarly adding a correct subtyping relationship... However, these cases are added in the 'known subtractionslist'.
-		eL - (e)(→)	= [!(eL)(→)]	means that (e)(→) does contain (eL)(→) and subtraction is usefull
-		eL - (e)(→)	= [eL]	means that (e)(→) does *not* contain (eL)(→) (and it won't be in the known dict)
-
-		 -}
-	= trace' debug "not alwaysIsA shortcut" e emin [e]
  | otherwise		
 	= let	{-debug'	= debug || 
 			(toParsable e == "(\"If\" (\"(\" e \")\") \"Then\" e \"Else\" e)" && 
@@ -122,7 +108,7 @@ _subtract' debug s k e emin
 		debug'	= debug
 		subbed	= _subtract debug' s k e emin 
 		in
-		if debug' then trace ("\n> Subtraction of "++toParsable e++" - "++toParsable emin++" gave: \n" ++ toParsable' "\n\t| " subbed)
+		if debug' then trace ("\n> Subtraction of "++toParsable e++" - "++toParsable emin++" gave: \n | " ++ toParsable' "\n | " subbed)
 				subbed
 			else subbed
 
@@ -136,17 +122,18 @@ _subtract debug s k e@EveryPossible{} emin	-- e is no subset of emin, emin is (a
 		in if unfolded == subbed then [e] else subbed
 _subtract debug s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin)
 	-- If the bnf-choice generating it is the same, then we roll! We should lookup, for the case of an identical choice in different rules
- | getPrototype s gen choice == getPrototype s genMin choiceMin
-	= trace' debug ("Case 1, 2 matching seqs") e emin $
-	  do	let diffPoints	= getPrototype s gen choice
+ | prototypesMatch' s (gen, choice) (genMin, choiceMin)
+	= do	let diffPoints	= getPrototype s (gen, choice)	-- Don't use genMin as prototype here, it might have more literals
 					|> isRuleCall	:: [Bool]
 		-- Only where rulecalls are in the prototype, we can subtract. The rest should be the same anyway
 		let subbedSeq'	=  zip3 diffPoints seq seqMin
 					|> (\(isDiffPoint, e', eMin') -> if isDiffPoint then _subtract' debug s k e' eMin' else []) 
 					:: [[AbstractSet]]
 		seq'		<- replacePointwise seq subbedSeq'	:: [[AbstractSet]]
-		return $ AsSeq gen choice seq'
- | otherwise	= trace' debug "Case 1.1: seqs no match" e emin [e]
+		trace' debug ("Case 1, 2 matching seqs, diffpoints are "++show diffPoints) e emin $
+	  		return $ AsSeq gen choice seq'
+ | otherwise	= trace' debug ("Case 1.1: seqs no match ("++show (getPrototype s (gen, choice)) ++" /= "++show (getPrototype s (genMin, choiceMin))++ ")")
+				e emin [e]
 _subtract debug s k e emin@EveryPossible{}
  | (typeOf e, typeOf emin) `member` k
 		= if head (typeOf e) == '!' then trace' True "FAILED ASSERTION" e emin $ error "ASSERTION FAILED: No negative form should be expanded"
@@ -159,10 +146,26 @@ _subtract debug s k e emin
 		= trace' debug "Case 3: leftovers" e emin [e]	-- only concrete values/seqs are left. These should be totally equal to be able to subtract... but these are already filtered by _subtract'
 
 
+prototypesMatch'	:: Syntax -> (TypeName, Int) -> (TypeName, Int) -> Bool
+prototypesMatch' s a b
+	= prototypesMatch (getPrototype s a) (getPrototype s b)
+
+
+prototypesMatch	:: [BNF] -> [BNF] -> Bool
+prototypesMatch [] []	= True
+prototypesMatch [] _	= False
+prototypesMatch _  []	= False
+prototypesMatch (BNFRuleCall "":as) (_:bs)
+		= prototypesMatch as bs
+prototypesMatch (_:as) (BNFRuleCall "":bs)
+		= prototypesMatch as bs
+prototypesMatch (a:as) (b:bs)
+		= a == b && prototypesMatch as bs
+
 	
 
-getPrototype	:: Syntax -> TypeName -> Int -> [BNF]
-getPrototype s tn choice
+getPrototype	:: Syntax -> (TypeName, Int) -> [BNF]
+getPrototype s (tn, choice)
 	= let 	bnfseq	= fromSeq' $ (get bnf s ! tn) !! choice in
 		bnfseq |> (\bnf -> if isRuleCall bnf then BNFRuleCall "" else bnf)
 

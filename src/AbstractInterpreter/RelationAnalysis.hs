@@ -177,7 +177,7 @@ inverseFor subtractions ra posNameSpec
 		negs'		= subtractAllWith s subtractions negsClass posRec
 		negs		= subtractAllWith s subtractions negs' posRecPure
 
-		test		= _subtractAllWith True s subtractions [last negsClass] posRec
+		test		= _subtractWith True s subtractions [all !! 1] (posClass !! 1)
 		show'		= toParsable' "\n\t | "
 		-- to use with Debug.trace
 		debugMsg	= ["Calculating inverse "++ toParsable negNameSpec
@@ -187,10 +187,11 @@ inverseFor subtractions ra posNameSpec
 					, "NegClass: "++show' negsClass
 					, "negs'     "++show' negs'
 					, "negs:     "++show' negs
+					, "test:     "++show' test
 					] & unlines
 
 		in
-		-- trace debugMsg
+		trace debugMsg
 		(negNameSpec, negs)
 
 

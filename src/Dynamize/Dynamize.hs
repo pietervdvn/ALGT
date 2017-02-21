@@ -67,12 +67,12 @@ dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 			Changes "Dynamized" [changedSyntax] [] [] newRulesCh
 
 trace'		:: String -> [()]
-trace' msg	= pass -- trace (">> Dynamizing: "++msg) $ pass
+trace' msg	= {--} pass {-} trace (">> Dynamizing: "++msg) $ pass --}
 
 
 calculateNewRulesFor	:: TypeSystem -> RelationAnalysis -> TypeName -> Expression -> Relation -> [Rule]
 calculateNewRulesFor ts ra exprType typeErrExpr relation
-	= do	trace' $ "exprType: "++exprType++", relation to get fix stucks: "++get relSymbol relation
+	= do	trace' $ "exprType: "++exprType++", relation to add stuck state errs: "++get relSymbol relation
 		
 		let raIntro	= get raIntroduced ra
 		let s		= get raSyntax ra
@@ -103,18 +103,19 @@ calculateNewRulesFor ts ra exprType typeErrExpr relation
 
 
  		trace' $ toParsable nonMatchingAS
-		let isRecursiveCall as	= fromEveryPossible as |> (`M.member` tnsToSuper') & fromMaybe False
+		let isRecursiveCall as	= fromEveryPossible as |> (`M.member` tnsToSuper) & fromMaybe False
 		let recursivePaths	= searchPathAS isRecursiveCall nonMatchingAS
 		trace' $ show recursivePaths
 
 		if L.null recursivePaths then createStuckRule' nonMatchingAS:extraRules	-- no recursive forms, we return it 'as is'
 		else do
-			-- we replace each recursive form by it's parent, as '!(e)(→) is not a valid syntactic form
-			let nonMatchingAS'	= L.foldl (\as path -> replacePathByParent s path tnsToSuper' as) nonMatchingAS recursivePaths
+			let typeErrAs		= fromExpression s "" typeErrExpr
+			-- we replace **each** recursive form by "TYPE ERROR". This is because ((1 + 1) + "TYPE ERROR") _can_ be smallstepped, to 2 + "TYPE ERROR"
+			let nonMatchingAS'	= L.foldl (\as path -> replaceAS as path typeErrAs) nonMatchingAS recursivePaths
 			trace' ("Non matching as subsed: "++toParsable nonMatchingAS')
-			path			<- recursivePaths
-			let nonMatching		= replaceAS nonMatchingAS' path (fromExpression s "" typeErrExpr)
-			createStuckRule' nonMatching:extraRules
+			-- path			<- recursivePaths
+			-- let nonMatching		= replaceAS nonMatchingAS' path (fromExpression s "" typeErrExpr)
+			createStuckRule' nonMatchingAS':extraRules
 		
 
 

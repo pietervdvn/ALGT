@@ -106,9 +106,9 @@ fromParseTree n (PtSeq (gen, i) pts)
 
 
 unfold		:: Syntax -> AbstractSet ->  [AbstractSet]
-unfold r (EveryPossible _ n e)
-		= let	bnfs	= getBNF r ! e
-		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r e (n++"/"++show i) (i, bnf))
+unfold r (EveryPossible _ n tp)
+		= let	bnfs	= getBNF r ! tp
+		  	choices	= mapi bnfs |> (\(i, bnf) -> _generateAbstractSet r tp (n++"/"++show i) (i, bnf))
 		  in choices & nub
 unfold r as	= [as]
 
