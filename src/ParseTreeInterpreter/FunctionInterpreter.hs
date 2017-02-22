@@ -1,5 +1,6 @@
- {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-} 
-module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch) where
+ {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses, TemplateHaskell #-} 
+module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch, builtinFunctions
+		, BuiltinFunction, bifName, bifDescr, bifMinArgs, bifMaxArgs, bifApply) where
 
 {-
 This module defines an interpreter for functions. 
@@ -18,8 +19,68 @@ import Data.List (intercalate, intersperse)
 import Data.Bifunctor (first)
 import Data.Either
 
+import Control.Arrow ((&&&))
+
+import Lens.Micro hiding ((&))
+import Lens.Micro.TH
+
 
 type VariableAssignments	= VariableAssignmentsA ParseTree
+
+data BuiltinFunction = BuiltinFunction
+	{ _bifName	:: Name
+	, _bifDescr	:: String
+	, _bifMinArgs	:: Int
+	, _bifMaxArgs	:: Maybe Int
+	, _bifApply	:: Either ([Int] -> Int) (Ctx -> TypeName -> [ParseTree] -> Either String ParseTree)  
+	} 
+data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
+			ctxFunctions 	:: Map Name Function,
+			ctxVars	:: VariableAssignments,
+			ctxStack	:: [(Name, [ParseTree])] -- only used for errors
+			}
+buildCtx ts vars 	= Ctx (get tsSyntax ts) (get tsFunctions ts) vars []
+buildCtx' ts		= buildCtx ts M.empty
+
+makeLenses ''BuiltinFunction
+
+_builtinFunctions'
+	= builtinFunctions |> (get bifName &&& id) & M.fromList
+builtinFunctions
+      = [ BuiltinFunction "plus" "Gives a sum of all arguments (0 if none given)" 
+		0 Nothing $ Left sum
+	, BuiltinFunction "min" "Gives the first argument, minus all the other arguments"
+		1 Nothing $ Left (\(i:is) -> i - sum is)
+	, BuiltinFunction "mul" "Multiplies all the arguments. (1 if none given)"
+		0 Nothing $ Left product
+	, BuiltinFunction "div" "Gives the first argument, divided by the product of the other arguments. (Integer division, rounded down))"
+		1 Nothing $ Left (\(i:is) -> i `div` (product is))
+	, BuiltinFunction "mod" "Gives the first argument, module the product of the other arguments."
+		1 Nothing $ Left (\(i:is) -> i `mod` product is)
+	, BuiltinFunction "neg" "Gives the negation of the argument"
+		1 (Just 1) $ Left (\[i] -> -1)
+	, BuiltinFunction "equal" "Checks that all the arguments are equal. Gives 1 if so, 0 if not."
+		2 Nothing $ Right (\_ tp (e:es) -> return $ MInt (tp, 0) $ if all (e ==) es then 1 else 0)
+	, BuiltinFunction "error" "Stops the function, gives a stack trace. When used in a rule, this won't match a predicate"
+		0 Nothing $ Right (\ctx tp pts ->
+			do 	let pts'	= toParsable' ", " pts
+				let msgs	= ["In evaluating a function:", pts']
+				let stack	= ctxStack ctx |> buildStackEl
+				Left $ unlines $ stack ++ msgs)
+	, BuiltinFunction "freshvar" "Generates an identifier not present in the arguments. If the first argument is an identifier, identifiers are based on that form."
+		0 Nothing $ Right (\ctx tp (identifier:pts) -> 
+			do	let used	= (identifier:pts) >>= usedIdentifiers'	:: [Name]
+				let base	= case identifier of
+							(MIdentifier _ nm)
+								-> nm
+							expr	-> "ident"
+				let possible	= [0..] |> show |> (base ++) & filter (`notElem` used)
+				return $ MIdentifier (tp, 0) $ head possible) 
+	]
+
+
+
+
 
 evalFunc	:: TypeSystem -> Name -> [ParseTree] -> Either String ParseTree
 evalFunc ts funcName args	
@@ -34,14 +95,7 @@ evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> Either String Par
 evalExpr ts vars
 	= evaluate (buildCtx ts vars)
 
-data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
-			ctxFunctions 	:: Map Name Function,
-			ctxVars	:: VariableAssignments,
-			ctxStack	:: [(Name, [ParseTree])] -- only used for errors
-			}
 
-buildCtx ts vars 	= Ctx (get tsSyntax ts) (get tsFunctions ts) vars []
-buildCtx' ts		= buildCtx ts M.empty
 
 
 -- applies given argument to the  function. Starts by evaluating the args
@@ -151,39 +205,48 @@ depthFirstSearch matchMaker path pt	= matchMaker (pt, path)
 
 
 
-evaluate	:: Ctx -> Expression -> Either String ParseTree
-evaluate ctx (MCall tp "plus" True es)
-	= _applyIntFunction' ctx tp "plus" sum es
-evaluate ctx (MCall tp "min" True es)
-	= _applyIntFunction ctx tp "min" (1, \(i:is) -> i - sum is) es
-evaluate ctx (MCall tp "mul" True es)
-	= _applyIntFunction' ctx tp "mul" product es
-evaluate ctx (MCall tp "div" True es)
-	= _applyIntFunction ctx tp "div" (1, \(i:is) -> i `div` product is) es
-evaluate ctx (MCall tp "mod" True es)
-	= _applyIntFunction ctx tp "mod" (1, \(i:is) -> i `mod` product is) es
-
-evaluate ctx (MCall tp "neg" True es)
-	= _applyIntFunction ctx tp "neg" (1, \(i:_) -> -i) es
-
-evaluate ctx (MCall tp "equal" True es)
-	= _applyIntFunction ctx tp "equal" (2, \(i:is) -> if all (==i) is then 1 else 0) es
 
 
-evaluate ctx (MCall _ "error" True exprs)
-	= do	exprs'	<- exprs |+> evaluate ctx |> toParsable' ", "
-		let msgs	= ["In evaluating a function:", exprs']
-		let stack	= ctxStack ctx |> buildStackEl
-		Left $ unlines $ stack ++ msgs
-evaluate ctx (MCall _ "newvar" True [identifier, nonOverlap])
-	= do	evalled	<- evaluate ctx identifier
-		case evalled of
-			(MIdentifier (basetype, _) nm)
-				-> return $ unusedIdentifier nonOverlap (Just nm) basetype
-			expr	-> return $ unusedIdentifier nonOverlap Nothing (typeOf expr)
+
+
+
+
+
+
+
+
+_searchBuiltinFunction	:: Name -> Either String BuiltinFunction
+_searchBuiltinFunction nm
+	= checkExists nm _builtinFunctions' ("No builtin function with name "++nm++" found")
+
+
+_applyBuiltinFunction'	:: Ctx -> TypeName -> Name -> [Expression] -> Either String ParseTree
+_applyBuiltinFunction' ctx tn funcName es
+	= do	bif	<- _searchBuiltinFunction funcName
+		_applyBuiltinFunction ctx tn bif es
+
+
+_applyBuiltinFunction	:: Ctx -> TypeName -> BuiltinFunction -> [Expression] -> Either String ParseTree
+_applyBuiltinFunction ctx tp (BuiltinFunction funcName _ atLeastNeeded atMostNeeded f) es
+	= do	let minimumOK	= length es >= atLeastNeeded
+		let maximumOK	= atMostNeeded |> (length es <=) & fromMaybe True
+		unless minimumOK $ Left $ "Builtin integer function '!" ++ funcName++"' needs at least "++show atLeastNeeded ++" arguments"
+		unless maximumOK $ Left $ "Builtin integer function '!" ++ funcName++"' needs at most "++show (fromMaybe 0 atMostNeeded) ++" arguments"
+		f & either (_runIntFunc ctx funcName tp es)
+			(\f -> do	pts	<- es |+> evaluate ctx
+					f ctx tp pts)
+	
+_runIntFunc	:: Ctx -> Name -> TypeName -> [Expression] -> ([Int] -> Int) -> Either String ParseTree
+_runIntFunc ctx funcName tp es f
+	= do 	is	<- asInts ctx funcName es
+		return $ MInt (tp, 0) (f is)
+
 			
-evaluate ctx (MCall _ nm True args)
-	= evalErr ctx $ "unknown builtin "++nm++" for arguments: "++ toParsable' ", " args
+
+
+evaluate	:: Ctx -> Expression -> Either String ParseTree
+evaluate ctx (MCall tp nm True es)
+	= _applyBuiltinFunction' ctx tp nm es
 
 evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctxFunctions ctx
@@ -229,15 +292,6 @@ showAssgn (pt, mPath)
 evalErr		:: Ctx -> String -> Either String ParseTree
 evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
 
-
-_applyIntFunction	:: Ctx -> TypeName -> Name -> (Int, [Int] -> Int) -> [Expression] -> Either String ParseTree
-_applyIntFunction ctx tp funcName (minimumNeeded, f) es
-	= do	is	<- asInts ctx funcName es
-		when (length es < minimumNeeded) $ Left $ "Builtin integer function '!" ++ funcName++"' needs at least "++show minimumNeeded++" arguments"
-		return $ MInt (tp, 0) (f is)
-
-_applyIntFunction' ctx tp funcName f
-	= _applyIntFunction ctx tp funcName (0, f)
 asInts ctx bi exprs	
 	= exprs |+> evaluate ctx 
 		|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
@@ -246,3 +300,7 @@ asInts ctx bi exprs
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)
 	= "   In "++func++ inParens (toParsable' ", " args)
+
+
+
+
