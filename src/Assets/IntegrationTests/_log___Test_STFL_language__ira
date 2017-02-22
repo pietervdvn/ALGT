@@ -33,9 +33,7 @@ Following new types were introduced:
   (typeL)(==)in0 	(derived from typeL)
   !(typeL)(==)in1 	(derived from typeL)
   (typeL)(==)in1 	(derived from typeL)
-  !(value)(⊢)in1 	(derived from value)
   (value)(⊢)in1 	(derived from value)
-  !(value)(✓)in0 	(derived from value)
   (value)(✓)in0 	(derived from value)
 
 Following types were ommitted, as they turned out to coincide with some other type:
@@ -60,6 +58,8 @@ Following types were ommitted, as they turned out to coincide with some other ty
   (typingEnvironment)(⊢)in0 	== typingEnvironment
 
 Following types were omitted, as they turned out to be empty. They might cause 'dissapearing' choices in other rules:
+  !(value)(⊢)in1
+  !(value)(✓)in0
   (value)(::)in0
   (value)(→)in0
   (value)(→*)in0
@@ -75,26 +75,18 @@ Following types were omitted, as they turned out to be empty. They might cause '
   (var)(⊢)in1
   (var)(✓)in0
 
-!(e)(→)in0 has following subtypes:  ɛ
-!(e)(⊢)in1 has following subtypes:  ɛ
+!(e)(→)in0 has following subtypes:  !(eL)(→)in0
+!(e)(⊢)in1 has following subtypes:  !(eL)(⊢)in1
 !(eL)(→)in0 has following subtypes:  value
   var
 !(eL)(⊢)in1 has following subtypes:  var
-!(typeL)(==)in0 has following subtypes:  ɛ
-!(typeL)(==)in1 has following subtypes:  ɛ
-!(value)(⊢)in1 has following subtypes:  ɛ
-!(value)(✓)in0 has following subtypes:  ɛ
 (e)(→)in0 has following subtypes:  (eL)(→)in0
 (e)(⊢)in1 has following subtypes:  (eL)(⊢)in1
-(eL)(→)in0 has following subtypes:  ɛ
 (eL)(⊢)in1 has following subtypes:  (value)(⊢)in1
-(typeL)(==)in0 has following subtypes:  ɛ
-(typeL)(==)in1 has following subtypes:  ɛ
 (value)(⊢)in1 has following subtypes:  bool
   number
 (value)(✓)in0 has following subtypes:  bool
   number
-bool has following subtypes:  ɛ
 e has following subtypes:  !(e)(→)in0
   !(e)(⊢)in1
   (e)(→)in0
@@ -106,43 +98,58 @@ eL has following subtypes:  !(eL)(→)in0
   (eL)(⊢)in1
   value
   var
-number has following subtypes:  ɛ
 type has following subtypes:  typeL
 typeL has following subtypes:  !(typeL)(==)in0
   !(typeL)(==)in1
   (typeL)(==)in0
   (typeL)(==)in1
-  ɛ
-typing has following subtypes:  ɛ
-typingEnvironment has following subtypes:  ɛ
-value has following subtypes:  !(value)(⊢)in1
-  !(value)(✓)in0
-  (value)(⊢)in1
+value has following subtypes:  (value)(⊢)in1
   (value)(✓)in0
   bool
   number
-var has following subtypes:  ɛ
-ɛ has following subtypes:
+
 
  Resulting Syntax 
 ------------------
 
-!(e)(→)in0       ::= bool "+" !(e)(→)in0
-                 | var "+" !(e)(→)in0
-                 | "(" "\\" var ":" type "." e ")" "+" !(e)(→)in0
-                 | "If" e "Then" e "Else" e "+" !(e)(→)in0
-                 | "(" e ")" "+" !(e)(→)in0
-                 | !(eL)(→)in0 "+" eL "+" e
-                 | !(eL)(→)in0 "+" eL "::" type
-                 | !(eL)(→)in0 "+" eL e
-                 | !(eL)(→)in0 "+" bool
+!(e)(→)in0       ::= !(eL)(→)in0
                  | !(eL)(→)in0 "+" var
-                 | !(eL)(→)in0 "+" "(" "\\" var ":" type "." e ")"
-                 | !(eL)(→)in0 "+" "If" e "Then" e "Else" e
-                 | !(eL)(→)in0 "+" "(" e ")"
-                 | !(eL)(→)in0 "::" type
+                 | !(eL)(→)in0 "+" bool
+                 | !(eL)(→)in0 "+" !(eL)(→)in0 "+" !(e)(→)in0
+                 | !(eL)(→)in0 "+" !(eL)(→)in0 "::" type
+                 | !(eL)(→)in0 "+" !(eL)(→)in0 "::" "Bool"
+                 | !(eL)(→)in0 "+" !(eL)(→)in0 "::" "Int"
+                 | !(eL)(→)in0 "+" !(eL)(→)in0 "::" typeL "->" type
+                 | !(eL)(→)in0 "+" !(eL)(→)in0 "::" "(" type ")"
+                 | !(eL)(→)in0 "+" "(" "\\" var ":" type "." !(e)(→)in0 ")"
+                 | !(eL)(→)in0 "+" "If" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | var "+" !(e)(→)in0
+                 | bool "+" !(e)(→)in0
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")" "+" !(e)(→)in0
+                 | "If" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0 "+" !(e)(→)in0
+                 | !(eL)(→)in0 "::" typeL "->" type
+                 | !(eL)(→)in0 "::" "(" type ")"
+                 | var "::" type
+                 | var "::" "Bool"
+                 | var "::" "Int"
+                 | var "::" typeL "->" type
+                 | var "::" "(" type ")"
+                 | bool "::" "Int"
+                 | bool "::" typeL "->" type
+                 | bool "::" "(" type ")"
+                 | number "::" "Bool"
+                 | number "::" typeL "->" type
+                 | number "::" "(" type ")"
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")" "::" type
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")" "::" "Bool"
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")" "::" "Int"
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")" "::" typeL "->" type
+                 | "(" "\\" var ":" type "." !(e)(→)in0 ")" "::" "(" type ")"
+                 | "If" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0 "::" type
+                 | "If" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0 "::" "Int"
                  | !(eL)(→)in0 !(e)(→)in0
-!(e)(⊢)in1       ::= !(eL)(⊢)in1 "+" e
+!(e)(⊢)in1       ::= !(eL)(⊢)in1
+                 | !(eL)(⊢)in1 "+" e
                  | eL "+" !(e)(⊢)in1
                  | !(eL)(⊢)in1 "::" type
                  | !(eL)(⊢)in1 e
@@ -150,26 +157,26 @@ var has following subtypes:  ɛ
 !(eL)(→)in0      ::= value
                  | var
                  | "(" "\\" var ":" type "." !(e)(→)in0 ")"
-                 | "If" eL "+" e "Then" !(e)(→)in0 "Else" !(e)(→)in0
-                 | "If" eL "::" type "Then" !(e)(→)in0 "Else" !(e)(→)in0
-                 | "If" eL e "Then" !(e)(→)in0 "Else" !(e)(→)in0
-                 | "If" number "Then" !(e)(→)in0 "Else" !(e)(→)in0
                  | "If" var "Then" !(e)(→)in0 "Else" !(e)(→)in0
-                 | "If" "(" "\\" var ":" type "." e ")" "Then" !(e)(→)in0 "Else" !(e)(→)in0
-                 | "If" "If" e "Then" e "Else" e "Then" !(e)(→)in0 "Else" !(e)(→)in0
-                 | "If" "(" e ")" "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" number "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" !(eL)(→)in0 "+" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" !(eL)(→)in0 "::" type "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" !(eL)(→)in0 "::" "Bool" "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" !(eL)(→)in0 "::" "Int" "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" !(eL)(→)in0 "::" typeL "->" type "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" !(eL)(→)in0 "::" "(" type ")" "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" "(" "\\" var ":" type "." !(e)(→)in0 ")" "Then" !(e)(→)in0 "Else" !(e)(→)in0
+                 | "If" "If" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0 "Then" !(e)(→)in0 "Else" !(e)(→)in0
 !(eL)(⊢)in1      ::= var
                  | "(" "\\" var ":" type "." !(e)(⊢)in1 ")"
                  | "If" !(e)(⊢)in1 "Then" e "Else" e
                  | "If" e "Then" !(e)(⊢)in1 "Else" e
                  | "If" e "Then" e "Else" !(e)(⊢)in1
                  | "(" !(e)(⊢)in1 ")"
-!(typeL)(==)in0  ::= "Int"
-                 | "Bool"
-!(typeL)(==)in1  ::= "Int"
-                 | "Bool"
-!(value)(⊢)in1   ::= < no bnfs declared >
-!(value)(✓)in0   ::= < no bnfs declared >
+!(typeL)(==)in0  ::= "Bool"
+                 | "Int"
+!(typeL)(==)in1  ::= "Bool"
+                 | "Int"
 (e)(→)in0        ::= (eL)(→)in0
                  | (eL)(→)in0 "+" e
                  | eL "+" (e)(→)in0

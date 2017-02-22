@@ -1,18 +1,22 @@
 Test/STFL.language -c Test/DynamizeSTFL.language-changes -c Test/GradualizeSTFL.language-changes --dlf
 
 Warning:
+  While checking the totality of function "cod":
+    Following calls will fall through:
+      cod("Bool")
+      cod("Int")
   While checking the totality of function "defaultValue":
     Following calls will fall through:
       defaultValue("?")
+  While checking the totality of function "dom":
+    Following calls will fall through:
+      dom("Bool")
+      dom("Int")
   While checking the totality of function "eval":
     Following calls will fall through:
       eval("TYPE ERROR")
       eval(("(" "\\" var ":" type "." e ")"))
   
-  While checking liveability of every clause in function "cod":
-    cod("?")                 = "?" will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "dom":
-    dom("?")                 = "?" will never match anything, as the possible arguments are already consumed
   While checking liveability of every clause in function "subs":
     subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
   
@@ -73,7 +77,6 @@ var	 -> "identifier"
 cod                      : type -> type
 cod("(" T ")")           = cod(T)
 cod(T1 "->" T2)          = T2
-cod(t0)                  = !error("Undefined behaviour: non exhaustive patterns in function cod")
 cod("?")                 = "?"
 
 
@@ -87,7 +90,6 @@ defaultValue("(" t ")")  = defaultValue(t)
 dom                      : type -> type
 dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
-dom(t0)                  = !error("Undefined behaviour: non exhaustive patterns in function dom")
 dom("?")                 = "?"
 
 
