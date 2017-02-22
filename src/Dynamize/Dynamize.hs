@@ -52,6 +52,17 @@ import Lens.Micro hiding ((&))
 
 import Debug.Trace
 
+
+dynamize'	:: TypeSystem -> TypeName -> String -> [Symbol] -> [Symbol] -> Either String Changes
+dynamize' ts rule typeErr addStuckStateRules addTypeErrCase
+	= inMsg "While dynamizing" $
+	  do	let checkAllExists' keys	= checkAllExists keys (get tsRelations' ts) (\k -> "No relation with name "++k++" found in "++get tsName ts)
+		checkExists rule (get (tsSyntax . bnf) ts) $ "Syntactic form "++show rule++" to dynamize does not exist."
+		addStuckStateRules'	<- checkAllExists' addStuckStateRules 
+		addTypeErrCase'		<- checkAllExists' addTypeErrCase 
+		return $ dynamize ts rule typeErr addStuckStateRules' addTypeErrCase'
+
+
 dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> [Relation] -> Changes
 dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 		= let	syntax		= get tsSyntax ts

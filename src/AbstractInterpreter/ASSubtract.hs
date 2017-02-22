@@ -17,9 +17,6 @@ import qualified Data.Map as M
 
 
 
-import Debug.Trace -- TODO
-
-
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtract s	= subtractWith s M.empty
 

@@ -23,6 +23,7 @@ import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
 
 import AbstractInterpreter.AbstractInterpreter
+import Dynamize.Dynamize
 
 import Control.Monad
 import Control.Arrow ((&&&))
@@ -77,6 +78,7 @@ mainPureOn args ts
 	, ioIfJust' subtypingSVG	$ saveSubtypingSVG (get tsSyntax ts)
 	, ioIfJust' iraSVG		$ saveSubtypingSVG (analyzeRelations ts & get raSyntax)
 	, ioIf' (not . actionSpecified)	$ putStrLn " # Language file parsed. No action specified, see -h or --manual to specify other options"
+	, ioIfJust' dynamizeArgs	$ dynamizeTS ts
 	] |+> (args &) & void
 
 
@@ -134,7 +136,7 @@ saveSubtypingSVG s fp
 
 
 
-mainChange	::TypeSystem -> FilePath -> PureIO TypeSystem
+mainChange	:: TypeSystem -> FilePath -> PureIO TypeSystem
 mainChange ts filepath
 	= do	contents	<- readFile filepath
 		(changes, ts')	<- parseChanges ts contents (Just filepath)
@@ -142,6 +144,15 @@ mainChange ts filepath
 		return ts'
 
 
+
+
+
+
+dynamizeTS	:: TypeSystem -> DynamizeArgs -> PureIO ()
+dynamizeTS ts (DynamizeArgs rule error relsToAnalyze relsToAdd)
+	= do	changes	<- dynamize' ts rule error relsToAnalyze relsToAdd
+				& liftEith
+		putStrLn $ toParsable' (16::Int) changes
 
 
 

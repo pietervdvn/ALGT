@@ -287,6 +287,11 @@ checkExists k dict msg
 			= return $ dict Map.! k
  | otherwise		= Left msg
 
+
+checkAllExists		:: (Ord k) => [k] -> Map k v -> (k -> String) -> Either String [v]
+checkAllExists ks dict msg
+	= ks |+> (\k -> checkExists k dict (msg k))
+
 padL		:: Int -> a -> [a] -> [a]
 padL i filler as
 		= replicate (i - length as) filler ++ as

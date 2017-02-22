@@ -1,4 +1,4 @@
-module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..),  getConfig, writeConfig, removeConfig, actionSpecified)where
+module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..), DynamizeArgs(..), getConfig, writeConfig, removeConfig, actionSpecified)where
 
 {-
 This module defines parsing of the arguments and reading/writing of the config file
@@ -40,7 +40,7 @@ class ActionSpecified a where
 
 
 data MainArgs	= MainArgs 
-			{ showVersionNr	:: Bool
+			{ showVersionNr	:: () -> ()
 			, manual	:: Bool
 			, realArgs	:: Maybe Args
 			, runTests	:: Bool
@@ -49,7 +49,7 @@ data MainArgs	= MainArgs
 instance ActionSpecified MainArgs where
 	actionSpecified args
 		= [realArgs] |> (args &) |> isJust & or
-			|| [showVersionNr, manual, runTests] |> (args &) & or
+			|| [manual, runTests] |> (args &) & or
 
 data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
@@ -61,7 +61,7 @@ data Args = Args 	{ tsFile		:: String
 			, interpretRules	:: [String]
 			, subtypingSVG		:: Maybe String
 			, iraSVG		:: Maybe String
-			, dynamizeTS		:: Bool
+			, dynamizeArgs		:: Maybe DynamizeArgs
 			}
 	deriving (Show)
 
@@ -88,6 +88,14 @@ data ExampleFile	= ExFileArgs
 	, ptSvg		:: Maybe Name
 	} deriving (Show)
 
+data DynamizeArgs	= DynamizeArgs
+	{ typeRule	:: TypeName
+	, stuckError	:: String
+	, relsToErr	:: [Symbol]
+	, relsToAdd	:: [Symbol]
+	} deriving (Show)
+
+
 
 instance ActionSpecified ExampleFile where
 	actionSpecified args
@@ -112,9 +120,7 @@ parseArgs version strs
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
 		MainArgs doShowVersion saveMan args runTests
 				<- handleParseResult result
-		when doShowVersion $ do
-			putStrLn (showVersion version)
-			exitSuccess
+		return $ doShowVersion ()
 		when saveMan $ do
 			B.writeFile "ALGT_Manual.pdf" _Manual_ALGT_Manual_pdf
 			putStrLn "Manual saved as ALGT_Manual.pdf"
@@ -151,9 +157,11 @@ removeConfig
 		exists	<- doesFileExist cfp
 		when exists $ removeFile cfp
 
+parserInfo	:: ([Int], String) -> ParserInfo MainArgs
+parserInfo v	= parserInfo' (mainArgs $ showVersion v) v
 
-
-parserInfo v	= info (helper <*> mainArgs)
+parserInfo' parser v
+	= info (helper <*> parser)
 			(fullDesc <> progDesc descriptionText <> header (headerText v))
 
 
@@ -254,14 +262,32 @@ args	= Args <$> argument str
 			(metavar "SVG-PATH"
 			<> long "irasvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules, created by the abstract rule analysises"))
-		<*> switch(
-			long "dynamize"
-			<> help "Create a change file that dynamizes the static relation")
+		<*> optional dynamizeArgsParser
 		
+dynamizeArgsParser	:: Parser DynamizeArgs
+dynamizeArgsParser
+	= DynamizeArgs
+		<$> strOption
+			(metavar "SYNTAX-RULE-EXPRESSION"
+			<> long "dynamize-syntax"
+			<> help "The type to add 'type-err' to")
+		<*> strOption
+			(metavar "STUCK-STATE"
+			<> long "error"
+			<> help "The literal representing a type error/stuck state")
+		<*> many (strOption
+			(metavar "REL-TO-ANALYZE"
+			<> long "rel"
+			<> help "The relation symbol for which stuck states should be introduced (e.g. 'smallstep')"))
+		<*> many (strOption
+			(metavar "REL-TO-ADD"
+			<> long "reladd"
+			<> help "The relation symbol for which stuck states should added trivially (e.g. 'is canonical')"))
 
-mainArgs	:: Parser MainArgs
-mainArgs	
-	= MainArgs <$> switch
+
+mainArgs	:: String -> Parser MainArgs
+mainArgs versionMsg
+	= MainArgs <$> infoOption versionMsg
 			(long "version"
 			<> short 'v'
 			<> help "Show the version number and text")
@@ -271,6 +297,7 @@ mainArgs
 		<*> optional args
 		<*> switch
 			(long "test"
-			<> help "Run the integration tests")
+			<> help "Run the integration tests"
+			<> hidden)
 
 
