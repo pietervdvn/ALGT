@@ -9,6 +9,9 @@ Warning:
     Following calls will fall through:
       dom("Bool")
       dom("Int")
+  While checking the totality of function "equate":
+    Following calls will fall through:
+      equate(type, type)
   While checking the totality of function "eval":
     Following calls will fall through:
       eval(("(" "\\" var ":" type "." e ")"))

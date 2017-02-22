@@ -9,6 +9,9 @@ Warning:
     Following calls will fall through:
       dom("Bool")
       dom("Int")
+  While checking the totality of function "equate":
+    Following calls will fall through:
+      equate(type, type)
   While checking the totality of function "eval":
     Following calls will fall through:
       eval("TYPE ERROR")
@@ -87,6 +90,10 @@ dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
 
 
+equate                   : type -> type -> type
+equate(T, T)             = T
+
+
 eval                     : e -> value
 eval((v:value))          = v
 eval(("(" "\\" x ":" t "." e ")") arg)
@@ -140,7 +147,7 @@ subs(x, y, z)            = z
 (::) 	: e (in), type (out)	Pronounced as "type in empty context"
 (==) 	: type (in), type (in)	Pronounced as "equals"
 (→) 	: e (in), e (out)	Pronounced as "evaluation"
-(→*) 	: e (in), e (out)	Pronounced as "big step"
+(→*) 	: e (in), value (out)	Pronounced as "big step"
 (⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
 (✓) 	: e (in)	Pronounced as "is canonical"
 

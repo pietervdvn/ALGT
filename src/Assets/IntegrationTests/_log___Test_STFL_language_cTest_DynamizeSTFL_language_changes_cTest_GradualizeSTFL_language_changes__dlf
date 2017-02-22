@@ -12,10 +12,27 @@ Warning:
     Following calls will fall through:
       dom("Bool")
       dom("Int")
+  While checking the totality of function "equate":
+    Following calls will fall through:
+      equate("Bool", "Bool")
+      equate("Bool", "Int")
+      equate("Bool", (gtypeL "->" gtype))
+      equate("Bool", ("(" gtype ")"))
+      equate("Int", "Bool")
+      equate("Int", "Int")
+      equate("Int", (gtypeL "->" gtype))
+      equate("Int", ("(" gtype ")"))
+      equate((gtypeL "->" gtype), "Bool")
+      equate((gtypeL "->" gtype), "Int")
+      equate((gtypeL "->" gtype), ("(" gtype ")"))
+      equate(("(" gtype ")"), "Bool")
+      equate(("(" gtype ")"), "Int")
+      equate(("(" gtype ")"), (gtypeL "->" gtype))
+      equate(("(" gtype ")"), ("(" gtype ")"))
   While checking the totality of function "eval":
     Following calls will fall through:
       eval("TYPE ERROR")
-      eval(("(" "\\" var ":" type "." e ")"))
+      eval(("(" "\\" var ":" gtype "." e ")"))
   
   While checking liveability of every clause in function "subs":
     subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
@@ -31,23 +48,23 @@ Warning:
 bool             ::= "True"
                  | "False"
 e                ::= eL "+" e
-                 | eL "::" type
+                 | eL "::" gtype
                  | eL e
                  | eL
 eL               ::= value
                  | var
-                 | "(" "\\" var ":" type "." e ")"
+                 | "(" "\\" var ":" gtype "." e ")"
                  | "If" e "Then" e "Else" e
                  | "(" e ")"
                  | "TYPE ERROR"
-number           ::= Number
-type             ::= typeL "->" type
-                 | typeL
-typeL            ::= "Int"
+gtype            ::= gtypeL "->" gtype
+                 | gtypeL
+gtypeL           ::= "Int"
                  | "Bool"
-                 | "(" type ")"
+                 | "(" gtype ")"
                  | "?"
-typing           ::= var ":" type
+number           ::= Number
+typing           ::= var ":" gtype
 typingEnvironment::= typing "," typingEnvironment
                  | "{}"
 value            ::= bool
@@ -63,9 +80,9 @@ bool	 -> "constant"
 e	 -> "statement"
 eL	 -> "statement"
 eL.4	 -> "keyword"
+gtype	 -> "type"
+gtypeL	 -> "type"
 number	 -> "constant"
-type	 -> "type"
-typeL	 -> "type"
 var	 -> "identifier"
 
 
@@ -74,23 +91,31 @@ var	 -> "identifier"
  Functions 
 ===========
 
-cod                      : type -> type
+cod                      : gtype -> gtype
 cod("(" T ")")           = cod(T)
 cod(T1 "->" T2)          = T2
 cod("?")                 = "?"
 
 
-defaultValue             : type -> e
+defaultValue             : gtype -> e
 defaultValue("Bool")     = "True"
 defaultValue("Int")      = 1
 defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
 defaultValue("(" t ")")  = defaultValue(t)
 
 
-dom                      : type -> type
+dom                      : gtype -> gtype
 dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
 dom("?")                 = "?"
+
+
+equate                   : gtype -> gtype -> gtype
+equate(T, T)             = T
+equate("?", t)           = t
+equate(t, "?")           = t
+equate(t11 "->" t12, t21 "->" t22)
+                         = equate(t11, t21) "->" equate(t12, t22)
 
 
 eval                     : e -> value
@@ -118,7 +143,7 @@ plus                     : number -> e -> number
 plus(e1, e2)             = !plus(e1, e2)
 
 
-rename                   : var -> var -> type -> e -> eL
+rename                   : var -> var -> gtype -> e -> eL
 rename(x, newVar, type, body)
                          = "(" "\\" newVar ":" type "." subs(x, newVar, body) ")"
 
@@ -143,11 +168,11 @@ subs(x, y, z)            = z
  Relations 
 ===========
 
-(::) 	: e (in), type (out)	Pronounced as "type in empty context"
-(~) 	: type (in), type (in)	Pronounced as "is consistent"
+(::) 	: e (in), gtype (out)	Pronounced as "type in empty context"
+(~) 	: gtype (in), gtype (in)	Pronounced as "is consistent"
 (→) 	: e (in), e (out)	Pronounced as "evaluation"
-(→*) 	: e (in), e (out)	Pronounced as "big step"
-(⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
+(→*) 	: e (in), value (out)	Pronounced as "big step"
+(⊢) 	: typingEnvironment (in), e (in), gtype (out)	Pronounced as "context entails typing"
 (✓) 	: e (in)	Pronounced as "is canonical"
 
 
@@ -189,8 +214,8 @@ subs(x, y, z)            = z
  Ta1 "->" Tb1 ~ Ta2 "->" Tb2
 
 
- T1 = T2 : type
------------------  	[EqBase]
+ T1 = T2 : gtype
+------------------  	[EqBase]
  T1 ~ T2
 
 
@@ -262,9 +287,9 @@ subs(x, y, z)            = z
  "If" "True" "Then" e1 "Else" e2 → e1
 
 
- (✓) arg	arg "::" type → arg'
--------------------------------------------------------------  	[EvalLamApp']
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+ (✓) arg	arg "::" gtype → arg'
+--------------------------------------------------------------  	[EvalLamApp']
+ ("(" "\\" var ":" gtype "." e ")") arg → subs(var, arg', e)
 
 
  

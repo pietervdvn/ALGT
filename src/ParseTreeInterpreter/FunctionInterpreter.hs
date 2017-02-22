@@ -113,8 +113,7 @@ applyFunc ctx (nm, MFunction tp clauses) args
 
 evalClause	:: Ctx ->  [ParseTree] -> Clause -> Either String ParseTree
 evalClause ctx args (MClause pats expr)
-	= do	variabless	<- zip pats args |+> uncurry (patternMatch (ctxSyntax ctx) (const True))	-- TODO use lookahead here for eval contexts in functions
-		variables	<- mergeVarss variabless
+	= do	variables	<- patternMatchAll (ctxSyntax ctx) pats args
 		let ctx'	= ctx {ctxVars = variables}
 		evaluate ctx' expr
 
@@ -133,6 +132,16 @@ mergeVars v1 v2
 		let failMsgs	= different |> msg & unlines
 		if cv1 == cv2 then return (v1 `M.union` v2)
 			else inMsg "Merging contexts failed: some variables are assigned different values" $ Left failMsgs
+
+
+-- TODO use lookahead here for eval contexts in functions
+patternMatchAll	:: Syntax -> [Expression] -> [ParseTree] -> Either String VariableAssignments
+patternMatchAll _ [] []
+		= return M.empty
+patternMatchAll s (pat:pats) (arg:args)
+	= do	variables	<- patternMatch s (const True) pat arg
+		variables'	<- patternMatchAll s pats args
+		mergeVars variables variables'
 
 {-
 Disasembles an expression against a pattern
