@@ -76,6 +76,12 @@ builtinFunctions
 							expr	-> "ident"
 				let possible	= [0..] |> show |> (base ++) & filter (`notElem` used)
 				return $ MIdentifier (tp, 0) $ head possible) 
+	, BuiltinFunction "subs" ("(expression to replace, to replace with, in this expression) "
+			++ "Replaces each occurence of the first expression by the second, in the third argument")
+		3 (Just 3) $ Right (\_ tp [searchFor, replaceBy, inExpr] ->
+			do	let paths	= search (==searchFor) inExpr
+				let folded	= foldl (\pt path -> replace pt path replaceBy) inExpr paths
+				return folded)
 	]
 
 
@@ -134,14 +140,17 @@ mergeVars v1 v2
 			else inMsg "Merging contexts failed: some variables are assigned different values" $ Left failMsgs
 
 
--- TODO use lookahead here for eval contexts in functions
 patternMatchAll	:: Syntax -> [Expression] -> [ParseTree] -> Either String VariableAssignments
 patternMatchAll _ [] []
 		= return M.empty
 patternMatchAll s (pat:pats) (arg:args)
-	= do	variables	<- patternMatch s (const True) pat arg
+	= do	let successFullMatch vars	= isLeft $ (do	vars'	<- patternMatchAll s pats args
+								mergeVars vars vars')
+		variables	<- patternMatch s successFullMatch pat arg
 		variables'	<- patternMatchAll s pats args
 		mergeVars variables variables'
+
+
 
 {-
 Disasembles an expression against a pattern
