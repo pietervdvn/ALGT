@@ -28,7 +28,7 @@ _subtractWith	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> [Ab
 _subtractWith debug syntax known ass minus
 	= nub $ do	as		<- ass
 			let subbed = _subtract' debug syntax known as minus
-			trace' debug ("Result: "++toParsable' ", " subbed) as minus subbed
+			subbed
 
 
 subtractAll	:: Syntax -> [AbstractSet] -> [AbstractSet] -> [AbstractSet]
@@ -42,8 +42,7 @@ _subtractAllWith	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> 
 _subtractAllWith debug syntax known ass []
 		= ass
 _subtractAllWith debug syntax known ass (minus:minuses)
-		= let	ass'	= (if debug then trace ("Subtract all with: "++toParsable' ", " ass++" - "++toParsable' ", "minuses) else id)
-					_subtractWith debug syntax known ass minus
+		= let	ass'	= _subtractWith debug syntax known ass minus
 			in
 			_subtractAllWith debug syntax known ass' minuses
 
@@ -85,7 +84,7 @@ trace' debug msg e emin
 	= let msg'	= ">> "++msg++" with:\n"
 				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
 				++"   emin = "++toParsable emin++"\t: "++typeOf emin
-		in if debug then trace msg' else id
+		in if debug then {-trace msg'-} id else id
 
 
 _subtract'	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
@@ -105,9 +104,7 @@ _subtract' debug s k e emin
 		debug'	= debug
 		subbed	= _subtract debug' s k e emin 
 		in
-		if debug' then trace ("\n> Subtraction of "++toParsable e++" - "++toParsable emin++" gave: \n | " ++ toParsable' "\n | " subbed)
-				subbed
-			else subbed
+		trace' debug' ("> Subtraction gave: \n | " ++ toParsable' "\n | " subbed) e emin subbed
 
 
 _subtract	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
