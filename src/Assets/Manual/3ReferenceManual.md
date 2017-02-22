@@ -204,6 +204,12 @@ This can be solved by splitting of `a | b` as a new rule.
 
 Are not possible for now (v $$version). Perhaps in a future version or when someone really needs it and begs for it.
 
+### Builtin functions
+
+ name	| Descr						| Arguments
+--------+-----------------------------------------------+-------------
+$$builtinFunctions
+
 
  Relations and Rules
 ---------------------

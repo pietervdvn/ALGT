@@ -7,6 +7,7 @@ import System.Process
 import System.IO.Unsafe
 
 import Utils.Utils
+import Utils.Version
 import Utils.ArgumentParser
 import Utils.ToString
 import Utils.PureIO hiding (writeFile, readFile, putStrLn)
@@ -15,9 +16,9 @@ import qualified Data.Map as M
 import Data.List
 import Data.Maybe
 import Data.Char
-import Utils.Version
 import Data.Time.Clock
 import Data.Time.Calendar
+import Data.Either
  
 import Utils.CreateAssets
 import Assets
@@ -29,6 +30,8 @@ import TypeSystem
 import TypeSystem.Parser.TargetLanguageParser
 import qualified TypeSystem.Parser.BNFParser as BNFParser
 import qualified TypeSystem.Parser.ParsingUtils as ParsingUtils
+
+import ParseTreeInterpreter.FunctionInterpreter as FuncInp
 
 import Control.Arrow
 import Control.Monad
@@ -63,11 +66,28 @@ buildVariables
 			|> (\(e, n, pat, expr) -> [verbatim (toParsable e), pat]
 				& intercalate " | " )
 			& unlines)
+	, ("builtinFunctions", FuncInp.builtinFunctions
+			& advancedTable (\bif -> [verbatim $ get bifName bif, get bifDescr bif
+					, intercalate ", " $ filter (/="") 
+						[argText (get bifMinArgs bif) (get bifMaxArgs bif)
+						, either (const "Ints only") (const "") $ get bifApply bif]
+					]))
 	] & M.fromList 
 
 
 
+argText		:: Int -> Maybe Int -> String
+argText min (Just max)
+ | min == max	= "Exactly "++show min
+ | min == 0	= "At most "++show max
+ | otherwise	= "Between "++show min++" and "++show max
+argText min Nothing
+ | min == 0	= ""
+ | otherwise	= "At least "++show min
 
+advancedTable	:: (a -> [String]) -> [a] -> String
+advancedTable f as
+		= as |> f |> intercalate "\t | " & unlines
 
 makeTable	:: [((String, a), String)] -> String
 makeTable vals
