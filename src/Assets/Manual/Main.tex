@@ -1,5 +1,14 @@
-\documentclass{article}
+\documentclass{book}
 \usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={ALGT-Manual},
+            pdfauthor={Pieter Vander Vennet},
+            breaklinks=true}
+
+
+
+
+
 \usepackage{listings}
 
 % For pandoc
@@ -9,6 +18,8 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{color}
+\usepackage{amssymb,amsmath}
+
 
 \definecolor{gray}{rgb}{0.9,0.9,0.9}
 \definecolor{black}{rgb}{0,0,0}
@@ -36,15 +47,9 @@
 \maketitle
 
 \tableofcontents
-\input{0Introduction.tex}
-\input{1Overview.tex}
-\input{2.0Tut-Intro.tex}
-\input{2.1Tut-Syntax.tex}
-\input{2.2Tut-Functions.tex}
-\input{2Tutorial.tex}
-\input{3ReferenceManual.tex}
-\input{4Concepts.tex}
-\input{5Gradualization.tex}
+
+\input{§}
+
 
 \end{document}
 

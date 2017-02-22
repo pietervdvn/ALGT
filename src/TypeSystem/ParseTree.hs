@@ -44,6 +44,18 @@ replace (PtSeq tp orig) (i:rest) toPlace
 replace rest path toReplace
 	= error $ "Invalid substitution path: not a sequence, but trying to execute the path "++show path++" on " ++show rest
 
+
+search	:: (ParseTree -> Bool) -> ParseTree -> [Path]
+search pred pt@(PtSeq _ pts)
+ | pred pt	= [ [] ]
+ | otherwise	= do	(i, pt') 	<- mapi pts
+			path		<- search pred pt'
+			return $ i:path
+search pred pt
+ | pred pt	= [ [] ]
+ | otherwise	= []
+
+
 isMInt'	:: ParseTree -> Bool
 isMInt' (MInt _ _)	= True
 isMInt' _		= False

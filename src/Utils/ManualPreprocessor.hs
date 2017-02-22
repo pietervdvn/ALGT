@@ -296,8 +296,7 @@ contentsChanged	:: FilePath -> IO (Map FilePath UTCTime)
 contentsChanged fp
 	= do	files	<- dirConts fp
 		files 	& filter (not . (".bin" `isInfixOf`))
-			& filter (not . ("ALGT_Manual.pdf" `isSuffixOf`))
-			& filter (not . ("ALGT_Manual_Focus.pdf" `isSuffixOf`))
+			& filter (not . (".pdf" `isSuffixOf`))
 			|> (id &&& getModificationTime) |+> sndEffect
 			|> M.fromList
 

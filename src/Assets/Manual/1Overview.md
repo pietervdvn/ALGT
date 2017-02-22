@@ -6,5 +6,4 @@ _ALGT_ (_Automated Language Generation Tool_ [^AGT-Name]) is a tool to formally 
 The tool is kept as general as possible, so any language can be modelled.
 
 
-[^AGT-Name]: Note the similarity of _ALGT_ and _AGT_ . The tool started its life as _AGT_, based on the paper _Abstracting Gradual Typing_. When it became more general, another name and acronym was used. TODO reference to paper!
-
+[^AGT-Name]: Note the similarity of _ALGT_ and _AGT_ . The tool started its life as _AGT_, based on the paper [_Abstracting Gradual Typing_](https://pleiad.cl/papers/2016/garciaAl-popl2016.pdf). When it became more general, another name and acronym was chosen.

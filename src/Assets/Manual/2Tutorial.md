@@ -56,6 +56,12 @@ $$STFL.language!37!file
  Relations and Rules
 ---------------------
 
+## Building smallstep
+
+## Building bigstep
+
+## Building a typechecker
+
 
  Properties
 ------------
