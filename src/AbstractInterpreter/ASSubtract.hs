@@ -91,7 +91,7 @@ _subtract' debug s k e emin
  | isEveryPossible e && isEveryPossible emin
 	&& (typeOf e, typeOf emin) `member` k	
 			= let 	result	= k ! (typeOf e, typeOf emin) in
-				trace' debug ("In the special known set, becoming: "++toParsable' " | " result) e emin $  
+				trace' debug ("In the special known set, becoming: "++toParsable' " | " result) e emin
 					result
  | e == emin		= trace' debug "Shortcut equality" e emin []
  | isSubsetOf s e emin

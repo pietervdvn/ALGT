@@ -131,7 +131,7 @@ _toStringFunctionAnalysis cats argsts (funcName, width, MFunction t clauses) (Fu
 			[zip clauses analysises |> (\(c, ca) -> cats (funcName, width, c) ca) & unlines & indent
 			, inHeader "" "Falthrough" '-' $
 				if S.null fallthroughs then "No fallthrough is possible"
-					else (fallthroughs & S.toList |> argsts ", " |> inParens & unlines)]
+					else fallthroughs & S.toList |> argsts ", " |> inParens & unlines]
 
 
 instance ToString' (Name, Int, Clause) ClauseAnalysis where

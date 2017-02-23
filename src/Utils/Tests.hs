@@ -52,7 +52,7 @@ parseAS tn str	= runParserUnsafe (parseSyntax subTestSynt tn) str
 
 genAS		= generateAbstractSet subTestSynt ""
 
-sub a b		= AS.subtract subTestSynt [a] b 
+sub a		= AS.subtract subTestSynt [a] 
 
 ascr		= genAS "ascr"
 val		= genAS "val"

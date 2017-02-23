@@ -133,12 +133,11 @@ annotatedDot cs under (nm, (x, y))
 
 drawRect	:: ColorScheme -> X -> Y -> W -> H -> Int ->  String -> S.Svg
 drawRect cs x y w h border opacity
-	= do	S.rect	! A.x 		(intValue $ x-border)
+	= S.rect	! A.x 		(intValue $ x-border)
 			! A.y 		(intValue $ y-border)
 			! A.width 	(intValue $ w+2*border)
 			! A.height 	(intValue $ h+2*border)
 			! A.fill 	(stringValue $ get bg cs)
 			! A.fillOpacity	(stringValue opacity)
-			-- ! A.stroke	(stringValue "#00ff00")
 
 

@@ -178,7 +178,7 @@ onAll f pts a
 
 onAll'		:: (a -> b -> PureIO ()) -> [b] -> a -> PureIO ()
 onAll' f pts a
-	= pts |> f a |+> catch (\str -> putStrLn str) & void
+	= pts |> f a |+> catch putStrLn & void
 		
 
 

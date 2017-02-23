@@ -2,8 +2,8 @@
 
 
 cd src
-hlint *.hs */*.hs
 ./searchTodo.sh
+ls *.hs */*.hs */*/*.hs | sed /Assets.hs/d | xargs hlint
 
 cd Assets/IntegrationTests
 rm *.FAILED

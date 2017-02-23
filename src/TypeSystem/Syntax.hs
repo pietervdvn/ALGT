@@ -91,7 +91,7 @@ topSymbol	= ".*"
 bottomSymbol	= "ɛ"
 
 
-asLattice'	:: Map Name [BNF] -> (Lattice TypeName)
+asLattice'	:: Map Name [BNF] -> Lattice TypeName
 asLattice' s	= asLattice s & checkNoCycles & either error id & fst
 
 asLattice	:: Map Name [BNF] -> Either [[TypeName]] (Lattice TypeName, [(TypeName, TypeName)])
@@ -386,7 +386,7 @@ commonSubsetsBetween s ruleToCheck against
 	= do	bnfs	<- getBNFSFor s ruleToCheck 
 		bnfs'	<- getBNFSFor s against
 		-- we check that this rule (bnfs) do not have a set in common (with more then one element)
-		let common	= L.intersect bnfs bnfs'
+		let common	=  bnfs `intersect` bnfs'
 		if length common > 1 then return $ Just (ruleToCheck, against, common)
 			else return Nothing
 
@@ -410,7 +410,7 @@ checkNoCycles (Left cycles)
 		& ("Cycles detected in the supertyping relationship:\n"++)
 		& Left
 checkNoCycles (Right a)
-	= (Right a)
+	= Right a
 
 
 checkDeadChoices	:: Syntax -> Either String ()
@@ -441,7 +441,7 @@ deadChoices s bnfs
 						& filter fst |> snd
 			rest		= deadChoices s $ init bnfs
 			in
-			(zip (repeat victim) killers) ++ rest
+			zip (repeat victim) killers ++ rest
 
 
 getsKilledBy	:: Syntax -> BNF -> BNF -> Bool

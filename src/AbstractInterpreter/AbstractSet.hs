@@ -272,7 +272,7 @@ _toExpression _ exp (genWith, _) (EveryPossible _ _ tp)
 		let var	= MVar tp nm
 		if tp == exp then return var else
 			-- expected type is bigger than actual type: ascription
-			return $ MAscription tp $ var
+			return $ MAscription tp var
 _toExpression _ _ mi (ConcreteLiteral _ str)
 	= return $ MParseTree $ MLiteral mi str
 _toExpression _ _ mi (ConcreteIdentifier genTp _)

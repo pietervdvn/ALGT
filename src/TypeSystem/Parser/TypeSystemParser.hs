@@ -113,9 +113,6 @@ relationDecl r	= do	symbol	<- relationSymb r
 
 
 
-liftParser	:: Parser u a -> Either String (Parser u a)
-liftParser p	= Right p
-
 typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile fp
 	= do	name	<- option fp $ try $ do
@@ -123,7 +120,7 @@ typeSystemFile fp
 				n	<- many $ inWs (try identifier <|> try iDentifier)
 				nl
 				inWs $ many1 $ char '*'
-				return $ intercalate " " n
+				return $ unwords n
 
 		bnfs	<- option [] $ try $ do 
 				nls

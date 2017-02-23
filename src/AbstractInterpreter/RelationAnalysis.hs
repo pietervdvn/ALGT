@@ -165,7 +165,7 @@ inverseFor subtractions ra posNameSpec
 		all		= derivedFrom & generateAbstractSet s "" & unfold s
 		posAll		= ruleNameFor posNameSpec & generateAbstractSet s "" & unfold s
 		(posRec', posClass)
-				= posAll & partition (\as -> doesContainRec as)
+				= posAll & partition doesContainRec
 		(posRecPure, posRec) 
 				= posRec' & partition isEveryPossible
 

@@ -90,7 +90,7 @@ defaultValue(ta "->" tr)
 defaultValue("(" t ")")	= defaultValue(t)
 
 dom 		: type -> type
-dom("(" T ")")	= dome(T)
+dom("(" T ")")	= dom(T)
 dom(T1 "->" T2) = T1
 
 cod 		: type -> type

@@ -54,7 +54,7 @@ builtinFunctions
 	, BuiltinFunction "mul" "Multiplies all the arguments. (1 if none given)"
 		0 Nothing $ Left product
 	, BuiltinFunction "div" "Gives the first argument, divided by the product of the other arguments. (Integer division, rounded down))"
-		1 Nothing $ Left (\(i:is) -> i `div` (product is))
+		1 Nothing $ Left (\(i:is) -> i `div` product is)
 	, BuiltinFunction "mod" "Gives the first argument, module the product of the other arguments."
 		1 Nothing $ Left (\(i:is) -> i `mod` product is)
 	, BuiltinFunction "neg" "Gives the negation of the argument"
@@ -146,8 +146,9 @@ patternMatchAll	:: Ctx -> [Expression] -> [ParseTree] -> Either String VariableA
 patternMatchAll _ [] []
 		= return M.empty
 patternMatchAll ctx (pat:pats) (arg:args)
-	= do	let successFullMatch vars	= isLeft $ (do	vars'	<- patternMatchAll ctx pats args
-								mergeVars vars vars')
+	= do	let successFullMatch vars	
+				= isLeft $ do	vars'	<- patternMatchAll ctx pats args
+						mergeVars vars vars'
 		variables	<- patternMatch ctx successFullMatch pat arg
 		variables'	<- patternMatchAll ctx pats args
 		mergeVars variables variables'
