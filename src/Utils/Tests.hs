@@ -61,6 +61,7 @@ validIf'	= AsSeq "expr" 0 [ConcreteLiteral "expr" "If", bool, ConcreteLiteral "e
 
 nestedIf	= AsSeq "expr" 0 [ConcreteLiteral "expr" "If", validIf , ConcreteLiteral "expr" "Then", expr]
 
+
 s0		= val `sub` bool
 s0e		= ["number"]
 s1		= ascr `sub` bool
@@ -87,6 +88,14 @@ s8e		= ["(\"If\" expr \"Then\" expr)","\"False\"","number"]
 
 s9		= expr `sub` parseAS "expr" "If True Then True"
 s9e		= ["(\"If\" (\"If\" expr \"Then\" expr) \"Then\" expr)","(\"If\" \"False\" \"Then\" expr)","(\"If\" number \"Then\" expr)","(\"If\" expr \"Then\" (\"If\" expr \"Then\" expr))","(\"If\" expr \"Then\" \"False\")","(\"If\" expr \"Then\" number)","val"]
+
+
+stflE		= generateAbstractSet stflSyntax "" "e"
+stflEl		= generateAbstractSet stflSyntax "" "eL"
+stflPar		= AsSeq "eL" 4 [ConcreteLiteral "eL" "(", stflE, ConcreteLiteral "eL" ")"]
+stflApp		= AsSeq "e" 2 [stflEl, stflE]
+
+s10		= AS._subtractWith True stflSyntax M.empty [stflPar] stflApp
 
 stests	= [(s0, s0e), (s1, s1e), (s2, s2e), (s3, s3e), (s4, s4e), (s5, s5e), (s6, s6e), (s7, s7e), (s8, s8e)]
 

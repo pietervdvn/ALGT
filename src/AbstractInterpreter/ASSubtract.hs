@@ -15,6 +15,8 @@ import Data.Map (Map, member, (!))
 
 import qualified Data.Map as M
 
+import Debug.Trace -- TODO
+
 
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
@@ -84,7 +86,7 @@ trace' debug msg e emin
 	= let msg'	= ">> "++msg++" with:\n"
 				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
 				++"   emin = "++toParsable emin++"\t: "++typeOf emin
-		in if debug then {-trace msg'-} id else id
+		in if debug then trace msg' else id
 
 
 _subtract'	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
@@ -194,6 +196,8 @@ isSubsetOf s isSub@EveryPossible{} isSuper
 	= unfold s isSub |> (\isSub' -> isSubsetOf s isSub' isSuper) & and
 isSubsetOf s isSub@(AsSeq genSub _ seqSub) concreteSuper@(AsSeq genSuper _ seqSuper)
  | not $ alwaysIsA s genSub genSuper	-- The same sequence can not occur in multiple types, as that triggers an error message. This implies that we can use the generating types
+	= False
+ | length seqSub /= length seqSuper
 	= False
  | otherwise
 	= zip seqSub seqSuper |> uncurry (isSubsetOf s) & and
