@@ -1,0 +1,6 @@
+No matches for [Tx]
+	Prob Cause: merging of vars is conservative (for function analysis) but should be liberal for rule analysis and possible matches
+
+Build parsers with decent error handling
+Properties: quickchecking
+Fix syntax highlighting
