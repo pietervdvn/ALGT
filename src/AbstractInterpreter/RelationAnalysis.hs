@@ -29,8 +29,6 @@ import Control.Monad
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
-import Debug.Trace
-
 
 -------------------------------------------- TYPENAMESPEC ---------------------------------------------
 

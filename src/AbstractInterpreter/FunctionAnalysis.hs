@@ -28,8 +28,6 @@ import qualified Data.Set as S
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
-import Debug.Trace -- TODO
-
 data ClauseAnalysis
 		= ClauseAnalysis
 		{ _clauseIndex	:: Int

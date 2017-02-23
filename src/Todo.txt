@@ -4,4 +4,3 @@ No matches for [Tx]
 Build parsers with decent error handling
 Properties: quickchecking
 Fix syntax highlighting
-Search for all Debug.Trace and remove them

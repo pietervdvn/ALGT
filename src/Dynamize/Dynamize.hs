@@ -50,8 +50,6 @@ import Control.Monad
 
 import Lens.Micro hiding ((&))
 
-import Debug.Trace
-
 
 dynamize'	:: TypeSystem -> TypeName -> String -> [Symbol] -> [Symbol] -> Either String Changes
 dynamize' ts rule typeErr addStuckStateRules addTypeErrCase

@@ -15,9 +15,6 @@ import Data.Map (Map, member, (!))
 
 import qualified Data.Map as M
 
-import Debug.Trace -- TODO
-
-
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtract s	= subtractWith s M.empty
@@ -83,10 +80,10 @@ subtract [a] "x"	--> "y" | b	-- note that b still can contain an 'x'
 -}
 
 trace' debug msg e emin
-	= let msg'	= ">> "++msg++" with:\n"
+	= let	msg'	= ">> "++msg++" with:\n"
 				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
 				++"   emin = "++toParsable emin++"\t: "++typeOf emin
-		in if debug then trace msg' else id
+		in if debug then {- trace msg'-} error $ "Tracing not enabled; anyway: "++msg' else id
 
 
 _subtract'	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]

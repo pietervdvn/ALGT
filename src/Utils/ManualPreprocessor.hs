@@ -37,7 +37,6 @@ import Control.Arrow
 import Control.Monad
 
 import Control.Concurrent
-import Debug.Trace
 
 import Lens.Micro hiding ((&))
 

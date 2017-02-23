@@ -31,8 +31,6 @@ import Control.Monad
 import Control.Monad.State (State, execState)
 import qualified Control.Monad.State as State
 
-import Debug.Trace
-
 
 data Lattice a	= Lattice
 	{ _bottom	:: a
