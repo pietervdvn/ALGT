@@ -193,7 +193,7 @@ patternMatch ctx _ func@MCall{} arg
 		unless (pt == arg) $ Left $ "Function result of "++toParsable func++" does not equal the given argument"
 		return M.empty
 patternMatch _ _ pat expr		
-	= Left $ "Could not match "++toParsable pat++" /= "++toCoParsable expr
+	= Left $ "Could not pattern match "++toCoParsable expr++" over "++toParsable pat
 
 
 patternMatchContxt	:: Ctx -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments

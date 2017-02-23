@@ -250,7 +250,12 @@
 <p>Let's put this to a test. We can calculate the domain of our examples.</p>
 <p>Create a file <code>typeExamples.stfl</code>, with contents</p>
 
-<p>Run this with</p>
+<p>Run this with <code>ALGT STFL.language typeExamples.stfl type -l -f domain</code>:</p>
+
+<p>What does this output tell?</p>
+<p>For starters, we get a warning that we forgot two cases, namely <code>Bool</code> and <code>Int</code>. For some functions this is a problem, but domain is not defined for those values.</p>
+<p>Then, we see an overview for each function what result it gives (or an error message if the pattern matches failed).</p>
+<p>If you want more information about the behaviour of a function, specify <code>--ia</code> or <code>--ifa FUNCTION-TO-ANALYZE</code> to get a clause-per-clause overview:</p>
 
 <h3 id="codomain">Codomain</h3>
 <p><code>codomain</code> can be implemented totally analogously:</p>

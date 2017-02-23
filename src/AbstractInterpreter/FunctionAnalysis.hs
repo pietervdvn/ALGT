@@ -69,7 +69,7 @@ analyzeFunction ts
 
 analyzeFunctionWith	::  TypeSystem -> Map Name TypeName -> Function -> Arguments -> FunctionAnalysis
 analyzeFunctionWith ts f (MFunction _ clauses) args
-	= analyzeClauses (get tsSyntax ts) f (mapi $ init clauses) [args]
+	= analyzeClauses (get tsSyntax ts) f (mapi clauses) [args]
 
 
 

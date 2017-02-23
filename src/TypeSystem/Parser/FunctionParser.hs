@@ -64,7 +64,7 @@ typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
 	  do 	clauses	<- body |+> typeClause bnfs typings tp
 		clauses |+> (\cl -> assert Left (equivalents bnfs (typesOf cl) tp) $ "Clause of type "++show (typesOf cl)++" does not match the expected type of "++show tp++"\n"++show cl)
-		return (nm, MFunction tp (clauses ++ [undefinedClause tp nm]))
+		return (nm, MFunction tp clauses)
 
 typeClause	:: Syntax -> Map Name Type -> Type -> SClause -> Either String Clause
 typeClause bnfs funcs tps sc@(SClause patterns expr)
@@ -82,17 +82,6 @@ typeClause bnfs funcs tps sc@(SClause patterns expr)
 		assert Left (null unknown) ("Undeclared variable(s): "++show unknown)
 		inMsg "While checking for conflicting typings of variables by using them" $ mergeContext bnfs patternsDeclare exprNeed
 		return $ MClause patterns' expr'
-
-
-
-undefinedClause	:: Type -> Name -> Clause
-undefinedClause tp nm
-	= let	args	= zip tp [0 .. length tp - 2] ||>> show ||>> ("t"++) |> uncurry MVar
-		expr	= MCall "" "error" True [MParseTree $ MLiteral ("", -1) $ "Undefined behaviour: non exhaustive patterns in function "++ nm]
-		in
-		MClause args expr
-		
-
 
 
 

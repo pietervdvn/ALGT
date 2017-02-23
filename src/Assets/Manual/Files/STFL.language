@@ -38,5 +38,5 @@ domain(T1 "->" T2)		= T1
 
 codomain 			: type -> type
 codomain("(" T ")")		= codomain(T)
-codomain(("(" T1 ")") "->" T2) 	= T2
+codomain(T1"->" ("(" T2 ")")) 	= T2
 codomain(T1 "->" T2)		= T2

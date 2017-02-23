@@ -283,9 +283,10 @@ renderParseTree nm (i, pt)
 
 runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> PureIO ()
 runFunc ts func (inp, pt)
- 	= do	pt'	<- evalFunc ts func [pt] & liftEith
-		putStrLn $ "\n# "++show inp++" applied to "++func
-		putStrLn $ toParsable pt'
+ 	= do	putStrLn $ "\n# "++show inp++" applied to "++func
+		catch putStrLn $ do
+			pt'	<- evalFunc ts func [pt] & liftEith
+			putStrLn $ toParsable pt'
 
 runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> PureIO ()
 runStepByStep ts func (inp, pt)

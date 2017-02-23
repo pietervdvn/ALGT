@@ -120,8 +120,7 @@ funcWith underSignature showClause (name, int) (MFunction tp clauses)
 	= let	sign	= name ++ replicate (int - length name) ' ' ++ " : "++ intercalate " -> " tp
 		sign'	= sign ++ underSignature
 		-- we drop the last clause, as it is an automatically added error clause for non exhaustive patterns
-		clauses'	= init clauses
-		clss	= clauses' |> showClause in
+		clss	= clauses |> showClause in
 		(sign':clss) & unlines
 
 
