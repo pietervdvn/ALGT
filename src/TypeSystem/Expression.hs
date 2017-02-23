@@ -200,9 +200,11 @@ instance ToString' ShowParens Expression where
 	toParsable' p (MParseTree pt)	= toCoParsable' p pt
 	toParsable' _ (MVar _ n)	= n
 	toParsable' p (MSeq _ exprs)	= exprs |> toParsable' (deepen p) & unwords & inParens' p
-	toParsable' p (MCall _ nm builtin args)
+	toParsable' p (MCall tp nm builtin args)
 				= let args'	= args |> toParsable' (least NotOnRoot p) & commas & inParens
-				  in (if builtin then "!" else "") ++ nm ++ args'
+				  in if builtin then
+					"!" ++ nm ++ ":" ++ tp ++ args' 
+					else nm ++ args'
 	toParsable' p (MAscription nm expr)	= (toParsable' (least NotOnRoot p) expr ++ ":" ++ nm) & inParens
 	toParsable' p (MEvalContext tp fullName hole)
 				= let 	hole'	= toParsable' (least NotOnRoot p) hole
@@ -240,9 +242,9 @@ expressionExamples
 	, (_int 42, "Number", "Argument should be exactly this number", "This number")
 	, (_lit "Token", "Literal", "Argument should be exactly this string", "This string")
 	, (MCall "resultType" "func" False [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],
-		"Function call", "Evaluates the function, matches if the argument equals the result. Can only use variabled declared left of this pattern", "Evaluate this function")
-	, (MCall "type" "func" True [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],
-		"Builtin function call", "Don't do this", "Evaluate this builtin function, let it return a `type`")
+		"Function call", "Evaluates the function, matches if the argument equals the result. Can only use variables which are declared left of this pattern", "Evaluate this function")
+	, (MCall "type" "func" True [MVar "sr" "arg0", MVar "sr" "..."],
+		"Builtin function call", "Evaluates the builtin function, matches if the argument equals the result. Can only use variables which are declared left of this pattern", "Evaluate this builtin function, let it return a `type`")
 	, (MAscription "type" $ MVar "" "expr or pattern", "Ascription", "Check that the argument is an element of `type`", "Checks that an expression is of a type. Bit useless")
 	, (MEvalContext "tn" "e" $ MVar "" "expr or pattern", "Evaluation context",
 		"Matches the parsetree with `e`, searches a subpart in it matching `pattern`", "Replugs `expr` at the same place in `e`. Only works if `e` was created with an evaluation context")
