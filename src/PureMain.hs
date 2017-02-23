@@ -189,12 +189,12 @@ parseWith file ts bnfRuleName str
 
 handleExampleFile	:: TypeSystem -> TypeName -> ExampleFile -> [(String, ParseTree)] -> PureIO ()
 handleExampleFile ts parsedWith exFile pts
-	= 	[ ioIfJust' ruleSymbol	$ runRule ts `onAll` pts
-		, ioIfJust' function 	$ runFunc ts `onAll` pts
-		, ioIfJust' stepByStep	$ evalStar ts `onAll` (pts |> snd)
+	= 	[ ioIfJust' ruleSymbol	$ runRule ts `onAll'` pts
+		, ioIfJust' function 	$ runFunc ts `onAll'` pts
+		, ioIfJust' stepByStep	$ evalStar ts `onAll'` (pts |> snd)
 		, ioIfJust' testProp 	$ testPropertyOn' (verbose exFile) ts parsedWith pts
 		, ioIf' testAllProps 	$ testAllProperties (verbose exFile) ts parsedWith pts
-		, ioIfJust' ptSvg	$ renderParseTree `onAll` (	pts |> snd & mapi)
+		, ioIfJust' ptSvg	$ renderParseTree `onAll'` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
 					(pts |+> printDebug & void)
 		] |+> (exFile &) & void

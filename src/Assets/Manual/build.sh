@@ -39,7 +39,7 @@ done
 
 
 
-for FILE in Manual.md Focus.md
+for FILE in Focus.md Manual.md
 do
 	OUTFILE=${FILE%.md}
 	# HTML OPTIONS

@@ -140,9 +140,6 @@ unfoldAll syntax as
 
 -------------------------------------------- FOLDING ----------------------------------------------
 
--- TODO recheck
-
-
 
 refold		:: Syntax -> [AbstractSet] -> [AbstractSet]
 refold s	= refoldWithout s []

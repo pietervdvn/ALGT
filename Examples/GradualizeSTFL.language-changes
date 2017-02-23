@@ -60,7 +60,7 @@ Rename (==) to (~), pronounced as "is consistent"
 
  (✓) arg	(arg "::" gtype) → arg'
 ------------------------------------------------------------	[EvalLamApp']
- ("(" "\\" var ":" gtype "." e ")") arg → subs(var, arg', e)
+ ("(" "\\" var ":" gtype "." e ")") arg → !subs:e(var, arg', e)
 
 
 

@@ -112,8 +112,9 @@ applyFunc ctx (nm, MFunction tp clauses) args
  | otherwise
 	= do	let stackEl		= (nm, args)
 		let ctx'		= ctx {ctxStack = stackEl:ctxStack ctx}
-		let clauseResults	= clauses |> evalClause ctx' args & rights
-		when (null clauseResults) $ Left "Not a single clause matched, even with error injection. This is a bug!"
+		let clauseResults'	= clauses |> evalClause ctx' args 
+		let clauseResults	= clauseResults' & rights
+		when (null clauseResults) $ Left $ "Not a single clause matched:\n"++(clauseResults' & lefts & unlines & indent)
 		return $ head clauseResults
 
 

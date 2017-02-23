@@ -13,7 +13,7 @@
    viewBox="0 0 340 228"
    id="svg2"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="TypeTrees2annot.svg">
+   sodipodi:docname="TypeTrees2annot1.svg">
   <metadata
      id="metadata188">
     <rdf:RDF>
@@ -22,6 +22,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -41,17 +42,17 @@
      id="namedview184"
      showgrid="false"
      inkscape:zoom="2.2211472"
-     inkscape:cx="82.232897"
+     inkscape:cx="88.535947"
      inkscape:cy="142.3131"
      inkscape:window-x="0"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg2" />
   <rect
-     width="380.96982"
+     width="381.87024"
      height="243.75763"
      id="rect4"
-     x="-9.0043564"
+     x="-9.9047918"
      y="0"
      style="fill:#ffffff" />
   <path
@@ -729,23 +730,23 @@
      fill="#000000"
      id="circle182" />
   <ellipse
-     style="fill:#ff0000;fill-opacity:0;stroke:#ff0000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="fill:#ff0000;fill-opacity:0;stroke:#ff0000;stroke-width:1.3224169;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      id="path4316"
-     cx="113.22977"
-     cy="164.29417"
-     rx="121.78391"
-     ry="74.511047" />
+     cx="105.57607"
+     cy="201.21204"
+     rx="90.60746"
+     ry="43.784813" />
   <text
      xml:space="preserve"
      style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-     x="185.31285"
-     y="191.66219"
+     x="166.85393"
+     y="184.45869"
      id="text4194"
      sodipodi:linespacing="125%"><tspan
        sodipodi:role="line"
        id="tspan4196"
-       x="185.31285"
-       y="191.66219"
+       x="166.85393"
+       y="184.45869"
        style="font-size:30px;fill:#ff0000">T1</tspan></text>
   <text
      xml:space="preserve"
@@ -766,4 +767,11 @@
      cy="91.133797"
      rx="30.376858"
      ry="15.52932" />
+  <ellipse
+     style="fill:#000000;fill-opacity:0;stroke:#00a700;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path4228"
+     cx="111.87912"
+     cy="174.8743"
+     rx="120.43326"
+     ry="74.736153" />
 </svg>

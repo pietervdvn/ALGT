@@ -148,6 +148,14 @@ readFile fp
 liftEith	:: Either String x -> PureIO x
 liftEith 	= either fail return
 
+
+catch		:: (String -> PureIO x) -> PureIO x -> PureIO x
+catch handler (PureIO fix)
+		= PureIO $ \i ->
+			case fix i of
+				Left msg	-> let PureIO fix'	= handler msg in fix' i
+				right		-> right
+
 ioIf	:: x -> (a -> Bool) -> PureIO x -> a -> PureIO x
 ioIf x fb action a
 	= if fb a then action else return x
@@ -168,6 +176,11 @@ onAll		:: (a -> b -> PureIO ()) -> [b] -> a -> PureIO ()
 onAll f pts a
 	= pts |+> f a & void
 
+onAll'		:: (a -> b -> PureIO ()) -> [b] -> a -> PureIO ()
+onAll' f pts a
+	= pts |> f a |+> catch (\str -> putStrLn str) & void
+		
+
 
 
 isolateFailure'	:: PureIO x -> PureIO ()
@@ -177,10 +190,8 @@ isolateFailure' (PureIO fix)
 				Right (x, out)	-> Right ((), out) )	
 
 isolateFailure	:: x -> PureIO x -> PureIO x
-isolateFailure x (PureIO fix)
-	= PureIO (\i -> case fix i of
-				Left msg	-> Right (x, Output M.empty [msg])
-				done		-> done)		
+isolateFailure x
+	= catch (\msg -> putStrLn msg >> return x) 
 
 isolateCheck	:: Either String () -> PureIO ()
 isolateCheck (Left msg)

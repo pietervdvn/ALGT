@@ -296,9 +296,13 @@ contentsChanged fp
 	= do	files	<- dirConts fp
 		files 	& filter (not . (".bin" `isInfixOf`))
 			& filter (not . (".pdf" `isSuffixOf`))
+			& filter (not . ("ALGT_Manual.html" `isSuffixOf`))
 			|> (id &&& getModificationTime) |+> sndEffect
 			|> M.fromList
 
+
+diff		:: (Ord k, Eq v) => Map k v -> Map k v -> Map k (v, v)
+diff m0 m1	= M.intersectionWith (,) m0 m1 & M.filter (uncurry (/=))
 
 autoRecreate'	:: Map FilePath UTCTime ->  IO ()
 autoRecreate' lastEdits
@@ -313,7 +317,8 @@ autoRecreate' lastEdits
 		if lastEdits == lastEdits' then do
 			animation' |+> (\frame -> threadDelay (frameLength*millisecs) >> putStr frame)
 			pass
-		else
+		else do
+			putStrLn $ "CHANGED: "++ show (M.toList $ diff lastEdits lastEdits')
 			autoPreprocess
 		autoRecreate' lastEdits'
 
