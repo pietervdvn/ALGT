@@ -16,9 +16,6 @@ Warning:
     Following calls will fall through:
       eval(("(" "\\" var ":" type "." e ")"))
   
-  While checking liveability of every clause in function "subs":
-    subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
-  
 # True applied to ::
 # Proof weight: 3, proof depth: 3
 

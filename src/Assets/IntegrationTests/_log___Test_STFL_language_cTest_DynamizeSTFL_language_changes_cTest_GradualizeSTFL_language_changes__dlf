@@ -34,9 +34,6 @@ Warning:
       eval("TYPE ERROR")
       eval(("(" "\\" var ":" gtype "." e ")"))
   
-  While checking liveability of every clause in function "subs":
-    subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
-  
 
   Gradualized Dynamized STFL 
  ****************************
@@ -121,7 +118,7 @@ equate(t11 "->" t12, t21 "->" t22)
 eval                     : e -> value
 eval((v:value))          = v
 eval(("(" "\\" x ":" t "." e ")") arg)
-                         = eval(subs(x, arg, e))
+                         = eval(!subs:e(x, arg, e))
 eval(f a)                = eval(eval(f) a)
 eval("If" "True" "Then" e1 "Else" e2)
                          = eval(e1)
@@ -130,9 +127,9 @@ eval("If" "False" "Then" e1 "Else" e2)
 eval("If" c "Then" e1 "Else" e2)
                          = eval("If" eval(c) "Then" e1 "Else" e2)
 eval("(" e ")")          = eval(e)
-eval(e1 "+" e2)          = !plus(eval(e1), eval(e2))
+eval(e1 "+" e2)          = !plus:number(eval(e1), eval(e2))
 eval(e "::" t)           = eval(e)
-eval((v:var))            = !error("Unknown variable", v)
+eval((v:var))            = !error:value("Unknown variable", v)
 
 
 id                       : e -> e
@@ -140,27 +137,12 @@ id(e)                    = e
 
 
 plus                     : number -> e -> number
-plus(e1, e2)             = !plus(e1, e2)
+plus(e1, e2)             = !plus:number(e1, e2)
 
 
 rename                   : var -> var -> gtype -> e -> eL
 rename(x, newVar, type, body)
-                         = "(" "\\" newVar ":" type "." subs(x, newVar, body) ")"
-
-
-subs                     : var -> e -> e -> e
-subs(x, y, x)            = y
-subs(x, y, "(" "\\" x ":" t "." rest ")")
-                         = subs(x, y, rename(x, !newvar(x, rest), t, rest))
-subs(x, y, "(" "\\" z ":" t "." rest ")")
-                         = "(" "\\" z ":" t "." subs(x, y, rest) ")"
-subs(x, y, "If" cond "Then" e1 "Else" e2)
-                         = "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
-subs(x, y, e1 "+" e2)    = subs(x, y, e1) "+" subs(x, y, e2)
-subs(x, y, e "::" type)  = subs(x, y, e) "::" type
-subs(x, y, f arg)        = subs(x, y, f) subs(x, y, arg)
-subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")"
-subs(x, y, z)            = z
+                         = "(" "\\" newVar ":" type "." !subs:e(x, newVar, body) ")"
 
 
 
@@ -288,8 +270,8 @@ subs(x, y, z)            = z
 
 
  (✓) arg	arg "::" gtype → arg'
---------------------------------------------------------------  	[EvalLamApp']
- ("(" "\\" var ":" gtype "." e ")") arg → subs(var, arg', e)
+-----------------------------------------------------------------  	[EvalLamApp']
+ ("(" "\\" var ":" gtype "." e ")") arg → !subs:e(var, arg', e)
 
 
  

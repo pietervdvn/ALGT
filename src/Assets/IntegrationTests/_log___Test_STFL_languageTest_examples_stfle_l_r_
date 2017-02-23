@@ -16,9 +16,6 @@ Warning:
     Following calls will fall through:
       eval(("(" "\\" var ":" type "." e ")"))
   
-  While checking liveability of every clause in function "subs":
-    subs(x, y, "(" e ")")    = "(" subs(x, y, e) ")" will never match anything, as the possible arguments are already consumed
-  
 # Could not apply relation → to relation the input True, because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:
