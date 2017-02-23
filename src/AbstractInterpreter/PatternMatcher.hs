@@ -21,11 +21,8 @@ import Control.Arrow ((&&&))
 
 
 patternMatch	:: Syntax -> Expression -> AbstractSet -> [Assignments]
-patternMatch _ (MCall _ "error" True _) _	
-	= error "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
-patternMatch _ (MCall _ nm _ _) _	
-	= error "Using a function call in a pattern is not allowed"
-
+patternMatch _ MCall{} _	
+	= returnE
 
 patternMatch r (MVar _ v) as
 		= assign v as 

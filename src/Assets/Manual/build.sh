@@ -50,7 +50,13 @@ do
 	# LaTeX
 	pandoc $PANDOC_EXTENSIONS --listings --chapters $FILE -o $OUTFILE.tex | sed "s/^/PANDOC-TEX /g"
 
-	cat Main.tex | sed "s/§/$OUTFILE/" > "ALGT_$OUTFILE.tex"
+
+	if [ $OUTFILE = "Focus" ]
+	then
+		cat Main.tex | sed "/%NOFOCUS/d " | sed "s/§/$OUTFILE/" > "ALGT_$OUTFILE.tex"
+	else
+		cat Main.tex | sed "s/§/$OUTFILE/" > "ALGT_$OUTFILE.tex"
+	fi
 
 	pdflatex -halt-on-error "ALGT_$OUTFILE.tex" | sed "s/^/LATEX-$OUTFILE: /g"
 done

@@ -62,25 +62,13 @@ id(e)		= e
 # deduces a new name for the variable in an lambda abstraction
 rename		: var -> var -> type -> e -> eL
 rename(x, newVar, type, body)
-		= "(" "\\" newVar ":" type "." subs(x, newVar, body ) ")"
-
-# replaces variable x by y in entire expression
-subs						: var -> e -> e -> e
-subs(x, y, x)					= y
-subs(x, y, "(" "\\" x ":" t "." rest ")" )	= subs(x, y, rename(x, !newvar:var(x, rest), t, rest) )
-subs(x, y, "(" "\\" z ":" t "." rest ")" )	= "(" "\\" z ":" t "." subs(x,y,rest) ")"
-subs(x, y, "If" cond "Then" e1 "Else" e2)	= "If" subs(x, y, cond) "Then" subs(x, y, e1) "Else" subs(x, y, e2)
-subs(x, y, e1 "+" e2)				= subs(x, y, e1) "+" subs(x, y, e2)
-subs(x, y, e "::" type)				= subs(x, y, e) "::" type
-subs(x, y, f arg)				= subs(x, y, f) subs(x, y, arg) 
-subs(x, y, "(" e ")")				= "(" subs(x, y, e) ")"
-subs(x, y, z)					= z
+		= "(" "\\" newVar ":" type "." !subs:e(x, newVar, body ) ")"
 
 
 eval			: e -> value
 eval( (v : value) )	= v
 eval(("(" "\\" x ":" t "." e ")") arg)
-			= eval(subs(x, arg, e))
+			= eval(!subs:e(x, arg, e))
 eval(f a)		= eval(eval(f) a)
 eval("If" "True" "Then" e1 "Else" e2)
 			= eval(e1)
@@ -181,7 +169,7 @@ equate(T, T)	= T
 
 
 ------------------------------------------------------------	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg, e)
+ ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg, e)
 
 
 

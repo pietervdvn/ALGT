@@ -26,6 +26,7 @@ builtinRelations
 	  , ("]", "Context close")
 	  , ("(", "Parenthese open")
 	  , (")", "Parenthese close")
+	  , ("!", "Builtin function")
 
 	  ]
 

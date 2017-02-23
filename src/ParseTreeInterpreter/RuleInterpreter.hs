@@ -128,7 +128,7 @@ patternMatchInputs ts predicates (rel, relationArgs) args
 matchAndMerge	:: TypeSystem -> [Predicate] -> [(Expression, ParseTree)] -> Either String VariableAssignments
 matchAndMerge ts predicates patsArgs
 	= do	let evalContextMatches assngs	= proofPredicates ts assngs predicates & isRight
-		matches	<- patsArgs |+> uncurry (patternMatch (get tsSyntax ts) evalContextMatches)
+		matches	<- patsArgs |+> uncurry (patternMatch (buildCtx' ts) evalContextMatches)
 		matches & mergeVarss
 
 

@@ -1,6 +1,6 @@
  {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses, TemplateHaskell #-} 
 module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch, builtinFunctions
-		, BuiltinFunction, bifName, bifDescr, bifMinArgs, bifMaxArgs, bifApply) where
+		, BuiltinFunction, bifName, bifDescr, bifMinArgs, bifMaxArgs, bifApply, buildCtx') where
 
 {-
 This module defines an interpreter for functions. 
@@ -36,7 +36,7 @@ data BuiltinFunction = BuiltinFunction
 	} 
 data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
 			ctxFunctions 	:: Map Name Function,
-			ctxVars	:: VariableAssignments,
+			ctxVars		:: VariableAssignments,
 			ctxStack	:: [(Name, [ParseTree])] -- only used for errors
 			}
 buildCtx ts vars 	= Ctx (get tsSyntax ts) (get tsFunctions ts) vars []
@@ -119,7 +119,8 @@ applyFunc ctx (nm, MFunction tp clauses) args
 
 evalClause	:: Ctx ->  [ParseTree] -> Clause -> Either String ParseTree
 evalClause ctx args (MClause pats expr)
-	= do	variables	<- patternMatchAll (ctxSyntax ctx) pats args
+	= do	let stackEl		= ("Pattern matching", args)
+		variables	<- patternMatchAll (ctx{ctxStack = stackEl:ctxStack ctx}) pats args
 		let ctx'	= ctx {ctxVars = variables}
 		evaluate ctx' expr
 
@@ -140,14 +141,14 @@ mergeVars v1 v2
 			else inMsg "Merging contexts failed: some variables are assigned different values" $ Left failMsgs
 
 
-patternMatchAll	:: Syntax -> [Expression] -> [ParseTree] -> Either String VariableAssignments
+patternMatchAll	:: Ctx -> [Expression] -> [ParseTree] -> Either String VariableAssignments
 patternMatchAll _ [] []
 		= return M.empty
-patternMatchAll s (pat:pats) (arg:args)
-	= do	let successFullMatch vars	= isLeft $ (do	vars'	<- patternMatchAll s pats args
+patternMatchAll ctx (pat:pats) (arg:args)
+	= do	let successFullMatch vars	= isLeft $ (do	vars'	<- patternMatchAll ctx pats args
 								mergeVars vars vars')
-		variables	<- patternMatch s successFullMatch pat arg
-		variables'	<- patternMatchAll s pats args
+		variables	<- patternMatch ctx successFullMatch pat arg
+		variables'	<- patternMatchAll ctx pats args
 		mergeVars variables variables'
 
 
@@ -158,7 +159,7 @@ patternMatch pattern value
 
 The extra function (VariableAssignments -> Bool) injects a test, to test different evaluation contexts
 -}
-patternMatch	:: Syntax -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Either String VariableAssignments
+patternMatch	:: Ctx -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Either String VariableAssignments
 patternMatch _ _ (MVar _ v) expr
 	= return $ M.singleton v (expr, Nothing)
 patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
@@ -170,40 +171,40 @@ patternMatch _ _ (MParseTree (MInt _ s1)) (MInt _ s2)
 patternMatch _ _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
 	| s1 == s2		= return M.empty
 	| otherwise		= Left $ "Not the same identifier: "++s1++ " /= " ++ s2
-patternMatch r f (MParseTree (PtSeq mi pts)) pt
-	= patternMatch r f (MSeq mi (pts |> MParseTree)) pt
-patternMatch r f s1@(MSeq _ seq1) s2@(PtSeq _ seq2)
+patternMatch ctx f (MParseTree (PtSeq mi pts)) pt
+	= patternMatch ctx f (MSeq mi (pts |> MParseTree)) pt
+patternMatch ctx f s1@(MSeq _ seq1) s2@(PtSeq _ seq2)
  | length seq1 /= length seq2	= Left $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++toCoParsable s2
- | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch r f) >>= foldM mergeVars M.empty
+ | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch ctx f) >>= foldM mergeVars M.empty
 
-patternMatch r f (MAscription as expr') expr
- | alwaysIsA r (typeOf expr) as	
-	= patternMatch r f expr' expr
+patternMatch ctx f (MAscription as expr') expr
+ | alwaysIsA (ctxSyntax ctx) (typeOf expr) as	
+	= patternMatch ctx f expr' expr
  | otherwise	
 	= Left $ toCoParsable expr ++" is not a "++show as
 
-patternMatch r extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
-	= patternMatchContxt r extraCheck (tp, name, hole) value
+patternMatch ctx extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
+	= patternMatchContxt ctx extraCheck (tp, name, hole) value
 		
 
-patternMatch _ _ (MCall _ "error" True _) _	
-	= error "Using an error in a pattern match is not allowed. Well, you've got your error now anyway. Happy now, you punk?"
-patternMatch _ _ (MCall _ nm _ _) _	
-	= error "Using a function call in a pattern is not allowed"
+patternMatch ctx _ func@MCall{} arg
+	= do	pt	<- evaluate ctx func
+		unless (pt == arg) $ Left $ "Function result of "++toParsable func++" does not equal the given argument"
+		return M.empty
 patternMatch _ _ pat expr		
 	= Left $ "Could not match "++toParsable pat++" /= "++toCoParsable expr
 
 
-patternMatchContxt	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
+patternMatchContxt	:: Ctx -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
 patternMatchContxt r extraCheck evalCtx fullContext@(PtSeq _ values)
 	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, Path) -> Either String VariableAssignments
 		depthFirstSearch' matchMaker [] values
 
 
-makeMatch	:: Syntax -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, Path) -> Either String VariableAssignments
-makeMatch r extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
+makeMatch	:: Ctx -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, Path) -> Either String VariableAssignments
+makeMatch ctx extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
-		holeAssgn	<- patternMatch r extraCheck holePattern holeFiller
+		holeAssgn	<- patternMatch ctx extraCheck holePattern holeFiller
 		assgn'		<- mergeVars baseAssign holeAssgn
 		assert Left (extraCheck assgn') "Extra patterns (for the rule) failed"
 		return assgn'

@@ -240,7 +240,7 @@ expressionExamples
 	, (_int 42, "Number", "Argument should be exactly this number", "This number")
 	, (_lit "Token", "Literal", "Argument should be exactly this string", "This string")
 	, (MCall "resultType" "func" False [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],
-		"Function call", "Don't do this", "Evaluate this function") {- TODO allow functions in pattern matches?-}
+		"Function call", "Evaluates the function, matches if the argument equals the result. Can only use variabled declared left of this pattern", "Evaluate this function")
 	, (MCall "type" "func" True [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],
 		"Builtin function call", "Don't do this", "Evaluate this builtin function, let it return a `type`")
 	, (MAscription "type" $ MVar "" "expr or pattern", "Ascription", "Check that the argument is an element of `type`", "Checks that an expression is of a type. Bit useless")

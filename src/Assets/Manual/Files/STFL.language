@@ -30,34 +30,6 @@ term	::= "If" expr "Then" expr "Else" expr
  Functions
 ===========
 
-testSubs		: expr -> expr
-testSubs(e)		= subs("x", 42, e)
-
-# replaces variable x by y in entire expression
-subs			: var -> expr -> expr -> expr
-subs(x, e, "True")	= "True"
-subs(x, e, "False")	= "False"
-subs(x, e, (i:int))	= i
-subs(x, e, x)		= e
-
-subs(x, e, "(" "\\" z ":" t "." body ")" )
-	= "(" "\\" z ":" t "." subs(x, e, body) ")"
-
-subs(x, e, "If" cond "Then" e1 "Else" e2)	
-	= "If" subs(x, e, cond) "Then" subs(x, e, e1) "Else" subs(x, e, e2)
-
-subs(x, e, e1 "+" e2)
-	= subs(x, e, e1) "+" subs(x, e, e2)
-
-subs(x, e, f arg)
-	= subs(x, e, f) subs(x, e, arg) 
-
-subs(x, e, z)
-	= z
-
-
-
-
 
 domain 				: type -> type
 domain("(" T ")")		= domain(T)
