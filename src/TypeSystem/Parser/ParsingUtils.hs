@@ -33,7 +33,7 @@ builtinRelations
 
 -- Parsing tools --
 
-type Parser u r	= ParsecT String u Identity r
+type Parser u r	= ParsecT String u (Either String) r
 
 sourcePos	:: Parser u SourcePos
 sourcePos	= getParserState |> statePos

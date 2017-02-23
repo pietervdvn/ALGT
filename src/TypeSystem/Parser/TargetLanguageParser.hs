@@ -15,10 +15,16 @@ import TypeSystem
 import Text.Parsec
 import Data.Maybe
 import Data.Char
+import qualified Data.Bifunctor as BF
 import qualified Data.Map as M
 
 
 ------------------------ Syntax: Actually parsed stuff -------------------------
+
+parseTargetLang	:: Syntax -> TypeName -> FilePath -> String -> Either String ParseTree
+parseTargetLang s tp fp inp
+	= do	parsed	<- runParserT (parseSyntax s tp <* ws <* eof) () fp inp
+		parsed & BF.first show
 
 parseSyntax	:: Syntax -> Name -> Parser u ParseTree
 parseSyntax syntax nm

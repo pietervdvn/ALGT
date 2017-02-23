@@ -19,6 +19,7 @@ import TypeSystem.Parser.TargetLanguageParser
 import Control.Monad
 
 import Text.Parsec
+import TypeSystem.Parser.ParsingUtils
 
 import AssetsHelper
 
@@ -34,15 +35,19 @@ subTestSynt   = [ "bool ::= \"True\" | \"False\""
 		, "type ::= \"Bool\" | \"Int\""
 		, "ascr ::= val \"::\" type"
 		, "expr ::= \"If\" expr \"Then\" expr | val"
-		] |> parse parseBnfRule "integration tests" |> either (error . show) id
-		& makeSyntax
+		] |> runParserUnsafe parseBnfRule & makeSyntax & either error id
+
+runParserUnsafe	:: Parser () a -> String -> a
+runParserUnsafe parser bnf
+	= runParserT parser () "integration tests" bnf
 		& either error id
+		& either (error . show) id
+
 
 
 
 parseAS		:: TypeName -> String -> AbstractSet
-parseAS tn str	= parse (parseSyntax subTestSynt tn) "integration test: parseAS" str
-			& either (error . show) id
+parseAS tn str	= runParserUnsafe (parseSyntax subTestSynt tn) str
 			& fromParseTree "pt"
 
 genAS		= generateAbstractSet subTestSynt ""

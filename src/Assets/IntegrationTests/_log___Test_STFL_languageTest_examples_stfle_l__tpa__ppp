@@ -25,23 +25,23 @@ Property successfull
   While trying to proof that (→) is applicable to "True":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with True:
-      Could not match e[e0] /= "True"
+      Could not pattern match "True" over e[e0]
     While trying to intepret the rule EvalPlus with True:
-      Could not match (n1:number) "+" n2 /= "True"
+      Could not pattern match "True" over (n1:number) "+" n2
     While trying to intepret the rule EvalAscrBool with True:
-      Could not match b "::" "Bool" /= "True"
+      Could not pattern match "True" over b "::" "Bool"
     While trying to intepret the rule EvalAscrInt with True:
-      Could not match i "::" "Int" /= "True"
+      Could not pattern match "True" over i "::" "Int"
     While trying to intepret the rule EvalAscrPar with True:
-      Could not match e "::" ("(" t ")") /= "True"
+      Could not pattern match "True" over e "::" ("(" t ")")
     While trying to intepret the rule EvalParens with True:
-      Could not match "(" e ")" /= "True"
+      Could not pattern match "True" over "(" e ")"
     While trying to intepret the rule EvalIfTrue with True:
-      Could not match "If" "True" "Then" e1 "Else" e2 /= "True"
+      Could not pattern match "True" over "If" "True" "Then" e1 "Else" e2
     While trying to intepret the rule EvalIfFalse with True:
-      Could not match "If" "False" "Then" e1 "Else" e2 /= "True"
+      Could not pattern match "True" over "If" "False" "Then" e1 "Else" e2
     While trying to intepret the rule EvalLamApp with True:
-      Could not match ("(" "\\" var ":" type "." e ")") arg /= "True"
+      Could not pattern match "True" over ("(" "\\" var ":" type "." e ")") arg
 Property successfull
 # Property Preservation proven by failing predicate with assignment {e0 --> False}:
   # Success: e0 :: T
@@ -50,23 +50,23 @@ Property successfull
   While trying to proof that (→) is applicable to "False":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with False:
-      Could not match e[e0] /= "False"
+      Could not pattern match "False" over e[e0]
     While trying to intepret the rule EvalPlus with False:
-      Could not match (n1:number) "+" n2 /= "False"
+      Could not pattern match "False" over (n1:number) "+" n2
     While trying to intepret the rule EvalAscrBool with False:
-      Could not match b "::" "Bool" /= "False"
+      Could not pattern match "False" over b "::" "Bool"
     While trying to intepret the rule EvalAscrInt with False:
-      Could not match i "::" "Int" /= "False"
+      Could not pattern match "False" over i "::" "Int"
     While trying to intepret the rule EvalAscrPar with False:
-      Could not match e "::" ("(" t ")") /= "False"
+      Could not pattern match "False" over e "::" ("(" t ")")
     While trying to intepret the rule EvalParens with False:
-      Could not match "(" e ")" /= "False"
+      Could not pattern match "False" over "(" e ")"
     While trying to intepret the rule EvalIfTrue with False:
-      Could not match "If" "True" "Then" e1 "Else" e2 /= "False"
+      Could not pattern match "False" over "If" "True" "Then" e1 "Else" e2
     While trying to intepret the rule EvalIfFalse with False:
-      Could not match "If" "False" "Then" e1 "Else" e2 /= "False"
+      Could not pattern match "False" over "If" "False" "Then" e1 "Else" e2
     While trying to intepret the rule EvalLamApp with False:
-      Could not match ("(" "\\" var ":" type "." e ")") arg /= "False"
+      Could not pattern match "False" over ("(" "\\" var ":" type "." e ")") arg
 Property successfull
 # Property Preservation statisfied with assignment {T --> Bool, e0 --> If True Then False Else True, e1 --> False}
   # Predicate satisfied:
@@ -147,23 +147,23 @@ Property successfull
   While trying to proof that (→) is applicable to "42":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with 42:
-      Could not match e[e0] /= 42
+      Could not pattern match 42 over e[e0]
     While trying to intepret the rule EvalPlus with 42:
-      Could not match (n1:number) "+" n2 /= 42
+      Could not pattern match 42 over (n1:number) "+" n2
     While trying to intepret the rule EvalAscrBool with 42:
-      Could not match b "::" "Bool" /= 42
+      Could not pattern match 42 over b "::" "Bool"
     While trying to intepret the rule EvalAscrInt with 42:
-      Could not match i "::" "Int" /= 42
+      Could not pattern match 42 over i "::" "Int"
     While trying to intepret the rule EvalAscrPar with 42:
-      Could not match e "::" ("(" t ")") /= 42
+      Could not pattern match 42 over e "::" ("(" t ")")
     While trying to intepret the rule EvalParens with 42:
-      Could not match "(" e ")" /= 42
+      Could not pattern match 42 over "(" e ")"
     While trying to intepret the rule EvalIfTrue with 42:
-      Could not match "If" "True" "Then" e1 "Else" e2 /= 42
+      Could not pattern match 42 over "If" "True" "Then" e1 "Else" e2
     While trying to intepret the rule EvalIfFalse with 42:
-      Could not match "If" "False" "Then" e1 "Else" e2 /= 42
+      Could not pattern match 42 over "If" "False" "Then" e1 "Else" e2
     While trying to intepret the rule EvalLamApp with 42:
-      Could not match ("(" "\\" var ":" type "." e ")") arg /= 42
+      Could not pattern match 42 over ("(" "\\" var ":" type "." e ")") arg
 Property successfull
 # Property Preservation statisfied with assignment {T --> Int, e0 --> 1 + 2, e1 --> 3}
   # Predicate satisfied:
@@ -382,23 +382,23 @@ Property successfull
   While trying to proof that (→) is applicable to "True":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with True:
-      Could not match e[e0] /= "True"
+      Could not pattern match "True" over e[e0]
     While trying to intepret the rule EvalPlus with True:
-      Could not match (n1:number) "+" n2 /= "True"
+      Could not pattern match "True" over (n1:number) "+" n2
     While trying to intepret the rule EvalAscrBool with True:
-      Could not match b "::" "Bool" /= "True"
+      Could not pattern match "True" over b "::" "Bool"
     While trying to intepret the rule EvalAscrInt with True:
-      Could not match i "::" "Int" /= "True"
+      Could not pattern match "True" over i "::" "Int"
     While trying to intepret the rule EvalAscrPar with True:
-      Could not match e "::" ("(" t ")") /= "True"
+      Could not pattern match "True" over e "::" ("(" t ")")
     While trying to intepret the rule EvalParens with True:
-      Could not match "(" e ")" /= "True"
+      Could not pattern match "True" over "(" e ")"
     While trying to intepret the rule EvalIfTrue with True:
-      Could not match "If" "True" "Then" e1 "Else" e2 /= "True"
+      Could not pattern match "True" over "If" "True" "Then" e1 "Else" e2
     While trying to intepret the rule EvalIfFalse with True:
-      Could not match "If" "False" "Then" e1 "Else" e2 /= "True"
+      Could not pattern match "True" over "If" "False" "Then" e1 "Else" e2
     While trying to intepret the rule EvalLamApp with True:
-      Could not match ("(" "\\" var ":" type "." e ")") arg /= "True"
+      Could not pattern match "True" over ("(" "\\" var ":" type "." e ")") arg
 Property successfull
 # Property Preservation statisfied with assignment {T --> Bool, e0 --> ( False ), e1 --> False}
   # Predicate satisfied:
@@ -827,7 +827,7 @@ Property successfull
         While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
           Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
-          Could not match Γ[x ":" T] /= "{}"
+          Could not pattern match "{}" over Γ[x ":" T]
         While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
           Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
@@ -840,20 +840,20 @@ Property successfull
             While trying to intepret the rule EqBase with Bool, ( Int ):
               Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
             While trying to intepret the rule EqParL with Bool, ( Int ):
-              Could not match "(" T1 ")" /= "Bool"
+              Could not pattern match "Bool" over "(" T1 ")"
             While trying to intepret the rule EqParR with Bool, ( Int ):
               While trying to proof that (==) is applicable to "Bool, Int":
                 Not a single rule matched:
                 While trying to intepret the rule EqBase with Bool, Int:
                   Equality predicate not met: T1="Bool" /= "Int"=T2
                 While trying to intepret the rule EqParL with Bool, Int:
-                  Could not match "(" T1 ")" /= "Bool"
+                  Could not pattern match "Bool" over "(" T1 ")"
                 While trying to intepret the rule EqParR with Bool, Int:
-                  Could not match "(" T2 ")" /= "Int"
+                  Could not pattern match "Int" over "(" T2 ")"
                 While trying to intepret the rule EqArrow with Bool, Int:
-                  Could not match Ta1 "->" Tb1 /= "Bool"
+                  Could not pattern match "Bool" over Ta1 "->" Tb1
             While trying to intepret the rule EqArrow with Bool, ( Int ):
-              Could not match Ta1 "->" Tb1 /= "Bool"
+              Could not pattern match "Bool" over Ta1 "->" Tb1
 # e0 → e1 failed because: 
   Proof not attempted as previous predicate failed
 Property Progress holds for given examples                                      
@@ -1439,7 +1439,7 @@ Property successfull
         While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
           Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
-          Could not match Γ[x ":" T] /= "{}"
+          Could not pattern match "{}" over Γ[x ":" T]
         While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
           Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
@@ -1452,20 +1452,20 @@ Property successfull
             While trying to intepret the rule EqBase with Bool, ( Int ):
               Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
             While trying to intepret the rule EqParL with Bool, ( Int ):
-              Could not match "(" T1 ")" /= "Bool"
+              Could not pattern match "Bool" over "(" T1 ")"
             While trying to intepret the rule EqParR with Bool, ( Int ):
               While trying to proof that (==) is applicable to "Bool, Int":
                 Not a single rule matched:
                 While trying to intepret the rule EqBase with Bool, Int:
                   Equality predicate not met: T1="Bool" /= "Int"=T2
                 While trying to intepret the rule EqParL with Bool, Int:
-                  Could not match "(" T1 ")" /= "Bool"
+                  Could not pattern match "Bool" over "(" T1 ")"
                 While trying to intepret the rule EqParR with Bool, Int:
-                  Could not match "(" T2 ")" /= "Int"
+                  Could not pattern match "Int" over "(" T2 ")"
                 While trying to intepret the rule EqArrow with Bool, Int:
-                  Could not match Ta1 "->" Tb1 /= "Bool"
+                  Could not pattern match "Bool" over Ta1 "->" Tb1
             While trying to intepret the rule EqArrow with Bool, ( Int ):
-              Could not match Ta1 "->" Tb1 /= "Bool"
+              Could not pattern match "Bool" over Ta1 "->" Tb1
 Property Termination holds for given examples                                   
 Property successfull
 # Property Termination statisfied with assignment {T --> Bool, e --> True}
@@ -2132,7 +2132,7 @@ Property successfull
         While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
           Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
-          Could not match Γ[x ":" T] /= "{}"
+          Could not pattern match "{}" over Γ[x ":" T]
         While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
           Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
@@ -2145,17 +2145,17 @@ Property successfull
             While trying to intepret the rule EqBase with Bool, ( Int ):
               Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
             While trying to intepret the rule EqParL with Bool, ( Int ):
-              Could not match "(" T1 ")" /= "Bool"
+              Could not pattern match "Bool" over "(" T1 ")"
             While trying to intepret the rule EqParR with Bool, ( Int ):
               While trying to proof that (==) is applicable to "Bool, Int":
                 Not a single rule matched:
                 While trying to intepret the rule EqBase with Bool, Int:
                   Equality predicate not met: T1="Bool" /= "Int"=T2
                 While trying to intepret the rule EqParL with Bool, Int:
-                  Could not match "(" T1 ")" /= "Bool"
+                  Could not pattern match "Bool" over "(" T1 ")"
                 While trying to intepret the rule EqParR with Bool, Int:
-                  Could not match "(" T2 ")" /= "Int"
+                  Could not pattern match "Int" over "(" T2 ")"
                 While trying to intepret the rule EqArrow with Bool, Int:
-                  Could not match Ta1 "->" Tb1 /= "Bool"
+                  Could not pattern match "Bool" over Ta1 "->" Tb1
             While trying to intepret the rule EqArrow with Bool, ( Int ):
-              Could not match Ta1 "->" Tb1 /= "Bool"
+              Could not pattern match "Bool" over Ta1 "->" Tb1

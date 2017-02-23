@@ -58,7 +58,7 @@ mainPure args
 	= do	checkInput args
 		tsContents	<- readFile (tsFile args)
 		ts		<- parseTypeSystem tsContents (Just $ tsFile args)
-					& first show & liftEith
+					& liftEith
 		changedTs	<- foldM mainChange ts (changeFiles args)
 		check   changedTs & inMsg "Error" & liftEith
 		checkTS changedTs & isolateCheck
@@ -139,7 +139,7 @@ mainChange	:: TypeSystem -> FilePath -> PureIO TypeSystem
 mainChange ts filepath
 	= do	contents	<- readFile filepath
 		(changes, ts')	<- parseChanges ts contents (Just filepath)
-						& first show & liftEith
+						& liftEith
 		return ts'
 
 
@@ -169,17 +169,14 @@ mainExFilePure ts args
 	  do	let path	= fileName args
 		contents	<- readFile path
 		let inputs	= (if lineByLine args then filter (/= "") . lines else (:[])) contents
-		parsed		<- inputs |> parseWith path ts (parser args) |+> liftEith
+		parsed		<- mapi inputs |> parseWith path ts (parser args) |+> liftEith
 		let parsed'	= zip inputs parsed
 		handleExampleFile ts (parser args) args parsed'
 		return parsed'
 
-parseWith	:: FilePath -> TypeSystem -> Name -> String -> Either String ParseTree
-parseWith file ts bnfRuleName str
-	= let 	parser	= parse (parseSyntax (get tsSyntax ts) bnfRuleName <* ws <* eof)
-		parsed	= parser file str
-		in
-		first show parsed
+parseWith	:: FilePath -> TypeSystem -> Name -> (Int, String) -> Either String ParseTree
+parseWith file ts bnfRuleName (i, str)
+	= parseTargetLang (get tsSyntax ts) bnfRuleName (file++" (line "++show i++")") str
 
 
 

@@ -19,6 +19,8 @@ import qualified Data.Map as M
 
 import Control.Arrow ((&&&))
 import Control.Monad
+import Control.Monad.Trans
+import qualified Data.Bifunctor as BF
 
 import Text.Parsec
 
@@ -76,12 +78,12 @@ functionChange types syntax
 	= do	(nm, tps)	<- metaSignature syntax
 		nls1
 		cons		<- try (string "..." >> nls1 >> return Edit) <|> return Override
-		clauses		<- parseClauses nm tps
+		clauses		<- parseClauses nm
 		let untypedFunc	= SFunction nm tps clauses
 
 
 		(nm, function)	<- typeFunction syntax types untypedFunc
-					& either error return
+					& lift
 		return $ cons nm function
 
 
@@ -148,8 +150,7 @@ changesFile ts0 name
 
 
 
-		let ts1	 = applySyntaxChanges bnfCh' ts0
-				& either error id
+		ts1	 <- lift $ applySyntaxChanges bnfCh' ts0
 
 		-- FUNCTIONS --
 		---------------
@@ -162,8 +163,7 @@ changesFile ts0 name
 
 		let newFuncs'	= newFuncs & M.toList |> uncurry New
 
-		let functions'	= get tsFunctions ts1 & applyAllChanges (editFunction (get tsSyntax ts1)) newFuncs'
-					& either error id
+		functions'	<- lift $ get tsFunctions ts1 & applyAllChanges (editFunction (get tsSyntax ts1)) newFuncs'
 
 		funcCh	<- option [] $ try $ do
 				nls
@@ -173,8 +173,7 @@ changesFile ts0 name
 
 		let funcCh'	= newFuncs' ++ funcCh
 		
-		let ts2	= applyFuncChanges funcCh' ts1
-				& either error id
+		ts2	<- lift $ applyFuncChanges funcCh' ts1
 
 		-- RELATIONS --
 		---------------
@@ -186,8 +185,6 @@ changesFile ts0 name
 				nls
 				header "New Relations"
 				nls1
-				try (string "Love, for example" >>
-					 error "Yeah, get a lover. And while you're out there, get me one too") <|> return ()
 				many $ try (nls *> relationDecl (get tsSyntax ts2) <* nls)
 		let newRels'	= newRels |> (\r -> New (get relSymbol r) r)
 		
@@ -195,15 +192,12 @@ changesFile ts0 name
 				nls
 				header "Relation Changes"
 				nls1
-				try (string "Please!" >> 
-					error "Hey! You are a polite chap! You deserve a cookie") <|> return ()
 				
 				many $ try (nls >> relationOption (get tsSyntax ts2) relationDict)
 
 		let relCh'	= newRels' ++ relCh
 		
-		let ts3		= applyRelChanges relCh' ts2
-					& either error id
+		ts3		<- lift $ applyRelChanges relCh' ts2
 
 
 		-- Rules --
@@ -226,26 +220,27 @@ changesFile ts0 name
 		let ruleCh'	= newRules' ++ ruleCh
 
 		
-		let tsFinal	= applyRuleChanges ruleCh' ts3
-					& either error id
+		tsFinal		<- lift $ applyRuleChanges ruleCh' ts3
+
 		nls
 		eof
 
 
-		check tsFinal & either error return
+		lift $ check tsFinal 
 		return (Changes name' bnfCh' funcCh' relCh ruleCh', applyNameChange name' tsFinal)
 
 
 
 
 
-parseChangesFile	:: TypeSystem -> String -> IO (Either ParseError (Changes, TypeSystem))
+parseChangesFile	:: TypeSystem -> String -> IO (Either String (Changes, TypeSystem))
 parseChangesFile ts fp
 	= do	input	<- readFile fp
 		return $ parseChanges ts input (Just fp)
 
-parseChanges	:: TypeSystem -> String -> Maybe String -> Either ParseError (Changes, TypeSystem)
+parseChanges	:: TypeSystem -> String -> Maybe String -> Either String (Changes, TypeSystem)
 parseChanges ts input file
-	= let 	nme	= fromMaybe "unknown source" file in
-	  	parse (changesFile ts nme) nme input
+	= do	let nme	= fromMaybe "unknown source" file
+	  	parsed	<- runParserT (changesFile ts nme) () nme input
+		parsed & BF.first show
 

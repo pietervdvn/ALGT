@@ -408,7 +408,7 @@ While trying to proof that (::) is applicable to "(( \ x : Int . (x + 1) )) True
       While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
         Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
       While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
-        Could not match Γ[x ":" T] /= "{}"
+        Could not pattern match "{}" over Γ[x ":" T]
       While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
         Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
       While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
@@ -421,17 +421,17 @@ While trying to proof that (::) is applicable to "(( \ x : Int . (x + 1) )) True
           While trying to intepret the rule EqBase with Bool, ( Int ):
             Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
           While trying to intepret the rule EqParL with Bool, ( Int ):
-            Could not match "(" T1 ")" /= "Bool"
+            Could not pattern match "Bool" over "(" T1 ")"
           While trying to intepret the rule EqParR with Bool, ( Int ):
             While trying to proof that (==) is applicable to "Bool, Int":
               Not a single rule matched:
               While trying to intepret the rule EqBase with Bool, Int:
                 Equality predicate not met: T1="Bool" /= "Int"=T2
               While trying to intepret the rule EqParL with Bool, Int:
-                Could not match "(" T1 ")" /= "Bool"
+                Could not pattern match "Bool" over "(" T1 ")"
               While trying to intepret the rule EqParR with Bool, Int:
-                Could not match "(" T2 ")" /= "Int"
+                Could not pattern match "Int" over "(" T2 ")"
               While trying to intepret the rule EqArrow with Bool, Int:
-                Could not match Ta1 "->" Tb1 /= "Bool"
+                Could not pattern match "Bool" over Ta1 "->" Tb1
           While trying to intepret the rule EqArrow with Bool, ( Int ):
-            Could not match Ta1 "->" Tb1 /= "Bool"
+            Could not pattern match "Bool" over Ta1 "->" Tb1

@@ -145,6 +145,12 @@ allRight_	:: [Either String ()] -> Either String ()
 allRight_ eithers
 		= eithers & filter isLeft & allRight >> return ()
 
+allRight'	:: [Either String b] -> Either String [b]
+allRight' eithers
+		= do	let failed = lefts eithers
+			unless (null failed) $ Left $ unlines failed
+			return $ rights eithers
+
 
 indent		= indentWith "  "
 

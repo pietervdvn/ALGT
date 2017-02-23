@@ -217,8 +217,8 @@ options('!':'f':'i':'l':'e':rest)
 		(\str -> str & wrapFile & action, rest')
 options ('!':rest)
 	= let	(option, str)	= span (`elem` "0123456789[].,") rest
-		pt	= parse (parseSyntax optionsSyntax "option") "Assets/Manual/Options.language" option
-				& either (error . show) id
+		pt	= parseTargetLang optionsSyntax "option" "Assets/Manual/Options.language" option
+				& either error id
 		action	= matchOptionBody pt
 		(action', str')	= options str
 		in (action' . action, str')

@@ -23,19 +23,22 @@ import Data.List (intercalate, partition)
 import qualified Data.Map as M
 import Data.Map (Map)
 import Data.Either
+import qualified Data.Bifunctor as BF
+import Control.Monad.Trans
 
 
 ------------------------ entry point ---------------------------
 
-parseTypeSystemFile	:: String -> IO (Either ParseError TypeSystem)
+parseTypeSystemFile	:: String -> IO (Either String TypeSystem)
 parseTypeSystemFile fp
 	= do	input	<- readFile fp
 		return $ parseTypeSystem input (Just fp)
 
-parseTypeSystem	:: String -> Maybe String -> Either ParseError TypeSystem
+parseTypeSystem	:: String -> Maybe String -> Either String TypeSystem
 parseTypeSystem input file
-	= let 	nme	= fromMaybe "unknown source" file in
-	  	parse (typeSystemFile nme) nme input
+	= do 	let nme	= fromMaybe "unknown source" file
+	  	parsed	<- runParserT (typeSystemFile nme) () nme input
+		parsed & BF.first show
 
 
 
@@ -108,6 +111,11 @@ relationDecl r	= do	symbol	<- relationSymb r
 		
 ------------------------ full file -----------------------------
 
+
+
+liftParser	:: Parser u a -> Either String (Parser u a)
+liftParser p	= Right p
+
 typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile fp
 	= do	name	<- option fp $ try $ do
@@ -123,7 +131,7 @@ typeSystemFile fp
 				nls1
 				many (try (nls >> parseBnfRule)) 
 
-		syntax	<- makeSyntax bnfs & either error return
+		syntax	<- lift $ makeSyntax bnfs
 
 		syntaxStyle
 			<- option (SyntaxStyle M.empty M.empty M.empty) $ try $ do
@@ -151,14 +159,14 @@ typeSystemFile fp
 				header "Rules"
 				nls1
 				parseRules (syntax, rels, funcs)
-		rules'	<- makeRules syntax rules & either error return
+		rules'	<- lift $ makeRules syntax rules
 
 		props	<- option [] $ try $ do
 				nls
 				header "Properties"
 				nls1
 				parseProperties (syntax, rels, funcs)
-		props'	<- makeProperties syntax props & either error return
+		props'	<- lift $ makeProperties syntax props
 				
 		nls
 		eof
