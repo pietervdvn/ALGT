@@ -327,7 +327,7 @@ rebuildSubtypings' ts ra
 					|> (ruleNameFor &&& get tnsSuper)		:: [(TypeName, TypeName)]
 		addRels		= tnss |> (& uncurry addRelation) & chain		:: Lattice TypeName -> Lattice TypeName
 		fixSyntax syntax	= syntax & rebuildSubtypings
-						& over lattice (removeTransitive' . addRels)
+						& over lattice (removeTransitiveNoCycles . addRels)
 		in
 		ra	& generateSyntax ts
 			& over raSyntax fixSyntax
@@ -465,7 +465,7 @@ We replace "e:0" with (e)(-->)in0
 fillHole	:: Syntax -> RuleApplication -> RuleApplication
 fillHole s rapp	= let	subs	= get predicates rapp |> fillHoleForPred s 
 				& M.unionsWith (\v1 v2 -> if v1 == v2 then v1 else error $ "TODO/FIXME: common rules (relationanalysis): intersection of "++toParsable v1 ++ " and "++toParsable v2)
-				-- TODO what if an argument is part of multiple rules!? Now it'll only have one form! We should use the lowest commond subgroup
+			-- TODO what if an argument is part of multiple rules!? Now it'll only have one form! We should use the lowest commond subgroup
 			in rapp & applySubsSimple subs
 
 
