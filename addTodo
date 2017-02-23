@@ -1,0 +1,1 @@
+echo "$1" >> src/Todo.txt
