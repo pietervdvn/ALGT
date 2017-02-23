@@ -120,8 +120,7 @@ runFuncAbstract	:: TypeSystem -> Name -> PureIO ()
 runFuncAbstract ts name
 	= do	func		<- liftEith $ checkExists name (get tsFunctions ts) $ "No such function: "++name
 		let analysis	= analyzeFunction' ts func
-		putStrLn $ inHeader "" ("Abstract interpretation of "++show name) '-' $
-					toParsable' (name, 24::Int, func) analysis
+		putStrLn $ toParsable' (name, 24::Int, func) analysis
 		
 
 saveSubtypingSVG:: Syntax -> Name -> PureIO ()

@@ -62,7 +62,7 @@ isMInt _		= False
 
 
 -- Searches for identifiers *in the target language*
-usedIdentifiers	:: Expression -> [Name]
+usedIdentifiers				:: Expression -> [Name]
 usedIdentifiers (MParseTree pt)		= usedIdentifiers' pt
 usedIdentifiers (MSeq _ exprs)		= exprs >>= usedIdentifiers
 usedIdentifiers (MCall _ _ _ exprs)	= exprs >>= usedIdentifiers
@@ -73,7 +73,7 @@ usedIdentifiers	_			= []
 
 
 -- Searches for variable names *in the meta expression*. If a variable is used twice, it'll appear twice in the list
-usedVariables	:: Expression -> [(Name, TypeName)]
+usedVariables			:: Expression -> [(Name, TypeName)]
 usedVariables (MVar tp nm)	= [(nm, tp)]
 usedVariables (MSeq _ es)	= es >>= usedVariables
 usedVariables (MCall _ _ _ es)	= es >>= usedVariables
@@ -82,6 +82,15 @@ usedVariables (MEvalContext tp n hole)
 				= (n, tp) : usedVariables hole
 usedVariables (MParseTree _)	= []
 
+
+usedFunctions			:: Expression -> [(Name, Bool)]
+usedFunctions (MCall _ nm bi es)
+				= (nm, bi):(es >>= usedFunctions)
+usedFunctions (MSeq _ es)	= es >>= usedFunctions
+usedFunctions (MAscription _ e)	= usedFunctions e
+usedFunctions (MEvalContext _ _ hole)
+				= usedFunctions hole
+usedFunctions _			= []
 
 
 -- generates an MVar, with a name that does not occurr in the given expression

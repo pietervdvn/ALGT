@@ -28,10 +28,13 @@ import qualified Data.Set as S
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
+import Debug.Trace -- TODO
+
 data ClauseAnalysis
 		= ClauseAnalysis
 		{ _clauseIndex	:: Int
 		, _hasEquality	:: Bool			-- Some inputs might have the right form, but might not match due to two parts not being equal
+		, _hasFunction	:: Bool			-- Some inputs might not match as the function call doesn't equal the argument
 		, _inputs	:: Set Arguments	-- Possible inputs at this stage. Not every input might have a result!
 		, _results	:: Map Arguments AbstractSet	-- arguments --> value
 		} deriving (Show, Eq)
@@ -86,7 +89,7 @@ analyzeClauses syntax f ((i, clause):clauses) argss
 			usedArgs	= get results clauseAn & M.keys
 			-- checks if the patterns don't use something as 'T -> T', thus a part of the argument that should be the same
 			-- this implies that the pattern might not match in some cases and falls through
-			argss'		= if get hasEquality clauseAn then argss
+			argss'		= if get hasEquality clauseAn || get hasFunction clauseAn then argss
 						else argss >>= (\args -> subtractArgs syntax args usedArgs)
 			restAnalysis	= analyzeClauses syntax f clauses argss'
 			in
@@ -96,10 +99,11 @@ analyzeClauses syntax f ((i, clause):clauses) argss
 
 analyzeClause	:: Syntax -> Map Name TypeName -> (Int, Clause) -> [Arguments] -> ClauseAnalysis
 analyzeClause  syntax functionReturns (i, clause) possibleInputs
-	= let	usesEquality	= (mecPatterns clause >>= usedVariables) & dubbles & null & not
+	= let	usesEquality	= (mecPatterns clause >>= usedVariables) |> fst & dubbles & null & not
+		usesFunctions	= (mecPatterns clause >>= usedFunctions) & null & not
 		results		= possibleInputs |> analyzeClauseWith syntax functionReturns (i, clause) & M.unions
 		in
-		ClauseAnalysis i usesEquality (S.fromList possibleInputs) results
+		ClauseAnalysis i usesEquality usesFunctions (S.fromList possibleInputs) results
 
 analyzeClauseWith	:: Syntax -> Map Name TypeName -> (Int, Clause) -> [AbstractSet] -> Map Arguments AbstractSet
 analyzeClauseWith syntax functionReturns (i, MClause patterns expr) args
@@ -125,9 +129,11 @@ instance ToString' (Name, Int, Function) FunctionAnalysis where
 
 
 _toStringFunctionAnalysis cats argsts (funcName, width, MFunction t clauses) (FunctionAnalysis analysises fallthroughs)	
-		= inHeader "" ("Analysis of "++funcName++" : "++intercalate " -> " t) '-' $ unlines
-			[zip clauses analysises |> (\(c, ca) -> cats (funcName, width, c) ca) & unlines
-			, inHeader "" "Falthrough" '-' (fallthroughs & S.toList |> argsts ", " |> inParens & unlines)]
+		= inHeader "" ("Analysis of "++funcName++" : "++intercalate " -> " t) '=' $ indent $ unlines
+			[zip clauses analysises |> (\(c, ca) -> cats (funcName, width, c) ca) & unlines & indent
+			, inHeader "" "Falthrough" '-' $
+				if S.null fallthroughs then "No fallthrough is possible"
+					else (fallthroughs & S.toList |> argsts ", " |> inParens & unlines)]
 
 
 instance ToString' (Name, Int, Clause) ClauseAnalysis where
@@ -137,7 +143,7 @@ instance ToString' (Name, Int, Clause) ClauseAnalysis where
 	show'		= const show
 	
 
-_toStringClauseAnalysis cts argsts (fn, w, clause) (ClauseAnalysis clauseI equality inputs results)
+_toStringClauseAnalysis cts argsts (fn, w, clause) (ClauseAnalysis clauseI equality functions inputs results)
 	= inHeader "" ("Analysis of clause "++show clauseI) '.' $ unlines
 		[ "Clause: "
 		, cts (fn, w) clause & indent
@@ -147,8 +153,9 @@ _toStringClauseAnalysis cts argsts (fn, w, clause) (ClauseAnalysis clauseI equal
 		, ""
 		, "Possible results: "
 		, results & M.toList |> showRes clauseI & unlines
-		, if equality then
-			"This clause uses equality in the patterns and might not match. No arguments are thus used in this abstract interpretation.\n"
+		, if equality || functions then
+			"This clause uses "++ (if functions then "equality and functions" else "equality")
+			++ " in the patterns and might not match. No arguments are thus used in this abstract interpretation.\n"
 			else ""
 		]
 

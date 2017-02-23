@@ -62,6 +62,6 @@ do
 done
 
 cp *.pdf ../
-
+cp Manual.html ../ALGT_Manual.html
 
 

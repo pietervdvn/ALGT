@@ -41,7 +41,8 @@ class ActionSpecified a where
 
 data MainArgs	= MainArgs 
 			{ showVersionNr	:: () -> ()
-			, manual	:: Bool
+			, manualPDF	:: Bool
+			, manualHTML	:: Bool
 			, realArgs	:: Maybe Args
 			, runTests	:: Bool
 			}
@@ -49,7 +50,7 @@ data MainArgs	= MainArgs
 instance ActionSpecified MainArgs where
 	actionSpecified args
 		= [realArgs] |> (args &) |> isJust & or
-			|| [manual, runTests] |> (args &) & or
+			|| [manualPDF, manualHTML, runTests] |> (args &) & or
 
 data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
@@ -72,7 +73,8 @@ instance ActionSpecified Args where
 	actionSpecified args
 		= [interpretFunctionAbs, interpretRules] 		|> (args &) |> (not . null) & or
 		  	|| [exampleFiles]				|> (args &) |> (not . null) & or
-			|| [subtypingSVG, iraSVG] 			|> (args &) |> isJust & or
+			|| [subtypingSVG, iraSVG] 	|> (args &) |> isJust & or
+			|| [dynamizeArgs] 		|> (args &) |> isJust & or
 			|| [dumpTS, interpretAbstract, interpretRulesAbstract]	|> (args &) & or
 
 data ExampleFile	= ExFileArgs
@@ -118,12 +120,16 @@ emptyConfig
 parseArgs	:: ([Int], String) -> [String] -> IO (Bool, Maybe Args)
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		MainArgs doShowVersion saveMan args runTests
+		MainArgs doShowVersion saveManPDF saveManHTML args runTests
 				<- handleParseResult result
 		return $ doShowVersion ()
-		when saveMan $ do
+		when saveManPDF $ do
 			B.writeFile "ALGT_Manual.pdf" _Manual_ALGT_Manual_pdf
 			putStrLn "Manual saved as ALGT_Manual.pdf"
+			exitSuccess
+		when saveManHTML $ do
+			writeFile "ALGT_Manual.html" _Manual_ALGT_Manual_html
+			putStrLn "Manual saved as ALGT_Manual.html"
 			exitSuccess
 		return (runTests, args)
 
@@ -292,8 +298,11 @@ mainArgs versionMsg
 			<> short 'v'
 			<> help "Show the version number and text")
 		<*> switch
-			(long "manual"
-			<> help "Save the manual file (pdf) to given path")
+			(long "manual-pdf"
+			<> help "Save the manual file (pdf) to the working directory")
+		<*> switch
+			(long "manual-html"
+			<> help "Save the manual file (html) to the working directory")
 		<*> optional args
 		<*> switch
 			(long "test"

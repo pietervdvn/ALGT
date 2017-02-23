@@ -52,5 +52,5 @@ eL 	::= ... | "TYPE ERROR"
 
  (✓) arg	(arg "::" type) → arg'
 ------------------------------------------------------------	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → subs(var, arg', e)
+ ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg', e)
 
