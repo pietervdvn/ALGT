@@ -22,6 +22,7 @@ import qualified Data.Set as S
 import Data.Set (Set)
 import Data.Maybe
 import Data.List as L
+import Data.Bifunctor (first)
 
 import Lens.Micro hiding ((&), both)
 import Lens.Micro.TH
@@ -90,9 +91,10 @@ topSymbol	= ".*"
 bottomSymbol	= "ɛ"
 
 
-asLattice'	= fst . asLattice
+asLattice'	:: Map Name [BNF] -> (Lattice TypeName)
+asLattice' s	= asLattice s & checkNoCycles & either error id & fst
 
-asLattice	:: Map Name [BNF] -> (Lattice TypeName, [(TypeName, TypeName)])
+asLattice	:: Map Name [BNF] -> Either [[TypeName]] (Lattice TypeName, [(TypeName, TypeName)])
 asLattice syntax
 	= let	relations	= syntax ||>> fromRuleCall |> catMaybes
 					|> S.fromList & invertDict	:: Map Name (Set Name)
@@ -391,12 +393,24 @@ commonSubsetsBetween s ruleToCheck against
 checkUnneededTransitive	:: Syntax -> Either String ()
 checkUnneededTransitive s
 	= inMsg "While checking for unneeded transitivity in the subtyping relationship" $
-	  do	let unneeded	= s & get bnf & asLattice & snd
-					& filter (both (not . (`elem` [topSymbol, bottomSymbol])))
+	  do	(_, unneeded')	<- s & get bnf & asLattice 
+					& checkNoCycles
+		let unneeded	= unneeded' & filter (both (not . (`elem` [topSymbol, bottomSymbol])))
 		let msg		= unneeded |> (\(tsup, tsub) -> 
 					"Every "++show tsub ++" is a "++show tsup++", but this is already known.\nPlease remove this choice.") 
 					& unlines
 		unless (null unneeded) $ Left msg
+
+
+checkNoCycles	:: Either [[TypeName]] a -> Either String a
+checkNoCycles (Left cycles)
+	= cycles |> intercalate " ⊂ " 
+		& unlines 
+		& indent 
+		& ("Cycles detected in the supertyping relationship:\n"++)
+		& Left
+checkNoCycles (Right a)
+	= (Right a)
 
 
 checkDeadChoices	:: Syntax -> Either String ()

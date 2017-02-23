@@ -112,10 +112,10 @@ typeSystemFile	:: String -> Parser u TypeSystem
 typeSystemFile fp
 	= do	name	<- option fp $ try $ do
 				nls 
-				n	<- inWs (try identifier <|> iDentifier)
+				n	<- many $ inWs (try identifier <|> try iDentifier)
 				nl
 				inWs $ many1 $ char '*'
-				return n
+				return $ intercalate " " n
 
 		bnfs	<- option [] $ try $ do 
 				nls

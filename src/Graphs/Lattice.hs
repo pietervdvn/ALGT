@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Graphs.Lattice (Lattice, bottom, top, makeLattice, addElement, addRelation, asSVG,
 			subsetsOf, supersetsOf, allSubsetsOf, allSupersetsOf, 
-			infimum, infimums, supremum, supremums, removeTransitive',
+			infimum, infimums, supremum, supremums, removeTransitive', removeTransitiveNoCycles,
 			debugLattice) where
 
 {-
@@ -42,14 +42,13 @@ data Lattice a	= Lattice
 makeLenses ''Lattice
 
 
-makeLattice	:: (Show a, Ord a) => a -> a -> Map a (Set a) -> (Lattice a, [(a, a)])
+makeLattice	:: (Show a, Ord a) => a -> a -> Map a (Set a) -> Either [[a]] (Lattice a, [(a, a)])
 makeLattice bottom top isSubsetOf
-	= let	(lattice, unneeded)	= removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
-		lattice'		= set isSupersetOfEvery (invertDict $ get isSubsetOfEvery lattice) lattice
-		in
-		(lattice', unneeded)
+	= do	(lattice, unneeded)	<- removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
+		let lattice'		= set isSupersetOfEvery (invertDict $ get isSubsetOfEvery lattice) lattice
+		return (lattice', unneeded)
 
-addElement	:: (Show a, Ord a) => a -> [a] -> [a] -> Lattice a -> (Lattice a, [(a, a)])
+addElement	:: (Show a, Ord a) => a -> [a] -> [a] -> Lattice a -> Either [[a]] (Lattice a, [(a, a)])
 addElement newEl subsOfNew supersOfNew lattice
 	= let	cleanse ls symb	= if null ls then [symb] else ls
 		subsOfNew'	= cleanse subsOfNew (get bottom lattice)
@@ -77,19 +76,22 @@ addRelation sub super l
  Consider lattice ["bottom" {"a","b"}] ["a", {"top", "b"} ] ["b", {"top"}]
 "bottom" can reach "b" via a, so the direct link "bottom" "b" can be removed
 
-Returns removed links
+Returns removed links together with the cleaned lattice (or Left $ cycles if cycles exists)
 -}
-removeTransitive	:: (Show a, Ord a) => Lattice a -> (Lattice a, [(a, a)])
+removeTransitive	:: (Ord a) => Lattice a -> Either [[a]] (Lattice a, [(a, a)])
 removeTransitive lattice
-	= let 	cycles	= cleanCycles $ get isSubsetOfEvery lattice
-		errMsg	= error $ "Cycles detected in the lattice... "++show cycles
-		in if null cycles then
-			foldl removeUnneedDirectLinksFor (lattice, []) (M.keys $ get isSubsetOfEvery lattice)
-			else errMsg
+	= do	let cycles	= cleanCycles $ get isSubsetOfEvery lattice
+		unless (null cycles) $ Left cycles
+		return $ foldl removeUnneedDirectLinksFor (lattice, []) (M.keys $ get isSubsetOfEvery lattice)
 
 
-removeTransitive'	:: (Show a, Ord a) => Lattice a -> Lattice a
-removeTransitive'	= fst . removeTransitive
+removeTransitive'	:: (Ord a) => Lattice a -> Either [[a]] (Lattice a)
+removeTransitive' l
+	= removeTransitive l |> fst
+
+removeTransitiveNoCycles	:: (Show a, Ord a) => Lattice a -> Lattice a
+removeTransitiveNoCycles l
+	= either (\cycles -> error $ "This is not a lattice: cycles detected "++show cycles) id $ removeTransitive' l
 
 removeUnneedDirectLinksFor	:: (Ord a) => (Lattice a, [(a, a)]) -> a -> (Lattice a, [(a, a)])
 removeUnneedDirectLinksFor (lattice, removed) a
