@@ -10,7 +10,7 @@ cd src/Assets/Manual 2> /dev/null
 cp *.tex  .bin/
 cp *.svg  .bin/
 cp *.png  .bin/
-cp *.html .bin/
+cp *.html .bin/ 2> /dev/null
 cp *.generate  .bin/
 cp *.slideshow .bin/
 cd .bin
@@ -26,7 +26,7 @@ do
 	fi
 done
 
-PANDOC_EXTENSIONS="-f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references --tab-stop=8 --normalize"
+PANDOC_EXTENSIONS=" --tab-stop=8 --normalize -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references"
 
 for SET in *.slideshow
 do
@@ -36,11 +36,14 @@ do
 	rm $OUTFILE 2> /dev/null
 	for FILE in `cat $SET`
 	do
-		cat $FILE >> $OUTFILE
+		cat $FILE | sed "s/\[style=terminal\]//g" >> $OUTFILE
 	done
 	cat $OUTFILE | wc -l
 	
-	pandoc $PANDOC_EXTENSIONS --slide-level 2 -t beamer $OUTFILE -o "Slides_$SETNAME.pdf"
+	echo "Running pandoc for slides on $OUTFILE"
+	cat $OUTFILE
+	rm "Slides_$SETNAME.pdf" 2> /dev/null
+	pandoc $PANDOC_EXTENSIONS --slide-level 2 --listings -t beamer $OUTFILE -o "Slides_$SETNAME.pdf"
 	cp "Slides_$SETNAME.pdf" ../Output/
 
 done
