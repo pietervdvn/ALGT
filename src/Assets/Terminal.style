@@ -1,5 +1,5 @@
 
- Terminal
+ terminal
 **********
 
 black	= "#000000"
@@ -13,6 +13,7 @@ darkgreen = "#009900"
 
 bold	= "bold"
 under	= "underline"
+bu	= "underlinedbold"
 normal	= "normal"
 
 
@@ -21,37 +22,42 @@ normal	= "normal"
 foreground-color: green
 
 
- Type
+ type
 ======
 
 foreground-color: blue
 font-style: bold
 
- Statement
+ statement
 ===========
 
 font-style: normal
 
- Identifier
-============
+ identifier
+------------
 
-foreground-color: darkgreen
+foreground-color: red
 
- Constant
-==========
+ constant
+----------
 
 foreground-color: blue
 
+ keyword
+---------
 
-Comment
-=======
+ foreground-color: darkgreen
+
+
+ comment
+=========
 
 foreground-color: grey
-font-style: italic
 
- Noise
+ noise
 -------
 
 font-style: normal
+foreground-color: grey
 
 

@@ -13,3 +13,5 @@ Interior = opstellen + genereren
 Subtyping taal opstellen
 Evidence toevoegen aan expressies
 Update manual for grouping
+
+explaining $ grouping in manual

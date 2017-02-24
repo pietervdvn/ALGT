@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell #-}
-module SyntaxHighlighting.Coloring(Coloring(..), FullColoring, emptyFullColoring, addColoring, t) where
+module SyntaxHighlighting.Coloring(Coloring(..), FullColoring, emptyFullColoring, addColoring, colorDistance, parseColoringFile, getProperty) where
 
 {- Defines rendering properties for styles -}
 
@@ -13,9 +13,12 @@ import ParseTreeInterpreter.FunctionInterpreter
 
 import Data.Maybe
 import Data.Map as M
+import Data.Char as Ord
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
+
+import Control.Monad
 
 type Prop	= String
 
@@ -34,6 +37,14 @@ newtype FullColoring
 emptyFullColoring
 	= FullColoring $ M.singleton "" rootColoring
 
+
+getProperty	:: FullColoring -> Name -> Prop -> Maybe String
+getProperty fc@(FullColoring fcStyles) style prop
+ | style == ""	= Nothing
+ | otherwise
+	= do	(Coloring fb props)	<- M.lookup style fcStyles
+		firstJusts [M.lookup prop props, getProperty fc fb prop]
+
 addColoring	:: (Name, Coloring) -> FullColoring -> Either String FullColoring
 addColoring (n, c) (FullColoring fc)
 	= do	checkExists (get coloringFallback c) fc $ "Fallback style "++show (get coloringFallback c)++" does not exist"
@@ -45,8 +56,8 @@ parseColoringFile fp coloring
 	= do	ts	<- parseTypeSystem Assets._Style_language (Just "Assets: Style.language")
 		pt	<- parseTargetLang (get tsSyntax ts) "styleFile" fp coloring
 		pt'	<- evalFunc ts "expandFile" [pt]
-		error $ show $ buildFC ts pt'
-		return emptyFullColoring
+		fc	<- buildFC ts pt'
+		return fc
 
 
 
@@ -57,19 +68,61 @@ buildFC ts file@(PtSeq _ [_, t, _, defs, b1s])
 		nm	<- fromPtToken nmT |> return & fromMaybe (Left $ "Not a token: "++toParsable nmT)
 		tree	<- evalFunc ts "fallbacks" [file]
 		
-		let tree'	= fallbackTree tree 
-		
-		error $ show $ coloring defs
+		let fallbacks	= fallbackTree tree 
+		let defColoring	= Coloring "" $ coloring defs
+		fc		<- addColoring (nm, defColoring) emptyFullColoring
+		colorings	<- overBlocksRec coloringForBlock b1s
+					|> prepColoring fallbacks & allRight'
+		fc'	<- foldM (flip addColoring) fc colorings
+		return fc'
 
+
+prepColoring	:: Map Name Name -> (Name, Map Prop String) -> Either String (Name, Coloring)
+prepColoring fallBacks (nm, props)
+	= do	fallBack	<- checkExists nm fallBacks $ "Weird, no fallback for "++nm
+		return $ (nm, Coloring fallBack props)
+
+
+coloringForBlock	:: (Name, Char, ParseTree) -> (Name, Map Prop String)
+coloringForBlock (nm, _, props)
+	= (nm, coloring props)
+
+overBlocks	:: ((Name, Char, ParseTree, Maybe ParseTree) -> a) -> ParseTree -> [a]
+overBlocks f (PtSeq (_,0) [blck, blcks])
+	=  (f $ dissectBlock blck) : overBlocks f blcks
+overBlocks f blck
+	= [f $ dissectBlock blck]
+
+
+overBlocksRec	:: ((Name, Char, ParseTree) -> a) -> ParseTree -> [a]
+overBlocksRec f pt
+	= overBlocks (_overBlocksRec f) pt & concat
+
+_overBlocksRec	:: ((Name, Char, ParseTree) -> a) -> (Name, Char, ParseTree, Maybe ParseTree) -> [a]
+_overBlocksRec f (nm, chr, pt, Nothing)
+	= [f (nm, chr, pt)]
+_overBlocksRec f (nm, chr, pt, Just nested)
+	= f (nm, chr, pt) : overBlocksRec f nested
 				
+
+dissectBlock	:: ParseTree -> (Name, Char, ParseTree, Maybe ParseTree)
+dissectBlock (PtSeq _ [header@(PtSeq _ [MLiteral _ nm, _, MLiteral _ level, _]), props])
+	= (nm, head level, props, Nothing)
+dissectBlock (PtSeq _ [header@(PtSeq _ [MLiteral _ nm, _, MLiteral _ level, _]), props, blocks])
+	= (nm, head level, props, Just blocks)
+dissectBlock pt
+	= error $ "dissectBlock: fallthrough: "++debug pt
 
 coloring	::  ParseTree -> Map Prop String
 coloring (MLiteral _ "\n")
 	= M.empty
-coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MLiteral _ v], nl, rest])
-	= error $ show k
-coloring fb pt
-	= error $ "Coloring: falltrhough: "++toParsable pt
+coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MLiteral _ v], _])
+	= M.singleton k (init $ tail v)
+coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MLiteral _ v], _, rest])
+	= M.insert k (init $ tail v) $ coloring rest
+coloring pt
+	= error $ "Coloring: fallthrough: "++debug pt
+
 
 
 fallbackTree	:: ParseTree -> Map Name Name
@@ -79,7 +132,14 @@ fallbackTree (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "->", MLiteral _ v], _,
 		= M.insert k v $ fallbackTree fbs
 fallbackTree ft	= error $ "FallbackTree: fallthrough: "++toParsable ft
 
+-- Distance between hex colors
+colorDistance	:: String -> String -> Int
+colorDistance ('#':col0) ('#':col1)
+	= let	(r0, (g0, b0))	= col0 |> digitToInt & splitAt 2 |> splitAt 2
+		(r1, (g1, b1))	= col1 |> digitToInt & splitAt 2 |> splitAt 2
+		n [a,b]		= 16*a + b
+		in 
+		abs (n r0 - n r1) + abs (n g0 - n g1) + abs (n b0 - n b1)
+colorDistance col0 col1
+	= error $ "Not colors: "++col0++", "++col1
 
-t	= do	f	<- readFile "Examples/Terminal.style"
-		fc	<- parseColoringFile "Examples/Terminal.style" f & either error return
-		print fc

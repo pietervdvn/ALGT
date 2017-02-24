@@ -248,6 +248,7 @@ expressionExamples
       = [ (MVar "syntactic_rule" "x", 
 		"Variable","Captures the argument as the name. If multiple are used in the same pattern, the captured arguments should be the same or the match fails.", 
 		"Recalls the parsetree associated with this variable")
+	, (MVar "" "_", "Wildcard", "Captures the argument and ignores it", "_Not defined_")
 	, (_int 42, "Number", "Argument should be exactly this number", "This number")
 	, (_lit "Token", "Literal", "Argument should be exactly this string", "This string")
 	, (MCall "resultType" "func" False [MVar "sr" "arg0", MVar "sr" "arg1", MVar "sr" "..."],

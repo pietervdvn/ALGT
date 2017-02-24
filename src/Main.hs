@@ -20,6 +20,8 @@ import TypeSystem
 
 {- Imports to test -}
 import SyntaxHighlighting.Coloring
+import SyntaxHighlighting.AnsiPT
+
 
 import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.AbstractSet

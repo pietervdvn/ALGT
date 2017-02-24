@@ -39,6 +39,7 @@ data ParseTreeA a
 	| MIdentifierA	{_ptAnnot :: a, _ptaInf :: MInfo, _ptaName :: Name}
 	| MIntA		{_ptAnnot :: a, _ptaInf :: MInfo, _ptaInt :: Int}	
 	| PtSeqA	{_ptAnnot :: a, _ptaInf :: MInfo, _ptaPts :: [ParseTreeA a]}	
+	deriving (Show, Ord, Eq)
 makeLenses ''ParseTreeA
 
 instance Functor ParseTreeA where

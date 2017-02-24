@@ -16,6 +16,8 @@ import TypeSystem.ParseTree
 import Lens.Micro.TH
 import Lens.Micro hiding ((&))
 
+import Debug.Trace
+
 -- A little extra, cause I like fancy colors
 
 data SyntaxStyle = SyntaxStyle
@@ -29,12 +31,15 @@ makeLenses ''SyntaxStyle
 
 determineStyle	:: SyntaxStyle -> ParseTreeA a -> ParseTreeA (a, Maybe Name)
 determineStyle styling pt
-	= let	(genType, choiceI)	= get ptaInf pt
+	= let	(genType, choiceI)	=  get ptaInf pt
 		specificStyle		= M.lookup (genType, choiceI) $ get extraStyles styling
 		baseStyle		= M.lookup genType $ get baseStyles styling
 		style			= firstJusts [specificStyle, baseStyle]
 		in
-		pt |> (\a -> (a, style))
+		case pt of
+			PtSeqA a i pts	-> pts |> determineStyle styling & PtSeqA (a, style) i
+			pt		-> pt |> (\a -> (a, style))
+			
 
 
 instance Refactorable TypeName SyntaxStyle where

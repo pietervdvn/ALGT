@@ -18,7 +18,7 @@ executable ALGT
   ghc-options:         -fno-warn-tabs
   main-is:             Main.hs
   default-language:    Haskell2010
-  build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative >= 0.13, directory, microlens, microlens-th, text, blaze-svg, hashable, time, process, bytestring
+  build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative >= 0.13, directory, microlens, microlens-th, text, blaze-svg, hashable, time, process, bytestring, ansi-wl-pprint
   other-modules:       
         AbstractInterpreter.AbstractSet
         AbstractInterpreter.AbstractInterpreter
@@ -80,6 +80,7 @@ executable ALGT
         Utils.Tests
         Utils.UnificationTest
         Utils.Version
+        TypeSystem.TypeSystemData
 
 
 
