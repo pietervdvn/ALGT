@@ -1,18 +1,25 @@
 #! /bin/bash
 
 
+./searchTodo
+
 cd src
-./searchTodo.sh
 ls *.hs */*.hs */*/*.hs | sed /Assets.hs/d | xargs hlint
 
 cd Assets/IntegrationTests
 rm *.FAILED
 cd ../..
 
+echo "Creating real assets"
 echo "createAssets False \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
 cd ..
 
+echo "Stack build"
 stack build
+
+cd src
+echo "Recreating dev assets" 
+echo "createAssets True \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
 
 rm ALGT
 rm ALGT-*

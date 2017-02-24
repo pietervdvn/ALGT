@@ -7,8 +7,10 @@ In this approach, we tokenize first to a tree, and then try to match a rule with
 
 import TypeSystem.Parser.ParsingUtils
 import TypeSystem.Parser.BNFParser
+import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem
 import Utils.Utils
+import Utils.ToString
 
 import Text.Parsec
 import Data.Maybe
@@ -29,19 +31,23 @@ data MEParseTree	= MePtToken String
 			| MePtCall Name (Maybe TypeName) [MEParseTree]	-- builtin if a type is provided
 			| MePtAscription Name MEParseTree
 			| MePtEvalContext Name MEParseTree	-- The type of the EvaluationContext is derived... from, well the context :p
-	deriving (Ord, Eq)
+	deriving (Show, Ord, Eq)
 
 
-instance Show MEParseTree where
-	show (MePtToken s)	= show s
-	show (MePtSeq pts)	= pts |> show & unwords & inParens
-	show (MePtVar v)	= v
-	show (MePtInt i)	= show i
-	show (MePtCall n bi args)
-				= (if isJust bi then "!" else "") ++ n ++ maybe "" (":"++) bi ++ inParens (args |> show & intercalate ", ")
-	show (MePtAscription n pt)	= inParens (show pt++" : "++n)
-	show (MePtEvalContext n expr)	= n++"["++ show expr ++"]"
+fromPtToken (MePtToken s)	= Just s
+fromPtToken _			= Nothing
 
+instance ToString MEParseTree where
+	toParsable	= showMEPT
+
+showMEPT (MePtToken s)	= show s
+showMEPT (MePtSeq pts)	= pts |> showMEPT & unwords & inParens
+showMEPT (MePtVar v)	= v
+showMEPT (MePtInt i)	= show i
+showMEPT (MePtCall n bi args)
+			= (if isJust bi then "!" else "") ++ n ++ maybe "" (":"++) bi ++ inParens (args |> showMEPT & intercalate ", ")
+showMEPT (MePtAscription n pt)	= inParens (showMEPT pt++" : "++n)
+showMEPT (MePtEvalContext n expr)	= n++"["++ showMEPT expr ++"]"
 
 
 
@@ -51,7 +57,7 @@ the parsetree is interpreted/typed following the bnf syntax.
 -}
 typeAs		:: Map Name Type -> Syntax -> TypeName -> MEParseTree -> Either String Expression
 typeAs functions rules ruleName pt
-	= inMsg ("While typing "++show pt++" against "++ruleName) $ 
+	= inMsg ("While typing "++toParsable pt++" against "++ruleName) $ 
 		matchTyping functions rules (BNFRuleCall ruleName) (ruleName, error "Should not be used") pt
  
 
@@ -62,18 +68,18 @@ typeAs functions rules ruleName pt
 matchTyping	:: Map Name Type -> Syntax -> BNF -> (TypeName, Int) -> MEParseTree -> Either String Expression
 matchTyping f r (BNFRuleCall ruleCall) tp (MePtAscription as expr)
  | not (alwaysIsA r as ruleCall)	
-			= Left $ "Invalid cast: "++as++" is not a "++ruleCall
+			= Left $ "Invalid cast: "++ruleCall++" is not a "++as
  | otherwise 		= typeAs f r as expr |> MAscription as
 matchTyping f r bnf tp c@(MePtAscription as expr)
-			= Left $ "Invalid cast: "++show c++" could not be matched with "++show bnf
+			= Left $ "Invalid cast: '"++toParsable c++"' could not be matched with '"++toParsable bnf++"'"
 
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
 			= return $ MVar ruleCall nm
 matchTyping _ _ exp tp (MePtVar nm)		
-			= Left $ "Non-rulecall (expected: "++show exp++") with a var "++ nm
+			= Left $ "Non-rulecall (expected: "++toParsable exp++") with a var "++ nm
 
 matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm hole@(MePtVar someName))
-			= inMsg ("While typing the evalution context (with only an identifier as hole)"++ show ctx) $
+			= inMsg ("While typing the evalution context (with only an identifier as hole)"++ toParsable ctx) $
 			  do	let types	= bnfNames r
 				let options	= types & filter (`isPrefixOf` someName)
 				let actualType	= head options
@@ -86,14 +92,19 @@ matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm hole@(MePtVar someName))
 				let holeAsc	= MAscription actualType hole'
 				return $ MEvalContext tp nm hole'
 matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
-			= inMsg ("While typing the evaluation context (which has an expression as hole)"++show ctx) $
+			= inMsg ("While typing the evaluation context (which has an expression as hole)"++toParsable ctx) $
 			  do	let possibleTypes	= bnf & calledRules >>= reachableVia r		:: [TypeName]
 				let possibleTypings	= possibleTypes |> flip (typeAs f r) expr	:: [Either String Expression]
-				let successfull		= zip possibleTypes possibleTypings & filter (isRight . snd ) |> fst & nub
-				when ((<) 1 $ length successfull) $ Left $ 
-					"Trying a possible typing for the expression "++show expr++" is ambiguous, as it can be typed as "++showComma successfull
-					++"\nAdd a type annotation to resolve this: "++nm++"[ ("++show expr ++" : someType) ]"
-				expr'	<- firstRight possibleTypings
+				let successfullTypings	= zip possibleTypes possibleTypings |> sndEffect & rights :: [(TypeName, Expression)]
+				let successfull		= successfullTypings |> fst & nub		:: [TypeName]
+				let successfull'	= successfull & smallestCommonType' r		:: Maybe TypeName
+				let ambiguousTypingErr	= Left $
+					"Trying a possible typing for the expression "++toParsable expr++" is ambiguous, as it can be typed as "++showComma successfull
+					++"\nAdd a type annotation to resolve this: "++nm++"[ ("++toParsable expr ++" : someType) ]"
+				inMsg "No typing for the hole can be found" $ when (null successfull) $ Left (possibleTypings & lefts & unlines & indent)
+				when (isNothing successfull') ambiguousTypingErr
+				
+				let expr'	= successfullTypings & filter ((== fromJust successfull') . fst) & head & snd
 				return $ MEvalContext tp nm expr'
 
 
@@ -116,7 +127,36 @@ matchTyping functions syntax (BNFRuleCall ruleName) _ (MePtCall fNm Nothing args
 								& allRight
 				return $ MCall returnTyp fNm False args'
 matchTyping _ _ bnf _ pt@MePtCall{}
-			= Left $ "Could not match " ++ show bnf ++ " ~ " ++ show pt
+			= Left $ "Could not match " ++ toParsable bnf ++ " ~ " ++ toParsable pt
+
+matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
+ | length bnfs == length pts
+			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f s bnf tp pt) 
+				joined & allRight 
+				|> MSeq tp
+ | otherwise		= Left $ "Seq could not match " ++ toParsable' " " bnfs ++ " ~ " ++ toParsable' " " pts 
+
+
+matchTyping f syntax (BNFRuleCall nm) _ pt
+ | nm `M.member` get bnf syntax
+		= do	let bnfASTs	= get bnf syntax M.! nm
+			let grouped	= get groupModes syntax M.! nm
+			if not grouped then do
+				let oneOption i bnf	= inMsg ("Trying to match "++nm++"." ++ show i++" ("++toParsable bnf++")") $ 
+								matchTyping f syntax bnf (nm, i) pt
+				zip [0..] bnfASTs |> uncurry oneOption & firstRight
+			 else do
+					let noTokenMsg	= Left $ "Trying to decipher a grouped rule "++show nm++", but '"++toParsable pt++"' is not a token"
+					str		<- fromPtToken pt |> return & fromMaybe noTokenMsg
+					let groupedMsg	= "While parsing grouped token "++show str++" against "++show nm
+					pt'	<- inMsg groupedMsg $ parseTargetLang syntax nm "Literal of a grouped value" str
+					return $ MParseTree pt'
+
+				
+ | otherwise	= Left $ "No bnf rule with name " ++ nm
+
+-- Simpler cases
+
 
 matchTyping _ _ (Literal s) tp (MePtToken s')
  | s == s'		= MLiteral tp s & MParseTree & return
@@ -128,24 +168,28 @@ matchTyping _ _ Number tp (MePtToken s)
 			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
 matchTyping _ _ Number tp (MePtInt i)
 			= return $ MParseTree $ MInt tp i
-
-matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
- | length bnfs == length pts
-			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f s bnf tp pt) 
-				joined & allRight 
-				|> MSeq tp
- | otherwise		= Left $ "Seq could not match " ++ show bnfs ++ " ~ " ++ show pts 
-
-
-matchTyping f syntax (BNFRuleCall nm) _ pt
- | nm `M.member` get bnf syntax
-		= do	let bnfASTs	= get bnf syntax M.! nm
-			let oneOption i bnf	= inMsg ("Trying to match "++nm++"." ++ show i++" ("++show bnf++")") $ 
-							matchTyping f syntax bnf (nm, i) pt
-			zip [0..] bnfASTs |> uncurry oneOption & firstRight
- | otherwise	= Left $ "No bnf rule with name " ++ nm
+matchTyping _ _ Digit tp (MePtToken c)
+	| length c == 1 && head c `elem` ['0'..'9']	
+		= return $ MParseTree $ MLiteral tp c
+	| otherwise
+		= Left $ "Not a digit: "++c
+matchTyping _ _ Lower tp (MePtToken c)
+	| length c == 1 && head c `elem` ['a'..'z']	
+		= return $ MParseTree $ MLiteral tp c
+	| otherwise
+		= Left $ "Not a Lower: "++c
+matchTyping _ _ Upper tp (MePtToken c)
+	| length c == 1 && head c `elem` ['A'..'Z']	
+		= return $ MParseTree $ MLiteral tp c
+	| otherwise
+		= Left $ "Not an Upper: "++c
+matchTyping _ _ String tp (MePtToken c)
+	| head c == '"' && last c == '"' && length c > 2
+		= return $ MParseTree $ MLiteral tp c
+	| otherwise
+		= Left $ "Not a String: "++c
 matchTyping _ _ bnf _ pt
-		= Left $ "Could not match "++show bnf++" ~ "++show pt
+		= Left $ "(Fallthrough) Could not match "++toParsable bnf++" ~ "++toParsable pt
 
 
 
@@ -196,7 +240,10 @@ mePtPart ident	= try mePtToken
 
 meNested ident	= char '(' *> ws *> mePt ident <* ws <* char ')'
 mePtToken	= bnfLiteral	|> MePtToken
-mePtVar ident	= try ident 	|> MePtVar
+mePtVar		:: Parser u Name-> Parser u MEParseTree
+mePtVar ident	= do	nm	<- try ident 
+					<|> (char '_' |> (:[]))
+			return $ MePtVar nm
 mePtInt		= negNumber	|> MePtInt
 mePtCall ident	= do	builtin	<- try (char '!' >> return True) <|> return False
 			nm	<- identifier	-- here we use the normal identifier, not the injected one

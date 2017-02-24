@@ -71,6 +71,7 @@ _generateAbstractSet r generator n (choice, BNFSeq bnfs)
 			= mapi bnfs
 				|> (\(i, bnf) -> _generateAbstractSet r generator (n++":"++show i) (choice, bnf))
 				& AsSeq generator choice
+_generateAbstractSet r generator n (_, builtin)	= ConcreteIdentifier generator n
 
 
 

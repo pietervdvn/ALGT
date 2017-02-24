@@ -74,7 +74,7 @@ parsePart _ tp _ Upper
 parsePart _ tp _ Digit
 		= annotLi (oneOf digits |> (:[]) |> MLiteral tp)
 parsePart _ tp _ String
-		= annotLi (bnfLiteral |> MLiteral tp)
+		= annotLi (bnfLiteral |> (\s -> "\"" ++ s ++ "\"") |> MLiteral tp)
 parsePart rules tp wsMode (BNFSeq [bnf])
 		= parsePart rules tp wsMode bnf
 parsePart rules tp wsMode (BNFSeq (bnf:bnfs))

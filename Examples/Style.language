@@ -1,0 +1,73 @@
+ Style
+*******
+
+ Syntax
+========
+
+ dash		::= "-"
+ lowerDigit	::= Lower | Digit
+ string		::= String
+
+ stars		::= $ "*" stars | "*"
+ equals		::= $ "=" equals | "="
+ dashes		::= $ dash dashes | dash
+ dots		::= $ "." dots | "."
+
+ nl		::= $ "\n" nl | "\n"
+
+ nameChar	::= lowerDigit | Upper
+ name		::= $ nameChar name | nameChar
+ title		::= name "\n" stars "\n\n"
+
+ identifierCh	~~= lowerDigit | dash
+ identifier	~~= $ identifierCh identifier | identifierCh
+
+ constant	::= identifier "=" string
+ constants	::= constant nl constants | constant nl | nl
+
+ property	::= identifier ":" identifier | constant
+ properties	::= property nl properties | property nl
+
+ header1	::= name "\n" equals nl
+ header2	::= name "\n" dashes nl
+ header3	::= name "\n" dots nl
+
+ block1 	::= header1 properties block2s | header1 properties 
+ block1s	::= block1 block1s | block1
+ block2		::= header2 properties block3s | header2 properties 
+ block2s	::= block2 block2s | block2
+ block3		::= header3 properties
+ block3s	::= block3 block3s | block3
+
+ styleFile	::= nl title constants properties block1s
+
+ Functions
+===========
+
+expandFile	: styleFile -> styleFile
+expandFile(nl title consts props blocks)
+	= nl title "\n" expandProps(props, consts) expandAll(blocks, consts)
+
+
+# Replaces all constant names by their string
+expand					: property -> constants -> property
+expand(propName ":" key, c[key "=" value])	
+					= propName "=" value
+expand(propName ":" key, c)		= !error:property("Constant", key ," not defined")
+expand(propName "=" value, c)		= propName "=" value
+
+
+expandProps	: properties -> constants -> properties
+expandProps(blocks[propName ":" key], constants)
+		= expandProps(blocks[expand(propName ":" key, constants)], constants)
+expandProps(blocks, c)
+		= blocks
+
+
+expandAll	: block1s -> constants -> block1s
+expandAll(blocks[propName ":" key], constants)
+		= expandAll(blocks[expand(propName ":" key, constants)], constants)
+expandAll(blocks, c)
+		= blocks
+
+

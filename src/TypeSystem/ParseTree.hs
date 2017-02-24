@@ -145,7 +145,7 @@ instance ToString' ShowParens ParseTree where
 	debug' p (PtSeq ti exprs)	= "+ " ++ tail (showTI ti) ++ "\n" ++ (exprs |> debug' p & unlines & indentWith "|  ")
 
 instance ToString ParseTree where
-	toParsable	= toParsable' NotOnRoot
+	toParsable	= toParsable' NoParens
 	toCoParsable	= toCoParsable' NotOnRoot
 	debug		= debug' NotOnRoot		
 

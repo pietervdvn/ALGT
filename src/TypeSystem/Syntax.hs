@@ -132,6 +132,7 @@ smallestCommonType syntax t1 t2
 		ifNotBottom $ infimum l t1 t2
 
 smallestCommonType'	:: Syntax -> [TypeName] -> Maybe TypeName
+smallestCommonType' _ []	= Nothing
 smallestCommonType' s ts
 		= ifNotBottom $ infimums (get lattice s) ts
 
@@ -141,6 +142,7 @@ biggestCommonType s t1 t2
 		= ifNotBottom $ supremum (get lattice s) t1 t2
 
 biggestCommonType'	:: Syntax -> [TypeName] -> Maybe TypeName
+biggestCommonType' _ []	= Nothing
 biggestCommonType' s ts
 		= ifNotBottom $ supremums (get lattice s) ts
 

@@ -56,6 +56,7 @@ data Args = Args 	{ tsFile		:: String
 			, exampleFiles		:: [ExampleFile]
 			, changeFiles		:: [FilePath]
 			, dumpTS		:: Bool
+			, noCheck		:: Bool
 			, interpretAbstract	:: Bool
 			, interpretFunctionAbs	:: [String]
 			, interpretRulesAbstract:: Bool
@@ -124,11 +125,11 @@ parseArgs version strs
 				<- handleParseResult result
 		return $ doShowVersion ()
 		when saveManPDF $ do
-			B.writeFile "ALGT_Manual.pdf" _Manual_ALGT_Manual_pdf
+			B.writeFile "ALGT_Manual.pdf" _Manual_Output_ALGT_Manual_pdf
 			putStrLn "Manual saved as ALGT_Manual.pdf"
 			exitSuccess
 		when saveManHTML $ do
-			writeFile "ALGT_Manual.html" _Manual_ALGT_Manual_html
+			writeFile "ALGT_Manual.html" _Manual_Output_ALGT_Manual_html
 			putStrLn "Manual saved as ALGT_Manual.html"
 			exitSuccess
 		return (runTests, args)
@@ -242,6 +243,9 @@ args	= Args <$> argument str
 			(long "dump-language-file"
 			<> long "dlf"
 			<> help "Dump the parsed type system, usefull for debugging purposes")
+		<*> switch
+			(long "no-check"
+			<> help "Supress liveabilitychecks")
 		<*> switch
 			(long "interpret-abstractly"
 			<> long "ia"

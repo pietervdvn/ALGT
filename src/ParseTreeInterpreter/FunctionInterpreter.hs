@@ -24,6 +24,8 @@ import Control.Arrow ((&&&))
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
+import Debug.Trace -- TODO
+
 
 type VariableAssignments	= VariableAssignmentsA ParseTree
 
@@ -112,16 +114,17 @@ applyFunc ctx (nm, MFunction tp clauses) args
  | otherwise
 	= do	let stackEl		= (nm, args)
 		let ctx'		= ctx {ctxStack = stackEl:ctxStack ctx}
-		let clauseResults'	= clauses |> evalClause ctx' args 
+		let clauseResults'	= mapi clauses |> evalClause ctx' args 
 		let clauseResults	= clauseResults' & rights
 		when (null clauseResults) $ Left $ "Not a single clause matched:\n"++(clauseResults' & lefts & unlines & indent)
 		return $ head clauseResults
 
 
-evalClause	:: Ctx ->  [ParseTree] -> Clause -> Either String ParseTree
-evalClause ctx args (MClause pats expr)
-	= do	let stackEl		= ("Pattern matching", args)
-		variables	<- patternMatchAll (ctx{ctxStack = stackEl:ctxStack ctx}) pats args
+evalClause	:: Ctx ->  [ParseTree] -> (Int, Clause) -> Either String ParseTree
+evalClause ctx args (i, MClause pats expr)
+	= do	let stackEl		= ("Pattern matching clause "++show i++" with arguments: ", args)
+		variables	<- inMsg ("While pattern matching clause "++show i) $
+					patternMatchAll (ctx{ctxStack = stackEl:ctxStack ctx}) pats args
 		let ctx'	= ctx {ctxVars = variables}
 		evaluate ctx' expr
 
@@ -143,14 +146,22 @@ mergeVars v1 v2
 
 
 patternMatchAll	:: Ctx -> [Expression] -> [ParseTree] -> Either String VariableAssignments
-patternMatchAll _ [] []
+patternMatchAll ctx 
+	= _patternMatchAll ctx M.empty
+
+_patternMatchAll	:: Ctx -> VariableAssignments -> [Expression] -> [ParseTree] -> Either String VariableAssignments
+_patternMatchAll _ _ [] []
 		= return M.empty
-patternMatchAll ctx (pat:pats) (arg:args)
+_patternMatchAll ctx prevVars (pat:pats) (arg:args)
 	= do	let successFullMatch vars	
-				= isLeft $ do	vars'	<- patternMatchAll ctx pats args
-						mergeVars vars vars'
+				= do	prevVars'	<- mergeVars prevVars vars
+					vars'	<- _patternMatchAll ctx prevVars' pats args
+					mergeVars vars vars'
+					pass
 		variables	<- patternMatch ctx successFullMatch pat arg
-		variables'	<- patternMatchAll ctx pats args
+		-- only used for the check
+		prevVars'	<- mergeVars prevVars variables
+		variables'	<- _patternMatchAll ctx prevVars' pats args
 		mergeVars variables variables'
 
 
@@ -161,8 +172,10 @@ patternMatch pattern value
 
 The extra function (VariableAssignments -> Bool) injects a test, to test different evaluation contexts
 -}
-patternMatch	:: Ctx -> (VariableAssignments -> Bool) -> Expression -> ParseTree -> Either String VariableAssignments
+patternMatch	:: Ctx -> (VariableAssignments -> Either String ()) -> Expression -> ParseTree -> Either String VariableAssignments
 patternMatch _ _ (MVar _ v) expr
+ | v == "_"	= return M.empty
+ | otherwise
 	= return $ M.singleton v (expr, Nothing)
 patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
 	| s1 == s2		= return M.empty
@@ -187,28 +200,33 @@ patternMatch ctx f (MAscription as expr') expr
 
 patternMatch ctx extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
 	= patternMatchContxt ctx extraCheck (tp, name, hole) value
-		
+patternMatch ctx extraCheck (MEvalContext tp name hole) literal
+	= Left $ "Evaluation contexts only searching within a parse tree and don't handle literals"
 
 patternMatch ctx _ func@MCall{} arg
 	= do	pt	<- evaluate ctx func
 		unless (pt == arg) $ Left $ "Function result of "++toParsable func++" does not equal the given argument"
 		return M.empty
-patternMatch _ _ pat expr		
-	= Left $ "Could not pattern match "++toCoParsable expr++" over "++toParsable pat
+patternMatch ctx _ pat expr		
+	= let 	stack	= ctxStack ctx |> buildStackEl & unlines in
+		inMsg stack $ Left $ "FT: Could not pattern match '"++toCoParsable expr++"' over '"++toParsable pat++"'"
 
 
-patternMatchContxt	:: Ctx -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
-patternMatchContxt r extraCheck evalCtx fullContext@(PtSeq _ values)
-	= do	let matchMaker	= makeMatch r extraCheck evalCtx fullContext	:: (ParseTree, Path) -> Either String VariableAssignments
-		depthFirstSearch' matchMaker [] values
+patternMatchContxt	:: Ctx -> (VariableAssignments -> Either String ()) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
+patternMatchContxt r extraCheck evalCtx@(tp, nm, expr) fullContext@(PtSeq _ values)
+	= inMsg ("While pattern matching evaluation context "++toParsable (MEvalContext tp nm expr)) $
+	  do	let matchMaker (pt, p)	
+			= inMsg ("While trying to fill the hole with '" ++ toParsable pt++"'") $ makeMatch r extraCheck evalCtx fullContext (pt, p)	
+					:: Either String VariableAssignments
+		inMsg "While searching a value to fill the hole" $ depthFirstSearch' matchMaker [] values
 
 
-makeMatch	:: Ctx -> (VariableAssignments -> Bool) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, Path) -> Either String VariableAssignments
+makeMatch	:: Ctx -> (VariableAssignments -> Either String ()) -> (TypeName, Name, Expression) -> ParseTree -> (ParseTree, Path) -> Either String VariableAssignments
 makeMatch ctx extraCheck (tp, name, holePattern) fullContext (holeFiller, path)
 	= do	let baseAssign	= M.singleton name (fullContext, Just path)	:: VariableAssignments
 		holeAssgn	<- patternMatch ctx extraCheck holePattern holeFiller
 		assgn'		<- mergeVars baseAssign holeAssgn
-		assert Left (extraCheck assgn') "Extra patterns (for the rule) failed"
+		inMsg "Testing extra patterns/predicates" $ extraCheck assgn'
 		return assgn'
 
 -- depth first search, excluding self match
@@ -222,7 +240,8 @@ depthFirstSearch matchMaker path pt@(PtSeq _ values)
 	= do	let deeper	= depthFirstSearch' matchMaker path values
 		let self	= matchMaker (pt, path)
 		firstRight [deeper, self]
-depthFirstSearch matchMaker path pt	= matchMaker (pt, path)
+depthFirstSearch matchMaker path pt	
+	= matchMaker (pt, path)
 
 
 
@@ -298,8 +317,8 @@ evaluate ctx (MSeq tp vals)	= do	vals'	<- vals |+> evaluate ctx
 evaluate ctx (MParseTree pt)	= return pt
 evaluate ctx (MAscription tn expr)
 				= evaluate ctx expr
--- evaluate ctx e			= evalErr ctx $ "Fallthrough on evaluation in Function interpreter: "++toParsable e++" with arguments:\n(This is a bug, pietervdvn added a clause to little)\n"++
--- 					(ctxVars ctx & M.toList |> showVarAssgn & unlines)
+
+
 
 showVarAssgn	:: (Name, (ParseTree, Maybe Path)) -> String
 showVarAssgn (nm, assgn)
@@ -320,7 +339,9 @@ asInts ctx bi exprs
 
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)
-	= "   In "++func++ inParens (toParsable' ", " args)
+	= let	shorten arg	= if length arg > 24 then take 21 arg ++ "..." else arg 
+		noNL arg	= arg & filter (/= '\n') in
+		"   In "++func++ inParens (args |> toParsable |> shorten |> noNL & intercalate ", ")
 
 
 

@@ -61,7 +61,7 @@ mainPure args
 					& liftEith
 		changedTs	<- foldM mainChange ts (changeFiles args)
 		check   changedTs & inMsg "Error" & liftEith
-		checkTS changedTs & isolateCheck
+		unless (noCheck args) (checkTS changedTs & isolateCheck)
 
 		mainPureOn args changedTs
 		return changedTs

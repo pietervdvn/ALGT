@@ -50,6 +50,8 @@ e	-> "statement"
 eL	-> "statement"
 eL.4	-> "keyword"
 
+"constant" -> "keyword"
+
 
  Functions
 ===========
