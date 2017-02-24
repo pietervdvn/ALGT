@@ -201,7 +201,7 @@ patternMatch ctx f (MAscription as expr') expr
 patternMatch ctx extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
 	= patternMatchContxt ctx extraCheck (tp, name, hole) value
 patternMatch ctx extraCheck (MEvalContext tp name hole) literal
-	= Left $ "Evaluation contexts only searching within a parse tree and don't handle literals"
+	= Left "Evaluation contexts only searching within a parse tree and don't handle literals"
 
 patternMatch ctx _ func@MCall{} arg
 	= do	pt	<- evaluate ctx func
