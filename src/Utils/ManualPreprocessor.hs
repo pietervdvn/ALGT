@@ -28,7 +28,7 @@ import PureMain
 import Text.Parsec
 import TypeSystem
 import TypeSystem.Parser.TargetLanguageParser
-import qualified TypeSystem.Parser.BNFParser as BNFParser
+import qualified TypeSystem.BNF as BNFParser
 import qualified TypeSystem.Parser.ParsingUtils as ParsingUtils
 
 import ParseTreeInterpreter.FunctionInterpreter as FuncInp

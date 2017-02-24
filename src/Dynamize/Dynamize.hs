@@ -65,7 +65,7 @@ dynamize	:: TypeSystem -> TypeName -> String -> [Relation] -> [Relation] -> Chan
 dynamize ts rule typeErr addStuckStateRules addTypeErrCase
 		= let	syntax		= get tsSyntax ts
 			typeErrExpr	= MParseTree $ MLiteral ("",-1) typeErr
-			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule))
+			changedSyntax	= Edit rule ([Literal typeErr], syntax & getWSMode & (M.! rule), False)
 			ra		= analyzeRelations ts
 			newRules	= addStuckStateRules |> calculateNewRulesFor ts ra rule typeErrExpr & concat & nub
 			newRules'	= addTypeErrCase |> (\rel ->

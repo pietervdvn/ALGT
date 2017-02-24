@@ -62,14 +62,15 @@ change' pa pb	= try (pb |> Right) <|> (defaultChange pa |> Left)
 changes' pa pb	= many $ try (nls *> ws *> change' pa pb <* ws)
 
 
-syntaxChange	:: Parser u (DefaultChange TypeName ([BNF], WSMode))
+syntaxChange	:: Parser u (DefaultChange TypeName ([BNF], WSMode, Bool))
 syntaxChange   = try (parseBnfRule |> uncurry Override) 
 		<|> (do	name	<- identifier
 			wsMode	<- inWs parseWSMode
+			doGroup	<- (char '$' >> return True) <|> return False
 			string "..."
 			inWs $ string "|"
 			bnfs	<- bnfLine
-			return $ Edit name (bnfs, wsMode))
+			return $ Edit name (bnfs, wsMode, doGroup))
 
 
 

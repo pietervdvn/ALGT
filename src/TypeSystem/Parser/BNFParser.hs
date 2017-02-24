@@ -21,32 +21,6 @@ import qualified Data.Map as M
 
 import Lens.Micro hiding ((&))
 
-builtinEscapes	:: [((Char, Char), String)]
-builtinEscapes
-      =	[ (('n', '\n'), "newline")
-	, (('t', '\t'), "tab")
-	, (('"', '"'), "double quote")
-	, (('\\', '\\'), "backslash")
-	]
-builtinEscapes'
-	= builtinEscapes |> fst
-
-
-wsModeInfo
-      = [ (IgnoreWS, "Totally ignore whitespace")
-	, (StrictWS, "Parse whitespace for this rule only")
-	, (StrictWSRecursive, "Parse whitespace for this rule and all recursively called rules")
-	] |> over _1 (toParsable &&& id)
-
-
-builtinSyntax	= 
-	[ (("Identifier", Identifier), ("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
-	, (("Number", Number), ("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
-	, (("Lower", Lower), ("Matches a lowercase letter", "[a-z]"))
-	, (("Upper", Upper), ("Matches an uppercase letter", "[A-Z]"))
-	, (("Digit", Digit), ("Matches an digit", "[0-9]"))
-	, (("String", String), ("Matches a double quote delimted string", "\"([^\"\\]|\\\"|\\\\)*\""))
-	]
 
 
 parseEscape	:: Parser s Char
@@ -94,6 +68,8 @@ parseBnfRule
 		name	<- identifier
 		ws
 		wsMode	<- parseWSMode
+		ws
+		doGroup	<- (char '$' >> return True) <|> return False
 		bnfs 	<- bnfLine
-		return (name, (bnfs, wsMode))
+		return (name, (bnfs, wsMode, doGroup))
 

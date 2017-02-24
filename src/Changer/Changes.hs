@@ -115,7 +115,7 @@ refactorFunc (_:rest) k	= refactorFunc rest k
 
 data Changes = Changes
 			{ _changesName		:: Name
-			, _changedSyntax	:: [DefaultChange TypeName ([BNF], WSMode)]
+			, _changedSyntax	:: [DefaultChange TypeName ([BNF], WSMode, Bool)]
 			, _changedFuncs		:: [DefaultChange Name Function]
 			, _changedRels		:: [DefaultChange Symbol Relation]
 			, _changedRules		:: [DefaultChange Name Rule]
@@ -131,15 +131,16 @@ checkNoCommon' old new rule section
 
 
 
-editSyntax	:: Bool -> TypeName -> ([BNF], WSMode) -> ([BNF], WSMode) -> Either String ([BNF], WSMode)
+editSyntax	:: Bool -> TypeName -> ([BNF], WSMode, Bool) -> ([BNF], WSMode, Bool) -> Either String ([BNF], WSMode, Bool)
 -- Case for overwriting
 editSyntax True _ old new
 		= return new
 -- Case for editing (thus adding cases)
-editSyntax False n (oldBNFs, oldWS) (newBNF, newWS)
+editSyntax False n (oldBNFs, oldWS, oldGroup) (newBNF, newWS, newGroup)
 	= inMsg ("While updating syntax rule "++show n) $
 	  do	unless (oldWS == newWS) $ Left $ "Whitespace-mode doesn't match. Expected mode (by the original definition): "++toParsable oldWS++", but got "++toParsable newWS
-		return (oldBNFs ++ newBNF, newWS)
+		unless (oldGroup == newGroup) $ Left $ "Grouping-mode doesn't match. Expected grouping (by the original definition): "++show oldGroup++", but got "++show newGroup
+		return (oldBNFs ++ newBNF, newWS, newGroup)
 
 
 
@@ -194,7 +195,7 @@ applyNameChange name
 	= over tsName ((name++" ")++) 
 
 applySyntaxChanges bnfCh'
-	= applyChangesOn editSyntax id bnfCh' (tsSyntax . fullSyntax)
+	= applyChangesOn editSyntax id bnfCh' (tsSyntax . fullSyntax')
 
 applyFuncChanges funcCh' ts
 	= applyChangesOn (editFunction (get tsSyntax ts)) liftFunctionName funcCh' tsFunctions ts
@@ -269,10 +270,11 @@ instance ToString' Int Changes where
 			 changedRules)
 		= let	plural s doPluralize	= s ++ if doPluralize then "s" else ""	:: String
 			
-			showBNFRule newOverride tn (bnfs, ws)
+			showBNFRule newOverride tn (bnfs, ws, group)
 				=  toParsable (tn :: TypeName
 					, i
 					, ws :: WSMode
+					, group :: Bool
 					, if newOverride then "" else "... | "
 					, bnfs :: [BNF])
 			syntaxExtras	= (id :: TypeName -> String

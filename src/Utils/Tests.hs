@@ -47,7 +47,7 @@ runParserUnsafe parser bnf
 
 
 parseAS		:: TypeName -> String -> AbstractSet
-parseAS tn str	= runParserUnsafe (parseSyntax subTestSynt tn) str
+parseAS tn str	= parseTargetLang subTestSynt tn "unit tests" str & either error id
 			& fromParseTree "pt"
 
 genAS		= generateAbstractSet subTestSynt ""
@@ -110,8 +110,8 @@ testS s sexp	= s |> toParsable & sort == sort sexp
 
 
 
-testSyntax = makeSyntax	[ ("a", ([BNFRuleCall "b"], IgnoreWS))
-			, ("b", ([Literal "b"] , IgnoreWS))
+testSyntax = makeSyntax	[ ("a", ([BNFRuleCall "b"], IgnoreWS, False))
+			, ("b", ([Literal "b"] , IgnoreWS, False))
 			] & either error id
 
 

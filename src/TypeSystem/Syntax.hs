@@ -32,9 +32,10 @@ import Control.Arrow ((&&&))
 
 {-Represents a syntax: the name of the rule + possible parseways -}
 data Syntax	= BNFRules 
-			{ _bnf :: Map TypeName [BNF]
-			, _wsModes :: Map TypeName WSMode
-			, _lattice :: Lattice TypeName
+			{ _bnf 		:: Map TypeName [BNF]
+			, _wsModes 	:: Map TypeName WSMode
+			, _groupModes	:: Map TypeName Bool
+			, _lattice 	:: Lattice TypeName
 			} deriving (Show)
 
 
@@ -64,10 +65,20 @@ getFullSyntax	:: Syntax -> Map TypeName ([BNF], WSMode)
 getFullSyntax s
 	= M.intersectionWith (,) (getBNF s) (getWSMode s)
 
+getFullSyntax'	:: Syntax -> Map TypeName ([BNF], WSMode, Bool)
+getFullSyntax' s
+	= M.intersectionWith (\a (b, c) -> (a, b, c)) (getBNF s)
+		(M.intersectionWith (,) (get wsModes s) (get groupModes s))
+
 
 fromFullSyntax	:: Map TypeName ([BNF], WSMode) -> Syntax
 fromFullSyntax dict
-	= BNFRules (dict |> fst) (dict |> snd) (dict |> fst & asLattice')
+	= BNFRules (dict |> fst) (dict |> snd) M.empty (dict |> fst & asLattice')
+
+fromFullSyntax' :: Map TypeName ([BNF], WSMode, Bool) -> Syntax
+fromFullSyntax' dict
+	= BNFRules (dict |> fst3) (dict |> snd3) (dict |> trd3) (dict |> fst3 & asLattice')
+
 
 
 rebuildSubtypings	:: Syntax -> Syntax
@@ -77,13 +88,18 @@ rebuildSubtypings s
 fullSyntax	:: Lens' Syntax (Map TypeName ([BNF], WSMode))
 fullSyntax	= lens getFullSyntax (const fromFullSyntax)
 
+fullSyntax'	:: Lens' Syntax (Map TypeName ([BNF], WSMode, Bool))
+fullSyntax'	= lens getFullSyntax' (const fromFullSyntax')
+
+
 instance Refactorable TypeName Syntax where
-	refactor ftn (BNFRules bnfs ws _)
+	refactor ftn (BNFRules bnfs ws group _)
 		= let	bnfs'	= bnfs ||>> refactor ftn & M.mapKeys ftn
 			ws'	= M.mapKeys ftn ws
+			group'	= M.mapKeys ftn group
 			lattice'	= asLattice' bnfs'
 			in
-			BNFRules bnfs' ws' lattice'
+			BNFRules bnfs' ws' group' lattice'
 
 ---------------------------- ABOUT SUBTYPING ------------------------------
 
@@ -285,10 +301,10 @@ inline' syntax
 
 
 -- constructor, with checks
-makeSyntax	:: [(Name, ([BNF], WSMode))] -> Either String Syntax
+makeSyntax	:: [(Name, ([BNF], WSMode, Bool))] -> Either String Syntax
 makeSyntax vals
-	= do	let bnfs	= vals & M.fromList |> fst ||>> normalize
-		let bnfr	= BNFRules bnfs (M.fromList $ vals ||>> snd) (asLattice' bnfs)
+	= do	let bnfs	= vals & M.fromList |> fst3 ||>> normalize
+		let bnfr	= BNFRules bnfs (vals ||>> snd3 & M.fromList) (vals ||>> trd3 & M.fromList) (asLattice' bnfs)
 		checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times")
 		return bnfr
 
@@ -316,7 +332,7 @@ checkUnknownRuleCall bnfs' (n, asts)
 	= inMsg "While checking for unknowns" $
 	  do	let bnfs	= getBNF bnfs'
 		mapi asts |> (\(i, ast) ->
-			inMsg ("While checking choice "++show i++", namely "++show ast) $
+			inMsg ("While checking choice "++show i++", namely '"++toParsable ast++"'") $
 			do	let unknowns = calledRules ast & filter (`M.notMember` bnfs) 
 				assert Left (null unknowns) $ "Unknown type "++showComma unknowns
 			) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs'))
@@ -468,10 +484,10 @@ bnfAlwaysIsA _ bnf0 bnf1
 
 
 instance ToString Syntax where
-	toParsable (BNFRules rules wsModes _)
+	toParsable (BNFRules rules wsModes group _)
 		= let 	width	= rules & M.keys |> length & maximum
-			merged	= M.intersectionWith (,) rules wsModes in
-			merged & M.toList |> (\(n, (r, ws)) -> (n, width, ws, "", r)) 
+			merged	= M.intersectionWith (,) rules (M.intersectionWith (,) wsModes group) in
+			merged & M.toList |> (\(n, (r, (ws, group))) -> (n, width, ws, group, "", r)) 
 					& toParsable' "\n" 
 	debug		= show
 

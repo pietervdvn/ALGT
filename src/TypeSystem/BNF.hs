@@ -13,20 +13,49 @@ import TypeSystem.Types
 
 import Data.Maybe
 
+import Lens.Micro hiding ((&))
+import Control.Arrow ((&&&))
 
 {- Syntax is described in a Backus-Naur format, a simple naive parser is constructed from it. -}
 
 
 data BNF 	= Literal String	-- Literally parse 'String'
+		| BNFRuleCall Name	-- Parse the rule with the given name
+		| BNFSeq [BNF]	-- Sequence of parts
 		| Identifier		-- Parse an identifier
 		| Lower			-- Lowercase letter
 		| Upper
 		| Digit
 		| String		-- Double-quote delimited string
 		| Number		-- Parse a number
-		| BNFRuleCall Name	-- Parse the rule with the given name
-		| BNFSeq [BNF]	-- Sequence of parts
 	deriving (Show, Eq, Ord)
+
+builtinEscapes	:: [((Char, Char), String)]
+builtinEscapes
+      =	[ (('n', '\n'), "newline")
+	, (('t', '\t'), "tab")
+	, (('"', '"'), "double quote")
+	, (('\\', '\\'), "backslash")
+	]
+builtinEscapes'
+	= builtinEscapes |> fst
+
+
+wsModeInfo
+      = [ (IgnoreWS, "Totally ignore whitespace")
+	, (StrictWS, "Parse whitespace for this rule only")
+	, (StrictWSRecursive, "Parse whitespace for this rule and all recursively called rules")
+	] |> over _1 (toParsable &&& id)
+
+
+builtinSyntax	= 
+	[ (("Identifier", Identifier), ("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
+	, (("Number", Number), ("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
+	, (("Lower", Lower), ("Matches a lowercase letter", "[a-z]"))
+	, (("Upper", Upper), ("Matches an uppercase letter", "[A-Z]"))
+	, (("Digit", Digit), ("Matches an digit", "[0-9]"))
+	, (("String", String), ("Matches a double quote delimted string", "\"([^\"\\]|\\\"|\\\\)*\""))
+	]
 
 
 normalize	:: BNF -> BNF
@@ -114,14 +143,10 @@ instance ToString BNF where
 
 toStr			:: (BNF -> String) -> BNF -> String
 toStr _ (Literal str)	= show str
-toStr _ Identifier	= "Identifier"
-toStr _ Number		= "Number"
-toStr _ Lower		= "Lower"
-toStr _ Upper		= "Upper"
-toStr _ String		= "String"
-toStr _ (BNFRuleCall n)	= n
 toStr f (BNFSeq asts)	= asts |> f & unwords
-
+toStr _ (BNFRuleCall n)	= n
+toStr _ builtin		= builtinSyntax |> fst |> swap & lookup builtin
+				& fromMaybe (error $ "BUG: you added a new syntactic form "++show builtin++" which you didn't add to the builtinSytnax yet")
 
 instance ToString WSMode where
 	toParsable IgnoreWS	= "::="
@@ -129,12 +154,14 @@ instance ToString WSMode where
 	toParsable StrictWSRecursive	= "//="
 
 
-instance ToString (Name, Int, WSMode, String, [BNF]) where
-	toParsable (n, i, ws, extra, [])
-		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ "< no bnfs declared >"
-	toParsable (n, i, ws, extra, bnfs)
-		= padR i ' ' n ++ toParsable ws ++ " " ++ extra ++ toParsable' ("\n" ++ replicate i ' ' ++  "| ") bnfs
+instance ToString (Name, Int, WSMode, Bool, String, [BNF]) where
+	toParsable (n, i, ws, group, extra, bnfs)
+		= padR i ' ' n ++ toParsable ws ++ _showGroup group ++ " " ++ extra ++ 
+			if null bnfs then "< no bnfs declared >"
+				else toParsable' ("\n" ++ replicate i ' ' ++  "| ") bnfs
 
+_showGroup True	= " $"
+_showGroup False= ""
 
 instance Refactorable TypeName BNF where
 	refactor ftn (BNFRuleCall nm)	= BNFRuleCall $ ftn nm

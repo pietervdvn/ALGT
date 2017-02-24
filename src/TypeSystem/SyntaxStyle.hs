@@ -11,6 +11,7 @@ import Data.Map as M
 import Data.List (sort)
 
 import TypeSystem.Types
+import TypeSystem.ParseTree
 
 import Lens.Micro.TH
 import Lens.Micro hiding ((&))
@@ -24,6 +25,17 @@ data SyntaxStyle = SyntaxStyle
 	} deriving (Show)
 
 makeLenses ''SyntaxStyle
+
+
+determineStyle	:: SyntaxStyle -> ParseTreeA a -> ParseTreeA (a, Maybe Name)
+determineStyle styling pt
+	= let	(genType, choiceI)	= get ptaInf pt
+		specificStyle		= M.lookup (genType, choiceI) $ get extraStyles styling
+		baseStyle		= M.lookup genType $ get baseStyles styling
+		style			= firstJusts [specificStyle, baseStyle]
+		in
+		pt |> (\a -> (a, style))
+
 
 instance Refactorable TypeName SyntaxStyle where
 	refactor ftn style
