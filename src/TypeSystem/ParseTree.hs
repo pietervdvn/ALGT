@@ -115,6 +115,10 @@ usedIdentifiers'	:: ParseTree -> [Name]
 usedIdentifiers' (MIdentifier _ nm)	= [nm]
 usedIdentifiers' (PtSeq _ pts)		= pts >>= usedIdentifiers'
 
+fromPtToken	:: ParseTree -> Maybe Name
+fromPtToken (MLiteral _ s)	= Just s
+fromPtToken _			= Nothing
+
 
 instance Refactorable TypeName ParseTree where
 	refactor ftn (MLiteral mi s)	= MLiteral (refactor ftn mi) s

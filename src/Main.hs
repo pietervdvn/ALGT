@@ -19,7 +19,8 @@ import TypeSystem
 
 
 {- Imports to test -}
-import Dynamize.Test
+import SyntaxHighlighting.Coloring
+
 import AbstractInterpreter.RelationAnalysis
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.RuleAnalysis

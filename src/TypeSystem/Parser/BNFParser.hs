@@ -11,7 +11,7 @@ import TypeSystem.Parser.ParsingUtils
 import Control.Arrow ((&&&))
 import Control.Monad
 
-import TypeSystem
+import TypeSystem.TypeSystemData
 
 import Text.Parsec
 import Data.Maybe

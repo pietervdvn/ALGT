@@ -9,7 +9,7 @@ import TypeSystem.Parser.ExpressionParser (MEParseTree, typeAs)
 
 import Control.Monad
 
-import TypeSystem hiding (relTypes)
+import TypeSystem.TypeSystemData hiding (relTypes)
 
 import Text.Parsec
 import Data.List

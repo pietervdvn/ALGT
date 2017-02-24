@@ -8,7 +8,7 @@ In this approach, we tokenize first to a tree, and then try to match a rule with
 import TypeSystem.Parser.ParsingUtils
 import TypeSystem.Parser.BNFParser
 import TypeSystem.Parser.TargetLanguageParser
-import TypeSystem
+import TypeSystem.TypeSystemData
 import Utils.Utils
 import Utils.ToString
 
@@ -34,8 +34,8 @@ data MEParseTree	= MePtToken String
 	deriving (Show, Ord, Eq)
 
 
-fromPtToken (MePtToken s)	= Just s
-fromPtToken _			= Nothing
+fromMePtToken (MePtToken s)	= Just s
+fromMePtToken _			= Nothing
 
 instance ToString MEParseTree where
 	toParsable	= showMEPT
@@ -150,7 +150,7 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
 				zip [0..] bnfASTs |> uncurry oneOption & firstRight
 			 else do
 					let noTokenMsg	= Left $ "Trying to decipher a grouped rule "++show nm++", but '"++toParsable pt++"' is not a token"
-					str		<- fromPtToken pt |> return & fromMaybe noTokenMsg
+					str		<- fromMePtToken pt |> return & fromMaybe noTokenMsg
 					let groupedMsg	= "While parsing grouped token "++show str++" against "++show nm
 					pt'	<- inMsg groupedMsg $ parseTargetLang syntax nm "Literal of a grouped value" str
 					return $ MParseTree pt'

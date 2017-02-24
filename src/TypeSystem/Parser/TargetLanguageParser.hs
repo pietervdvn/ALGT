@@ -10,7 +10,7 @@ import TypeSystem.Parser.BNFParser (bnfLiteral)
 
 import Control.Arrow ((&&&))
 
-import TypeSystem
+import TypeSystem.TypeSystemData
 
 import Text.Parsec
 import Data.Maybe

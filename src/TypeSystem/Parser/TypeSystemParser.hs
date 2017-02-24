@@ -10,7 +10,7 @@ import TypeSystem.Parser.ParsingUtils
 import Control.Arrow ((&&&))
 import Control.Monad
 
-import TypeSystem
+import TypeSystem.TypeSystemData
 import TypeSystem.Parser.BNFParser
 import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem.Parser.FunctionParser
