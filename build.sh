@@ -17,12 +17,10 @@ cd ..
 echo "Stack build"
 stack build
 
-cd src
-echo "Recreating dev assets" 
-echo "createAssets True \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
 
 rm ALGT
 rm ALGT-*
+
 cp .stack-work/install/x86_64-linux/lts-7.15/8.0.1/bin/ALGT ALGT
 
 VERSION=`./ALGT -v | sed "s/, .*$//"`
@@ -35,3 +33,10 @@ else
 	mv ALGT "ALGT-FAIL"
 	echo "Marked build as fail"
 fi
+
+
+cd src
+echo "Recreating dev assets" 
+echo "createAssets True \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
+cd ..
+

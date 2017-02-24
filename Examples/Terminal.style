@@ -10,6 +10,17 @@ blue	= "#0000ff"
 
 grey	= "#999999"
 darkgreen = "#009900"
+ Cobalt
+********
+
+black	= "#000000"
+white	= "#ffffff"
+red	= "#ff0000"
+green	= "#00ff00"
+blue	= "#0000ff"
+
+grey	= "#999999"
+darkgreen = "#009900"
 
 bold	= "bold"
 italic	= "italic"
@@ -54,3 +65,38 @@ font-style: italic
 font-style: normal
 
 
+
+bold	= "bold"
+italic	= "italic"
+normal	= "normal"
+
+
+background-color: black
+foreground-color: green
+
+
+Comment
+=======
+
+fg:x
+
+ Noise
+-------
+
+fg:y
+
+Noisier
+.......
+
+fg:ns
+
+
+ Fear
+------
+
+fg:z
+
+Statement
+=========
+
+fg:s

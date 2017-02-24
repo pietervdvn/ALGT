@@ -116,7 +116,7 @@ applyFunc ctx (nm, MFunction tp clauses) args
 		let ctx'		= ctx {ctxStack = stackEl:ctxStack ctx}
 		let clauseResults'	= mapi clauses |> evalClause ctx' args 
 		let clauseResults	= clauseResults' & rights
-		when (null clauseResults) $ Left $ "Not a single clause matched:\n"++(clauseResults' & lefts & unlines & indent)
+		when (null clauseResults) $ Left $ "Not a single clause of "++nm++" matched:\n"++(clauseResults' & lefts & unlines & indent)
 		return $ head clauseResults
 
 

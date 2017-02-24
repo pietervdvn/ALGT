@@ -41,6 +41,10 @@
 
  styleFile	::= nl title constants properties block1s
 
+
+fallbacks	::= fallback "\n" fallbacks | "$"
+fallback	::= name "->" name
+
  Functions
 ===========
 
@@ -70,4 +74,78 @@ expandAll(blocks[propName ":" key], constants)
 expandAll(blocks, c)
 		= blocks
 
+
+
+
+
+h1n		: header1 -> name
+h1n(n _ _ _)	= n
+
+h2n		: header2 -> name
+h2n(n _ _ _)	= n
+
+h3n		: header3 -> name
+h3n(n _ _ _)	= n
+
+titleN		: title -> name
+titleN(n _ _ _)	= n
+
+
+
+b1n		: block1 -> name
+b1n(h _ _)	= h1n(h)
+b1n(h _)	= h1n(h)
+
+b2n		: block2 -> name
+b2n(h _ _)	= h2n(h)
+b2n(h _)	= h2n(h)
+
+b3n		: block3 -> name
+b3n(h _)	= h3n(h)
+
+
+fallbacks	: styleFile -> fallbacks
+fallbacks(_ title _ _ b1s)
+		= fallbackN1(titleN(title), b1s)
+
+# recursive fallbacks
+fallback1	: block1 -> fallbacks
+fallback1(h1 _ b2s)
+		= fallbackN2(h1n(h1), b2s)
+fallback1(_ _)	= "$"
+
+
+fallback2	: block2 -> fallbacks
+fallback2(h2 _ b3s)
+		= fallbackN3(h2n(h2), b3s)
+fallback2(_ _)	= "$"
+
+
+
+fallbackN1	: name -> block1s -> fallbacks
+fallbackN1(n, (b1 block1s))
+	= concatFBs((b1n(b1) "->" n) "\n" fallbackN1(n, block1s), fallback1(b1))
+fallbackN1(n, b1)
+	= (b1n(b1) "->" n) "\n" fallback1(b1)
+
+
+fallbackN2	: name -> block2s -> fallbacks
+fallbackN2(n, (b2 blocks))
+	= concatFBs((b2n(b2) "->" n) "\n" fallbackN2(n, blocks), fallback2(b2))
+fallbackN2(n, b2)
+		= (b2n(b2) "->" n) "\n" fallback2(b2)
+
+
+
+fallbackN3	: name -> block3s -> fallbacks
+fallbackN3(n, b3 block3s)
+	= (b3n(b3) "->" n) "\n" fallbackN3(n, block3s)
+fallbackN3(n, b3)
+		= (b3n(b3) "->" n) "\n" "$"
+
+concatFBs	: fallbacks -> fallbacks -> fallbacks
+concatFBs("$", fbs)
+		= fbs
+concatFBs(fb "\n" fbs0, fbs)
+		= fb "\n" concatFBs(fbs0, fbs) 
 
