@@ -67,7 +67,7 @@ runTest args
 				<- parseArgs ([-1::Int], "Integration tests") args
 		let output
 			= mainPure parsedArgs
-				& runPureOutput defaultInput
+				& runPureOutput defaultConfig defaultInput
 		return $ removeCarriageReturns output
 
 recreateAllTests	

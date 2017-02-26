@@ -55,7 +55,7 @@ main' args
 			when (isNothing parsedArgs) $
 				error  "No typesystem file given. See -h"
 			let (Just parsedArgs')	= parsedArgs
-			runIO' parsedArgs' (mainPure parsedArgs')
+			runIO' defaultConfig parsedArgs' (mainPure parsedArgs')
 
 
 

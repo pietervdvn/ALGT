@@ -158,7 +158,7 @@ preprocess target vars ('$':'$':'(':str)
 		
 
 		let output	= mainPure parsedArgs
-					& runPureOutput input
+					& runPureOutput defaultConfig input
 					& removeCarriageReturns
 					& get stdOut & unlines
 
@@ -176,7 +176,7 @@ preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
 				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor svgs") args'
 
 		let output	= mainPure parsedArgs
-					& runPure input
+					& runPure defaultConfig input
 					& inMsg ("While generating the svg with "++args)
 					& either error snd
 		

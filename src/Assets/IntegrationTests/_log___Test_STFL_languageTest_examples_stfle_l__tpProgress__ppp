@@ -82,7 +82,7 @@ Property successfull
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Bool, e0 --> If (( (If True Then False Else True) )) Then False Else True}
+# Property Progress statisfied with assignment {T --> Bool, e0 --> If ( If True Then False Else True ) Then False Else True}
   # Predicate satisfied:
   # e0 :: T
   
@@ -92,11 +92,11 @@ Property successfull
     --------------------------------------------------------------------------------------------------- [TIf]                                                           
     {} ⊢ If True Then False Else True, Bool                                                                      False : bool                True : bool                T1 = Bool = T2
     ----------------------------------------------------------------------------------------------- [TParens]    ---------------- [Tbool]    --------------- [Tbool]    -------------- [EqBase]
-    {} ⊢ ( (If True Then False Else True) ), Bool                                                                {} ⊢ False, Bool            {} ⊢ True, Bool            Bool == Bool
+    {} ⊢ ( If True Then False Else True ), Bool                                                                  {} ⊢ False, Bool            {} ⊢ True, Bool            Bool == Bool
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TIf]
-    {} ⊢ If (( (If True Then False Else True) )) Then False Else True, Bool
+    {} ⊢ If ( If True Then False Else True ) Then False Else True, Bool
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-    If (( (If True Then False Else True) )) Then False Else True :: Bool
+    If ( If True Then False Else True ) Then False Else True :: Bool
   
   
   
@@ -105,8 +105,8 @@ Property successfull
   
   ------------------------------------ [EvalIfTrue]
   If True Then False Else True → False
-  -------------------------------------------------------------------------------------------------- [EvalCtx]
-  If (( (If True Then False Else True) )) Then False Else True → If (( False )) Then False Else True
+  -------------------------------------------------------------------------------------------- [EvalCtx]
+  If ( If True Then False Else True ) Then False Else True → If ( False ) Then False Else True
   
   
 Property successfull
@@ -154,31 +154,31 @@ Property successfull
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> (( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) ))}
+# Property Progress statisfied with assignment {T --> Int, e0 --> ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 )}
   # Predicate satisfied:
   # e0 :: T
   
-                                                                                                                                                                                                 T1 = Int = T2                      
-                                                                                                                                                                                                 ------------- [EqBase]             
-                                                    5 : number                                    T1 = Int = T2                                             1 : number                           Int == Int                         T1 = Int = T2
-    --------------------------------------- [Tx]    -------------------------------- [Tnumber]    ------------- [EqBase]    ----------------------- [Tx]    ----------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
-    (f : (Int -> Int)) , {} ⊢ f, Int -> Int         (f : (Int -> Int)) , {} ⊢ 5, Int              Int == Int                (i : Int) , {} ⊢ i, Int         (i : Int) , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
-    ------------------------------------------------------------------------------------------------------------- [Tapp]    --------------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
-    (f : (Int -> Int)) , {} ⊢ f 5, Int                                                                                      (i : Int) , {} ⊢ i + 1, Int                                          (( Int )) -> Int == Int -> Int
-    ---------------------------------------------------------------------------------------------------------- [TLambda]    ------------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
-    {} ⊢ ( \ f : (Int -> Int) . (f 5) ), (( (Int -> Int) )) -> Int                                                          {} ⊢ ( \ i : Int . (i + 1) ), (( Int )) -> Int                       (( Int )) -> Int == ( (Int -> Int) )
-    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
-    {} ⊢ (( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )), Int
-    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
-    (( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )) :: Int
+                                                                                                                                                                                     T1 = Int = T2                      
+                                                                                                                                                                                     ------------- [EqBase]             
+                                                5 : number                                T1 = Int = T2                                           1 : number                         Int == Int                         T1 = Int = T2
+    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
+    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
+    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
+    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        ( Int ) -> Int == Int -> Int
+    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
+    {} ⊢ ( \ f : Int -> Int . f 5 ), ( Int -> Int ) -> Int                                                          {} ⊢ ( \ i : Int . i + 1 ), ( Int ) -> Int                       ( Int ) -> Int == ( Int -> Int )
+    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
+    {} ⊢ ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ), Int
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
+    ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) :: Int
   
   
   
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  ---------------------------------------------------------------------------------------- [EvalLamApp]
-  (( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )) → (( \ i : Int . (i + 1) )) 5
+  -------------------------------------------------------------------------- [EvalLamApp]
+  ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) → ( \ i : Int . i + 1 ) 5
   
   
 Property successfull
@@ -249,7 +249,7 @@ Property successfull
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Bool, e0 --> (( (If True Then True Else True) )) :: Bool}
+# Property Progress statisfied with assignment {T --> Bool, e0 --> ( If True Then True Else True ) :: Bool}
   # Predicate satisfied:
   # e0 :: T
   
@@ -259,11 +259,11 @@ Property successfull
     -------------------------------------------------------------------------------------------------- [TIf]    
     {} ⊢ If True Then True Else True, Bool                                                                      T1 = Bool = T2
     ---------------------------------------------------------------------------------------------- [TParens]    -------------- [EqBase]
-    {} ⊢ ( (If True Then True Else True) ), Bool                                                                Bool == Bool
+    {} ⊢ ( If True Then True Else True ), Bool                                                                  Bool == Bool
     --------------------------------------------------------------------------------------------------------------------------- [TAscr]
-    {} ⊢ (( (If True Then True Else True) )) :: Bool, Bool
+    {} ⊢ ( If True Then True Else True ) :: Bool, Bool
     ----------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-    (( (If True Then True Else True) )) :: Bool :: Bool
+    ( If True Then True Else True ) :: Bool :: Bool
   
   
   
@@ -272,8 +272,8 @@ Property successfull
   
   ---------------------------------- [EvalIfTrue]
   If True Then True Else True → True
-  ---------------------------------------------------------------- [EvalCtx]
-  (( (If True Then True Else True) )) :: Bool → (( True )) :: Bool
+  ---------------------------------------------------------- [EvalCtx]
+  ( If True Then True Else True ) :: Bool → ( True ) :: Bool
   
   
 Property successfull
@@ -410,7 +410,7 @@ Property successfull
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> 5 + (6 + 7)}
+# Property Progress statisfied with assignment {T --> Int, e0 --> 5 + 6 + 7}
   # Predicate satisfied:
   # e0 :: T
   
@@ -420,9 +420,9 @@ Property successfull
     ----------- [Tnumber]    -------------------------------------- [TPlus]
     {} ⊢ 5, Int              {} ⊢ 6 + 7, Int
     --------------------------------------------------------------- [TPlus]
-    {} ⊢ 5 + (6 + 7), Int
+    {} ⊢ 5 + 6 + 7, Int
     ----------------------------------------------------------- [TEmptyCtx]
-    5 + (6 + 7) :: Int
+    5 + 6 + 7 :: Int
   
   
   
@@ -433,37 +433,37 @@ Property successfull
   ------------------------ [EvalPlus]
   6 + 7 → 13
   ------------------------- [EvalCtx]
-  5 + (6 + 7) → 5 + 13
+  5 + 6 + 7 → 5 + 13
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> (( \ x : Int . (x + 1) )) 5}
+# Property Progress statisfied with assignment {T --> Int, e0 --> ( \ x : Int . x + 1 ) 5}
   # Predicate satisfied:
   # e0 :: T
   
-                                    1 : number                                                    
-    ----------------------- [Tx]    ----------------------- [Tnumber]                             
-    (x : Int) , {} ⊢ x, Int         (x : Int) , {} ⊢ 1, Int                                       T1 = Int = T2
-    --------------------------------------------------------- [TPlus]                             ------------- [EqBase]
-    (x : Int) , {} ⊢ x + 1, Int                                          5 : number               Int == Int
-    ------------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
-    {} ⊢ ( \ x : Int . (x + 1) ), (( Int )) -> Int                       {} ⊢ 5, Int              Int == ( Int )
-    ---------------------------------------------------------------------------------------------------------------------- [Tapp]
-    {} ⊢ (( \ x : Int . (x + 1) )) 5, Int
-    ----------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-    (( \ x : Int . (x + 1) )) 5 :: Int
+                                  1 : number                                                  
+    --------------------- [Tx]    --------------------- [Tnumber]                             
+    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       T1 = Int = T2
+    ----------------------------------------------------- [TPlus]                             ------------- [EqBase]
+    x : Int , {} ⊢ x + 1, Int                                        5 : number               Int == Int
+    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
+    {} ⊢ ( \ x : Int . x + 1 ), ( Int ) -> Int                       {} ⊢ 5, Int              Int == ( Int )
+    ------------------------------------------------------------------------------------------------------------------ [Tapp]
+    {} ⊢ ( \ x : Int . x + 1 ) 5, Int
+    ------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+    ( \ x : Int . x + 1 ) 5 :: Int
   
   
   
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  ----------------------------------- [EvalLamApp]
-  (( \ x : Int . (x + 1) )) 5 → 5 + 1
+  ------------------------------- [EvalLamApp]
+  ( \ x : Int . x + 1 ) 5 → 5 + 1
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> If (( (If True Then False Else True) )) Then 123456 Else 42}
+# Property Progress statisfied with assignment {T --> Int, e0 --> If ( If True Then False Else True ) Then 123456 Else 42}
   # Predicate satisfied:
   # e0 :: T
   
@@ -473,11 +473,11 @@ Property successfull
     --------------------------------------------------------------------------------------------------- [TIf]                                                            
     {} ⊢ If True Then False Else True, Bool                                                                      123456 : number               42 : number               T1 = Int = T2
     ----------------------------------------------------------------------------------------------- [TParens]    ---------------- [Tnumber]    ------------ [Tnumber]    ------------- [EqBase]
-    {} ⊢ ( (If True Then False Else True) ), Bool                                                                {} ⊢ 123456, Int              {} ⊢ 42, Int              Int == Int
+    {} ⊢ ( If True Then False Else True ), Bool                                                                  {} ⊢ 123456, Int              {} ⊢ 42, Int              Int == Int
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TIf]
-    {} ⊢ If (( (If True Then False Else True) )) Then 123456 Else 42, Int
+    {} ⊢ If ( If True Then False Else True ) Then 123456 Else 42, Int
     ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-    If (( (If True Then False Else True) )) Then 123456 Else 42 :: Int
+    If ( If True Then False Else True ) Then 123456 Else 42 :: Int
   
   
   
@@ -486,12 +486,12 @@ Property successfull
   
   ------------------------------------ [EvalIfTrue]
   If True Then False Else True → False
-  ------------------------------------------------------------------------------------------------ [EvalCtx]
-  If (( (If True Then False Else True) )) Then 123456 Else 42 → If (( False )) Then 123456 Else 42
+  ------------------------------------------------------------------------------------------ [EvalCtx]
+  If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 123456 Else 42
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> 5 + (( (6 + 7) ))}
+# Property Progress statisfied with assignment {T --> Int, e0 --> 5 + ( 6 + 7 )}
   # Predicate satisfied:
   # e0 :: T
   
@@ -501,11 +501,11 @@ Property successfull
                              -------------------------------------- [TPlus]
     5 : number               {} ⊢ 6 + 7, Int
     ----------- [Tnumber]    ------------------------------------ [TParens]
-    {} ⊢ 5, Int              {} ⊢ ( (6 + 7) ), Int
+    {} ⊢ 5, Int              {} ⊢ ( 6 + 7 ), Int
     --------------------------------------------------------------- [TPlus]
-    {} ⊢ 5 + (( (6 + 7) )), Int
+    {} ⊢ 5 + ( 6 + 7 ), Int
     ----------------------------------------------------------- [TEmptyCtx]
-    5 + (( (6 + 7) )) :: Int
+    5 + ( 6 + 7 ) :: Int
   
   
   
@@ -516,11 +516,11 @@ Property successfull
   ------------------------ [EvalPlus]
   6 + 7 → 13
   ------------------------- [EvalCtx]
-  5 + (( (6 + 7) )) → 5 + (( 13 ))
+  5 + ( 6 + 7 ) → 5 + ( 13 )
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> (( (5 + 6) )) + (( (7 + 8) ))}
+# Property Progress statisfied with assignment {T --> Int, e0 --> ( 5 + 6 ) + ( 7 + 8 )}
   # Predicate satisfied:
   # e0 :: T
   
@@ -530,11 +530,11 @@ Property successfull
     -------------------------------------- [TPlus]    -------------------------------------- [TPlus]
     {} ⊢ 5 + 6, Int                                   {} ⊢ 7 + 8, Int
     ------------------------------------ [TParens]    ------------------------------------ [TParens]
-    {} ⊢ ( (5 + 6) ), Int                             {} ⊢ ( (7 + 8) ), Int
+    {} ⊢ ( 5 + 6 ), Int                               {} ⊢ ( 7 + 8 ), Int
     ---------------------------------------------------------------------------------------- [TPlus]
-    {} ⊢ (( (5 + 6) )) + (( (7 + 8) )), Int
+    {} ⊢ ( 5 + 6 ) + ( 7 + 8 ), Int
     ------------------------------------------------------------------------------------ [TEmptyCtx]
-    (( (5 + 6) )) + (( (7 + 8) )) :: Int
+    ( 5 + 6 ) + ( 7 + 8 ) :: Int
   
   
   
@@ -544,12 +544,12 @@ Property successfull
   5 : number    6 : number
   ------------------------ [EvalPlus]
   5 + 6 → 11
-  -------------------------------------------------------- [EvalCtx]
-  (( (5 + 6) )) + (( (7 + 8) )) → (( 11 )) + (( (7 + 8) ))
+  ------------------------------------------ [EvalCtx]
+  ( 5 + 6 ) + ( 7 + 8 ) → ( 11 ) + ( 7 + 8 )
   
   
 Property successfull
-# Property Progress statisfied with assignment {T --> Int, e0 --> 5 + (( (6 + (( (7 + 8) ))) ))}
+# Property Progress statisfied with assignment {T --> Int, e0 --> 5 + ( 6 + ( 7 + 8 ) )}
   # Predicate satisfied:
   # e0 :: T
   
@@ -559,15 +559,15 @@ Property successfull
                                                       -------------------------------------- [TPlus]
                              6 : number               {} ⊢ 7 + 8, Int
                              ----------- [Tnumber]    ------------------------------------ [TParens]
-                             {} ⊢ 6, Int              {} ⊢ ( (7 + 8) ), Int
+                             {} ⊢ 6, Int              {} ⊢ ( 7 + 8 ), Int
                              --------------------------------------------------------------- [TPlus]
-    5 : number               {} ⊢ 6 + (( (7 + 8) )), Int
+    5 : number               {} ⊢ 6 + ( 7 + 8 ), Int
     ----------- [Tnumber]    ------------------------------------------------------------- [TParens]
-    {} ⊢ 5, Int              {} ⊢ ( (6 + (( (7 + 8) ))) ), Int
+    {} ⊢ 5, Int              {} ⊢ ( 6 + ( 7 + 8 ) ), Int
     ---------------------------------------------------------------------------------------- [TPlus]
-    {} ⊢ 5 + (( (6 + (( (7 + 8) ))) )), Int
+    {} ⊢ 5 + ( 6 + ( 7 + 8 ) ), Int
     ------------------------------------------------------------------------------------ [TEmptyCtx]
-    5 + (( (6 + (( (7 + 8) ))) )) :: Int
+    5 + ( 6 + ( 7 + 8 ) ) :: Int
   
   
   
@@ -577,52 +577,57 @@ Property successfull
   7 : number    8 : number
   ------------------------ [EvalPlus]
   7 + 8 → 15
-  -------------------------------------------------------- [EvalCtx]
-  5 + (( (6 + (( (7 + 8) ))) )) → 5 + (( (6 + (( 15 ))) ))
+  ------------------------------------------ [EvalCtx]
+  5 + ( 6 + ( 7 + 8 ) ) → 5 + ( 6 + ( 15 ) )
   
   
 Property successfull
-# Property Progress proven by failing predicate with assignment {e0 --> (( \ x : Int . (x + 1) )) True}:
+# Property Progress proven by failing predicate with assignment {e0 --> ( \ x : Int . x + 1 ) True}:
   # Failed: e0 :: T
 # e0 :: T failed because: 
-  While trying to proof that (::) is applicable to "(( \ x : Int . (x + 1) )) True":
+  While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
     Not a single rule matched:
-    While trying to intepret the rule TEmptyCtx with (( \ x : Int . (x + 1) )) True:
-      While trying to proof that (⊢) is applicable to "{}, (( \ x : Int . (x + 1) )) True":
+    While trying to intepret the rule TEmptyCtx with ( \ x : Int . x + 1 ) True:
+      While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
-        While trying to intepret the rule Tnumber with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
           n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
-        While trying to intepret the rule Tbool with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
           b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
-        While trying to intepret the rule TParens with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-        While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-        While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
-          Could not pattern match "{}" over Γ[x ":" T]
-        While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule Tx with {}, ( \ x : Int . x + 1 ) True:
+          Evaluation contexts only searching within a parse tree and don't handle literals
+        While trying to intepret the rule TPlus with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-        While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule TIf with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "If" c "Then" e1 "Else" e2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-        While trying to intepret the rule TLambda with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-        While trying to intepret the rule Tapp with {}, (( \ x : Int . (x + 1) )) True:
+        While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
           While trying to proof that (==) is applicable to "Bool, ( Int )":
             Not a single rule matched:
             While trying to intepret the rule EqBase with Bool, ( Int ):
               Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
             While trying to intepret the rule EqParL with Bool, ( Int ):
-              Could not pattern match "Bool" over "(" T1 ")"
+              :
+                FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
             While trying to intepret the rule EqParR with Bool, ( Int ):
               While trying to proof that (==) is applicable to "Bool, Int":
                 Not a single rule matched:
                 While trying to intepret the rule EqBase with Bool, Int:
                   Equality predicate not met: T1="Bool" /= "Int"=T2
                 While trying to intepret the rule EqParL with Bool, Int:
-                  Could not pattern match "Bool" over "(" T1 ")"
+                  :
+                    FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
                 While trying to intepret the rule EqParR with Bool, Int:
-                  Could not pattern match "Int" over "(" T2 ")"
+                  :
+                    FT: Could not pattern match '"Int"' over '"(" T2 ")"'
                 While trying to intepret the rule EqArrow with Bool, Int:
-                  Could not pattern match "Bool" over Ta1 "->" Tb1
+                  :
+                    FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
             While trying to intepret the rule EqArrow with Bool, ( Int ):
-              Could not pattern match "Bool" over Ta1 "->" Tb1
+              :
+                FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'

@@ -8,7 +8,7 @@ import qualified Assets as Assets
 import TypeSystem
 import TypeSystem.Parser.TargetLanguageParser
 
-import Text.PrettyPrint.ANSI.Leijen
+import Text.PrettyPrint.ANSI.Leijen as ANSI
 
 import SyntaxHighlighting.Coloring
 import Data.List as L
@@ -21,8 +21,6 @@ import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
 
--- TODO test code
-import AssetsHelper
 
 renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPT fc style pt
@@ -41,6 +39,21 @@ renderDoc (MIntA f _ i)
 		= f $ show i
 renderDoc (PtSeqA _ _ pts)
 		= pts |> renderDoc & foldl1 (<+>)
+
+renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
+renderPTDebug fc style pt
+	= let	ptannot		= annot () pt & determineStyle style |> snd
+		ptannot'	= ptannot |> fromMaybe (error "No style found") |> renderWithStyle fc
+		in
+		renderDocDebug ptannot' & foldl1 (ANSI.<$>)
+
+
+renderDocDebug	:: ParseTreeA (String -> Doc) -> [Doc]
+renderDocDebug (PtSeqA _ _ pts)
+		= let	(h:t)	= pts >>= renderDocDebug in
+			(text "+ " <+> h) : (t |> ( text "| " <+>))
+renderDocDebug pt
+		= [renderDoc pt]
 
 
 renderWithStyle	:: FullColoring -> Name -> String -> Doc
@@ -98,12 +111,4 @@ styles
 	, ("underlinedbold", underline . bold)
 	]
 
-
-t = do	fc	<- parseColoringFile "Assets: Terminal.style" Assets._Terminal_style
-			& either error return
-	pt	<- parseTargetLang (get tsSyntax stfl) "e" "Int test" "(If True Then (\\x : Int . x + 1) Else (\\x : Int . x + 12)) 1"
-			& either error return
-	print fc
-	putDoc $ renderPT fc (stfl & get tsStyle) pt
-	putStrLn ""
 

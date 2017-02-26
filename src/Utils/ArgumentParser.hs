@@ -1,4 +1,4 @@
-module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..), DynamizeArgs(..), getConfig, writeConfig, removeConfig, actionSpecified)where
+module Utils.ArgumentParser (parseArgs, Args(..), ExampleFile(..), Config(..), NeedsFiles(..), DynamizeArgs(..), getConfigFile, writeConfigFile, removeConfigFile, actionSpecified)where
 
 {-
 This module defines parsing of the arguments and reading/writing of the config file
@@ -139,8 +139,8 @@ parseArgs version strs
 dataPath	= getXdgDirectory XdgData "ALGT"
 configPath	= dataPath |> (++"/config")
 
-getConfig	:: IO Config
-getConfig	
+getConfigFile	:: IO Config
+getConfigFile	
 	= do	fp	<- configPath
 		exists	<- doesFileExist fp
 		if exists then
@@ -148,9 +148,9 @@ getConfig
 		else
 			return emptyConfig
 
-writeConfig	:: Config -> IO ()
-writeConfig config
- | config == emptyConfig	= removeConfig
+writeConfigFile	:: Config -> IO ()
+writeConfigFile config
+ | config == emptyConfig	= removeConfigFile
  | otherwise
 	= do	fp	<- dataPath
 		createDirectoryIfMissing True fp
@@ -158,8 +158,8 @@ writeConfig config
 		putStrLn $ "# Config updated ("++show cfp++")"
 		writeFile cfp $ show config
 
-removeConfig	:: IO ()
-removeConfig
+removeConfigFile	:: IO ()
+removeConfigFile
 	= do	cfp	<- configPath
 		exists	<- doesFileExist cfp
 		when exists $ removeFile cfp

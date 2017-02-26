@@ -15,6 +15,8 @@ import Data.Either
 import Control.Arrow ((&&&))
 import Control.Monad
 
+import qualified Text.PrettyPrint.ANSI.Leijen as ANSI
+import Text.PrettyPrint.ANSI.Leijen (Doc)
 
 
 import Lens.Micro hiding ((&))
@@ -57,7 +59,7 @@ runInput	:: (NeedsFiles a) => a -> IO Input
 runInput fn	=  filesNeeded fn |> (id &&& IO.readFile) |+> sndEffect |> M.fromList
 
 
-checkInput	:: (NeedsFiles a) => a -> PureIO ()
+checkInput	:: (NeedsFiles a) => a -> PureIO' config ()
 checkInput fn
 	= do	let needed	= filesNeeded fn
 		inp		<- getInputs
@@ -66,19 +68,26 @@ checkInput fn
 		unless (null missing) $ fail $ "Missing files in input: "++ showComma missing
 
 
-getInputs	:: PureIO Input
-getInputs	= PureIO (\i -> return (i, emptyOutput))
+getInputs	:: PureIO' config Input
+getInputs	= PureIO (\(_, i) -> return (i, emptyOutput))
+
+getConfig	:: PureIO' config config
+getConfig	= PureIO (\(c, _) -> return (c, emptyOutput))
+
+getConfig'	:: (config -> a) -> PureIO' config a
+getConfig' f	= getConfig |> f
 
 
+data PureIO' config a	= PureIO ((config, Input) -> Either String (a, Output))
 
-data PureIO a	= PureIO (Input -> Either String (a, Output))
+type PureIO a		= PureIO' () a
 
-instance Functor PureIO where
+instance Functor (PureIO' config) where
 	fmap f (PureIO fi)
 		= PureIO (\i -> fi i |> over _1 f)
 
 
-instance Applicative PureIO where
+instance Applicative (PureIO' config) where
 	pure a	= PureIO (\_ -> Right (a, emptyOutput))
 	(<*>) (PureIO fia2b) (PureIO fia)
 		= PureIO (\i -> 
@@ -87,7 +96,7 @@ instance Applicative PureIO where
 				return (a2b a, out0 <> out1))
 
 
-instance Monad PureIO where
+instance Monad (PureIO' config) where
 	return	= pure
 	(>>=) (PureIO  fia) a2mb
 		= PureIO (\i ->
@@ -99,28 +108,29 @@ instance Monad PureIO where
 
 
 
-runPure		:: Input -> PureIO a -> Either String (a, Output)
-runPure inp (PureIO i2a)
-	= i2a inp
+runPure		:: config -> Input -> PureIO' config a -> Either String (a, Output)
+runPure config inp (PureIO i2a)
+	= i2a (config, inp)
 
-runPureOutput	:: Input -> PureIO a -> Output
-runPureOutput inp pureIO
-	= runPure inp (pureIO & isolateFailure') & either (error "Bug") id & snd 
-
-
+runPureOutput	:: config -> Input -> PureIO' config a -> Output
+runPureOutput config inp pureIO
+	= runPure config inp (pureIO & isolateFailure') & either (error "Bug") id & snd 
 
 
-runIO		:: (NeedsFiles a) => a -> PureIO x -> IO x
-runIO needsFiles f
+
+
+runIO		:: (NeedsFiles a) => config -> a -> PureIO' config x -> IO x
+runIO config needsFiles f
 	= do	inp	<- runInput needsFiles
-		case runPure inp f of
+		case runPure config inp f of
 			Left msg	-> error msg
 			Right (x, output)	-> runOutput output >> return x
 
 
 
-runIO'		:: (NeedsFiles a) => a -> PureIO x -> IO ()
-runIO' nf f	= runIO nf f & void
+runIO'		:: (NeedsFiles a) => config -> a -> PureIO' config x -> IO ()
+runIO' config nf f
+		= runIO config nf f & void
 
 
 
@@ -129,34 +139,37 @@ runIO' nf f	= runIO nf f & void
 
 
 
-putStrLn	:: String -> PureIO ()
+putStrLn	:: String -> PureIO' config ()
 putStrLn str
 	= PureIO $ \_ -> Right ((), Output M.empty [str])
 
+putDocLn	:: Doc -> PureIO' config ()
+putDocLn doc	= putStrLn $ show doc
 
-writeFile	:: FilePath -> String -> PureIO ()
+
+writeFile	:: FilePath -> String -> PureIO' config ()
 writeFile fp contents
 	= PureIO $ \_ -> Right ((), Output (M.singleton fp contents) [])
 
-readFile	:: FilePath -> PureIO String
+readFile	:: FilePath -> PureIO' config String
 readFile fp
-	= PureIO $ \i -> 
+	= PureIO $ \(c, i) -> 
 			do	contents	<- checkExists fp i ("No file "++fp++" found")
 				return (contents, emptyOutput)
 
 
-liftEith	:: Either String x -> PureIO x
+liftEith	:: Either String x -> PureIO' config x
 liftEith 	= either fail return
 
 
-catch		:: (String -> PureIO x) -> PureIO x -> PureIO x
+catch		:: (String -> PureIO' config x) -> PureIO' config x -> PureIO' config x
 catch handler (PureIO fix)
 		= PureIO $ \i ->
 			case fix i of
 				Left msg	-> let PureIO fix'	= handler msg in fix' i
 				right		-> right
 
-ioIf	:: x -> (a -> Bool) -> PureIO x -> a -> PureIO x
+ioIf	:: x -> (a -> Bool) -> PureIO' config x -> a -> PureIO' config x
 ioIf x fb action a
 	= if fb a then action else return x
 
@@ -164,7 +177,7 @@ ioIf'	= ioIf ()
 
 
 
-ioIfJust	:: x -> (a -> Maybe b) -> (b -> PureIO x) -> a -> PureIO x
+ioIfJust	:: x -> (a -> Maybe b) -> (b -> PureIO' config x) -> a -> PureIO' config x
 ioIfJust x fb action a
 	= case fb a of
 		(Just b)	-> action b
@@ -172,28 +185,28 @@ ioIfJust x fb action a
 
 ioIfJust'	= ioIfJust ()
 
-onAll		:: (a -> b -> PureIO ()) -> [b] -> a -> PureIO ()
+onAll		:: (a -> b -> PureIO' config ()) -> [b] -> a -> PureIO' config ()
 onAll f pts a
 	= pts |+> f a & void
 
-onAll'		:: (a -> b -> PureIO ()) -> [b] -> a -> PureIO ()
+onAll'		:: (a -> b -> PureIO' config ()) -> [b] -> a -> PureIO' config ()
 onAll' f pts a
 	= pts |> f a |+> catch putStrLn & void
 		
 
 
 
-isolateFailure'	:: PureIO x -> PureIO ()
+isolateFailure'	:: PureIO' config x -> PureIO' config ()
 isolateFailure' (PureIO fix)
 	= PureIO (\i -> case fix i of
 				Left msg	-> Right ((), Output M.empty [msg])
 				Right (x, out)	-> Right ((), out) )	
 
-isolateFailure	:: x -> PureIO x -> PureIO x
+isolateFailure	:: x -> PureIO' config x -> PureIO' config x
 isolateFailure x
 	= catch (\msg -> putStrLn msg >> return x) 
 
-isolateCheck	:: Either String () -> PureIO ()
+isolateCheck	:: Either String () -> PureIO' config ()
 isolateCheck (Left msg)
 		= fail msg & isolateFailure'
 isolateCheck _	= return ()

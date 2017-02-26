@@ -1,3 +1,4 @@
+ {-# LANGUAGE TemplateHaskell #-}
 module PureMain where
 
 import TypeSystem
@@ -9,7 +10,9 @@ import Utils.ArgumentParser
 import Graphs.Lattice 
 import Utils.LatticeImage (terminalCS, whiteCS)
 import Utils.ParseTreeImage
-import Utils.PureIO
+import Utils.PureIO hiding (PureIO)
+
+import AssetsHelper as Assets
 
 import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem.Parser.TypeSystemParser (parseTypeSystem)
@@ -21,6 +24,8 @@ import ParseTreeInterpreter.PropertyTester
 
 import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
+import SyntaxHighlighting.AnsiPT
+import SyntaxHighlighting.Coloring
 
 import AbstractInterpreter.AbstractInterpreter
 import Dynamize.Dynamize
@@ -51,6 +56,13 @@ import Lens.Micro.TH
 
 
 svgColors	= whiteCS
+data RunConfig	= RunConfig
+	{ _colorScheme	:: FullColoring}
+makeLenses ''RunConfig
+
+defaultConfig	= RunConfig Assets.terminalStyle
+
+type PureIO a	= PureIO' RunConfig a
 
 
 mainPure	:: Args -> PureIO TypeSystem
@@ -193,7 +205,7 @@ handleExampleFile ts parsedWith exFile pts
 		, ioIf' testAllProps 	$ testAllProperties (verbose exFile) ts parsedWith pts
 		, ioIfJust' ptSvg	$ renderParseTree `onAll'` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
-					(pts |+> printDebug & void)
+					(pts |+> printPTDebug ts & void)
 		] |+> (exFile &) & void
 
 
@@ -265,10 +277,6 @@ runRule ts symbol (input, pt)
 		proof & showProofWithDepth input symbol & putStrLn
 
 
-printDebug	:: (String, ParseTree) -> PureIO ()
-printDebug (inp, pt)
-	= do	putStrLn $ "# "++show inp++" was parsed as:"
-		putStrLn $ debug pt
 
 
 renderParseTree	:: Name -> (Int, ParseTree) -> PureIO ()
@@ -283,7 +291,7 @@ runFunc ts func (inp, pt)
  	= do	putStrLn $ "\n# "++show inp++" applied to "++func
 		catch putStrLn $ do
 			pt'	<- evalFunc ts func [pt] & liftEith
-			putStrLn $ toParsable pt'
+			printPT ts pt'
 
 runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> PureIO ()
 runStepByStep ts func (inp, pt)
@@ -293,9 +301,20 @@ runStepByStep ts func (inp, pt)
 
 evalStar	:: TypeSystem -> Name -> ParseTree -> PureIO ()
 evalStar ts funcName pt	
-	= do	putStrLn $ toParsable pt
+	= do	printPT ts pt
 		pt'	<- evalFunc ts funcName [pt] & liftEith
 		if pt' /= pt then evalStar ts funcName pt' else pass
 
 
+printPT		:: TypeSystem -> ParseTree -> PureIO ()
+printPT ts pt
+	= do	fc	<- getConfig' $ get colorScheme
+		let ptDoc	= renderPT fc (get tsStyle ts) pt
+		putDocLn ptDoc
 
+printPTDebug	:: TypeSystem -> (String, ParseTree) -> PureIO ()
+printPTDebug ts (inp, pt)
+	= do	putStrLn $ "# "++show inp++" was parsed as:"
+		fc	<- getConfig' $ get colorScheme
+		let ptDoc	= renderPTDebug fc (get tsStyle ts) pt
+		putDocLn ptDoc

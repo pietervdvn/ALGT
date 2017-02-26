@@ -67,11 +67,11 @@ True : bool                False : bool                True : bool              
 --------------------------------------------------------------------------------------------------- [TIf]                                                           
 {} ⊢ If True Then False Else True, Bool                                                                      False : bool                True : bool                T1 = Bool = T2
 ----------------------------------------------------------------------------------------------- [TParens]    ---------------- [Tbool]    --------------- [Tbool]    -------------- [EqBase]
-{} ⊢ ( (If True Then False Else True) ), Bool                                                                {} ⊢ False, Bool            {} ⊢ True, Bool            Bool == Bool
+{} ⊢ ( If True Then False Else True ), Bool                                                                  {} ⊢ False, Bool            {} ⊢ True, Bool            Bool == Bool
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TIf]
-{} ⊢ If (( (If True Then False Else True) )) Then False Else True, Bool
+{} ⊢ If ( If True Then False Else True ) Then False Else True, Bool
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-If (( (If True Then False Else True) )) Then False Else True :: Bool
+If ( If True Then False Else True ) Then False Else True :: Bool
 
 
 
@@ -108,19 +108,19 @@ If (( (If True Then False Else True) )) Then False Else True :: Bool
 # Proof weight: 21, proof depth: 7
 
 
-                                                                                                                                                                                             T1 = Int = T2                      
-                                                                                                                                                                                             ------------- [EqBase]             
-                                                5 : number                                    T1 = Int = T2                                             1 : number                           Int == Int                         T1 = Int = T2
---------------------------------------- [Tx]    -------------------------------- [Tnumber]    ------------- [EqBase]    ----------------------- [Tx]    ----------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
-(f : (Int -> Int)) , {} ⊢ f, Int -> Int         (f : (Int -> Int)) , {} ⊢ 5, Int              Int == Int                (i : Int) , {} ⊢ i, Int         (i : Int) , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
-------------------------------------------------------------------------------------------------------------- [Tapp]    --------------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
-(f : (Int -> Int)) , {} ⊢ f 5, Int                                                                                      (i : Int) , {} ⊢ i + 1, Int                                          (( Int )) -> Int == Int -> Int
----------------------------------------------------------------------------------------------------------- [TLambda]    ------------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
-{} ⊢ ( \ f : (Int -> Int) . (f 5) ), (( (Int -> Int) )) -> Int                                                          {} ⊢ ( \ i : Int . (i + 1) ), (( Int )) -> Int                       (( Int )) -> Int == ( (Int -> Int) )
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [Tapp]
-{} ⊢ (( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )), Int
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-(( \ f : (Int -> Int) . (f 5) )) (( \ i : Int . (i + 1) )) :: Int
+                                                                                                                                                                                 T1 = Int = T2                      
+                                                                                                                                                                                 ------------- [EqBase]             
+                                            5 : number                                T1 = Int = T2                                           1 : number                         Int == Int                         T1 = Int = T2
+----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
+f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
+----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
+f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        ( Int ) -> Int == Int -> Int
+-------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
+{} ⊢ ( \ f : Int -> Int . f 5 ), ( Int -> Int ) -> Int                                                          {} ⊢ ( \ i : Int . i + 1 ), ( Int ) -> Int                       ( Int ) -> Int == ( Int -> Int )
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
+{} ⊢ ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ), Int
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
+( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) :: Int
 
 
 
@@ -180,11 +180,11 @@ True : bool                True : bool                True : bool               
 -------------------------------------------------------------------------------------------------- [TIf]    
 {} ⊢ If True Then True Else True, Bool                                                                      T1 = Bool = T2
 ---------------------------------------------------------------------------------------------- [TParens]    -------------- [EqBase]
-{} ⊢ ( (If True Then True Else True) ), Bool                                                                Bool == Bool
+{} ⊢ ( If True Then True Else True ), Bool                                                                  Bool == Bool
 --------------------------------------------------------------------------------------------------------------------------- [TAscr]
-{} ⊢ (( (If True Then True Else True) )) :: Bool, Bool
+{} ⊢ ( If True Then True Else True ) :: Bool, Bool
 ----------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-(( (If True Then True Else True) )) :: Bool :: Bool
+( If True Then True Else True ) :: Bool :: Bool
 
 
 
@@ -287,9 +287,9 @@ If False Then 23 Else 44 :: Int
 ----------- [Tnumber]    -------------------------------------- [TPlus]
 {} ⊢ 5, Int              {} ⊢ 6 + 7, Int
 --------------------------------------------------------------- [TPlus]
-{} ⊢ 5 + (6 + 7), Int
+{} ⊢ 5 + 6 + 7, Int
 ----------------------------------------------------------- [TEmptyCtx]
-5 + (6 + 7) :: Int
+5 + 6 + 7 :: Int
 
 
 
@@ -298,17 +298,17 @@ If False Then 23 Else 44 :: Int
 # Proof weight: 12, proof depth: 6
 
 
-                                1 : number                                                    
------------------------ [Tx]    ----------------------- [Tnumber]                             
-(x : Int) , {} ⊢ x, Int         (x : Int) , {} ⊢ 1, Int                                       T1 = Int = T2
---------------------------------------------------------- [TPlus]                             ------------- [EqBase]
-(x : Int) , {} ⊢ x + 1, Int                                          5 : number               Int == Int
-------------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
-{} ⊢ ( \ x : Int . (x + 1) ), (( Int )) -> Int                       {} ⊢ 5, Int              Int == ( Int )
----------------------------------------------------------------------------------------------------------------------- [Tapp]
-{} ⊢ (( \ x : Int . (x + 1) )) 5, Int
------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
-(( \ x : Int . (x + 1) )) 5 :: Int
+                              1 : number                                                  
+--------------------- [Tx]    --------------------- [Tnumber]                             
+x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       T1 = Int = T2
+----------------------------------------------------- [TPlus]                             ------------- [EqBase]
+x : Int , {} ⊢ x + 1, Int                                        5 : number               Int == Int
+--------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
+{} ⊢ ( \ x : Int . x + 1 ), ( Int ) -> Int                       {} ⊢ 5, Int              Int == ( Int )
+------------------------------------------------------------------------------------------------------------------ [Tapp]
+{} ⊢ ( \ x : Int . x + 1 ) 5, Int
+------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+( \ x : Int . x + 1 ) 5 :: Int
 
 
 
@@ -323,11 +323,11 @@ True : bool                False : bool                True : bool              
 --------------------------------------------------------------------------------------------------- [TIf]                                                            
 {} ⊢ If True Then False Else True, Bool                                                                      123456 : number               42 : number               T1 = Int = T2
 ----------------------------------------------------------------------------------------------- [TParens]    ---------------- [Tnumber]    ------------ [Tnumber]    ------------- [EqBase]
-{} ⊢ ( (If True Then False Else True) ), Bool                                                                {} ⊢ 123456, Int              {} ⊢ 42, Int              Int == Int
+{} ⊢ ( If True Then False Else True ), Bool                                                                  {} ⊢ 123456, Int              {} ⊢ 42, Int              Int == Int
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TIf]
-{} ⊢ If (( (If True Then False Else True) )) Then 123456 Else 42, Int
+{} ⊢ If ( If True Then False Else True ) Then 123456 Else 42, Int
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
-If (( (If True Then False Else True) )) Then 123456 Else 42 :: Int
+If ( If True Then False Else True ) Then 123456 Else 42 :: Int
 
 
 
@@ -342,11 +342,11 @@ If (( (If True Then False Else True) )) Then 123456 Else 42 :: Int
                          -------------------------------------- [TPlus]
 5 : number               {} ⊢ 6 + 7, Int
 ----------- [Tnumber]    ------------------------------------ [TParens]
-{} ⊢ 5, Int              {} ⊢ ( (6 + 7) ), Int
+{} ⊢ 5, Int              {} ⊢ ( 6 + 7 ), Int
 --------------------------------------------------------------- [TPlus]
-{} ⊢ 5 + (( (6 + 7) )), Int
+{} ⊢ 5 + ( 6 + 7 ), Int
 ----------------------------------------------------------- [TEmptyCtx]
-5 + (( (6 + 7) )) :: Int
+5 + ( 6 + 7 ) :: Int
 
 
 
@@ -361,11 +361,11 @@ If (( (If True Then False Else True) )) Then 123456 Else 42 :: Int
 -------------------------------------- [TPlus]    -------------------------------------- [TPlus]
 {} ⊢ 5 + 6, Int                                   {} ⊢ 7 + 8, Int
 ------------------------------------ [TParens]    ------------------------------------ [TParens]
-{} ⊢ ( (5 + 6) ), Int                             {} ⊢ ( (7 + 8) ), Int
+{} ⊢ ( 5 + 6 ), Int                               {} ⊢ ( 7 + 8 ), Int
 ---------------------------------------------------------------------------------------- [TPlus]
-{} ⊢ (( (5 + 6) )) + (( (7 + 8) )), Int
+{} ⊢ ( 5 + 6 ) + ( 7 + 8 ), Int
 ------------------------------------------------------------------------------------ [TEmptyCtx]
-(( (5 + 6) )) + (( (7 + 8) )) :: Int
+( 5 + 6 ) + ( 7 + 8 ) :: Int
 
 
 
@@ -380,58 +380,63 @@ If (( (If True Then False Else True) )) Then 123456 Else 42 :: Int
                                                   -------------------------------------- [TPlus]
                          6 : number               {} ⊢ 7 + 8, Int
                          ----------- [Tnumber]    ------------------------------------ [TParens]
-                         {} ⊢ 6, Int              {} ⊢ ( (7 + 8) ), Int
+                         {} ⊢ 6, Int              {} ⊢ ( 7 + 8 ), Int
                          --------------------------------------------------------------- [TPlus]
-5 : number               {} ⊢ 6 + (( (7 + 8) )), Int
+5 : number               {} ⊢ 6 + ( 7 + 8 ), Int
 ----------- [Tnumber]    ------------------------------------------------------------- [TParens]
-{} ⊢ 5, Int              {} ⊢ ( (6 + (( (7 + 8) ))) ), Int
+{} ⊢ 5, Int              {} ⊢ ( 6 + ( 7 + 8 ) ), Int
 ---------------------------------------------------------------------------------------- [TPlus]
-{} ⊢ 5 + (( (6 + (( (7 + 8) ))) )), Int
+{} ⊢ 5 + ( 6 + ( 7 + 8 ) ), Int
 ------------------------------------------------------------------------------------ [TEmptyCtx]
-5 + (( (6 + (( (7 + 8) ))) )) :: Int
+5 + ( 6 + ( 7 + 8 ) ) :: Int
 
 
 
 
 # Could not apply relation :: to relation the input (\x : Int . x + 1) True, because:
-While trying to proof that (::) is applicable to "(( \ x : Int . (x + 1) )) True":
+While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
   Not a single rule matched:
-  While trying to intepret the rule TEmptyCtx with (( \ x : Int . (x + 1) )) True:
-    While trying to proof that (⊢) is applicable to "{}, (( \ x : Int . (x + 1) )) True":
+  While trying to intepret the rule TEmptyCtx with ( \ x : Int . x + 1 ) True:
+    While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
       Not a single rule matched:
-      While trying to intepret the rule Tnumber with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
         n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
-      While trying to intepret the rule Tbool with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
         b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
-      While trying to intepret the rule TParens with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
         Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-      While trying to intepret the rule TAscr with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:
         Sequence lengths are not the same: e "::" T /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-      While trying to intepret the rule Tx with {}, (( \ x : Int . (x + 1) )) True:
-        Could not pattern match "{}" over Γ[x ":" T]
-      While trying to intepret the rule TPlus with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule Tx with {}, ( \ x : Int . x + 1 ) True:
+        Evaluation contexts only searching within a parse tree and don't handle literals
+      While trying to intepret the rule TPlus with {}, ( \ x : Int . x + 1 ) True:
         Sequence lengths are not the same: n1 "+" n2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-      While trying to intepret the rule TIf with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule TIf with {}, ( \ x : Int . x + 1 ) True:
         Sequence lengths are not the same: "If" c "Then" e1 "Else" e2 /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-      While trying to intepret the rule TLambda with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
         Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
-      While trying to intepret the rule Tapp with {}, (( \ x : Int . (x + 1) )) True:
+      While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
         While trying to proof that (==) is applicable to "Bool, ( Int )":
           Not a single rule matched:
           While trying to intepret the rule EqBase with Bool, ( Int ):
             Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
           While trying to intepret the rule EqParL with Bool, ( Int ):
-            Could not pattern match "Bool" over "(" T1 ")"
+            :
+              FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
           While trying to intepret the rule EqParR with Bool, ( Int ):
             While trying to proof that (==) is applicable to "Bool, Int":
               Not a single rule matched:
               While trying to intepret the rule EqBase with Bool, Int:
                 Equality predicate not met: T1="Bool" /= "Int"=T2
               While trying to intepret the rule EqParL with Bool, Int:
-                Could not pattern match "Bool" over "(" T1 ")"
+                :
+                  FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
               While trying to intepret the rule EqParR with Bool, Int:
-                Could not pattern match "Int" over "(" T2 ")"
+                :
+                  FT: Could not pattern match '"Int"' over '"(" T2 ")"'
               While trying to intepret the rule EqArrow with Bool, Int:
-                Could not pattern match "Bool" over Ta1 "->" Tb1
+                :
+                  FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
           While trying to intepret the rule EqArrow with Bool, ( Int ):
-            Could not pattern match "Bool" over Ta1 "->" Tb1
+            :
+              FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'

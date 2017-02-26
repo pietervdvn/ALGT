@@ -53,10 +53,12 @@ var              ::= Identifier
  Syntax Highlighting 
 =====================
 
+"constant"	 -> "keyword"
 bool	 -> "constant"
 e	 -> "statement"
 eL	 -> "statement"
-eL.4	 -> "keyword"
+eL.2	 -> "noise"
+eL.4	 -> "noise"
 number	 -> "constant"
 type	 -> "type"
 typeL	 -> "type"
