@@ -77,6 +77,15 @@ getConfig	= PureIO (\(c, _) -> return (c, emptyOutput))
 getConfig'	:: (config -> a) -> PureIO' config a
 getConfig' f	= getConfig |> f
 
+withConfig	:: config -> PureIO' config a -> PureIO' config a
+withConfig c (PureIO f)
+		= PureIO (\(_, i) -> f (c, i))
+
+withConfig'	:: (config' -> config) -> PureIO' config a -> PureIO' config' a
+withConfig' f (PureIO fia)
+		= do	c'	<- getConfig
+			PureIO (\(_, i) -> fia (f c', i))
+			
 
 data PureIO' config a	= PureIO ((config, Input) -> Either String (a, Output))
 

@@ -8,6 +8,8 @@ import Utils.Image
 
 import TypeSystem
 
+import SyntaxHighlighting.Coloring
+
 import Text.Blaze.Svg11 ((!), stringValue)
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
@@ -30,13 +32,14 @@ data Point	= Point
 		, _x		:: X
 		, _y		:: Y
 		, _showUnderDot	:: Bool
+		, _style	:: Maybe Name
 		} deriving (Show)
 
 makeLenses ''Point
 data PPS	= PPS	{ _cs		:: ColorScheme
 			, _fs		:: Int	-- fontsize
 			, _hDiff	:: Y	-- size between layers
-			, _currName	:: Text	-- current running name, for unique identification
+			, _currName	:: Text	-- current running name, for unique identification (used to draw the lines)
 			, _conns	:: [(Text, Text)]	-- Connections
 			} 
 makeLenses ''PPS			
@@ -44,24 +47,28 @@ makeLenses ''PPS
 coor		:: Point -> (X, Y)
 coor p		= (get x p, get y p)
 
-parseTreeSVG	:: Int -> ColorScheme -> ParseTree -> String
-parseTreeSVG factor cs pt
-	= let	((points, w, h), state)	= runState (pointPositions pt) $ startState cs
+parseTreeSVG	:: TypeSystem -> Int -> FullColoring -> ParseTree -> String
+parseTreeSVG ts factor fc pt
+	= let	pt'		= determineStyle' (get tsStyle ts) pt
+		cs		= toSVGColorScheme Nothing fc
+		((points, w, h), state)	
+				= runState (pointPositions pt') $ startState cs
 		pointsDict	= points |> (get name &&& (get x &&& get y))
 					& M.fromList
 		connections	= get conns state
 		svg	= do	S.rect ! A.width (intValue w) ! A.height (intValue h) ! A.fill (stringValue $ get bg cs)
 				connections |+> uncurry (drawLineBetween cs False pointsDict)
-				points |+> renderPoint cs
+				points |+> renderPoint fc
 				pass
 		in 
 		packageSVG (w*factor, h*factor) (w, h) svg
 
 
-renderPoint	:: ColorScheme -> Point -> S.Svg
-renderPoint cs point
-	= annotatedDot cs (get showUnderDot point)
-		(get contents point, (get x point, get y point))
+renderPoint	:: FullColoring -> Point -> S.Svg
+renderPoint fc point
+	= let cs	= fc & toSVGColorScheme (get style point) in
+		annotatedDot cs (get showUnderDot point)
+			(get contents point, (get x point, get y point))
 
 
 
@@ -82,20 +89,21 @@ withName i st	= do	oldName	<- get' currName
 			return a
 
 
-pointPositions	:: ParseTree -> State PPS ([Point], W, H)
-pointPositions (MLiteral _ content)
+pointPositions	:: ParseTreeA (Maybe Name) -> State PPS ([Point], W, H)
+pointPositions (MLiteralA style _ content)
 	= do	w	<- get' fs
-		ds	<- get' (cs . dotSize) 
+		ds	<- get' (cs . dotSize)
 		let w'	= w * length content
 		n	<- get' currName
 		let p	= Point n (Text.pack content)
 				(w' `div` 2) (ds*2) True
+				style
 		return ([p], w', 2*(ds + w))
-pointPositions (MIdentifier mi nm)
-	= pointPositions (MLiteral mi ("<"++nm++">"))
-pointPositions (MInt mi i)
-	= pointPositions (MIdentifier mi $ show i)
-pointPositions (PtSeq mi@(tpName, choice) pts)
+pointPositions (MIdentifierA style mi nm)
+	= pointPositions (MLiteralA style mi nm)
+pointPositions (MIntA style mi i)
+	= pointPositions (MIdentifierA style mi $ show i)
+pointPositions (PtSeqA style mi@(tpName, choice) pts)
 	= do	(pointss, ws, hs)
 			<- pts	|> pointPositions
 				 & mapi |+> uncurry withName
@@ -119,6 +127,7 @@ pointPositions (PtSeq mi@(tpName, choice) pts)
 					(width `div` 2)
 					(2 * (ds + h))
 					False
+					style
 
 		return (node:points', width, yDiff + maximum hs)
 

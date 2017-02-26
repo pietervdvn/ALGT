@@ -64,6 +64,7 @@ data Args = Args 	{ tsFile		:: String
 			, subtypingSVG		:: Maybe String
 			, iraSVG		:: Maybe String
 			, dynamizeArgs		:: Maybe DynamizeArgs
+			, styleName		:: Name
 			}
 	deriving (Show)
 
@@ -273,6 +274,12 @@ args	= Args <$> argument str
 			<> long "irasvg"
 			<> help "Create a SVG of the subset relationship between BNF-rules, created by the abstract rule analysises"))
 		<*> optional dynamizeArgsParser
+		<*> strOption (
+			metavar "STYLE-NAME"
+			<> long "style"
+			<> value "Terminal"
+			<> help "Color scheme for parsetrees and svg files"
+			)
 		
 dynamizeArgsParser	:: Parser DynamizeArgs
 dynamizeArgsParser

@@ -28,6 +28,9 @@ data SyntaxStyle = SyntaxStyle
 
 makeLenses ''SyntaxStyle
 
+determineStyle'	:: SyntaxStyle -> ParseTree -> ParseTreeA (Maybe Name)
+determineStyle' styling pt
+	= pt & annot () & determineStyle styling |> snd
 
 determineStyle	:: SyntaxStyle -> ParseTreeA a -> ParseTreeA (a, Maybe Name)
 determineStyle styling pt

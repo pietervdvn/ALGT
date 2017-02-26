@@ -81,6 +81,6 @@ executable ALGT
         Utils.UnificationTest
         Utils.Version
         TypeSystem.TypeSystemData
-
+        SyntaxHighlighting.AnsiPT
 
 

@@ -19,9 +19,9 @@ normal	= "normal"
 
 
 
-foreground-color	: green
-background-color	: black
-svg-line-color		: green
+foreground-color	: black
+background-color	: white
+svg-line-color		: black
 svg-line-thickness 	= 1
 svg-dotsize 		= 4
 svg-fontsize 		= 20

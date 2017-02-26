@@ -6,7 +6,7 @@
 
  dash		::= "-"
  lowerDigit	::= Lower | Digit
- string		::= String
+ value		::= String | Number
 
  stars		::= $ "*" stars | "*"
  equals		::= $ "=" equals | "="
@@ -22,7 +22,7 @@
  identifierCh	~~= lowerDigit | dash
  identifier	~~= $ identifierCh identifier | identifierCh
 
- constant	::= identifier "=" string
+ constant	::= identifier "=" value
  constants	::= constant nl constants | constant nl | nl
 
  property	::= identifier ":" identifier | constant

@@ -4,7 +4,7 @@ module SyntaxHighlighting.AnsiPT where
 
 import Utils.Utils
 
-import qualified Assets as Assets
+import qualified Assets
 import TypeSystem
 import TypeSystem.Parser.TargetLanguageParser
 
@@ -62,22 +62,23 @@ renderWithStyle fc styleN str
 		in
 		effect $ text str
 
-applyProperty	:: FullColoring -> Name -> (Name, (String -> Doc -> Doc)) -> Doc -> Doc
+applyProperty	:: FullColoring -> Name -> (Name, Either Int String -> Doc -> Doc) -> Doc -> Doc
 applyProperty fc style (prop, effect)
 	= case getProperty fc style prop of
 		Nothing		-> id
 		(Just v)	-> effect v
 
 
-properties	:: [(Name, (String -> Doc -> Doc))]
+properties	:: [(Name, Either Int String -> Doc -> Doc)]
 properties
       = [ ("foreground-color", fst . closestColor)
 	, ("background-color", snd . closestColor)
-	, ("font-style", (\v -> fromMaybe plain $ L.lookup v styles)) ]
+	, ("font-style", either (const id) (\v -> fromMaybe plain $ L.lookup v styles)) ]
 
 
-closestColor	:: String -> (Doc -> Doc, Doc -> Doc)
-closestColor c
+closestColor	:: Either Int String -> (Doc -> Doc, Doc -> Doc)
+closestColor (Left c)	= closestColor $ Right $ intAsColor c
+closestColor (Right c)
 	= colors |> over _1 (colorDistance c)
 		& sortOn fst
 		& head & snd

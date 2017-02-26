@@ -55,12 +55,14 @@ import Lens.Micro.TH
 
 
 
-svgColors	= whiteCS
 data RunConfig	= RunConfig
-	{ _colorScheme	:: FullColoring}
+	{ _colorScheme	:: FullColoring
+	, _rcTs		:: TypeSystem}
 makeLenses ''RunConfig
 
-defaultConfig	= RunConfig Assets.terminalStyle
+getTS		= getConfig' $ get rcTs
+
+defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded")
 
 type PureIO a	= PureIO' RunConfig a
 
@@ -68,6 +70,8 @@ type PureIO a	= PureIO' RunConfig a
 mainPure	:: Args -> PureIO TypeSystem
 mainPure args
 	= do	checkInput args
+		style		<- args & styleName & Assets.fetchStyle & liftEith
+		withConfig' (set colorScheme style) $ do
 		tsContents	<- readFile (tsFile args)
 		ts		<- parseTypeSystem tsContents (Just $ tsFile args)
 					& liftEith
@@ -75,14 +79,14 @@ mainPure args
 		check   changedTs & inMsg "Error" & liftEith
 		unless (noCheck args) (checkTS changedTs & isolateCheck)
 
-		mainPureOn args changedTs
+		withConfig' (set rcTs changedTs) $ mainPureOn args changedTs
 		return changedTs
 
 
 mainPureOn	:: Args -> TypeSystem -> PureIO ()
 mainPureOn args ts
       = [ ioIf' dumpTS			$ putStrLn $ toParsable' (24::Int) ts
-	, \args -> 			  exampleFiles args 	     |+> mainExFilePure ts   & void
+	, \args -> 			  exampleFiles args 	     |+> mainExFilePure   & void
 	, ioIf' interpretAbstract	  (get tsFunctions ts & keys |+> runFuncAbstract  ts & void)
 	, \args ->			  interpretFunctionAbs args  |+> runFuncAbstract  ts & void
 	, ioIf' interpretRulesAbstract	$ abstractRuleSyntax (isJust $ iraSVG args) ts
@@ -90,7 +94,7 @@ mainPureOn args ts
 	, ioIfJust' subtypingSVG	$ saveSubtypingSVG (get tsSyntax ts)
 	, ioIfJust' iraSVG		$ saveSubtypingSVG (analyzeRelations ts & get raSyntax)
 	, ioIf' (not . actionSpecified)	$ putStrLn " # Language file parsed. No action specified, see -h or --manual to specify other options"
-	, ioIfJust' dynamizeArgs	$ dynamizeTS ts
+	, ioIfJust' dynamizeArgs	  dynamizeTS
 	] |+> (args &) & void
 
 
@@ -137,9 +141,9 @@ runFuncAbstract ts name
 
 saveSubtypingSVG:: Syntax -> Name -> PureIO ()
 saveSubtypingSVG s fp
-	= let	fp'	= if ".svg" `L.isSuffixOf` fp then fp else fp ++ ".svg"
-		in
-		s & latticeAsSVG svgColors & writeFile fp'
+	= do	let fp'	= if ".svg" `L.isSuffixOf` fp then fp else fp ++ ".svg"
+		fc	<- getConfig' $ get colorScheme
+		s & latticeAsSVG (toSVGColorScheme Nothing fc) & writeFile fp'
 
 
 
@@ -159,9 +163,10 @@ mainChange ts filepath
 
 
 
-dynamizeTS	:: TypeSystem -> DynamizeArgs -> PureIO ()
-dynamizeTS ts (DynamizeArgs rule error relsToAnalyze relsToAdd)
-	= do	changes	<- dynamize' ts rule error relsToAnalyze relsToAdd
+dynamizeTS	:: DynamizeArgs -> PureIO ()
+dynamizeTS (DynamizeArgs rule error relsToAnalyze relsToAdd)
+	= do	ts		<- getTS
+		changes	<- dynamize' ts rule error relsToAnalyze relsToAdd
 				& liftEith
 		putStrLn $ toParsable' (16::Int) changes
 
@@ -175,15 +180,16 @@ dynamizeTS ts (DynamizeArgs rule error relsToAnalyze relsToAdd)
 
 
 
-mainExFilePure	:: TypeSystem -> ExampleFile -> PureIO [(String, ParseTree)]
-mainExFilePure ts args
+mainExFilePure	:: ExampleFile -> PureIO [(String, ParseTree)]
+mainExFilePure args
 	= isolateFailure [] $ 
-	  do	let path	= fileName args
+	  do	ts		<- getTS
+		let path	= fileName args
 		contents	<- readFile path
 		let inputs	= (if lineByLine args then filter (/= "") . lines else (:[])) contents
 		parsed		<- mapi inputs |> parseWith path ts (parser args) |+> liftEith
 		let parsed'	= zip inputs parsed
-		handleExampleFile ts (parser args) args parsed'
+		handleExampleFile (parser args) args parsed'
 		return parsed'
 
 parseWith	:: FilePath -> TypeSystem -> Name -> (Int, String) -> Either String ParseTree
@@ -196,39 +202,42 @@ parseWith file ts bnfRuleName (i, str)
 
 
 
-handleExampleFile	:: TypeSystem -> TypeName -> ExampleFile -> [(String, ParseTree)] -> PureIO ()
-handleExampleFile ts parsedWith exFile pts
-	= 	[ ioIfJust' ruleSymbol	$ runRule ts `onAll'` pts
-		, ioIfJust' function 	$ runFunc ts `onAll'` pts
-		, ioIfJust' stepByStep	$ evalStar ts `onAll'` (pts |> snd)
-		, ioIfJust' testProp 	$ testPropertyOn' (verbose exFile) ts parsedWith pts
-		, ioIf' testAllProps 	$ testAllProperties (verbose exFile) ts parsedWith pts
+handleExampleFile	:: TypeName -> ExampleFile -> [(String, ParseTree)] -> PureIO ()
+handleExampleFile parsedWith exFile pts
+	= 	[ ioIfJust' ruleSymbol	$ runRule `onAll'` pts
+		, ioIfJust' function 	$ runFunc `onAll'` pts
+		, ioIfJust' stepByStep	$ evalStar `onAll'` (pts |> snd)
+		, ioIfJust' testProp 	$ testPropertyOn' (verbose exFile) parsedWith pts
+		, ioIf' testAllProps 	$ testAllProperties (verbose exFile) parsedWith pts
 		, ioIfJust' ptSvg	$ renderParseTree `onAll'` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
-					(pts |+> printPTDebug ts & void)
+					(pts |+> printPTDebug & void)
 		] |+> (exFile &) & void
 
 
 
 
-testAllProperties	:: Bool -> TypeSystem -> TypeName -> [(String, ParseTree)] -> PureIO ()
-testAllProperties verbose ts tp pts
-	= get tsProps ts |+> testPropertyOn verbose ts tp pts & void
+testAllProperties	:: Bool -> TypeName -> [(String, ParseTree)] -> PureIO ()
+testAllProperties verbose tp pts
+	= do	ts	<- getTS
+		get tsProps ts |+> testPropertyOn verbose tp pts & void
 
 
 
-testPropertyOn'	:: Bool -> TypeSystem -> TypeName -> [(String, ParseTree)] -> Name -> PureIO ()
-testPropertyOn' verbose ts tp pts nm
-	= do	let propDict	= ts & get tsProps |> (get propName &&& id) & M.fromList
+testPropertyOn'	:: Bool -> TypeName -> [(String, ParseTree)] -> Name -> PureIO ()
+testPropertyOn' verbose tp pts nm
+	= do	ts	<- getTS
+		let propDict	= ts & get tsProps |> (get propName &&& id) & M.fromList
 		property	<- checkExists nm propDict ("No property "++show nm++" found") & liftEith
-		testPropertyOn verbose ts tp pts property
+		testPropertyOn verbose tp pts property
 		
 
 
 
-testPropertyOn	:: Bool -> TypeSystem -> TypeName -> [(String, ParseTree)] -> Property -> PureIO ()
-testPropertyOn verbose ts tp pts property
-	= do	let needed	= neededVars property
+testPropertyOn	:: Bool -> TypeName -> [(String, ParseTree)] -> Property -> PureIO ()
+testPropertyOn verbose tp pts property
+	= do	ts	<- getTS
+		let needed	= neededVars property
 		let nm		= get propName property
 		let errMsg	= "Properties tested against examples should have exactly one input, of type "++ tp ++" (as this is the used parser)"
 					++", however, the property "++nm++" needs inputs "
@@ -257,9 +266,8 @@ testPropertyOn verbose ts tp pts property
 
 testProperty	:: TypeSystem -> Property -> Name -> (String, ParseTree) -> ([String], Bool)
 testProperty ts property exprName (input, pt)
-	= let 	eithStrProp	= testPropOn ts property (M.singleton exprName (pt, Nothing))
-		in
-		either
+	= let	eithStrProp	= testPropOn ts property (M.singleton exprName (pt, Nothing))
+		in either
 			(\fail	-> (["Property failed!", fail], False))
 			(\proof -> (["Property successfull", toParsable' property proof], True))
 			eithStrProp
@@ -270,10 +278,10 @@ testProperty ts property exprName (input, pt)
 
 
 
-runRule		:: TypeSystem -> Symbol -> (String, ParseTree) -> PureIO ()
-runRule ts symbol (input, pt)
-	= let	proof		= proofThat' ts symbol [pt]	:: Either String Proof
-		in
+runRule		:: Symbol -> (String, ParseTree) -> PureIO ()
+runRule symbol (input, pt)
+	= do	ts	<- getTS		
+		let	proof	 = proofThat' ts symbol [pt]	:: Either String Proof
 		proof & showProofWithDepth input symbol & putStrLn
 
 
@@ -283,38 +291,44 @@ renderParseTree	:: Name -> (Int, ParseTree) -> PureIO ()
 renderParseTree nm (i, pt)
 	= do 	let nm'		= if ".svg" `L.isSuffixOf` nm then nm & reverse & drop 4 & reverse else nm
 		let fileName	= nm' ++"_"++ show i ++ ".svg"
-		let conts	=  parseTreeSVG 1 svgColors pt
+		fc		<- getConfig' $ get colorScheme 
+		ts		<- getTS
+		let conts	=  parseTreeSVG ts 1 fc pt
 		writeFile fileName conts
 
-runFunc		:: TypeSystem -> Name -> (String, ParseTree) -> PureIO ()
-runFunc ts func (inp, pt)
- 	= do	putStrLn $ "\n# "++show inp++" applied to "++func
+runFunc		:: Name -> (String, ParseTree) -> PureIO ()
+runFunc func (inp, pt)
+ 	= do	ts	<- getTS
+		putStrLn $ "\n# "++show inp++" applied to "++func
 		catch putStrLn $ do
 			pt'	<- evalFunc ts func [pt] & liftEith
-			printPT ts pt'
+			printPT pt'
 
-runStepByStep	:: TypeSystem -> Name -> (String, ParseTree) -> PureIO ()
-runStepByStep ts func (inp, pt)
+runStepByStep	:: Name -> (String, ParseTree) -> PureIO ()
+runStepByStep func (inp, pt)
 	= do	putStrLn $ "# "++show inp++" applied repeatedly to "++func
-		evalStar ts func pt
+		evalStar func pt
 
 
-evalStar	:: TypeSystem -> Name -> ParseTree -> PureIO ()
-evalStar ts funcName pt	
-	= do	printPT ts pt
+evalStar	:: Name -> ParseTree -> PureIO ()
+evalStar funcName pt	
+	= do	printPT pt
+		ts	<- getTS
 		pt'	<- evalFunc ts funcName [pt] & liftEith
-		if pt' /= pt then evalStar ts funcName pt' else pass
+		if pt' /= pt then evalStar funcName pt' else pass
 
 
-printPT		:: TypeSystem -> ParseTree -> PureIO ()
-printPT ts pt
-	= do	fc	<- getConfig' $ get colorScheme
+printPT		:: ParseTree -> PureIO ()
+printPT pt
+	= do	ts	<- getTS
+		fc	<- getConfig' $ get colorScheme
 		let ptDoc	= renderPT fc (get tsStyle ts) pt
 		putDocLn ptDoc
 
-printPTDebug	:: TypeSystem -> (String, ParseTree) -> PureIO ()
-printPTDebug ts (inp, pt)
-	= do	putStrLn $ "# "++show inp++" was parsed as:"
+printPTDebug	:: (String, ParseTree) -> PureIO ()
+printPTDebug (inp, pt)
+	= do	ts	<- getTS
+		putStrLn $ "# "++show inp++" was parsed as:"
 		fc	<- getConfig' $ get colorScheme
 		let ptDoc	= renderPTDebug fc (get tsStyle ts) pt
 		putDocLn ptDoc
