@@ -171,7 +171,7 @@ preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
 					|> tail
 					|> options
 		
-		(args', input)	<- genArgs vars args
+		(args', input)	<- genArgs vars (args++" --style WhiteFlat")
 		let (_, Just parsedArgs)
 				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor svgs") args'
 
