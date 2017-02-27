@@ -191,6 +191,18 @@ matchTyping _ _ String tp (MePtToken c)
 		= return $ MParseTree $ MLiteral tp c
 	| otherwise
 		= Left $ "Not a String: "++c
+matchTyping _ _ Any tp (MePtToken c)
+	| length c == 1
+		= return $ MParseTree $ MLiteral tp c
+	| otherwise
+		= Left $ "Not an Any: number of chars don't match: " ++ c
+matchTyping _ _ LineChar tp (MePtToken c)
+	| length c == 1 && c /= "\n"
+		= return $ MParseTree $ MLiteral tp c
+	| length c /= 1
+		= Left $ "Not a LineChar: number of chars don't match: " ++ c
+	| otherwise
+		= Left $ "Not a LineChar: this is a newline; the only character that is not allowed! :angry-frown: " ++ c
 matchTyping _ _ bnf _ pt
 		= Left $ "(Fallthrough) Could not match "++toParsable bnf++" ~ "++toParsable pt
 

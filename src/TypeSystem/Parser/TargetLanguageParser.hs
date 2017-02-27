@@ -65,6 +65,10 @@ parsePart _ tp _ (Literal str)
 		= annotLi (string str |> MLiteral tp)
 parsePart _ tp _ Identifier
 		= annotLi (identifier |> MIdentifier tp)
+parsePart _ tp _ Any
+		= annotLi (anyChar |> (:[]) |> MLiteral tp)
+parsePart _ tp _ LineChar
+		= annotLi (noneOf "\n" |> (:[]) |> MLiteral tp)
 parsePart _ tp _ Number
 		= annotLi (number |> MInt tp)
 parsePart _ tp _ Lower

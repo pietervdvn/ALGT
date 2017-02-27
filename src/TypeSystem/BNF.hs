@@ -23,6 +23,8 @@ data BNF 	= Literal String	-- Literally parse 'String'
 		| BNFRuleCall Name	-- Parse the rule with the given name
 		| BNFSeq [BNF]	-- Sequence of parts
 		| Identifier		-- Parse an identifier
+		| Any
+		| LineChar
 		| Lower			-- Lowercase letter
 		| Upper
 		| Digit
@@ -47,11 +49,13 @@ wsModeInfo
 	, (StrictWSRecursive, "Parse whitespace for this rule and all recursively called rules")
 	] |> over _1 (toParsable &&& id)
 
-
+-- Also update: matchTyping in the expressionParser; TargetLanguageParser
 builtinSyntax	= 
 	[ (("Identifier", Identifier), ("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
 	, (("Number", Number), ("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
+	, (("Any", Any), ("Matches a single character, whatever it is, including newline characters", "."))
 	, (("Lower", Lower), ("Matches a lowercase letter", "[a-z]"))
+	, (("LineChar", LineChar), ("Matches a single character that is not a newline", "[^\\n]"))
 	, (("Upper", Upper), ("Matches an uppercase letter", "[A-Z]"))
 	, (("Digit", Digit), ("Matches an digit", "[0-9]"))
 	, (("String", String), ("Matches a double quote delimted string", "\"([^\"\\]|\\\"|\\\\)*\""))
