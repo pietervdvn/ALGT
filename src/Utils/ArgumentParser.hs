@@ -5,12 +5,15 @@ This module defines parsing of the arguments and reading/writing of the config f
 -}
 
 import TypeSystem
+import AssetsHelper
+
 import Utils.Utils
 import Utils.PureIO hiding (writeFile, readFile, putStrLn)
 
 import Data.Monoid ((<>))
-import Data.List (intercalate)
+import Data.List (intercalate, isPrefixOf)
 import Data.Maybe
+import qualified Data.Map as M
 
 import Control.Monad
 
@@ -45,6 +48,7 @@ data MainArgs	= MainArgs
 			, manualHTML	:: Bool
 			, realArgs	:: Maybe Args
 			, runTests	:: Bool
+			, saveGTKSourceview	:: Bool
 			}
 
 instance ActionSpecified MainArgs where
@@ -122,7 +126,7 @@ emptyConfig
 parseArgs	:: ([Int], String) -> [String] -> IO (Bool, Maybe Args)
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		MainArgs doShowVersion saveManPDF saveManHTML args runTests
+		MainArgs doShowVersion saveManPDF saveManHTML args runTests saveGTKSourceview
 				<- handleParseResult result
 		return $ doShowVersion ()
 		when saveManPDF $ do
@@ -132,6 +136,10 @@ parseArgs version strs
 		when saveManHTML $ do
 			writeFile "ALGT_Manual.html" _Manual_Output_ALGT_Manual_html
 			putStrLn "Manual saved as ALGT_Manual.html"
+			exitSuccess
+		when saveGTKSourceview $ do
+			writeFile "language.lang" _language_lang
+			putStrLn "Saved 'language.lang' to current directory. Move it to: '~/.local/share/gtksourceview-3.0/language-specs' to enable highlighting"
 			exitSuccess
 		return (runTests, args)
 
@@ -279,6 +287,7 @@ args	= Args <$> argument str
 			<> long "style"
 			<> value "Terminal"
 			<> help "Color scheme for parsetrees and svg files"
+			<> completer (mkCompleter (\part -> knownStyles & M.keys & filter (part `isPrefixOf`) & return))
 			)
 		
 dynamizeArgsParser	:: Parser DynamizeArgs
@@ -319,5 +328,8 @@ mainArgs versionMsg
 			(long "test"
 			<> help "Run the integration tests"
 			<> hidden)
+		<*> switch
+			(long "install-gtk-sourceview"
+			<> help "Saves the language spec for .language files. Move it to the language specs file for gtk-sourceview to enable syntax highlighting in editors using GTK-sourceview (GEdit, Pluma,...")
 
 
