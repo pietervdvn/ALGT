@@ -152,14 +152,65 @@ This gives rise to the following behaviour:
 +-----------------------+-------------------------------+
 
 
+
+### Grouping sequences
+
+Sometimes, you'll want to group an entire rule as a token (e.g. comments, an identifier, ...)
+
+Add a `$` after the assignment to group it. 
+
+
+	
+	text			::= LineChar line | LineChar
+	commentLine		::= $ "#" text "\n"
+
+	customIdentifier	::= $ Upper Number
+	
+
+
+When such a token is used in a pattern or expression, the contents of this token are parsed against this rule:
+
+
+	f		: customIdentifier -> statement
+	f("X10")	= "X9" "# Some comment"
+
+
+
+
  Functions
 -----------
 
 ### Patterns and expressions
 
+
+Functions transform their input. A function is declared by first giving its type, followed by one or more clauses:
+
+	f		: a -> b
+	f(a, "b")	= "c"
+	f(a, b)		= "d"
+
+When an input is given, arguments are pattern matched against the patterns on between parentheses. If the match succeeds, the expression on the right is given. If not, the next clause is given.
+
+Note that using the same variable multiple times is allowed, this will only work if these arguments are the same:
+
+	f(a, a)		= ...
+
+
+
+Recursion can be used just as well:
+
+	f("a" a)	= f(a)
+
+This is purely functional, heavily inspired on Haskell.
+
+#### Possible expressions
+
 | Expr			| Name		|  As expression						
 |:----------------------|:--------------|:-------------------------------------
 $$expressionExamples
+
+
+#### Possible patterns
 
 | Expr				| As pattern			
 |:------------------------------|:---------------------------------------------
@@ -200,6 +251,8 @@ This can be solved by splitting of `a | b` as a new rule.
 
 ### Totality- and liveabilitychecks
 
+Can be disabled with `--no-check`, when they take to long.
+
 ### Higher order functions and currying?
 
 Are not possible for now (v $$version). Perhaps in a future version or when someone really needs it and begs for it.
@@ -213,6 +266,8 @@ $$builtinFunctions
 
  Relations and Rules
 ---------------------
+
+
 
 
  Properties
