@@ -5,7 +5,7 @@
 ========
 
  dash		::= "-"
- lowerDigit	::= Lower | Digit
+lowerDigit	::= LineChar | Digit
  value		::= String | Number
 
  stars		::= $ "*" stars | "*"
@@ -39,7 +39,7 @@
  block3		::= header3 properties
  block3s	::= block3 block3s | block3
 
- styleFile	::= nl title constants properties block1s
+ styleFile	::= nl title constants properties block1s | nl title constants properties
 
 
 fallbacks	::= fallback "\n" fallbacks | "$"
@@ -51,6 +51,8 @@ fallback	::= name "->" name
 expandFile	: styleFile -> styleFile
 expandFile(nl title consts props blocks)
 	= nl title "\n" expandProps(props, consts) expandAll(blocks, consts)
+expandFile(nl title consts props)
+	= nl title "\n" expandProps(props, consts)
 
 
 # Replaces all constant names by their string

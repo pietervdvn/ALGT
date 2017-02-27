@@ -67,18 +67,19 @@ parseColoringFile fp coloring
 
 
 buildFC		:: TypeSystem -> ParseTree -> Either String FullColoring
-buildFC ts file@(PtSeq _ [_, t, _, defs, b1s])
-	= do	nmT	<- evalFunc ts "titleN" [t]
-		nm	<- fromPtToken nmT |> return & fromMaybe (Left $ "Not a token: "++toParsable nmT)
+buildFC ts file@(PtSeq i [ws, t, cons, defs, b1s])
+	= do	fc	<- buildFC ts (PtSeq i [ws, t, cons, defs])
 		tree	<- evalFunc ts "fallbacks" [file]
-		
 		let fallbacks	= fallbackTree tree 
-		let defColoring	= Coloring "" $ coloring defs
-		fc		<- addColoring (nm, defColoring) (emptyFullColoring nm)
-		
 		colorings	<- overBlocksRec coloringForBlock b1s
 					|> prepColoring fallbacks & allRight'
 		foldM (flip addColoring) fc colorings
+buildFC ts file@(PtSeq _ [_, t, _, defs])
+	= do	nmT	<- evalFunc ts "titleN" [t]
+		nm	<- fromPtToken nmT |> return & fromMaybe (Left $ "Not a token: "++toParsable nmT)
+		let defColoring	= Coloring "" $ coloring defs
+		addColoring (nm, defColoring) (emptyFullColoring nm)
+		
 
 
 prepColoring	:: Map Name Name -> (Name, Map Prop (Either Int String)) -> Either String (Name, Coloring)

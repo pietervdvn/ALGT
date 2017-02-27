@@ -24,8 +24,8 @@ import Lens.Micro hiding ((&))
 
 renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPT fc style pt
-	= let	ptannot		= annot () pt & determineStyle style |> snd
-		ptannot'	= ptannot |> fromMaybe (error "No style found") |> renderWithStyle fc
+	= let	ptannot		= determineStyle' style pt
+		ptannot'	= ptannot |> fromMaybe "" |> renderWithStyle fc
 		in
 		renderDoc ptannot'
 
@@ -43,7 +43,7 @@ renderDoc (PtSeqA _ _ pts)
 renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPTDebug fc style pt
 	= let	ptannot		= annot () pt & determineStyle style |> snd
-		ptannot'	= ptannot |> fromMaybe (error "No style found") |> renderWithStyle fc
+		ptannot'	= ptannot |> fromMaybe "" |> renderWithStyle fc
 		in
 		renderDocDebug ptannot' & foldl1 (ANSI.<$>)
 

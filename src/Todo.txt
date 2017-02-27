@@ -2,16 +2,11 @@ No matches for [Tx]
 	Prob Cause: merging of vars is conservative (for function analysis) but should be liberal for rule analysis and possible matches
 
 Properties: quickchecking
-Fix syntax highlighting
-Implement simple pascal
-Generate ParseTree from AbsSet
-Unfold parseTree till certain depth
+	- Generate ParseTree from AbsSet
+	- Unfold parseTree till certain depth
 
 Figure 4 van ALGT uitpluizen
 Safety lang paper lezen
 Interior = opstellen + genereren
 Subtyping taal opstellen
 Evidence toevoegen aan expressies
-Update manual for grouping
-
-explaining $ grouping in manual

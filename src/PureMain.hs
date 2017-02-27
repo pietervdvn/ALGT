@@ -72,15 +72,15 @@ mainPure args
 	= do	checkInput args
 		style		<- args & styleName & Assets.fetchStyle & liftEith
 		withConfig' (set colorScheme style) $ do
-		tsContents	<- readFile (tsFile args)
-		ts		<- parseTypeSystem tsContents (Just $ tsFile args)
-					& liftEith
-		changedTs	<- foldM mainChange ts (changeFiles args)
-		check   changedTs & inMsg "Error" & liftEith
-		unless (noCheck args) (checkTS changedTs & isolateCheck)
+			tsContents	<- readFile (tsFile args)
+			ts		<- parseTypeSystem tsContents (Just $ tsFile args)
+						& liftEith
+			changedTs	<- foldM mainChange ts (changeFiles args)
+			check   changedTs & inMsg "Error" & liftEith
+			unless (noCheck args) (checkTS changedTs & isolateCheck)
 
-		withConfig' (set rcTs changedTs) $ mainPureOn args changedTs
-		return changedTs
+			withConfig' (set rcTs changedTs) $ mainPureOn args changedTs
+			return changedTs
 
 
 mainPureOn	:: Args -> TypeSystem -> PureIO ()

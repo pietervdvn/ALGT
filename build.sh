@@ -16,6 +16,21 @@ cd ..
 
 echo "Stack build"
 stack build
+STACKEXIT="$?"
+echo "EXIT CODE: $STACKEXIT"
+
+
+cd src
+echo "Recreating dev assets" 
+echo "createAssets True \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
+cd ..
+
+if [[ $STACKEXIT -ne 0 ]]
+then
+	echo "FAILED: stack did not exit properly. Quitting now"
+	exit
+fi
+
 
 
 rm ALGT
@@ -34,9 +49,4 @@ else
 	echo "Marked build as fail"
 fi
 
-
-cd src
-echo "Recreating dev assets" 
-echo "createAssets True \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/CreateAssets.hs 
-cd ..
 

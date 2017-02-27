@@ -2,7 +2,8 @@
 module SyntaxHighlighting.Highlighting where
 
 {- 
-Builds a syntax highlighting file, based on a typesystem
+Builds a syntax highlighting file for gtk sourceview, based on a language file
+Works very poorly, it's not even accessible via the command line flags
 -}
 
 import Utils.Utils
