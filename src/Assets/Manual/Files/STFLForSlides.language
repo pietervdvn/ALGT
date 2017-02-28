@@ -1,0 +1,207 @@
+ 
+ STFL 
+******
+
+# A Simply Typed Functional Language
+
+ Syntax
+========
+
+basetype::= "Bool" | "Int" | "(" type ")"
+type	::= basetype "->" type | basetype
+
+bool	::= "True" | "False"
+int	::= Number
+var	::= Identifier
+
+expr	::= term "+" expr
+	| term expr
+	| term
+
+
+term	::= "If" expr "Then" expr "Else" expr
+	| "(" "\\" var ":" type "." expr ")"
+	| bool
+	| int
+	| var
+typing			::= var ":" type
+typingEnv	::= typing "," typingEnv | "{}"
+
+ Functions
+===========
+
+
+domain 				: type -> type
+domain("(" T ")")		= domain(T)
+domain(("(" T1 ")") "->" T2)	= T1
+domain(T1 "->" T2)		= T1
+
+codomain 			: type -> type
+codomain("(" T ")")		= codomain(T)
+codomain(T1"->" ("(" T2 ")")) 	= T2
+codomain(T1 "->" T2)		= T2
+
+
+ Relations
+===========
+
+# (:) is reserved, as predicate that a term is of a production rule
+# one can refer to rewrite rules/functions earlier on
+
+(→)	: expr (in), expr (out)
+(→*)	: expr (in), expr (out)
+(✓)	: expr (in)
+
+(⊢)	: typingEnv (in), expr (in), type (out)
+
+(::)	: expr (in), type (out)
+
+(==)	: type (in), type (in)
+
+
+ Rules
+=======
+
+
+------------------------------------- [EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+------------------------------------- [EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ n1:int		n2:int
+------------------------------------	[EvalPlus]
+ n1 "+" n2 → !plus:int(n1, n2)
+
+
+------------------------------------- [EvalLamApp]
+ ("(" "\\" var ":" type "." e ")") arg 
+	→ !subs:e(var, arg, e)
+
+
+ expr0 → expr1
+----------------------------		[EvalCtx]
+ expr[expr0] → expr[expr1]
+
+
+
+ b:bool
+-------			[CanonBool]
+ (✓) b
+
+ n:int
+---------		[CanonNumber]
+ (✓) n
+
+
+
+ (✓) e
+--------			[BigStepCanon]
+ e →* e
+
+ e0 → e1	e1 →* e2
+-------------------------	[BigStepRec]
+ e0 →* e2
+
+ e0 → e1	(✓) e1
+------------------------	[BigStepBase]
+ e0 →* e1
+
+
+
+
+
+ "{}" ⊢ e, T  
+-----------	[TEmptyCtx]
+ e :: T
+
+
+
+
+ n:int
+---------------		[Tnumber] 
+ Γ ⊢ n, "Int"
+
+
+ b:bool
+----------------	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+
+
+
+
+--------------------	[Tx]
+ Γ[ x ":" T ] ⊢ x, T
+
+
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+------------------------------				[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
+--------------------------------------------------------	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
+
+
+
+ ((x ":" T1) "," Γ) ⊢ e, T2
+-------------------------------------------------------	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
+
+
+
+ Γ ⊢ e1, Tfunc		Γ ⊢ e2, Targ	
+ Targ == domain(Tfunc)
+--------------------------------------- [Tapp]
+ Γ ⊢ e1 e2, codomain(Tfunc)
+
+
+
+
+
+
+ T1 = T2 : type
+--------------- [EqBase]
+ T1 == T2
+
+
+ T1 == T2
+----------------- [EqParL]
+ "(" T1 ")" == T2
+
+ T1 == T2
+----------------- [EqParR]
+ T1 == "(" T2 ")"
+
+
+ Ta1 == Ta2	Tb1 == Tb2
+---------------------------------- [EqArrow]
+ Ta1 "->" Tb1   ==   Ta2 "->" Tb2
+
+
+ Properties
+============
+
+ e0 :: T	 e0 → e1
+-------------------------- [Preservation]
+         e1 :: T
+
+
+         e0 :: T
+-------------------------- [Progress]
+ (✓) e0    |     e0 → e1 
+
+
+
+# STFL can't contain loops (or recursion), so will always terminate
+
+ 
+ e :: T
+-------- [Termination]
+ e →* v 
+

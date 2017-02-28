@@ -1,0 +1,425 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<h1 id="reference-manual">Reference manual</h1>
+<h2 id="general">General</h2>
+<p>A language is defined in a <code>.language</code>-file. It starts (optionally) with a title:</p>
+
+<p>Comments start with a <code>#</code> and can appear quasi everywhere.</p>
+
+<p>Syntax, functions, relations, ... are all defined in their own sections:</p>
+
+<p>A section header starts with an upper case, is underlined with <code>=</code> and followed by a blank line.</p>
+<h2 id="syntax">Syntax</h2>
+<p>All syntax is defined in the <code>Syntax</code> section. It consists out of <code>BNF</code>-rules, of the form</p>
+
+<p>Choices might be written on multiple lines, as long as at least one tab precedes them:</p>
+
+<h3 id="literals">Literals</h3>
+<p>A string that should be matched exactly, is enclosed in <code>&quot;</code> (double quotes). Some characters can be escaped with a backslash, namely:</p>
+<table>
+<caption>Escape sequences</caption>
+<thead>
+<tr class="header">
+<th align="left">Sequence</th>
+<th align="left">Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>\n</code></td>
+<td align="left">newline</td>
+</tr>
+<tr class="even">
+<td align="left"><code>\t</code></td>
+<td align="left">tab</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>\&quot;</code></td>
+<td align="left">double quote</td>
+</tr>
+<tr class="even">
+<td align="left"><code>\\</code></td>
+<td align="left">backslash</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parsing-order">Parsing order</h3>
+<p>Rules are parsed <strong>left to right</strong>, in other words, choices are tried in order. No backtracking happens when a choice is made; the parser is a <em>recursive descent parser</em>. This has two drawbacks: left recursion results in an infinite loop and the ordering of choices does matter.</p>
+
+<h3 id="builtin-syntactic-forms">Builtin syntactic forms</h3>
+<p>Some syntactic forms are already provided for your convenience, namely:</p>
+<table>
+<caption>Builtin syntax</caption>
+<colgroup>
+<col width="22%"></col>
+<col width="55%"></col>
+<col width="22%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Builtin</th>
+<th align="left">Meaning</th>
+<th align="left">Regex</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>Identifier</code></td>
+<td align="left">Matches an identifier</td>
+<td align="left"><code>[a-z][a-zA-Z0-9]*</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>Number</code></td>
+<td align="left">Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.</td>
+<td align="left"><code>-?[0-9]*</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>Any</code></td>
+<td align="left">Matches a single character, whatever it is, including newline characters</td>
+<td align="left"><code>.</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>Lower</code></td>
+<td align="left">Matches a lowercase letter</td>
+<td align="left"><code>[a-z]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>LineChar</code></td>
+<td align="left">Matches a single character that is not a newline</td>
+<td align="left"><code>[^\n]</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>Upper</code></td>
+<td align="left">Matches an uppercase letter</td>
+<td align="left"><code>[A-Z]</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>Digit</code></td>
+<td align="left">Matches an digit</td>
+<td align="left"><code>[0-9]</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>String</code></td>
+<td align="left">Matches a double quote delimted string</td>
+<td align="left"><code>&quot;([^&quot;\]|\&quot;|\\)*&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="subtyping-relationship">Subtyping relationship</h3>
+<p>A syntactic form equals a (possibly infinite) set of strings. By using a syntactic form <code>a</code> as choice in other syntactic form <code>b</code>, <code>a</code> will be a subset of be, giving the natural result that <code>a</code> is a subtype of <code>b</code>.</p>
+<p>In the following examle, <code>bool</code> and <code>int</code> are both subsets of <code>expr</code>. This can be visualised with the <code>--lsvg Output.svg</code>-flag.</p>
+<pre><code>bool    ::= &quot;True&quot; | &quot;False&quot;
+int     ::= Number
+expr    ::= ... | bool | int</code></pre>
+<h3 id="whitespace-in-sequences">Whitespace in sequences</h3>
+<p>Whitespace (the characters <code>&quot; &quot;</code>,<code>&quot;\t&quot;</code>), is parsed by default (and ignored completely). If you want to parse a whitespace sensitive language, use other symbols to declare the rule:</p>
+<table>
+<caption>Whitespace modes</caption>
+<thead>
+<tr class="header">
+<th align="left">Operator</th>
+<th align="left">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>::=</code></td>
+<td align="left">Totally ignore whitespace</td>
+</tr>
+<tr class="even">
+<td align="left"><code>~~=</code></td>
+<td align="left">Parse whitespace for this rule only</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>//=</code></td>
+<td align="left">Parse whitespace for this rule and all recursively called rules</td>
+</tr>
+</tbody>
+</table>
+<p>This gives rise to the following behaviour:</p>
+<table style="width:78%;">
+<caption>Whitespace mode examples</caption>
+<colgroup>
+<col width="33%"></col>
+<col width="44%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Syntax</th>
+<th align="left">Matching String</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><p><code>a ::= &quot;b&quot; &quot;c&quot; x</code></p></td>
+<td align="left"><p><code>b c x y</code></p></td>
+</tr>
+<tr class="even">
+<td align="left"><p><code>x ::= &quot;x&quot; &quot;y&quot;</code></p></td>
+<td align="left"><p><code>bcxy</code></p></td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="left"><code>b\tc\tx\ty</code></td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left"><code>b c\txy</code></td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="left">...</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left"><p><code>a ~~= &quot;b&quot; &quot;c&quot; x</code></p></td>
+<td align="left"><p><code>bcx y</code></p></td>
+</tr>
+<tr class="even">
+<td align="left"><p><code>x ::= &quot;x&quot; &quot;y&quot;</code></p></td>
+<td align="left"><p><code>bcxy</code></p></td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="left"><code>bcx\ty</code></td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left"><p><code>a //= &quot;b&quot; &quot;c&quot; x</code></p></td>
+<td align="left"><p><code>bcxy</code></p></td>
+</tr>
+<tr class="even">
+<td align="left"><p><code>x ::= &quot;x&quot; &quot;y&quot;</code></p></td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="grouping-sequences">Grouping sequences</h3>
+<p>Sometimes, you'll want to group an entire rule as a token (e.g. comments, an identifier, ...)</p>
+<p>Add a <code>$</code> after the assignment to group it.</p>
+<pre><code>text                    ::= LineChar line | LineChar
+commentLine             ::= $ &quot;#&quot; text &quot;\n&quot;
+
+customIdentifier        ::= $ Upper Number</code></pre>
+<p>When such a token is used in a pattern or expression, the contents of this token are parsed against this rule:</p>
+<pre><code>f               : customIdentifier -&gt; statement
+f(&quot;X10&quot;)        = &quot;X9&quot; &quot;# Some comment&quot;</code></pre>
+<h2 id="functions">Functions</h2>
+<h3 id="patterns-and-expressions">Patterns and expressions</h3>
+<p>Functions transform their input. A function is declared by first giving its type, followed by one or more clauses:</p>
+<pre><code>f               : a -&gt; b
+f(a, &quot;b&quot;)       = &quot;c&quot;
+f(a, b)         = &quot;d&quot;</code></pre>
+<p>When an input is given, arguments are pattern matched against the patterns on between parentheses. If the match succeeds, the expression on the right is given. If not, the next clause is given.</p>
+<p>Note that using the same variable multiple times is allowed, this will only work if these arguments are the same:</p>
+<pre><code>f(a, a)         = ...</code></pre>
+<p>Recursion can be used just as well:</p>
+<pre><code>f(&quot;a&quot; a)        = f(a)</code></pre>
+<p>This is purely functional, heavily inspired on Haskell.</p>
+<h4 id="possible-expressions">Possible expressions</h4>
+<table style="width:100%;">
+<colgroup>
+<col width="30%"></col>
+<col width="20%"></col>
+<col width="49%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Expr</th>
+<th align="left">Name</th>
+<th align="left">As expression</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>x</code></td>
+<td align="left">Variable</td>
+<td align="left">Recalls the parsetree associated with this variable</td>
+</tr>
+<tr class="even">
+<td align="left"><code>_</code></td>
+<td align="left">Wildcard</td>
+<td align="left"><em>Not defined</em></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>42</code></td>
+<td align="left">Number</td>
+<td align="left">This number</td>
+</tr>
+<tr class="even">
+<td align="left"><code>&quot;Token&quot;</code></td>
+<td align="left">Literal</td>
+<td align="left">This string</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>func(arg0, arg1, ...)</code></td>
+<td align="left">Function call</td>
+<td align="left">Evaluate this function</td>
+</tr>
+<tr class="even">
+<td align="left"><code>!func:type(arg0, ...)</code></td>
+<td align="left">Builtin function call</td>
+<td align="left">Evaluate this builtin function, let it return a <code>type</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>(expr or pattern:type)</code></td>
+<td align="left">Ascription</td>
+<td align="left">Checks that an expression is of a type. Bit useless</td>
+</tr>
+<tr class="even">
+<td align="left"><code>e[expr or pattern]</code></td>
+<td align="left">Evaluation context</td>
+<td align="left">Replugs <code>expr</code> at the same place in <code>e</code>. Only works if <code>e</code> was created with an evaluation context</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>a &quot;b&quot; (nested)</code></td>
+<td align="left">Sequence</td>
+<td align="left">Builds the parse tree</td>
+</tr>
+</tbody>
+</table>
+<h4 id="possible-patterns">Possible patterns</h4>
+<table style="width:100%;">
+<colgroup>
+<col width="40%"></col>
+<col width="59%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Expr</th>
+<th align="left">As pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>x</code></td>
+<td align="left">Captures the argument as the name. If multiple are used in the same pattern, the captured arguments should be the same or the match fails.</td>
+</tr>
+<tr class="even">
+<td align="left"><code>_</code></td>
+<td align="left">Captures the argument and ignores it</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>42</code></td>
+<td align="left">Argument should be exactly this number</td>
+</tr>
+<tr class="even">
+<td align="left"><code>&quot;Token&quot;</code></td>
+<td align="left">Argument should be exactly this string</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>func(arg0, arg1, ...)</code></td>
+<td align="left">Evaluates the function, matches if the argument equals the result. Can only use variables which are declared left of this pattern</td>
+</tr>
+<tr class="even">
+<td align="left"><code>!func:type(arg0, ...)</code></td>
+<td align="left">Evaluates the builtin function, matches if the argument equals the result. Can only use variables which are declared left of this pattern</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>(expr or pattern:type)</code></td>
+<td align="left">Check that the argument is an element of <code>type</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>e[expr or pattern]</code></td>
+<td align="left">Matches the parsetree with <code>e</code>, searches a subpart in it matching <code>pattern</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>a &quot;b&quot; (nested)</code></td>
+<td align="left">Splits the parse tree in the appropriate parts, pattern matches the subparts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="typechecking">Typechecking</h3>
+<h4 id="equality">Equality</h4>
+
+<p>When equality checks are used in the pattern matching, the variable will be typed as the smallest common supertype of both types. If such a supertype does not exist, an error message is given.</p>
+<p>Note that using a supertype might be a little <em>too</em> loose, but won't normally happen in real-world examples.</p>
+<p>In the given example, <code>x</code> will be typed as <code>c</code>, the common super type. In this example, <code>x</code> might also be a <code>d</code>, while this is not possible for the input. This can be solved by splitting of <code>a | b</code> as a new rule.</p>
+<h3 id="totality--and-liveabilitychecks">Totality- and liveabilitychecks</h3>
+<p>Can be disabled with <code>--no-check</code>, when they take to long.</p>
+<h3 id="higher-order-functions-and-currying">Higher order functions and currying?</h3>
+<p>Are not possible for now (v 0.1.18). Perhaps in a future version or when someone really needs it and begs for it.</p>
+<h3 id="builtin-functions">Builtin functions</h3>
+<table style="width:99%;">
+<colgroup>
+<col width="12%"></col>
+<col width="66%"></col>
+<col width="19%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">name</th>
+<th align="left">Descr</th>
+<th align="left">Arguments</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>plus</code></td>
+<td align="left">Gives a sum of all arguments (0 if none given)</td>
+<td align="left">Ints only</td>
+</tr>
+<tr class="even">
+<td align="left"><code>min</code></td>
+<td align="left">Gives the first argument, minus all the other arguments</td>
+<td align="left">At least 1, Ints only</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>mul</code></td>
+<td align="left">Multiplies all the arguments. (1 if none given)</td>
+<td align="left">Ints only</td>
+</tr>
+<tr class="even">
+<td align="left"><code>div</code></td>
+<td align="left">Gives the first argument, divided by the product of the other arguments. (Integer division, rounded down))</td>
+<td align="left">At least 1, Ints only</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>mod</code></td>
+<td align="left">Gives the first argument, module the product of the other arguments.</td>
+<td align="left">At least 1, Ints only</td>
+</tr>
+<tr class="even">
+<td align="left"><code>neg</code></td>
+<td align="left">Gives the negation of the argument</td>
+<td align="left">Exactly 1, Ints only</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>equal</code></td>
+<td align="left">Checks that all the arguments are equal. Gives 1 if so, 0 if not.</td>
+<td align="left">At least 2</td>
+</tr>
+<tr class="even">
+<td align="left"><code>error</code></td>
+<td align="left">Stops the function, gives a stack trace. When used in a rule, this won't match a predicate</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>freshvar</code></td>
+<td align="left">Generates an identifier not present in the arguments. If the first argument is an identifier, identifiers are based on that form.</td>
+</tr>
+<tr class="even">
+<td align="left"><code>subs</code></td>
+<td align="left">(expression to replace, to replace with, in this expression) Replaces each occurence of the first expression by the second, in the third argument</td>
+<td align="left">Exactly 3</td>
+</tr>
+</tbody>
+</table>
+<h2 id="relations-and-rules">Relations and Rules</h2>
+<h2 id="properties">Properties</h2>
+<h2 id="command-line-flags">Command line flags</h2>
+</body>
+</html>

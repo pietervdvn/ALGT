@@ -43,7 +43,9 @@ builtins	= builtinSyntax |> fst
 
 
 bnfBuiltin
-	= builtins |> (\(str, val) -> string str >> return val)
+	= builtins
+		|> (\(str, val) -> string str >> return val)
+		|> try
 		& L.foldl1 (<|>)
 
 

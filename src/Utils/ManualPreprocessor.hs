@@ -163,7 +163,7 @@ preprocess target vars ('$':'$':'(':str)
 					& get stdOut & unlines
 
 		rest'	<- preprocess target vars rest
-		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\\end{lstlisting}"
+		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\n\\end{lstlisting}"
 		return (output & action & wrapFile ++ rest')
 preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
 	= do	let (args, (action, rest))
@@ -215,6 +215,10 @@ options('!':'f':'i':'l':'e':rest)
 		wrapFile str	= "\\begin{lstlisting}\n"++str++"\\end{lstlisting}\n"
 		in
 		(\str -> str & wrapFile & action, rest')
+options('!':'s':'a':'f':'e':rest)
+	= let	(action, rest')	= options rest
+		in
+		(\str -> (str >>= escapeWeirdChars) & action, rest')
 options ('!':rest)
 	= let	(option, str)	= span (`elem` "0123456789[].,") rest
 		pt	= parseTargetLang optionsSyntax "option" "Assets/Manual/Options.language" option
@@ -225,6 +229,13 @@ options ('!':rest)
 options str
 	= (id, str)
 
+
+escapeWeirdChars	:: Char -> String
+escapeWeirdChars '→'	= "->"
+escapeWeirdChars '✓'	= "~"
+escapeWeirdChars '⊢'	= "|-"
+escapeWeirdChars 'Γ'	= "§"
+escapeWeirdChars c	= [c]
 
 matchOptionBody	:: ParseTree -> String -> String
 matchOptionBody (PtSeq _ [body, MLiteral _ ",", body']) str
@@ -308,7 +319,7 @@ autoRecreate' lastEdits
 	= do	lastEdits'	<- contentsChanged "src/Assets/Manual"
 		let millisecs	= 750
 		-- let animation	= ["|","/","-","\\"] 
-		let animations	= ["    .","    . ","  .  "," .   ",".    "] 
+		let animations	= ["|","/","-","\\"] 
 		let animation	= animations ++ reverse animations
 
 		let animation'	= animation |> ("\r "++)

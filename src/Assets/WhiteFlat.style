@@ -1,10 +1,10 @@
 
+
  whiteflat
 ************
 
-black	= "#000000"
-white	= "#ffffff"
-
+$black	= "#000000"
+$white	= "#ffffff"
 
 foreground-color	: black
 background-color	: white

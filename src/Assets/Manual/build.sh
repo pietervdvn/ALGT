@@ -26,7 +26,7 @@ do
 	fi
 done
 
-PANDOC_EXTENSIONS=" --tab-stop=8 --normalize -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references"
+PANDOC_EXTENSIONS=" --tab-stop=8 -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references --latex-engine=xelatex"
 
 for SET in *.slideshow
 do
@@ -79,10 +79,11 @@ do
 	
 	echo "Running pdf latex..."
 	rm "ALGT_$SETNAME.pdf"
-	LATEX_OUTPUT=`pdflatex -halt-on-error "ALGT_$SETNAME.tex" | sed "s/^/§LATEX-$SETNAME: /g"`
+	LATEX_OUTPUT=`lualatex -halt-on-error "ALGT_$SETNAME.tex" | sed "s/^/§LATEX-$SETNAME: /g"`
 	cp "ALGT_$SETNAME.pdf" ../Output/
 	if [ $? -eq 0 ]
 	then
+		echo $LATEX_OUTPUT | sed "s/§/\\n/g"
 		echo "Pdf-compilation successfull"
 	else
 		echo "NO PDF FOUND"

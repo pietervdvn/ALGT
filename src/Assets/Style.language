@@ -5,7 +5,7 @@
 ========
 
  dash		::= "-"
-lowerDigit	::= LineChar | Digit
+ lowerDigit	::= Lower | Digit
  value		::= String | Number
 
  stars		::= $ "*" stars | "*"
@@ -22,10 +22,10 @@ lowerDigit	::= LineChar | Digit
  identifierCh	~~= lowerDigit | dash
  identifier	~~= $ identifierCh identifier | identifierCh
 
- constant	::= identifier "=" value
+ constant	::= "$" identifier "=" value
  constants	::= constant nl constants | constant nl | nl
 
- property	::= identifier ":" identifier | constant
+ property	::= identifier ":" identifier | identifier "=" value
  properties	::= property nl properties | property nl
 
  header1	::= name "\n" equals nl
@@ -57,7 +57,7 @@ expandFile(nl title consts props)
 
 # Replaces all constant names by their string
 expand					: property -> constants -> property
-expand(propName ":" key, c[key "=" value])	
+expand(propName ":" key, c["$" key "=" value])	
 					= propName "=" value
 expand(propName ":" key, c)		= !error:property("Constant", key ," not defined")
 expand(propName "=" value, c)		= propName "=" value

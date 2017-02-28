@@ -6,6 +6,7 @@ These have a different parse tree, as we can't parse that in one pass
 -}
 
 import Utils.Utils
+import Utils.ToString
 import TypeSystem.Parser.ParsingUtils
 import TypeSystem.Parser.ExpressionParser
 
@@ -29,11 +30,12 @@ data SClause = SClause [MEParseTree] MEParseTree
 	deriving (Ord, Eq)
 
 instance Show SClause where
-	show (SClause pats e)	= (pats & showComma & inParens)++" = "++show e
+	show (SClause pats e)	= (pats & toParsable' ", " & inParens)++" = "++toParsable e
 
 
 data SFunction = SFunction {sfName :: Name, sfType :: Type, sfBody :: [SClause]}
 	deriving (Show, Ord, Eq)
+
 
 
 parseFunctions	:: Maybe (Map Name Type) -> Syntax -> Parser u Functions
@@ -63,14 +65,14 @@ neatFuncs funcs
 typeFunction	:: Syntax -> Map Name Type -> SFunction -> Either String (Name, Function)
 typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
-	  do 	clauses	<- body |> typeClause bnfs typings tp & allRight'
+	  do 	clauses	<- mapi body |> typeClause bnfs typings tp & allRight'
 		let errMsg cl	= "Clause of type "++show (typesOf cl)++" does not match the expected type of "++show tp++"\n"++show cl
 		clauses |> (\cl -> unless (equivalents bnfs (typesOf cl) tp) $ Left $ errMsg cl) & allRight'
 		return (nm, MFunction tp clauses)
 
-typeClause	:: Syntax -> Map Name Type -> Type -> SClause -> Either String Clause
-typeClause bnfs funcs tps sc@(SClause patterns expr)
-	= inMsg ("In clause "++show sc) $
+typeClause	:: Syntax -> Map Name Type -> Type -> (Int, SClause) -> Either String Clause
+typeClause bnfs funcs tps (i, sc@(SClause patterns expr))
+	= inMsg ("In clause "++show i++", namely "++show sc) $
           do	let argTps	= init tps
 		let rType	= last tps
 		assert Left (length argTps == length patterns) $ "Expected "++show (length argTps)++" patterns, but only got "++show (length patterns)
