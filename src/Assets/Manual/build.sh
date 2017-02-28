@@ -83,7 +83,6 @@ do
 	cp "ALGT_$SETNAME.pdf" ../Output/
 	if [ $? -eq 0 ]
 	then
-		echo $LATEX_OUTPUT | sed "s/§/\\n/g"
 		echo "Pdf-compilation successfull"
 	else
 		echo "NO PDF FOUND"

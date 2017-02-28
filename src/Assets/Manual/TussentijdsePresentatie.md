@@ -247,7 +247,7 @@ En 'plakken' dit aan elke expressie:
 Bewijs bijhouden
 ------------------
 
-Zo kunnen we een mogelijk bewijs bijhouden:
+Zo kunnen we een optimistisch bewijs bijhouden:
 
 	(\\x . ? : x + 1) True
 
@@ -262,6 +262,84 @@ Bij de volgende stap kan er geen bewijs meer gevonden worden, dus hebben we een 
 	< ? > (True :: Int) + 1
 
 
+Bewijs introduceren
+-------------------
+
+ Hoe vinden we initieel bewijs?
+
+ Hiervoor kunnen we ook deductieregels opstellen
+
+ De paper stelt een manier voor om dit automatisch op te stellen.
+
+Bewijs introduceren
+-------------------
+
+![Voorbeeld van initiële bewijsregels](Rules.png)
+
+Bewijs evolueren
+----------------
+
+Transitiviteit is niet altijd geldig:
+
+	Bool = ?
+	? = Int
+	Bool = Int
+
+Bewijs evolueren is dus niet triviaal
+
+Bewijs evolueren
+----------------
+
+Met behulp van consistente transitiviteit kunnen we dit doen
+
+![Transitive consistentie](ConsTrans.png)
+
+
+We onderzoeken hoever dit geautomatiseerd kan worden
+
+Gradualizeren van het typesysteem
+=================================
+
+Uitbreiden van de syntax
+------------------------
+
+       type ::= ... | "?"
+
+
+Gradualizeren van functies
+--------------------------
+
+        dom(T1 "->" T2)	= T1
+
+Wat met `dom(?)`?
+
+Dit wordt opgelost met abstracte interpretatie via een Galois-connectie
+
+- Concretizatie: {Int, Bool, Int -> Bool, Int -> Int, ...}
+- Mogelijke outputs: {Int, Bool}
+- Abstractie: ?
+
+Typesysteem regels
+------------------
+
+ Hoeven in essentie niet aangepast te worden
+
+ (Al gaan we wel functies hernoemen)
+
+
+Conclusie
+=========
+
+Afgewerkt
+---------
+
+Een flexibele en bruikbare tool om arbitraire programmeertalen te beschrijven, interpreteren, testen en transformeren
+
+
+Future work
+-----------
+
+Zoveel mogelijk aspecten van gradualizatie automatiseren, gebaseerd op AGT
 
 
 
