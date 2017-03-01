@@ -19,3 +19,9 @@ Type CTRL+SHIFT+U, followed by a hexcode to obtain following chars:
 Γ	0393
 γ	03b3
 ɛ	025b
+λ       03bb
+∨       2228
+∧       2227
+⇒       21d2
+⋎       22ce
+⋏       22cf

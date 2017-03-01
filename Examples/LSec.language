@@ -1,0 +1,98 @@
+ 
+ LSec 
+******
+
+# Security language by ZDancewic 2002, as given by Ronald Garcia and Éric Tanter in Deriving a Simple Gradual Security Language (2006)
+
+ Syntax
+========
+
+# Variable
+x	::= Identifier
+
+label	::= "x"	| "(" label "⋎" label ")" | "(" label "⋏" label ")"
+
+bool	::= "true" | "false"
+type	::= "Bool" label | "(" type "->" label type ")"
+# raw term
+r	::= bool | "λ" x ":" type "." t
+v	::= r label
+
+t	::= tL t | tL op t | tL "::" type | tL
+# T without left recursion
+tL	::= v | x | "if" t "then" t "else" t | "(" t ")"
+
+# Operations
+op	::= "∨" | "∧" | "⇒"
+
+
+typing			::= x ":" type
+typingEnvironment	::= typing typingEnvironment | "$"
+
+
+ Functions
+===========
+
+joinL	: label -> label -> label
+joinL(l0, l1)
+	= "(" l0 "⋎" l1 ")"
+
+# " ∨
+join	: type -> type -> type
+join("Bool" l0, "Bool" l1)
+	= "Bool" joinL(l0, l1) 
+join("(" t11 "->" l0 t12 ")", "(" t21 "->" l1 t22 ")")
+	= "(" join(t11, t21) "->" joinL(l0, l1) join(t21, t22) ")"
+join(t0, t1)
+	= !error:type("Undefined")
+
+
+meetL	: label -> label -> label
+meetL(l0, l1)
+	= "(" l0 "⋏" l1 ")"
+
+# " ∨
+meet	: type -> type -> type
+meet("Bool" l0, "Bool" l1)
+	= "Bool" meetL(l0, l1) 
+meet("(" t11 "->" l0 t12 ")", "(" t21 "->" l1 t22 ")")
+	= "(" meet(t11, t21) "->" meetL(l0, l1) meet(t21, t22) ")"
+meet(t0, t1)
+	= !error:type("Undefined")
+
+
+
+ Relations
+===========
+
+#(→)	: e (in), e (out)	Pronounced as "evaluation"
+(⊢)	: typingEnvironment (in), t (in), type (out)	Pronounced as "context entails typing"
+#(::)	: e (in), type (out)	Pronounced as "type in empty context"
+#(==)	: type (in), type (in)	Pronounced as "equals"
+#(✓)	: e (in)		Pronounced as "is canonical"
+
+ Rules
+=======
+
+
+-------------------	[Sx]
+ Γ[x ":" S] ⊢ x, S
+
+
+----------------------	[Sb]
+ _ ⊢ (bool l:v), "Bool" l
+
+
+# Properties
+#============
+
+# e0 :: T	 e0 → e1
+#-------------------------- [Preservation]
+#         e1 :: T
+
+
+#         e0 :: T
+#-------------------------- [Progress]
+# (✓) e0    |     e0 → e1 
+
+
