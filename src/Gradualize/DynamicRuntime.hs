@@ -41,4 +41,10 @@ generateRelationProof ts nm
 		let name	= get relPronounce rel |> ("proof "++) |> camelCase & fromMaybe nm
 		let bnf		= [BNFRuleCall $ fst t]
 		return [t, (name, bnf)]
+
+
+
+
+
+
 		

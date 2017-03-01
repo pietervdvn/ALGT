@@ -23,7 +23,7 @@
 -->
 <language id="language" _name="Language" version="2.0" _section="Source">
   <metadata>
-    <property name="globs">*.typesystem</property>
+    <property name="globs">*.language</property>
     <property name="line-comment-start">#</property>
   </metadata>
 

@@ -315,6 +315,10 @@ padR		:: Int -> a -> [a] -> [a]
 padR i filler as
 		= as ++ replicate (i - length as) filler
 
+padR'		:: (Monoid a) => Int -> (a -> Int) -> a -> a -> a
+padR' i length filler as
+		= as `mappend` (replicate (i - length as) filler & mconcat)
+
 equalizeLength	:: a -> [[a]] -> [[a]]
 equalizeLength a ass
 	= let	longest		= ass |> length & maximum

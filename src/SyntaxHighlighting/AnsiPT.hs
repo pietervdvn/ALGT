@@ -3,6 +3,7 @@ module SyntaxHighlighting.AnsiPT where
 {-  Renders a parsetree with ANSI-Strings -}
 
 import Utils.Utils
+import Utils.ToString
 
 import qualified Assets
 import TypeSystem
@@ -42,18 +43,25 @@ renderDoc (PtSeqA _ _ pts)
 
 renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPTDebug fc style pt
-	= let	ptannot		= annot () pt & determineStyle style |> snd
-		ptannot'	= ptannot |> fromMaybe "" |> renderWithStyle fc
+	= let	ptannot		= annot () pt & determineStyle style |> snd	:: ParseTreeA (Maybe Name)
+		ptannot'	= ptannot |> fromMaybe "" 
+					|> (renderWithStyle fc)
+		(meta, docs)	= renderDocDebug ptannot' & unzip
+		meta'		= meta |> text |> yellow
+		l		= docs |> show |> length & maximum 
+		docs'		= docs |> padR' (l+3) (length . show) (text " ")	:: [Doc] 
 		in
-		renderDocDebug ptannot' & foldl1 (ANSI.<$>)
+		zip docs' meta' |> uncurry (<+>) & foldl1 (ANSI.<$>)
 
+styleMI		:: ParseTreeA a -> String
+styleMI pt'	= get ptaInf pt' & (\(tn, i) -> tn++ "." ++ show i)
 
-renderDocDebug	:: ParseTreeA (String -> Doc) -> [Doc]
+renderDocDebug	:: ParseTreeA (String -> Doc) -> [(String, Doc)]
 renderDocDebug (PtSeqA _ _ pts)
-		= let	(h:t)	= pts >>= renderDocDebug in
-			(text "+ " <+> h) : (t |> ( text "| " <+>))
+		= let	(meta, (h:t))	= (pts >>= renderDocDebug) & unzip in
+			zip meta $ (text "+ " <+> h) : (t |> ( text "| " <+>))
 renderDocDebug pt
-		= [renderDoc pt]
+		= [(styleMI pt, renderDoc pt)]
 
 
 renderWithStyle	:: FullColoring -> Name -> String -> Doc
