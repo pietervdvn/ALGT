@@ -165,7 +165,7 @@ supremum l a b
 supremums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
 supremums l as	
  | length as == 1	= maximum as
- | otherwise = foldl (supremum l) (get top l) as 
+ | otherwise = foldl (supremum l) (get bottom l) as 
 
 
 
