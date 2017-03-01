@@ -17,6 +17,8 @@ import Data.List (intercalate, isPrefixOf)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Data.Char (toUpper)
+
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -233,6 +235,13 @@ replaceN i a (h:as)
 onHead		:: (a -> a) -> [a] -> [a]
 onHead f []	= []
 onHead f (a:as)	= f a : as
+
+camelCase	:: String -> String
+camelCase (' ':str)
+		= camelCase $ onHead toUpper str
+camelCase (c:str)
+		= c : camelCase str
+camelCase []	= []
 
 
 -- Replaces each element of origs by a choice of pointwise. If a pointwise is empty, the original element is returned

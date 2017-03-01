@@ -63,6 +63,11 @@ findRelation	:: TypeSystem -> Symbol -> Maybe Relation
 findRelation rels s
 	= find ((==) s . get relSymbol) $ get tsRelations rels
 
+findRelation'	:: TypeSystem -> Symbol -> Either String Relation
+findRelation' ts s
+	= do	let available	= get tsRelations' ts & M.keys & unlines & indent
+		let msg		= "Relation "++show s ++" not found; perhaps you meant:\n"++available
+		checkExists s (get tsRelations' ts) msg
 
 
 instance Refactorable TypeName TypeSystem where

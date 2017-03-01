@@ -1,4 +1,4 @@
-module A.X where
+module Gradualize.Gradualize where
 
 {-  -}
 
