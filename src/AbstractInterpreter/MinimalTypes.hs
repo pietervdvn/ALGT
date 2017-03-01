@@ -41,14 +41,14 @@ searchStrictest ts backup f state
 
 step		:: TypeSystem -> Map Name TypeName -> Functions -> Map Name TypeName -> Map Name TypeName
 step ts backup functions state
-	= let	minimalTypes	= functions |> minimalTypeOf ts state	:: Map Name (Maybe TypeName)
+	= let	minimalTypes	= functions & M.mapWithKey (\k v -> minimalTypeOf ts state (k, v))	:: Map Name (Maybe TypeName)
 		minimalTypes'	= minimalTypes & mapWithKey (\k v -> fromMaybe (backup ! k) v)
 		in
 		minimalTypes'
 
 
-minimalTypeOf	:: TypeSystem -> Map Name TypeName -> Function -> Maybe TypeName
-minimalTypeOf ts funcSigns f
+minimalTypeOf	:: TypeSystem -> Map Name TypeName -> (Name, Function) -> Maybe TypeName
+minimalTypeOf ts funcSigns (name, f)
 	= let	s		= get tsSyntax ts
 		args		= typesOf f & init |> generateAbstractSet s "_"
 		analysis	= analyzeFunctionWith ts funcSigns f args
@@ -59,5 +59,4 @@ minimalTypeOf ts funcSigns f
 					& L.nub
 		in
 		biggestCommonType' s tps
-
 

@@ -10,3 +10,4 @@ Safety lang paper lezen
 Interior = opstellen + genereren
 Subtyping taal opstellen
 Evidence toevoegen aan expressies
+Latex rendering

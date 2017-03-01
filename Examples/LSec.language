@@ -13,7 +13,7 @@ x	::= Identifier
 label	::= "x"	| "(" label "⋎" label ")" | "(" label "⋏" label ")"
 
 bool	::= "true" | "false"
-type	::= "Bool" label | "(" type "->" label type ")"
+type	::= "Bool" label | "(" type "→" label type ")"
 # raw term
 r	::= bool | "λ" x ":" type "." t
 v	::= r label
@@ -27,7 +27,7 @@ op	::= "∨" | "∧" | "⇒"
 
 
 typing			::= x ":" type
-typingEnvironment	::= typing typingEnvironment | "$"
+typingEnvironment	::= typing "," typingEnvironment | "$"
 
 
  Functions
@@ -41,8 +41,8 @@ joinL(l0, l1)
 join	: type -> type -> type
 join("Bool" l0, "Bool" l1)
 	= "Bool" joinL(l0, l1) 
-join("(" t11 "->" l0 t12 ")", "(" t21 "->" l1 t22 ")")
-	= "(" join(t11, t21) "->" joinL(l0, l1) join(t21, t22) ")"
+join("(" t11 "→" l0 t12 ")", "(" t21 "→" l1 t22 ")")
+	= "(" join(t11, t21) "→" joinL(l0, l1) join(t21, t22) ")"
 join(t0, t1)
 	= !error:type("Undefined")
 
@@ -55,8 +55,8 @@ meetL(l0, l1)
 meet	: type -> type -> type
 meet("Bool" l0, "Bool" l1)
 	= "Bool" meetL(l0, l1) 
-meet("(" t11 "->" l0 t12 ")", "(" t21 "->" l1 t22 ")")
-	= "(" meet(t11, t21) "->" meetL(l0, l1) meet(t21, t22) ")"
+meet("(" t11 "→" l0 t12 ")", "(" t21 "→" l1 t22 ")")
+	= "(" meet(t11, t21) "→" meetL(l0, l1) meet(t21, t22) ")"
 meet(t0, t1)
 	= !error:type("Undefined")
 
@@ -81,6 +81,12 @@ meet(t0, t1)
 
 ----------------------	[Sb]
  _ ⊢ (bool l:v), "Bool" l
+
+
+ x ":" S1 "," Γ ⊢ t : S2
+--------------------------------------------	[Sλ]
+ Γ ⊢ ( "λ" x ":" S1 "." t) l , S1 "→" l S2
+
 
 
 # Properties

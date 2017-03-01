@@ -45,7 +45,7 @@ renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPTDebug fc style pt
 	= let	ptannot		= annot () pt & determineStyle style |> snd	:: ParseTreeA (Maybe Name)
 		ptannot'	= ptannot |> fromMaybe "" 
-					|> (renderWithStyle fc)
+					|> renderWithStyle fc
 		(meta, docs)	= renderDocDebug ptannot' & unzip
 		meta'		= meta |> text |> yellow
 		l		= docs |> show |> length & maximum 
@@ -58,7 +58,7 @@ styleMI pt'	= get ptaInf pt' & (\(tn, i) -> tn++ "." ++ show i)
 
 renderDocDebug	:: ParseTreeA (String -> Doc) -> [(String, Doc)]
 renderDocDebug (PtSeqA _ _ pts)
-		= let	(meta, (h:t))	= (pts >>= renderDocDebug) & unzip in
+		= let	(meta, h:t)	= (pts >>= renderDocDebug) & unzip in
 			zip meta $ (text "+ " <+> h) : (t |> ( text "| " <+>))
 renderDocDebug pt
 		= [(styleMI pt, renderDoc pt)]
@@ -93,7 +93,7 @@ closestColor (Right c)
 
 colors	:: [(String, (Doc -> Doc, Doc -> Doc))]
 colors
-      = [ ("#000000", (dullblack, ondullblack))
+      = [ ("#000000", (dullblack, id))
 	, ("#ff0000", (red, onred))
 	, ("#00ff00", (green, ongreen))
 	, ("#0000ff", (blue, onblue))

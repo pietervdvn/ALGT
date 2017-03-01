@@ -59,17 +59,13 @@ eL.2	-> "noise"
 ===========
 
 
-id		: e -> e
-id(e)		= e
-
-
 # deduces a new name for the variable in an lambda abstraction
 rename		: var -> var -> type -> e -> eL
 rename(x, newVar, type, body)
 		= "(" "\\" newVar ":" type "." !subs:e(x, newVar, body ) ")"
 
 
-eval			: e -> value
+eval			: e -> e
 eval( (v : value) )	= v
 eval(("(" "\\" x ":" t "." e ")") arg)
 			= eval(!subs:e(x, arg, e))
@@ -96,10 +92,16 @@ defaultValue("(" t ")")	= defaultValue(t)
 dom 		: type -> type
 dom("(" T ")")	= dom(T)
 dom(T1 "->" T2) = T1
+dom("Bool")	= !error:type("Not defined for Bool")
+dom("Int")	= !error:type("Not defined for Int")
+
+
 
 cod 		: type -> type
 cod("(" T ")")	= cod(T)
 cod(T1 "->" T2) = T2
+cod("Bool")	= !error:type("Not defined for Bool")
+cod("Int")	= !error:type("Not defined for Int")
 
 # wrappers for builtin functions, as we can't type within a builtin
 plus		: number -> e -> number
@@ -108,6 +110,7 @@ plus(e1, e2)	= !plus:number(e1, e2)
 
 equate		: type -> type -> type
 equate(T, T)	= T
+equate(T1, T2)	= !error:type("Not the same type")
 
 
 

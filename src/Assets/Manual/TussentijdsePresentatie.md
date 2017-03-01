@@ -1,5 +1,5 @@
 
- Building Gradualized typesystems
+ Building Gradualized Typesystems
 ====================================
 
 
@@ -18,6 +18,21 @@ Delen van de code zijn statisch getypeerd, andere zijn afgezwakt
 
 De programmeur kiest zelf de mate waarin
 
+Voorbeeld
+---------
+
+	(\\ x : Int . x + 1) True
+
+Gradualizatie introduceert `?`:
+
+        (\\ x : ? . x + 1) True
+
+We zijn __optimistisch__ dat dit lukt!
+
+        True + 1
+
+Hier loopt de runtime vast en krijgen we een _dynamische_ fout
+
 Waarom is een gradueel typesysteem nuttig?
 ------------------------------------------
 
@@ -25,39 +40,10 @@ Veel software begint met een _PoC_ in een dynamische taal (e.g. Python)\
 \
 
 Deze POC wordt vaak uitgebreid en uitgebreid totdat het moeilijk wordt om dit onder controle te houden...
-
-
-Waarom is een gradueel typesysteem nuttig?
-------------------------------------------
-
-Veel software begint met een _PoC_ in een dynamische taal (e.g. Python)\
-\
-
-Deze POC wordt vaak uitgebreid en uitgebreid totdat het moeilijk wordt om dit onder controle te houden zonder typesysteem...\
-\
-... maar ook duur om te herschrijven
-
-Waarom is een gradueel typesysteem nuttig?
-------------------------------------------
-
-Veel software begint met een _PoC_ in een dynamische taal (e.g. Python)\
-\
-
-Deze POC wordt vaak uitgebreid en uitgebreid totdat het moeilijk wordt om dit onder controle te houden zonder typesysteem...\
-\
 ... maar ook duur om te herschrijven
 
 
-Waarom is een gradueel typesysteem nuttig?
-------------------------------------------
-
-Met een gradueel typesysteem begin je met een dynmische PoC\
-\
-
-Wanneer de software groeit, voegt de programmeur type-annotaties toe en krijg je meer statische garanties\
-\
-
-De programmeur kiest zelf hoeveel typering nodig is
+In een gradueel systeem kiest de programmeur kiest zelf hoeveel typering nodig is
 
 
 Waarom zijn er niet meer graduele typesystemen?
@@ -68,16 +54,14 @@ Een typesysteem gradualizeren is moeilijk en handmatig werk
 Mijn tool __automatiseert__ het gradualizeren van typesystemen voor __arbitraire talen__
 
 
- Gradualizatie
-===============
 
 
 Gradualizatie
 -------------
 
  - Invoeren van de programmeertaal
- - Bouwen van een dynamische runtime
  - Bouwen van een gradueel typesysteem
+ - Bouwen van een dynamische runtime
 
 Snel en efficiënt
 
@@ -85,29 +69,92 @@ Snel en efficiënt
 Definitie van een programmeertaal
 =================================
 
-Simply Typed Functional Language (_STFL_)
------------------------------------------
+Definitie van een programmeertaal
+---------------------------------
 
-We bouwen samen een simpele functionele programmeertaal
-
-
-$$STFL.language![0..5]!indent
-
-
-STFL: Syntax
-------------
-
-Vereenvoudigde BNF-notatie
-
-
-$$STFL.language![5..11]!indent
+ - Syntax: hoe ziet de programmeertaal eruit?
+ - Semantiek: hoe wordt ze geëvalueerd?
+ - Eigenschappen
 
 
 STFL: Syntax
 ------------
 
+$$STFL.language![10..26]!indent
 
-$$STFL.language![12..26]!indent
+
+STFL: Evaluator
+--------------
+
+$$STFLForSlides.language![65..76]!indent!safe
+
+
+
+
+
+STFL: evaluator
+---------------
+
+Op dit punt kunnen we onze programmeertaal uitvoeren!
+Dit door een afleidingboom op te bouwen
+
+Gegeven het voorbeeld `1 + 2` krijgen we:
+
+
+	1 : number    2 : number
+	------------------------ [EvalPlus]
+	1 + 2 -> 3
+
+
+STFL: evaluator
+---------------
+
+Op dit punt kunnen we onze programmeertaal uitvoeren!
+Dit door een afleidingboom op te bouwen
+
+
+Gegeven het voorbeeld `If True Then False Else True` krijgen we:
+
+
+	------------------------------------ [EvalIfTrue]
+	If True Then False Else True → False
+
+
+
+
+
+STFL: evaluator
+---------------
+
+Op dit punt kunnen we onze programmeertaal uitvoeren!
+Dit door een afleidingboom op te bouwen
+
+
+Gegeven het voorbeeld `(\x . Int : x + 1) 41` krijgen we:
+
+
+
+	---------------------------------- [EvalLamApp]
+	( \ x : Int . x + 1 ) 41 → 41 + 1
+
+
+
+STFL: typesysteem
+------------------
+
+Het typesysteem kunnen we analoog opstellen
+
+
+STFL: Rules
+-----------
+
+$$STFLForSlides.language![158..161]!indent!safe
+
+
+STFL: typesysteem
+-----------------
+
+$$STFLForSlides.language![128..130]!indent!safe
 
 
 STFL: Functions
@@ -118,174 +165,174 @@ Pattern matching clauses
 $$STFL.language![30..42]!indent
 
 
-STFL: Relaties
---------------
-
-We creëeren relaties om _natural deduction_ op toe te passen, zoals gangbaar in de academische wereld
 
 
 
-Dit kan met unicode-karakters (maar niet in deze slides...)
 
-STFL: Relaties, declaratie
---------------
+Bewijsboom voor typering
+------------------------
 
-$$STFLForSlides.language![45..46],[51..59]!indent!safe
-
-STFL: Rules
---------------
-
-$$STFLForSlides.language![62..71]!indent!safe
-
-STFL: Rules
---------------
-
-$$STFLForSlides.language![74..76]!indent!safe
-
-STFL: Rules
---------------
-
-$$STFLForSlides.language![78..81]!indent!safe
-
-STFL: Rules
---------------
-
-$$STFLForSlides.language![84..86]!indent!safe
+	True : bool            False : bool        
+	---------------        -----------------    
+	{} |- True, Bool       {} |- False, Bool   
+	----------------------------------------
+	{} |- If True Then False Else True, Bool
+	----------------------------------------
+	If True Then False Else True :: Bool
 
 
-STFL: Rules
------------
+STFL: Typechecken
+-----------------
 
-$$STFLForSlides.language![158..161]!indent!safe
+		                1 : number                                                  
+	----------------------  ----------------
+	x : Int , {} |- x, Int   {} |- 1, Int                                     
+	----------------------------------------
+	x : Int , {} |- x + 1, Int                                     
+	----------------------------------------
+	{} |- ( \ x : Int . x + 1 ), Int -> Int 
+	----------------------------------------
+	{} |- ( \ x : Int . x + 1 ) 5, Int
 
 
-STFL: Rules
------------
-
-_En nog een hoop andere regels_
 
 
 STFL: properties
 ----------------
 
-$$STFLForSlides.language![187..197]!indent!safe
+__Arbitraire__ eigenschappen kunnen beschreven worden
+Deze worden automatisch getest
+
+$$STFLForSlides.language![190..197]!indent!safe
+
+\
+
+Als iemand het halting-probleem oplost, zal er ook een automatische bewijzer worden toegevoegd
 
 
- Opstellen van bewijsbomen
-===========================
+Hulmiddelen
+-----------
+
+Abstracte interpratatie van functies en regels
+
+Genereren van parsebomen als afbeelding
+
+Genereren van subtyperingsrelatie als afbeelding
+
+Foutdetectie
+
+Checks
+------
+
+Linkse recursie of cycles in subtypering in de syntax
+
+	
+
+Checks
+------
+
+Totality-check
+
+	  While checking the totality of function "cod":
+	    Following calls will fall through:
+	      codomain("Bool")
+	      codomain("Int")
+
+Checks
+------
+
+Dead-clauses check
+
+	  While checking liveability of every clause in function "eval":
+	    eval(("(" "\\" x ":" t "." e ")") arg)
 
 
-Bewijsboom voor evaluatie
--------------------------
+Checks
+------
 
-	------------------------------------ [EvalIfTrue]
-	If True Then False Else True -> False
+Detectie van kleinere types
 
-Bewijsboom voor evaluatie
--------------------------
-
-	7 : number    8 : number
-	------------------------ [EvalPlus]
-	7 + 8 -> 15
-	---------------------------------- [EvalCtx]
-	5 + ( 6 + ( 7 + 8 ) ) -> 5 + ( 6 + ( 15 ) )
-
-
-Bewijsboom voor typering
-------------------------
-
-	True : bool       False : bool        
-	---------------   -----------------    
-	{} |- True, Bool  {} |- False, Bool    Bool == Bool
-	-----------------------------------------------------
-	{} |- If True Then False Else True, Bool
-	-----------------------------------------------------
-	If True Then False Else True :: Bool
-
-
-
-Bewijsboom voor typering
-------------------------
-
-
-                         6 : number      7 : number
-                         -----------    ------------
-	5 : number       {} |- 6, Int   {} |- 7, Int
-	------------    ----------------------------
-	{} |- 5, Int     {} |- 6 + 7, Int
-	--------------------------------------------
-	{} |- 5 + 6 + 7, Int
-	--------------------------------------------
-	5 + 6 + 7 :: Int
-
+	While checking that the functions do have the strictest possible types:
+    	 "id" can be typed as "value", instead of a "e"
 
 
 
-Bouwen van een dynamische runtime
-=================================
+ALGT
+----
+
+Gebaseerd op bestaand werk
+
+Degelijke, geïntegreerde en uitbreidbare basis om programmeertalen te beschrijven en transformeren
+
+Mogelijke uitbreidingen
+
+ - syntax highlighting
+ - latex-rendering
+ - scoping-informatie
+ - automatisch refactoren
+ - IDE-tools
+ - ...
+
+
+Gradualizatie
+=============
+
 
 AGT-paper
 ---------
 
 Gebaseerd op de paper _Abstracting Gradual Typing_ (Ronald Garcia, Alison M.Clark, Éric Tanter)
 
+Biedt een theoretisch framework om typesystemen met de hand om te zetten
+
+Deze thesis onderzoekt in de hoeverre dit __gemechaniseerd__ kan worden
+
+ Syntax
+--------
+
+	type	::= "Bool" | "Int" | type "->" type
+	
+
+	type	::= "Bool" | "Int" | "?" | type "->" type
+
+
+ Functies
+----------
+
+De paper gebruikt abstract interpretatie om te bepalen wat `?` moet geven
+
+	domain("?")	= "?"
+
+Functies
+--------
+
+We zetten "?" om in een verzameling van mogelijke waarden `{Int, Bool, Int -> Int, Int -> Bool, ...}`
+
+We voeren de functie uit op deze oneindige verzameling
+
+We hopen dat dit eindig is
+
+We zetten dit terug om naar een concreet type
+
+
+Typesysteem
+-----------
+
+De regels moeten in essentie niet aangepast worden
+
+(Al is functies hernoemen wel nuttig, bv. `equate` naar `is consistent with`)
+
+
+Dynamische runtime
+==================
+
 
 Bewijs bijhouden
 ----------------
 
-We houden bewijs bij dat een typering _mogelijk_ is
+	(\x : ? . x + 1) True
 
-We genereren nieuwe syntactische vormen met bewijs:
-
-	proofTyping	::= "<" type "," type ">"
-
-En 'plakken' dit aan elke expressie:
-
-	provenExpr	::= proofTyping expr
-
-
-Bewijs bijhouden
-------------------
-
-Zo kunnen we een optimistisch bewijs bijhouden:
-
-	(\\x . ? : x + 1) True
-
-wordt:
-
-	 <Bool, Bool> (\\x . ? : x + 1) True
-
-Want `Bool` is consistent met `?`
-
-Bij de volgende stap kan er geen bewijs meer gevonden worden, dus hebben we een type error
-
-	< ? > (True :: Int) + 1
-
-
-Bewijs introduceren
--------------------
-
- Hoe vinden we initieel bewijs?
-
- Hiervoor kunnen we ook deductieregels opstellen
-
- De paper stelt een manier voor om dit automatisch op te stellen.
-
-Bewijs introduceren
--------------------
-
-![Voorbeeld van initiële bewijsregels](Rules.png)
-
-Bewijs evolueren
-----------------
-
-Transitiviteit is niet altijd geldig:
-
-	Bool = ?
-	? = Int
-	Bool = Int
-
-Bewijs evolueren is dus niet triviaal
+Mogelijke optimistische typering: `<Bool, Bool>`
 
 Bewijs evolueren
 ----------------
@@ -295,51 +342,28 @@ Met behulp van consistente transitiviteit kunnen we dit doen
 ![Transitive consistentie](ConsTrans.png)
 
 
-We onderzoeken hoever dit geautomatiseerd kan worden
-
-Gradualizeren van het typesysteem
-=================================
-
-Uitbreiden van de syntax
-------------------------
-
-       type ::= ... | "?"
+Wanneer geen transitiviteit mogelijk is, vinden we een dynamische fout
 
 
-Gradualizeren van functies
---------------------------
+Initieel bewijs opstellen
+-------------------------
 
-        dom(T1 "->" T2)	= T1
+Initieel bewijs: regels opstellen met gevallen-onderzoek
 
-Wat met `dom(?)`?
-
-Dit wordt opgelost met abstracte interpretatie via een Galois-connectie
-
-- Concretizatie: {Int, Bool, Int -> Bool, Int -> Int, ...}
-- Mogelijke outputs: {Int, Bool}
-- Abstractie: ?
-
-Typesysteem regels
-------------------
-
- Hoeven in essentie niet aangepast te worden
-
- (Al gaan we wel functies hernoemen)
+![Initiëel bewijs](Rules.png)
 
 
 Conclusie
 =========
 
-Afgewerkt
----------
+Samengevat
+----------
 
-Een flexibele en bruikbare tool om arbitraire programmeertalen te beschrijven, interpreteren, testen en transformeren
+_ALGT_ is flexibele en bruikbare tool om arbitraire programmeertalen te beschrijven, interpreteren, testen en transformeren
 
+\
 
-Future work
------------
-
-Zoveel mogelijk aspecten van gradualizatie automatiseren, gebaseerd op AGT
+We proberen zoveel mogelijk aspecten van gradualizatie te automatiseren, gebaseerd op de AGT-paper
 
 
 

@@ -27,7 +27,6 @@ do
 done
 
 PANDOC_EXTENSIONS=" --tab-stop=8 -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references --latex-engine=xelatex"
-
 for SET in *.slideshow
 do
 	SETNAME=${SET%.slideshow}
@@ -43,7 +42,7 @@ do
 	echo "Running pandoc for slides on $OUTFILE"
 	cat $OUTFILE
 	rm "Slides_$SETNAME.pdf" 2> /dev/null
-	pandoc $PANDOC_EXTENSIONS --slide-level 2 --listings -t beamer $OUTFILE -o "Slides_$SETNAME.pdf"
+	pandoc $PANDOC_EXTENSIONS --slide-level 2 --listings -t beamer $OUTFILE -o "Slides_$SETNAME.pdf" # --variable mainfont="Ubuntu"
 	cp "Slides_$SETNAME.pdf" ../Output/
 
 done
