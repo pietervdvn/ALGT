@@ -152,7 +152,7 @@ preprocess target vars ('$':'$':'(':str)
 					|> tail
 					|> options
 		
-		(args', input)	<- genArgs vars args
+		(args', input)	<- genArgs vars (args ++ " --plain")
 		let (_, Just parsedArgs)
 				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor tests") args'
 		

@@ -34,6 +34,7 @@ import Control.Monad
 import Control.Arrow ((&&&))
 
 import Text.Parsec
+import Text.PrettyPrint.ANSI.Leijen (Doc, plain)
 
 import Data.Maybe
 import Data.Either
@@ -57,12 +58,13 @@ import Lens.Micro.TH
 
 data RunConfig	= RunConfig
 	{ _colorScheme	:: FullColoring
-	, _rcTs		:: TypeSystem}
+	, _rcTs		:: TypeSystem
+	, _noMakeup	:: Bool}
 makeLenses ''RunConfig
 
 getTS		= getConfig' $ get rcTs
 
-defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded")
+defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False
 
 type PureIO a	= PureIO' RunConfig a
 
@@ -71,7 +73,8 @@ mainPure	:: Args -> PureIO (FullColoring, TypeSystem)
 mainPure args
 	= do	checkInput args
 		style		<- args & styleName & Assets.fetchStyle & liftEith
-		withConfig' (set colorScheme style) $ do
+		let ascii	= noMakeupArg args
+		withConfig' (set colorScheme style) $ withConfig' (set noMakeup ascii) $ do
 			tsContents	<- readFile (tsFile args)
 			ts		<- parseTypeSystem tsContents (Just $ tsFile args)
 						& liftEith
@@ -324,7 +327,7 @@ printPT pt
 	= do	ts	<- getTS
 		fc	<- getConfig' $ get colorScheme
 		let ptDoc	= renderPT fc (get tsStyle ts) pt
-		putDocLn ptDoc
+		putDocLn' ptDoc
 
 printPTDebug	:: (String, ParseTree) -> PureIO ()
 printPTDebug (inp, pt)
@@ -332,4 +335,12 @@ printPTDebug (inp, pt)
 		putStrLn $ "# "++show inp++" was parsed as:"
 		fc	<- getConfig' $ get colorScheme
 		let ptDoc	= renderPTDebug fc (get tsStyle ts) pt
-		putDocLn ptDoc
+		putDocLn' ptDoc
+
+
+putDocLn'	:: Doc -> PureIO ()
+putDocLn' d
+	= do	ascii	<- getConfig' $ get noMakeup
+		let d'	= if ascii then plain d else d
+		putDocLn d'
+		

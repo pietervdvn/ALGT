@@ -70,6 +70,7 @@ data Args = Args 	{ tsFile		:: String
 			, dynamizeArgs		:: Maybe DynamizeArgs
 			, styleName		:: Name
 			, interactiveArg	:: Maybe Symbol
+			, noMakeupArg		:: Bool
 			}
 	deriving (Show)
 
@@ -296,6 +297,11 @@ args	= Args <$> argument str
 			<> long "interactive"
 			<> short 'i'
 			<> help "Run this rule interactively"))
+		<*> switch(
+			long "plain"
+			<> long "no-makeup"
+			<> help "Prints the parsetrees as flat text and not as colored output; usefull to capture output in e.g. LaTeX"
+			<> hidden)
 
 
 		

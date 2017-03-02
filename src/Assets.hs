@@ -17,12 +17,12 @@ allAssets = [("White.style", _White_style)
 			, ("Style.language", _Style_language)
 			, ("Terminal.style", _Terminal_style)
 			, ("language.lang", _language_lang)
+			, ("None.style", _None_style)
 			, ("Manual/TypeTrees1.svg", _Manual_TypeTrees1_svg)
 			, ("Manual/2.0Tut-Intro.md", _Manual_2_0Tut_Intro_md)
 			, ("Manual/6Thanks.md", _Manual_6Thanks_md)
 			, ("Manual/TypeTrees2.svg", _Manual_TypeTrees2_svg)
 			, ("Manual/2Tutorial.md", _Manual_2Tutorial_md)
-			, ("Manual/TussentijdsePresentatie.md", _Manual_TussentijdsePresentatie_md)
 			, ("Manual/2.1Tut-Syntax.md", _Manual_2_1Tut_Syntax_md)
 			, ("Manual/Focus.generate", _Manual_Focus_generate)
 			, ("Manual/TypeTrees0.svg", _Manual_TypeTrees0_svg)
@@ -32,7 +32,6 @@ allAssets = [("White.style", _White_style)
 			, ("Manual/3ReferenceManual.md", _Manual_3ReferenceManual_md)
 			, ("Manual/4Concepts.md", _Manual_4Concepts_md)
 			, ("Manual/TypeTrees2annot.svg", _Manual_TypeTrees2annot_svg)
-			, ("Manual/Tussentijdse.slideshow", _Manual_Tussentijdse_slideshow)
 			, ("Manual/5Gradualization.md", _Manual_5Gradualization_md)
 			, ("Manual/Manual.generate", _Manual_Manual_generate)
 			, ("Manual/Options.language", _Manual_Options_language)
@@ -154,6 +153,10 @@ _Terminal_style
 _language_lang
 	 = unsafePerformIO $ readFile "src/Assets/language.lang"
 
+{-# NOINLINE _None_style #-}
+_None_style
+	 = unsafePerformIO $ readFile "src/Assets/None.style"
+
 {-# NOINLINE _Manual_TypeTrees1_svg #-}
 _Manual_TypeTrees1_svg
 	 = unsafePerformIO $ readFile "src/Assets/Manual/TypeTrees1.svg"
@@ -177,10 +180,6 @@ _Manual_2Tutorial_md
 {-# NOINLINE _Manual_hofstadter_png #-}
 _Manual_hofstadter_png
 	 = unsafePerformIO $ B.readFile "src/Assets/Manual/hofstadter.png"
-
-{-# NOINLINE _Manual_TussentijdsePresentatie_md #-}
-_Manual_TussentijdsePresentatie_md
-	 = unsafePerformIO $ readFile "src/Assets/Manual/TussentijdsePresentatie.md"
 
 {-# NOINLINE _Manual_2_1Tut_Syntax_md #-}
 _Manual_2_1Tut_Syntax_md
@@ -221,10 +220,6 @@ _Manual_4Concepts_md
 {-# NOINLINE _Manual_TypeTrees2annot_svg #-}
 _Manual_TypeTrees2annot_svg
 	 = unsafePerformIO $ readFile "src/Assets/Manual/TypeTrees2annot.svg"
-
-{-# NOINLINE _Manual_Tussentijdse_slideshow #-}
-_Manual_Tussentijdse_slideshow
-	 = unsafePerformIO $ readFile "src/Assets/Manual/Tussentijdse.slideshow"
 
 {-# NOINLINE _Manual_ConsTrans_png #-}
 _Manual_ConsTrans_png
@@ -301,10 +296,6 @@ _Manual_Files_STFL_language
 {-# NOINLINE _Manual_Output_ALGT_Focus_pdf #-}
 _Manual_Output_ALGT_Focus_pdf
 	 = unsafePerformIO $ B.readFile "src/Assets/Manual/Output/ALGT_Focus.pdf"
-
-{-# NOINLINE _Manual_Output_Slides_Tussentijdse_pdf #-}
-_Manual_Output_Slides_Tussentijdse_pdf
-	 = unsafePerformIO $ B.readFile "src/Assets/Manual/Output/Slides_Tussentijdse.pdf"
 
 {-# NOINLINE _Manual_Output_ALGT_Manual_html #-}
 _Manual_Output_ALGT_Manual_html
