@@ -72,12 +72,10 @@ interactive ts fc symbol
 		unless (length inTypes == 1) $ print "expected exactly one input type for interactive mode"
 		let [inType]	= inTypes
 		repl ts fc inType rel
-		putStrLn "Exiting repl"
 		
 repl		:: TypeSystem -> FullColoring -> TypeName -> Relation -> IO ()
 repl ts fc tn rel
-	= do	putStr (get relSymbol rel ++ " > ")
-		input	<- getLine
+	= do	input	<- getLine
 		unless (Prelude.null input || input == "\EOT") $ do
 			let parsed	= parseTargetLang (get tsSyntax ts) tn "Interactive" input
 			case parsed of

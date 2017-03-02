@@ -155,7 +155,7 @@ codomain(T1 "->" T2)		= T2
 
 
 
- Γ ⊢ e1, TArg -> TREs		Γ ⊢ e2, Targ	
+ Γ ⊢ e1, Tfunc		Γ ⊢ e2, Targ	
  Targ == domain(Tfunc)
 --------------------------------------- [Tapp]
  Γ ⊢ e1 e2, codomain(Tfunc)

@@ -145,10 +145,7 @@ STFL: typesysteem
 Het typesysteem kunnen we analoog opstellen
 
 
-STFL: Rules
------------
 
-$$STFLForSlides.language![158..161]!indent!safe
 
 
 STFL: typesysteem
@@ -164,6 +161,12 @@ Pattern matching clauses
 
 $$STFL.language![30..42]!indent
 
+
+
+STFL: Rules
+-----------
+
+$$STFLForSlides.language![158..161]!indent!safe
 
 
 
