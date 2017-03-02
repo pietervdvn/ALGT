@@ -69,6 +69,7 @@ data Args = Args 	{ tsFile		:: String
 			, iraSVG		:: Maybe String
 			, dynamizeArgs		:: Maybe DynamizeArgs
 			, styleName		:: Name
+			, interactiveArg	:: Maybe Symbol
 			}
 	deriving (Show)
 
@@ -289,6 +290,14 @@ args	= Args <$> argument str
 			<> help "Color scheme for parsetrees and svg files"
 			<> completer (mkCompleter (\part -> knownStyles & M.keys & filter (part `isPrefixOf`) & return))
 			)
+		<*> optional (strOption
+			(metavar "RULE-TO-INTERPRET"
+			<> long "repl"
+			<> long "interactive"
+			<> short 'i'
+			<> help "Run this rule interactively"))
+
+
 		
 dynamizeArgsParser	:: Parser DynamizeArgs
 dynamizeArgsParser
@@ -331,5 +340,4 @@ mainArgs versionMsg
 		<*> switch
 			(long "install-gtk-sourceview"
 			<> help "Saves the language spec for .language files. Move it to the language specs file for gtk-sourceview to enable syntax highlighting in editors using GTK-sourceview (GEdit, Pluma,...")
-
-
+		

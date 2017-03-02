@@ -67,7 +67,7 @@ defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded")
 type PureIO a	= PureIO' RunConfig a
 
 
-mainPure	:: Args -> PureIO TypeSystem
+mainPure	:: Args -> PureIO (FullColoring, TypeSystem)
 mainPure args
 	= do	checkInput args
 		style		<- args & styleName & Assets.fetchStyle & liftEith
@@ -80,7 +80,8 @@ mainPure args
 			unless (noCheck args) (checkTS changedTs & isolateCheck)
 
 			withConfig' (set rcTs changedTs) $ mainPureOn args changedTs
-			return changedTs
+			fc	<- getConfig' $ get colorScheme
+			return (fc, changedTs)
 
 
 mainPureOn	:: Args -> TypeSystem -> PureIO ()

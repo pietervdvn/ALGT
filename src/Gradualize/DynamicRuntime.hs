@@ -33,7 +33,7 @@ generateTupleRule (tnl, tnr)
 
 generateRelationProof	:: TypeSystem -> Symbol -> Either String [(TypeName, [BNF])]
 generateRelationProof ts nm
-	= do	rel		<- findRelation' ts nm
+	= do	rel		<- checkRelationExists ts nm
 		let types	= get relTypesModes rel |> fst
 		unless (length types == 2) $ Left $ "Expected exactly two arguments to "++show nm++", this is not a tuple. Proofs can only be constructed for stuff like equality, is subtype of, ..."
 		let [tnl, tnr]	= types

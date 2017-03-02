@@ -24,8 +24,6 @@ import Control.Arrow ((&&&))
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
-import Debug.Trace -- TODO
-
 
 type VariableAssignments	= VariableAssignmentsA ParseTree
 

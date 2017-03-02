@@ -1,3 +1,4 @@
+ {-# LANGUAGE FlexibleContexts #-}
 module TypeSystem.Parser.FunctionParser where
 
 {-
@@ -65,14 +66,15 @@ neatFuncs funcs
 typeFunction	:: Syntax -> Map Name Type -> SFunction -> Either String (Name, Function)
 typeFunction bnfs typings (SFunction nm tp body)
 	= inMsg ("While typing the function "++nm) $ 
-	  do 	clauses	<- mapi body |> typeClause bnfs typings tp & allRight'
-		let errMsg cl	= "Clause of type "++show (typesOf cl)++" does not match the expected type of "++show tp++"\n"++show cl
+	  do 	clauses	<- mapi body |> typeClause bnfs typings nm tp & allRight'	:: Either String [Clause]
+		let errMsg cl	= "Clause of type "++(typesOf cl & intercalate " -> ")++" does not match the expected type of "++intercalate " -> " tp++"\n"
+				++toParsable' (nm, 24::Int) cl
 		clauses |> (\cl -> unless (equivalents bnfs (typesOf cl) tp) $ Left $ errMsg cl) & allRight'
 		return (nm, MFunction tp clauses)
 
-typeClause	:: Syntax -> Map Name Type -> Type -> (Int, SClause) -> Either String Clause
-typeClause bnfs funcs tps (i, sc@(SClause patterns expr))
-	= inMsg ("In clause "++show i++", namely "++show sc) $
+typeClause	:: Syntax -> Map Name Type -> Name -> Type -> (Int, SClause) -> Either String Clause
+typeClause bnfs funcs funcName tps (i, sc@(SClause patterns expr))
+	= inMsg ("In clause "++show (i+1)++", this is \n"++indent (funcName ++ show sc)) $
           do	let argTps	= init tps
 		let rType	= last tps
 		assert Left (length argTps == length patterns) $ "Expected "++show (length argTps)++" patterns, but only got "++show (length patterns)

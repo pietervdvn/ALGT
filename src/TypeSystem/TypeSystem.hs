@@ -63,11 +63,20 @@ findRelation	:: TypeSystem -> Symbol -> Maybe Relation
 findRelation rels s
 	= find ((==) s . get relSymbol) $ get tsRelations rels
 
-findRelation'	:: TypeSystem -> Symbol -> Either String Relation
-findRelation' ts s
+checkRelationExists	:: TypeSystem -> Symbol -> Either String Relation
+checkRelationExists ts s
 	= do	let available	= get tsRelations' ts & M.keys & unlines & indent
 		let msg		= "Relation "++show s ++" not found; perhaps you meant:\n"++available
 		checkExists s (get tsRelations' ts) msg
+
+
+
+checkFunctionExists	:: TypeSystem -> Name -> Either String Function
+checkFunctionExists ts nm
+	= do	let fs		= get tsFunctions ts
+		let available	= fs & M.keys & unlines & indent
+		let msg		= "Function "++show nm++" not found; perhaps you meant one of:\n"++available
+		checkExists nm fs msg
 
 
 instance Refactorable TypeName TypeSystem where

@@ -74,10 +74,10 @@ matchTyping f r bnf tp c@(MePtAscription as expr)
 			= Left $ "Invalid cast: '"++toParsable c++"' could not be matched with '"++toParsable bnf++"'"
 
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
- | nm == "_"		= return $ MVar "" "_"
+ | nm == "_"		= return $ MVar bottomSymbol "_"
  | otherwise		= return $ MVar ruleCall nm
 matchTyping _ _ exp tp (MePtVar nm)
- | nm == "_"		= return $ MVar "" "_"
+ | nm == "_"		= return $ MVar bottomSymbol "_"
  | otherwise		
 			= Left $ "Non-rulecall (expected: "++toParsable exp++") with a var "++ nm
 
