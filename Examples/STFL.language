@@ -36,6 +36,8 @@ eL	::= value
 typing			::= var ":" type
 typingEnvironment	::= typing "," typingEnvironment | "{}"
 
+typeSet			::= type typeSet | "$"
+
 
 
  Syntax Style
@@ -65,7 +67,7 @@ rename(x, newVar, type, body)
 		= "(" "\\" newVar ":" type "." !subs:e(x, newVar, body ) ")"
 
 
-eval			: e -> e
+eval			: e -> value
 eval( (v : value) )	= v
 eval(("(" "\\" x ":" t "." e ")") arg)
 			= eval(!subs:e(x, arg, e))
@@ -80,9 +82,11 @@ eval("(" e ")")		= eval(e)
 eval(e1 "+" e2)		= !plus:number(eval(e1), eval(e2))
 eval(e "::" t)		= eval(e)
 eval( (v:var) )		= !error:value("Unknown variable", v)
+eval("(" "\\" v ":" t "." e ")")
+			= !error:value("Lone lambda expression left")
 
 
-defaultValue		: type -> e
+defaultValue		: type -> eL
 defaultValue("Bool")	= "True"
 defaultValue("Int")	= 1
 defaultValue(ta "->" tr)
@@ -111,6 +115,56 @@ plus(e1, e2)	= !plus:number(e1, e2)
 equate		: type -> type -> type
 equate(T, T)	= T
 equate(T1, T2)	= !error:type("Not the same type")
+
+
+concr		: type -> typeSet
+concr("Int")	= "Int" "$"
+concr("Bool")	= "Bool" "$"
+concr("(" T ")")
+		= concr(T)
+concr(T1 "->" T2)
+		= arrow(concr(T1), concr(T2))
+
+
+
+abstract		: typeSet -> type
+abstract("$")		= !error:type("Undefined")
+abstract("Int" "$")	= "Int"
+abstract("Bool" "$")	= "Bool"
+abstract(("(" T ")") ts)
+			= abstract(T ts)
+abstract((T1 "->" T2) ts)
+			= abstract(domains( (T1 "->" T2) ts)) "->" abstract(codomains( (T1 "->" T2) ts))
+
+
+domains		: typeSet -> typeSet
+domains((T1 "->" _) ts)
+		= T1 domains(ts)
+domains("$")	= "$"
+domains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
+
+
+codomains		: typeSet -> typeSet
+codomains((_ "->" T2) ts)
+		= T2 codomains(ts)
+codomains("$")	= "$"
+codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
+
+
+
+arrow		: typeSet -> typeSet -> typeSet
+arrow("$", _)	= "$"
+arrow(_, "$")	= "$"
+arrow(t0 ts0, t1 ts1)
+		= (t0 "->" t1) concatTypeSet(arrow(ts0, t1 ts1), arrow(ts0, ts1))
+
+
+
+concatTypeSet	: typeSet -> typeSet -> typeSet
+concatTypeSet("$", ts)
+		= ts
+concatTypeSet(t ts, ts0)
+		= t concatTypeSet(ts, ts0)
 
 
 
