@@ -1,20 +1,18 @@
 Test/STFL.language Test/examples.stfl e -l -r →
 
 Warning:
-  While checking the totality of function "cod":
+  While checking the totality of function "abstract":
     Following calls will fall through:
-      cod("Bool")
-      cod("Int")
-  While checking the totality of function "dom":
+      abstract(("Bool" (type typeSet)))
+      abstract(("Int" (type typeSet)))
+  While checking the totality of function "codomains":
     Following calls will fall through:
-      dom("Bool")
-      dom("Int")
-  While checking the totality of function "equate":
+      codomains("$")
+      codomains((typeL typeSet))
+  While checking the totality of function "domains":
     Following calls will fall through:
-      equate(type, type)
-  While checking the totality of function "eval":
-    Following calls will fall through:
-      eval(("(" "\\" var ":" type "." e ")"))
+      domains("$")
+      domains((typeL typeSet))
   
 # Could not apply relation → to relation the input True, because:
 While trying to proof that (→) is applicable to "True":

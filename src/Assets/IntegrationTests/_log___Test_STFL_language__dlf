@@ -1,20 +1,18 @@
 Test/STFL.language --dlf
 
 Warning:
-  While checking the totality of function "cod":
+  While checking the totality of function "abstract":
     Following calls will fall through:
-      cod("Bool")
-      cod("Int")
-  While checking the totality of function "dom":
+      abstract(("Bool" (type typeSet)))
+      abstract(("Int" (type typeSet)))
+  While checking the totality of function "codomains":
     Following calls will fall through:
-      dom("Bool")
-      dom("Int")
-  While checking the totality of function "equate":
+      codomains("$")
+      codomains((typeL typeSet))
+  While checking the totality of function "domains":
     Following calls will fall through:
-      equate(type, type)
-  While checking the totality of function "eval":
-    Following calls will fall through:
-      eval(("(" "\\" var ":" type "." e ")"))
+      domains("$")
+      domains((typeL typeSet))
   
 
   STFL 
@@ -41,6 +39,8 @@ type             ::= typeL "->" type
 typeL            ::= "Int"
                  | "Bool"
                  | "(" type ")"
+typeSet          ::= type typeSet
+                 | "$"
 typing           ::= var ":" type
 typingEnvironment::= typing "," typingEnvironment
                  | "{}"
@@ -70,12 +70,46 @@ var	 -> "identifier"
  Functions 
 ===========
 
+abstract                 : typeSet -> type
+abstract("$")            = !error:type("Undefined")
+abstract("Int" "$")      = "Int"
+abstract("Bool" "$")     = "Bool"
+abstract(("(" T ")") ts) = abstract(T ts)
+abstract((T1 "->" T2) ts)
+                         = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
+
+
+arrow                    : typeSet -> typeSet -> typeSet
+arrow("$", _)            = "$"
+arrow(_, "$")            = "$"
+arrow(t0 ts0, t1 ts1)    = (t0 "->" t1) concatTypeSet(arrow(ts0, t1 ts1), arrow(ts0, ts1))
+
+
 cod                      : type -> type
 cod("(" T ")")           = cod(T)
 cod(T1 "->" T2)          = T2
+cod("Bool")              = !error:type("Not defined for Bool")
+cod("Int")               = !error:type("Not defined for Int")
 
 
-defaultValue             : type -> e
+codomains                : typeSet -> typeSet
+codomains((_ "->" T2) ts)
+                         = T2 codomains(ts)
+
+
+concatTypeSet            : typeSet -> typeSet -> typeSet
+concatTypeSet("$", ts)   = ts
+concatTypeSet(t ts, ts0) = t concatTypeSet(ts, ts0)
+
+
+concr                    : type -> typeSet
+concr("Int")             = "Int" "$"
+concr("Bool")            = "Bool" "$"
+concr("(" T ")")         = concr(T)
+concr(T1 "->" T2)        = arrow(concr(T1), concr(T2))
+
+
+defaultValue             : type -> eL
 defaultValue("Bool")     = "True"
 defaultValue("Int")      = 1
 defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
@@ -85,10 +119,17 @@ defaultValue("(" t ")")  = defaultValue(t)
 dom                      : type -> type
 dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
+dom("Bool")              = !error:type("Not defined for Bool")
+dom("Int")               = !error:type("Not defined for Int")
+
+
+domains                  : typeSet -> typeSet
+domains((T1 "->" _) ts)  = T1 domains(ts)
 
 
 equate                   : type -> type -> type
 equate(T, T)             = T
+equate(T1, T2)           = !error:type("Not the same type")
 
 
 eval                     : e -> value
@@ -106,10 +147,8 @@ eval("(" e ")")          = eval(e)
 eval(e1 "+" e2)          = !plus:number(eval(e1), eval(e2))
 eval(e "::" t)           = eval(e)
 eval((v:var))            = !error:value("Unknown variable", v)
-
-
-id                       : e -> e
-id(e)                    = e
+eval("(" "\\" v ":" t "." e ")")
+                         = !error:value("Lone lambda expression left")
 
 
 plus                     : number -> e -> number
