@@ -34,8 +34,6 @@ renderPT fc style pt
 renderDoc	:: ParseTreeA (String -> Doc) -> Doc
 renderDoc (MLiteralA f _ s)
 		= f s
-renderDoc (MIdentifierA f _ s)
-		= f s
 renderDoc (MIntA f _ i)
 		= f $ show i
 renderDoc (PtSeqA _ _ pts)

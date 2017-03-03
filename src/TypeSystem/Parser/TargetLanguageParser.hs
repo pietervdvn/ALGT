@@ -46,7 +46,6 @@ parseSyntax' bnf@(BNFRules rules wsModes group _) nm wsModeParent
 			
 
 
-
 parseChoice	:: Syntax -> Name -> WSMode -> [(BNF, Int)] -> Parser u ParseTreeLi
 parseChoice _ name _ []
 	= fail $ "Could not parse expression of the form "++name
@@ -61,24 +60,6 @@ parsePart' rules pt wsMode bnf
 		= parseWS wsMode >> parsePart rules pt wsMode bnf
 
 parsePart	:: Syntax -> (TypeName, Int) -> WSMode -> BNF -> Parser u ParseTreeLi
-parsePart _ tp _ (Literal str)
-		= annotLi (string str |> MLiteral tp)
-parsePart _ tp _ Identifier
-		= annotLi (identifier |> MIdentifier tp)
-parsePart _ tp _ Any
-		= annotLi (anyChar |> (:[]) |> MLiteral tp)
-parsePart _ tp _ LineChar
-		= annotLi (noneOf "\n" |> (:[]) |> MLiteral tp)
-parsePart _ tp _ Number
-		= annotLi (number |> MInt tp)
-parsePart _ tp _ Lower
-		= annotLi (oneOf lowers |> (:[]) |> MLiteral tp)
-parsePart _ tp _ Upper
-		= annotLi (oneOf uppers |> (:[]) |> MLiteral tp)
-parsePart _ tp _ Digit
-		= annotLi (oneOf digits |> (:[]) |> MLiteral tp)
-parsePart _ tp _ String
-		= annotLi (bnfLiteral |> (\s -> "\"" ++ s ++ "\"") |> MLiteral tp)
 parsePart rules tp wsMode (BNFSeq [bnf])
 		= parsePart rules tp wsMode bnf
 parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
@@ -89,6 +70,13 @@ parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
 			return $ PtSeqA (locationInfo start end) tp $ head:tail
 parsePart rules _ wsMode (BNFRuleCall nm)
 		= parseSyntax rules nm
+parsePart _ tp _ (Literal str)
+		= annotLi (string str |> MLiteral tp)
+parsePart _ tp _ Number
+		= annotLi (number |> MInt tp)
+parsePart _ tp _ builtinBNF
+		= do	let parser	= getParserForBuiltin builtinBNF
+			annotLi (parser |> MLiteral tp)
 
 
 annotLi		:: Parser u ParseTree -> Parser u ParseTreeLi

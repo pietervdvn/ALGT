@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell #-}
-module Utils.ParseTreeImage where
+module SyntaxHighlighting.ParseTreeImage where
 
 {- Draws parsetrees as images -}
 
@@ -99,10 +99,8 @@ pointPositions (MLiteralA style _ content)
 				(w' `div` 2) (ds*2) True
 				style
 		return ([p], w', 2*(ds + w))
-pointPositions (MIdentifierA style mi nm)
-	= pointPositions (MLiteralA style mi nm)
 pointPositions (MIntA style mi i)
-	= pointPositions (MIdentifierA style mi $ show i)
+	= pointPositions (MLiteralA style mi $ show i)
 pointPositions (PtSeqA style mi@(tpName, choice) pts)
 	= do	(pointss, ws, hs)
 			<- pts	|> pointPositions

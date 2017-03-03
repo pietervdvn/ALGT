@@ -67,15 +67,6 @@ builtinFunctions
 				let msgs	= ["In evaluating a function:", pts']
 				let stack	= ctxStack ctx |> buildStackEl
 				Left $ unlines $ stack ++ msgs)
-	, BuiltinFunction "freshvar" "Generates an identifier not present in the arguments. If the first argument is an identifier, identifiers are based on that form."
-		0 Nothing $ Right (\ctx tp (identifier:pts) -> 
-			do	let used	= (identifier:pts) >>= usedIdentifiers'	:: [Name]
-				let base	= case identifier of
-							(MIdentifier _ nm)
-								-> nm
-							expr	-> "ident"
-				let possible	= [0..] |> show |> (base ++) & filter (`notElem` used)
-				return $ MIdentifier (tp, 0) $ head possible) 
 	, BuiltinFunction "subs" ("(expression to replace, to replace with, in this expression) "
 			++ "Replaces each occurence of the first expression by the second, in the third argument")
 		3 (Just 3) $ Right (\_ tp [searchFor, replaceBy, inExpr] ->
@@ -179,9 +170,6 @@ patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
 patternMatch _ _ (MParseTree (MInt _ s1)) (MInt _ s2)
 	| s1 == s2		= return M.empty
 	| otherwise		=  Left $ "Not the same int: "++show s1++ " /= " ++ show s2
-patternMatch _ _ (MParseTree (MIdentifier _ s1)) (MIdentifier _ s2)
-	| s1 == s2		= return M.empty
-	| otherwise		= Left $ "Not the same identifier: "++s1++ " /= " ++ s2
 patternMatch ctx f (MParseTree (PtSeq mi pts)) pt
 	= patternMatch ctx f (MSeq mi (pts |> MParseTree)) pt
 patternMatch ctx f s1@(MSeq _ seq1) s2@(PtSeq _ seq2)

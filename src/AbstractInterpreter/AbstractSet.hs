@@ -32,7 +32,7 @@ type GeneratingType	= TypeName
 data AbstractSet
 	= EveryPossible 	GeneratingType Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
 	| ConcreteLiteral 	GeneratingType String
-	| ConcreteIdentifier 	GeneratingType Name
+	| ConcreteBuiltin	GeneratingType BNF Name		-- Some possible builtin, e.g. Any, Identifier, ...
 	| ConcreteInt 		GeneratingType Name
 	| AsSeq 		GeneratingType Int [AbstractSet]		-- Sequence, generated with choice
 	deriving (Ord, Eq, Show)
@@ -61,7 +61,6 @@ generateAbstractSet' s n tp
 
 _generateAbstractSet					:: Syntax -> TypeName -> Name -> (Int, BNF) -> AbstractSet
 _generateAbstractSet r generator n (_, Literal s)	= ConcreteLiteral generator s
-_generateAbstractSet r generator n (_, Identifier)	= ConcreteIdentifier generator n
 _generateAbstractSet r generator n (_, Number)		= ConcreteInt generator n
 _generateAbstractSet r generator n (_, BNFRuleCall tp)
 	| tp `member` getBNF r
@@ -71,7 +70,8 @@ _generateAbstractSet r generator n (choice, BNFSeq bnfs)
 			= mapi bnfs
 				|> (\(i, bnf) -> _generateAbstractSet r generator (n++":"++show i) (choice, bnf))
 				& AsSeq generator choice
-_generateAbstractSet r generator n (_, builtin)	= ConcreteIdentifier generator n
+_generateAbstractSet r generator n (_, builtin)
+			= ConcreteBuiltin generator builtin n
 
 
 
@@ -95,8 +95,6 @@ fromExpression s n (MEvalContext tn _ _)
 fromParseTree			:: Name -> ParseTree -> AbstractSet
 fromParseTree _ (MLiteral mi l)
 				= ConcreteLiteral (fst mi) l
-fromParseTree n (MIdentifier mi _)
-				= ConcreteIdentifier (fst mi) n
 fromParseTree n (MInt mi _)
 				= ConcreteInt (fst mi) n
 fromParseTree n (PtSeq (gen, i) pts)
@@ -252,8 +250,8 @@ toBNF (EveryPossible _ _ tp)
 			= BNFRuleCall tp
 toBNF (ConcreteLiteral mi s)
 			= Literal s
-toBNF (ConcreteIdentifier _ _)
-			= Identifier
+toBNF (ConcreteBuiltin _ bnf _)
+			= bnf
 toBNF (ConcreteInt _ _)
 			= Number
 toBNF (AsSeq _ _ ass)	= ass |> toBNF & BNFSeq
@@ -276,7 +274,7 @@ _toExpression _ exp (genWith, _) (EveryPossible _ _ tp)
 			return $ MAscription tp var
 _toExpression _ _ mi (ConcreteLiteral _ str)
 	= return $ MParseTree $ MLiteral mi str
-_toExpression _ _ mi (ConcreteIdentifier genTp _)
+_toExpression _ _ mi (ConcreteBuiltin genTp _ _)
 	= do	nm	<- _getName genTp
 		return $ MVar genTp nm
 _toExpression _ _ mi (ConcreteInt genTp _)
@@ -359,7 +357,7 @@ fromEveryPossible _		= Nothing
 
 isConcrete 			:: AbstractSet -> Bool
 isConcrete ConcreteLiteral{}	= True
-isConcrete ConcreteIdentifier{}	= True
+isConcrete ConcreteBuiltin{}	= True
 isConcrete ConcreteInt{}	= True
 isConcrete _			= False
 
@@ -389,8 +387,8 @@ overAsName f (EveryPossible gen n tn)
 		= EveryPossible gen (f n) tn
 overAsName f (ConcreteLiteral gen s)
 		= ConcreteLiteral gen s	-- Literals don't have a name!
-overAsName f (ConcreteIdentifier gen n)
-		= ConcreteIdentifier gen $ f n
+overAsName f (ConcreteBuiltin gen bnf n)
+		= ConcreteBuiltin gen bnf $ f n
 overAsName f (ConcreteInt gen n)
 		= ConcreteInt gen $ f n
 overAsName f (AsSeq gen i ass)
@@ -402,7 +400,7 @@ getAsName (EveryPossible _ n _)
 		= Just n
 getAsName ConcreteLiteral{}
 		= Nothing
-getAsName (ConcreteIdentifier _ n)
+getAsName (ConcreteBuiltin _ _ n)
 		= Just n
 getAsName (ConcreteInt _ n)
 		= Just n
@@ -414,7 +412,7 @@ getAsName AsSeq{}
 instance SimplyTyped AbstractSet where
 	typeOf (EveryPossible _ _ tn)		= tn
 	typeOf (ConcreteLiteral gen _)		= gen
-	typeOf (ConcreteIdentifier gen _)	= gen
+	typeOf (ConcreteBuiltin gen _ _)	= gen
 	typeOf (ConcreteInt gen _)		= gen
 	typeOf (AsSeq gen _ _)			= gen
 
@@ -430,8 +428,8 @@ overGenerator f (EveryPossible gen n tn)
 		= EveryPossible (f gen) n tn
 overGenerator f (ConcreteLiteral gen n)
 		= ConcreteLiteral (f gen) n
-overGenerator f (ConcreteIdentifier gen n)
-		= ConcreteIdentifier (f gen) n
+overGenerator f (ConcreteBuiltin gen bnf n)
+		= ConcreteBuiltin (f gen) bnf n
 overGenerator f (ConcreteInt gen n)
 		= ConcreteInt (f gen) n
 overGenerator f (AsSeq gen i ass)
@@ -510,13 +508,13 @@ instance Refactorable TypeName AbstractSet where
 instance ToString AbstractSet where
 	toParsable (EveryPossible _ _ name)	= name 
 	toParsable (ConcreteLiteral _ s)	= show s
-	toParsable (ConcreteIdentifier _ nm)	= "Identifier"
+	toParsable (ConcreteBuiltin _ bnf nm)	= toParsable bnf
 	toParsable (ConcreteInt _ nm)		= "Number"
 	toParsable (AsSeq _ _ ass)		= ass |> toParsable & unwords & inParens
 	
 	toCoParsable as@(EveryPossible _ n tp)		= tp++n
 	toCoParsable as@(ConcreteLiteral _ s)		= show s ++ _to as
-	toCoParsable as@(ConcreteIdentifier _ nm)	= "Identifier"++nm ++ _to as
+	toCoParsable as@(ConcreteBuiltin _ bnf nm)	= toParsable bnf ++nm ++ _to as
 	toCoParsable as@(ConcreteInt _ nm)		= "Number"++nm ++ _to as
 	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as ++ "(gen: "++generatorOf as++"/"++show (getSeqNumber as)++")"
 

@@ -58,6 +58,12 @@
     <context id="bnf-keywords" style-ref="def:keyword">
       <keyword>Identifier</keyword>
       <keyword>Number</keyword>
+      <keyword>Any</keyword>
+      <keyword>Digit</keyword>
+      <keyword>Lower</keyword>
+      <keyword>Upper</keyword>
+      <keyword>LineChar</keyword>
+      <keyword>String</keyword>
     </context>
 
     <context id="token" style-ref="def:string">

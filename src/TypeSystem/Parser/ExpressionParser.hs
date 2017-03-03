@@ -164,56 +164,21 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
 matchTyping _ _ (Literal s) tp (MePtToken s')
  | s == s'		= MLiteral tp s & MParseTree & return
  | otherwise		= Left $ "Not the right literal: "++show s++" ~ "++show s'
-matchTyping _ _ Identifier tp (MePtToken s)
- | isIdentifier s	= MIdentifier tp s & MParseTree & return
- | otherwise		= Left $ s ++ " is not an identifier"
 matchTyping _ _ Number tp (MePtToken s)
 			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
 matchTyping _ _ Number tp (MePtInt i)
 			= return $ MParseTree $ MInt tp i
-matchTyping _ _ Digit tp (MePtToken c)
-	| length c == 1 && head c `elem` ['0'..'9']	
-		= return $ MParseTree $ MLiteral tp c
-	| otherwise
-		= Left $ "Not a digit: "++c
-matchTyping _ _ Lower tp (MePtToken c)
-	| length c == 1 && head c `elem` ['a'..'z']	
-		= return $ MParseTree $ MLiteral tp c
-	| otherwise
-		= Left $ "Not a Lower: "++c
-matchTyping _ _ Upper tp (MePtToken c)
-	| length c == 1 && head c `elem` ['A'..'Z']	
-		= return $ MParseTree $ MLiteral tp c
-	| otherwise
-		= Left $ "Not an Upper: "++c
-matchTyping _ _ String tp (MePtToken c)
-	| head c == '"' && last c == '"' && length c > 2
-		= return $ MParseTree $ MLiteral tp c
-	| otherwise
-		= Left $ "Not a String: "++c
-matchTyping _ _ Any tp (MePtToken c)
-	| length c == 1
-		= return $ MParseTree $ MLiteral tp c
-	| otherwise
-		= Left $ "Not an Any: number of chars don't match: " ++ c
-matchTyping _ _ LineChar tp (MePtToken c)
-	| length c == 1 && c /= "\n"
-		= return $ MParseTree $ MLiteral tp c
-	| length c /= 1
-		= Left $ "Not a LineChar: number of chars don't match: " ++ c
-	| otherwise
-		= Left $ "Not a LineChar: this is a newline; the only character that is not allowed! :angry-frown: " ++ c
+
+matchTyping _ _ builtinBNF tp pt@(MePtToken s)
+ | not (isBuiltin builtinBNF)
+			=  Left $ "Could not match "++toParsable builtinBNF ++" with token "++toParsable pt
+ | isValidBuiltin builtinBNF s
+			= MLiteral tp s & MParseTree & return
+ | otherwise		= Left $ s ++" is not a "++toParsable builtinBNF
 matchTyping _ _ bnf _ pt
-		= Left $ "(Fallthrough) Could not match "++toParsable bnf++" ~ "++toParsable pt
+	= Left $ "Could not match "++toParsable bnf++" ~ "++toParsable pt
 
 
-
-
-
-
-isIdentifier	:: String -> Bool
-isIdentifier (c:chrs)
-		= isLower c && all isAlphaNum chrs
 
 
 -- only used for builtin functions, as it's arguments do not have a typing. (If this were so, we wouldn't be ably to handle arbitrary syntaxes)

@@ -152,7 +152,7 @@ infimum l a b
 infimums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
 infimums l as
  | length as == 1	= minimum as
- | otherwise	= foldl (infimum l) (get top l) as 
+ | otherwise	= L.foldl1 (infimum l) as 
 
 
 supremum	:: (Eq a, Ord a, Show a) => Lattice a -> a -> a -> a
@@ -165,7 +165,7 @@ supremum l a b
 supremums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
 supremums l as	
  | length as == 1	= maximum as
- | otherwise = foldl (supremum l) (get bottom l) as 
+ | otherwise = L.foldl1 (supremum l) as 
 
 
 

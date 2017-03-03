@@ -78,8 +78,6 @@ evalExpr f assgns e
 _evalExpr	:: Map Name TypeName -> Assignments -> Expression -> Either String AbstractSet
 _evalExpr _ assgns (MParseTree (MLiteral mi token))
 		= return $ ConcreteLiteral (fst mi) token
-_evalExpr _ assgns (MParseTree (MIdentifier mi nm))
-		= return $ ConcreteLiteral (fst mi) nm
 _evalExpr _ assgns (MParseTree (MInt mi i))
 		= return $ ConcreteLiteral (fst mi) (show i)
 _evalExpr _ assgns (MParseTree seq@(PtSeq mi _))

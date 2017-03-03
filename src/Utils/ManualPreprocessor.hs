@@ -44,16 +44,17 @@ buildVariables	:: Map String String
 buildVariables
       = [ ("version", version & fst |> show & intercalate ".")
 	, ("versionmsg", version & snd)
-	, ("builtinEscapes", BNFParser.builtinEscapes	
+	, ("builtinEscapes", ParsingUtils.builtinEscapes	
 				|> over (_1 . _1) (\c -> '\\':[c])
 				& makeTable)
 	, ("wsModeInfo", BNFParser.wsModeInfo & makeTable)
 	, ("whitespace", ParsingUtils.whitespace |> (:[]) |> show |> verbatim & intercalate ",")
-	, ("builtinSyntax", BNFParser.builtinSyntax |> over _1 fst |> unmerge3r
+	, ("builtinSyntax", BNFParser.builtinSyntax |> over _1 fst3 |> unmerge3r
 			|> (\(bnf, expl, regex) -> verbatim bnf ++ "|" ++ expl ++ "|" ++ verbatim regex)
 			& unlines)
+	, ("bnfKeywords", BNFParser.builtinSyntax |> fst |> fst3 & unlines)
 	, ("regexIdentifier", BNFParser.builtinSyntax 
-		|> over _1 fst
+		|> over _1 fst3
 		& lookup "Identifier" 
 		& fromMaybe (error "BUG in manualpreprocessor: no Identifier regex for builtin")
 		& snd)
@@ -206,6 +207,10 @@ preprocess target vars (ch:str)
 
 
 options	:: String -> (String -> String, String)
+options('!':'k':'e':'y':'w':'o':'r':'d':rest)
+	= let	(action, rest')	= options rest
+		in
+		(\str -> "      <keyword>" ++ str ++ "</keyword>", rest')
 options ('!':'i':'n':'d':'e':'n':'t':rest)
 	= let	(action, rest')	= options rest
 		in

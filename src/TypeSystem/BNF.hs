@@ -11,7 +11,11 @@ import Utils.ToString
 
 import TypeSystem.Types
 
+import Text.Parsec
+import TypeSystem.Parser.ParsingUtils
+
 import Data.Maybe
+import Data.Either
 
 import Lens.Micro hiding ((&))
 import Control.Arrow ((&&&))
@@ -32,15 +36,7 @@ data BNF 	= Literal String	-- Literally parse 'String'
 		| Number		-- Parse a number
 	deriving (Show, Eq, Ord)
 
-builtinEscapes	:: [((Char, Char), String)]
-builtinEscapes
-      =	[ (('n', '\n'), "newline")
-	, (('t', '\t'), "tab")
-	, (('"', '"'), "double quote")
-	, (('\\', '\\'), "backslash")
-	]
-builtinEscapes'
-	= builtinEscapes |> fst
+
 
 
 wsModeInfo
@@ -50,16 +46,41 @@ wsModeInfo
 	] |> over _1 (toParsable &&& id)
 
 -- Also update: matchTyping in the expressionParser; TargetLanguageParser
+-- ((BNF-Name; BNF-representation; targetLang-parser (is wrapped in a MLiteral afterwards); check that something is valid) (documentation, documentation regex)
 builtinSyntax	= 
-	[ (("Identifier", Identifier), ("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
-	, (("Number", Number), ("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
-	, (("Any", Any), ("Matches a single character, whatever it is, including newline characters", "."))
-	, (("Lower", Lower), ("Matches a lowercase letter", "[a-z]"))
-	, (("LineChar", LineChar), ("Matches a single character that is not a newline", "[^\\n]"))
-	, (("Upper", Upper), ("Matches an uppercase letter", "[A-Z]"))
-	, (("Digit", Digit), ("Matches an digit", "[0-9]"))
-	, (("String", String), ("Matches a double quote delimted string", "\"([^\"\\]|\\\"|\\\\)*\""))
+	[ (("Identifier", Identifier, identifier), 
+		("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
+	, (("Number", Number, number |> show), 
+		("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
+	, (("Any", Any, anyChar |> (:[])),
+		 ("Matches a single character, whatever it is, including newline characters", "."))
+	, (("Lower", Lower, oneOf lowers |> (:[])), 
+		("Matches a lowercase letter", "[a-z]"))
+	, (("Upper", Upper, oneOf uppers |> (:[])),
+		("Matches an uppercase letter", "[A-Z]"))
+	, (("Digit", Digit, oneOf digits |> (:[])),
+		("Matches an digit", "[0-9]"))
+	, (("String", String, dqString'),
+		("Matches a double quote delimted string, returns the value including the double quotes", "\"([^\"\\]|\\\"|\\\\)*\""))
+	, (("LineChar", LineChar, noneOf "\n" |> (:[])),
+		("Matches a single character that is not a newline", "[^\\n]"))
 	]
+
+isValidBuiltin	:: BNF -> String -> Bool
+isValidBuiltin bnf s
+	= let	result	= runParserT (getParserForBuiltin bnf) () ("Pattern "++show s++" against bnf "++show bnf) s
+		in
+		isRight result
+
+isBuiltin	:: BNF -> Bool
+isBuiltin bnf	= bnf `elem` (builtinSyntax |> fst |> snd3)
+
+
+
+getParserForBuiltin	:: BNF -> Parser u String
+getParserForBuiltin bnf
+	= builtinSyntax |> fst |> dropFst3 & lookup bnf & fromMaybe (error $ "No builtin for parser defined for "++show bnf++", this is a bug")
+
 
 
 normalize	:: BNF -> BNF
@@ -149,7 +170,7 @@ toStr			:: (BNF -> String) -> BNF -> String
 toStr _ (Literal str)	= show str
 toStr f (BNFSeq asts)	= asts |> f & unwords
 toStr _ (BNFRuleCall n)	= n
-toStr _ builtin		= builtinSyntax |> fst |> swap & lookup builtin
+toStr _ builtin		= builtinSyntax |> fst |> dropTrd3 |> swap & lookup builtin
 				& fromMaybe (error $ "BUG: you added a new syntactic form "++show builtin++" which you didn't add to the builtinSytnax yet")
 
 instance ToString WSMode where

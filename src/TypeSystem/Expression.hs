@@ -61,16 +61,6 @@ isMInt (MParseTree pt)	= isMInt' pt
 isMInt _		= False
 
 
--- Searches for identifiers *in the target language*
-usedIdentifiers				:: Expression -> [Name]
-usedIdentifiers (MParseTree pt)		= usedIdentifiers' pt
-usedIdentifiers (MSeq _ exprs)		= exprs >>= usedIdentifiers
-usedIdentifiers (MCall _ _ _ exprs)	= exprs >>= usedIdentifiers
-usedIdentifiers (MAscription _ expr)	= usedIdentifiers expr
-usedIdentifiers (MEvalContext _ _ hole)
-					= usedIdentifiers hole
-usedIdentifiers	_			= []
-
 
 -- Searches for variable names *in the meta expression*. If a variable is used twice, it'll appear twice in the list
 usedVariables			:: Expression -> [(Name, TypeName)]
@@ -91,17 +81,6 @@ usedFunctions (MAscription _ e)	= usedFunctions e
 usedFunctions (MEvalContext _ _ hole)
 				= usedFunctions hole
 usedFunctions _			= []
-
-
--- generates an MVar, with a name that does not occurr in the given expression
-unusedIdentifier	:: Expression -> Maybe Name -> TypeName -> ParseTree
-unusedIdentifier noOverlap baseName productionType 
-	= let	name	= fromMaybe "x" baseName
-		alreadyUsed = name: usedIdentifiers noOverlap
-		varName	= [0..] |> show |> (name++) & filter (`notElem` alreadyUsed) & head
-		in
-		MIdentifier (productionType, -2) varName
-
 
 
 -- walks a  expression, gives which variables have what types

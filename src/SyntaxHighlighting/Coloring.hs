@@ -184,14 +184,16 @@ toSVGColorScheme style fc
 
 
 instance ToString Coloring where
-
+	toParsable	= debug
+	toCoParsable	= debug
 	debug (Coloring fallback dict)
 		= ["Fallback: "++fallback
 			, dict |> either show id & M.toList |> (\(k, v) -> k ++ " = " ++ v) & unlines
 			] & unlines 
 
 instance ToString FullColoring where
-
+	toParsable	= debug
+	toCoParsable	= debug
 	debug (FullColoring n d)
 		= let fc	= d |> debug & M.toList |> (\(k, v) -> k ++ "\n" ++ indent v) & unlines in
 			inHeader "" n '-' fc

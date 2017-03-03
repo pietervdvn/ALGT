@@ -9,7 +9,7 @@ import Utils.Utils
 import Utils.ArgumentParser
 import Graphs.Lattice 
 import Utils.LatticeImage (terminalCS, whiteCS)
-import Utils.ParseTreeImage
+import SyntaxHighlighting.ParseTreeImage
 import Utils.PureIO hiding (PureIO)
 
 import AssetsHelper as Assets

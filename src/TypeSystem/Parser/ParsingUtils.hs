@@ -6,7 +6,7 @@ import Text.Parsec
 
 import Data.Functor.Identity
 
-
+import Data.List (foldl1)
 
 
 
@@ -16,6 +16,16 @@ digits	= ['0'..'9']
 lowers	= ['a'..'z']
 uppers	= ['A'..'Z']
 whitespace = [' ','\t']
+
+builtinEscapes	:: [((Char, Char), String)]
+builtinEscapes
+      =	[ (('n', '\n'), "newline")
+	, (('t', '\t'), "tab")
+	, (('"', '"'), "double quote")
+	, (('\\', '\\'), "backslash")
+	]
+builtinEscapes'
+	= builtinEscapes |> fst
 
 builtinRelations	
 	= [ (":", "Parsetree generated with")
@@ -145,4 +155,21 @@ negNumber	= do	sign	<- try ((char '-' <* ws) >> return negate) <|> return id
 			i	<- number
 			return $ sign i
 
+parseEscape	:: Parser s Char
+parseEscape
+	= builtinEscapes' |> (\(inp, result) -> char inp >> return result)
+		& foldl1 (<|>)
 
+dqString	:: Parser s String
+dqString	
+	= do	char '"'
+		str <- many1 (noneOf "\\\"" <|> 
+					(char '\\' >> parseEscape))
+		char '"'
+		return str 
+
+-- Same as dqString, but does return the double quotes
+dqString'	:: Parser s String
+dqString'
+	= do	s	<- dqString
+		return $ "\""++s++"\""

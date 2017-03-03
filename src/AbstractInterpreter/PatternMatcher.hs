@@ -30,8 +30,6 @@ patternMatch r (MParseTree (MLiteral _ s1)) (ConcreteLiteral _ s2)
 	| otherwise		= returnF $ "Not the same literal: "++s1++ " /= " ++ s2
 patternMatch r (MParseTree (MInt _ s1)) (ConcreteInt _ n)
 	= returnE
-patternMatch r (MParseTree (MIdentifier _ s1)) (ConcreteIdentifier _ n)
-	= returnE
 patternMatch r (MParseTree (PtSeq mi pts)) pt
 	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
 patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ _ seq2)

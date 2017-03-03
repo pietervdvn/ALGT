@@ -23,28 +23,16 @@ import Lens.Micro hiding ((&))
 
 
 
-parseEscape	:: Parser s Char
-parseEscape
-	= builtinEscapes' |> (\(inp, result) -> char inp >> return result)
-		& L.foldl1 (<|>)
 
 
-bnfLiteral	:: Parser s String
-bnfLiteral	
-	= do	char '"'
-		str <- many1 (noneOf "\\\"" <|> 
-					(char '\\' >> parseEscape))
-		char '"'
-		return str 
-
+bnfLiteral	= dqString
 
 
 builtins	= builtinSyntax |> fst
 
-
 bnfBuiltin
 	= builtins
-		|> (\(str, val) -> string str >> return val)
+		|> (\(str, val, _) -> string str >> return val)
 		|> try
 		& L.foldl1 (<|>)
 
