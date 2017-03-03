@@ -76,14 +76,14 @@ _addConstraint (nm, constraint) constraints
  | nm `M.member` constraints
 		= inMsg ("While adding the constraint "++show nm++": "++show constraint) $ do
 			let c	= constraints M.! nm
-			if (c == constraint) then return constraints else 
+			if c == constraint then return constraints else 
 				case c of
 					c@(HasValue v)	-> Left $ "Another value was found: "++either show show v
 					(SameAs x)	-> addConstraint (x, constraint) constraints
  | otherwise	= M.insert nm constraint constraints & return
 
 
-patternMatch	:: Syntax -> Expression -> AbstractSet -> ([Assignments], Constraints)
+patternMatch	:: Syntax -> Expression -> AbstractSet -> [Assignments]
 patternMatch _ MCall{} _	
 	= returnE
 

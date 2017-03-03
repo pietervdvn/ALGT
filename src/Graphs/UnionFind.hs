@@ -14,7 +14,7 @@ The lowest numbered node will always be the representative of the union.
 -}
 unionFind	:: (Ord n) => [(n, n)] -> Map n n
 unionFind tuples
-	= snd $ runState (mapM_ add tuples) empty
+	= execState (mapM_ add tuples) empty
 
 {- the map is a map of pointers. A name will always try to point to its representative, being the smallest element of the set.
 

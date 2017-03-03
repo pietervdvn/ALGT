@@ -25,7 +25,7 @@ evalFunc ts evalFunc' (MFunction _ clauses) args
 evalClause		:: TypeSystem -> EvalFunc -> Arguments -> Clause -> Either String AbstractSet
 evalClause ts evalFunc' args (MClause pats expr)
  | length args /= length pats
-	= error $ "Evalclause in abstract function interpreter: number of args doesn't match"
+	= error "Evalclause in abstract function interpreter: number of args doesn't match"
  | otherwise
 	= do	let syntax	= get tsSyntax ts
 		-- let vars	= zip pats args |> uncurry (patternMatch syntax) & mergeAssgn syntax

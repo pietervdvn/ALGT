@@ -18,7 +18,7 @@ dynamized ts proofsFor
 	= do	proofRules	<- proofsFor |> generateRelationProof ts 
 					& allRight |> concat
 		let proofRules'	= proofRules 
-					|> (\(n, bnf) -> New n $ (bnf, IgnoreWS, False))
+					|> (\(n, bnf) -> New n (bnf, IgnoreWS, False))
 		
 		return $ Changes "Dynamic Runtimed" proofRules' [] [] []
 

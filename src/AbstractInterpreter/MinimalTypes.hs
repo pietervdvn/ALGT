@@ -41,7 +41,7 @@ searchStrictest ts backup f state
 
 step		:: TypeSystem -> Map Name TypeName -> Functions -> Map Name TypeName -> Map Name TypeName
 step ts backup functions state
-	= let	minimalTypes	= functions & M.mapWithKey (\k v -> minimalTypeOf ts state (k, v))	:: Map Name (Maybe TypeName)
+	= let	minimalTypes	= functions & M.mapWithKey (curry $ minimalTypeOf ts state)	:: Map Name (Maybe TypeName)
 		minimalTypes'	= minimalTypes & mapWithKey (\k v -> fromMaybe (backup ! k) v)
 		in
 		minimalTypes'

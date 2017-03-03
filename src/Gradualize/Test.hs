@@ -29,15 +29,14 @@ t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 
 		-- concretization	:: TypeSystem -> TypeName -> Name -> String -> [AbstractSet] -> ParseTree -> Either String [AbstractSet]
 		let dynSet	= [generateAbstractSet (get tsSyntax ts) "" "type"]
-		let concrFunc pt
-				= concretization (dyn, dynSet) pt 
+		let concrFunc	= concretization (dyn, dynSet)
 
 		let testPT1	= PtSeq ("type", -1) [MLiteral ("typeL", 1) "Bool", MLiteral ("type",0)  "->", MLiteral ("typeL", 1) "Bool"]
 		let testPT2	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", MLiteral ("typeL", 1) "Bool"]
 		let testPT3	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", dyn]
 
-		print $ concrFunc $ testPT2
-		print $ concrFunc $ testPT3
+		print $ concrFunc testPT2
+		print $ concrFunc testPT3
 
 
 		--gradualizeFunc	:: TypeSystem -> TypeName -> String -> Name -> Name -> Name -> Either String Clause
