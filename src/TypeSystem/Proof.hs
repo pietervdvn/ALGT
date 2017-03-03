@@ -128,7 +128,7 @@ showProofWith opts (Proof concl proverRule predicates)
 
 showProofWithDepth		:: String -> Symbol -> Either String Proof -> String
 showProofWithDepth input relation (Left str)	
-	= ["# Could not apply relation "++relation++" to relation the input "++input++", because:",str] & unlines
+	= ["# Could not apply relation "++relation++" to the input "++show input++", because:",str] & unlines
 showProofWithDepth input relation (Right proof)
 	= ["# "++input++" applied to "++relation
 		,"# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) 

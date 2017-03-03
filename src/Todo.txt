@@ -14,3 +14,10 @@ Interior = opstellen + genereren
 Subtyping taal opstellen
 Evidence toevoegen aan expressies
 Latex rendering
+Why is --ira broken?
+
+Consider
+	arith	::= "(" arith ")" | int
+	expr	::= "(" expr ")" | arith
+
+THis should give an error, as "(" 5 ")" can be parsed as both arith and expr
