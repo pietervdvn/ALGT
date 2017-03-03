@@ -19,7 +19,6 @@ import Data.List as L
 import Control.Arrow ((&&&))
 
 
-
 patternMatch	:: Syntax -> Expression -> AbstractSet -> [Assignments]
 patternMatch _ MCall{} _	
 	= returnE
