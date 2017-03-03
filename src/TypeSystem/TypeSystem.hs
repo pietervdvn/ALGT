@@ -10,6 +10,7 @@ import Utils.Utils
 import Utils.ToString
 
 import TypeSystem.Types
+import TypeSystem.BNF
 import TypeSystem.Syntax
 import TypeSystem.SyntaxStyle
 import TypeSystem.Function
@@ -62,6 +63,15 @@ tsRulesOnName	=  tsRules' . rulesOnName
 findRelation	:: TypeSystem -> Symbol -> Maybe Relation
 findRelation rels s
 	= find ((==) s . get relSymbol) $ get tsRelations rels
+
+
+checkSyntaxExists	:: TypeSystem -> Name -> Either String ([BNF], WSMode, Bool)
+checkSyntaxExists ts nm
+	= do	let syntax	= get (tsSyntax . fullSyntax') ts
+		let available	= syntax & M.keys & unlines & indent
+		let msg		= "Syntactic form "++show nm++" not found; perhaps you meant:\n"++available
+		checkExists nm syntax msg
+		
 
 checkRelationExists	:: TypeSystem -> Symbol -> Either String Relation
 checkRelationExists ts s

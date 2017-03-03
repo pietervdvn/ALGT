@@ -39,7 +39,7 @@ import Data.Map as M
 import ParseTreeInterpreter.PropertyTester
 import Utils.ManualPreprocessor
 
--- import Gradualize.Test
+import Gradualize.Test
 
 main	:: IO ()
 main	= do	args	<- getArgs

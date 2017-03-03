@@ -89,13 +89,11 @@ builtinFunctions
 
 
 evalFunc	:: TypeSystem -> Name -> [ParseTree] -> Either String ParseTree
-evalFunc ts funcName args	
- | funcName `M.member` get tsFunctions ts
-	= let	func	= get tsFunctions ts M.! funcName in
+evalFunc ts funcName args
+	= do	func	<- checkFunctionExists ts funcName	
 		applyFunc (buildCtx' ts) (funcName, func) args
- | otherwise
-	= evalErr (Ctx (get tsSyntax ts) (get tsFunctions ts) M.empty []) $
-		"evalFunc with unknown function: "++funcName	
+
+
 
 evalExpr	:: TypeSystem -> VariableAssignments -> Expression -> Either String ParseTree
 evalExpr ts vars

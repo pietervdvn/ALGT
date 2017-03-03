@@ -54,8 +54,6 @@ eL	-> "statement"
 eL.4	-> "noise"
 eL.2	-> "noise"
 
-"constant" -> "keyword"
-
 
  Functions
 ===========
@@ -117,15 +115,6 @@ equate(T, T)	= T
 equate(T1, T2)	= !error:type("Not the same type")
 
 
-concr		: type -> typeSet
-concr("Int")	= "Int" "$"
-concr("Bool")	= "Bool" "$"
-concr("(" T ")")
-		= concr(T)
-concr(T1 "->" T2)
-		= arrow(concr(T1), concr(T2))
-
-
 
 abstract		: typeSet -> type
 abstract("$")		= !error:type("Undefined")
@@ -151,20 +140,6 @@ codomains("$")	= "$"
 codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
 
 
-
-arrow		: typeSet -> typeSet -> typeSet
-arrow("$", _)	= "$"
-arrow(_, "$")	= "$"
-arrow(t0 ts0, t1 ts1)
-		= (t0 "->" t1) concatTypeSet(arrow(ts0, t1 ts1), arrow(ts0, ts1))
-
-
-
-concatTypeSet	: typeSet -> typeSet -> typeSet
-concatTypeSet("$", ts)
-		= ts
-concatTypeSet(t ts, ts0)
-		= t concatTypeSet(ts, ts0)
 
 
 
