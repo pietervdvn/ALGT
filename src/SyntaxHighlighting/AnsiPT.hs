@@ -70,7 +70,7 @@ renderWithStyle fc styleN str
 
 applyProperty	:: FullColoring -> Name -> (Name, Either Int String -> Doc -> Doc) -> Doc -> Doc
 applyProperty fc style (prop, effect)
-	= getProperty fc style prop |> effect & fromMaybe id
+	= getProperty fc (Just style) prop |> effect & fromMaybe id
 
 
 properties	:: [(Name, Either Int String -> Doc -> Doc)]

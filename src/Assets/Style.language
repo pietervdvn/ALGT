@@ -5,7 +5,9 @@
 Syntax
 ======
 
-nls		::= "\n" nls | "\n"
+commentChars	::= LineChar commentChars | LineChar
+comment		::= $ "#" commentChars
+nls		::= "\n" comment nls | "\n" nls | "\n"
 
 dash		::= "-"
 questionMark	::= "?"
@@ -65,7 +67,7 @@ prepareFile	: styleFile -> styleFile
 prepareFile(sf)	= check(expandFile(sf))
 
 expandFile	: styleFile -> styleFile
-expandFile(title (_ constants _) defaultSect styleSect)
+expandFile(title (_ (constants:constants) _) defaultSect styleSect)
 		= title "\n" expandDefaults(constants, defaultSect) expandStyleSect(constants, styleSect)
 expandFile(title nl defs styles)
 		= title nl defs styles
@@ -131,10 +133,11 @@ checkLoopsFrom(styles, start, current)
 
 getPropertyFor	: styleFile -> identifier -> identifier -> mvalue
 getPropertyFor(title constants defaults styles, styleN, propN)
+		= withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN))
+
+getDefaultPropertyFor	: styleFile -> identifier -> mvalue
+getDefaultPropertyFor(title _ defaults _, propN)
 		= findPropertyInDefaults(defaults, propN)
-			# "#0000ff"# withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN))
-
-
 
 getPropertyForS	: styleFile -> style -> identifier -> mvalue
 getPropertyForS(sf, style, propN)	
@@ -162,7 +165,7 @@ fallbackFor(_)	= "Default"
 
 
 findStyleIn	: stylesSect -> identifier -> style
-findStyleIn(_ styles _, id)
+findStyleIn(_ (styles:styles) _, id)
 		= findStyle(styles, id)
 findStyleIn(_, id)
 		= !error:style("No stylesection defined")
@@ -192,7 +195,7 @@ styleName((_ h "(" _ ")" _ _ _) _)
 
 
 findProperty	: properties -> identifier -> mvalue
-findProperty((key "=" value) _ _, key)
+findProperty((key "=" value:property) _ _, key)
 		= value
 findProperty((key ":" value) _ _, _)
 		= !error:value("Non-normalized input")
@@ -207,9 +210,9 @@ findProperty(_, key)
 
 
 findPropertyInDefaults	: defaultsSect -> identifier -> mvalue
-findPropertyInDefaults(_ p _, key)
+findPropertyInDefaults(_ (p:properties) _, key)
 		= findProperty(p, key)
-findPropertyInDefaults(defs, key)
+findPropertyInDefaults((nls:nls), key)
 		= "?" 
 
 

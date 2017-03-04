@@ -11,14 +11,13 @@ import Data.ByteString.Lazy (toStrict)
 -- This file contains all assets, loaded via 'unsafePerformIO' or hardcoded as string, not to need IO for assets
 
 
-allAssets = [("White.style1", _White_style1)
+allAssets = [("White.style", _White_style)
+			, ("White.style1", _White_style1)
 			, ("language-changes.lang", _language_changes_lang)
 			, ("Style.language", _Style_language)
-			, ("Style1.language", _Style1_language)
 			, ("Terminal.style", _Terminal_style)
 			, ("WhiteFlat.style1", _WhiteFlat_style1)
 			, ("language.lang", _language_lang)
-			, ("Terminal.style1", _Terminal_style1)
 			, ("Manual/TypeTrees1.svg", _Manual_TypeTrees1_svg)
 			, ("Manual/2.0Tut-Intro.md", _Manual_2_0Tut_Intro_md)
 			, ("Manual/6Thanks.md", _Manual_6Thanks_md)
@@ -130,6 +129,10 @@ allAssets = [("White.style1", _White_style1)
 			, ("IntegrationTests/Parsetrees_19.svg", _IntegrationTests_Parsetrees_19_svg)
 			]
 
+{-# NOINLINE _White_style #-}
+_White_style
+	 = unsafePerformIO $ readFile "src/Assets/White.style"
+
 {-# NOINLINE _White_style1 #-}
 _White_style1
 	 = unsafePerformIO $ readFile "src/Assets/White.style1"
@@ -142,10 +145,6 @@ _language_changes_lang
 _Style_language
 	 = unsafePerformIO $ readFile "src/Assets/Style.language"
 
-{-# NOINLINE _Style1_language #-}
-_Style1_language
-	 = unsafePerformIO $ readFile "src/Assets/Style1.language"
-
 {-# NOINLINE _Terminal_style #-}
 _Terminal_style
 	 = unsafePerformIO $ readFile "src/Assets/Terminal.style"
@@ -157,10 +156,6 @@ _WhiteFlat_style1
 {-# NOINLINE _language_lang #-}
 _language_lang
 	 = unsafePerformIO $ readFile "src/Assets/language.lang"
-
-{-# NOINLINE _Terminal_style1 #-}
-_Terminal_style1
-	 = unsafePerformIO $ readFile "src/Assets/Terminal.style1"
 
 {-# NOINLINE _Manual_TypeTrees1_svg #-}
 _Manual_TypeTrees1_svg

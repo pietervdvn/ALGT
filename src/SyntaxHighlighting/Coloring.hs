@@ -34,29 +34,43 @@ data FullColoring = FullColoring
 makeLenses ''FullColoring
 
 
-getProperty	:: FullColoring -> Name -> Prop -> Maybe (Either Int String)
-getProperty fc@(FullColoring pt ts) style prop
- 	= either (\fail -> trace ("FAIL: "++fail) Nothing) return $ do	
-		let asID name	= parseTargetLang (get tsSyntax ts) "identifier" "coloring.hs:getProperty:id" name 
-					& inMsg ("Not a valid stylename or property name: "++name)
-		stylePt	<- asID style
-		propPt	<- asID prop
+getProperty	:: FullColoring -> Maybe Name -> Prop -> Maybe (Either Int String)
+getProperty (FullColoring pt ts) Nothing prop
+	= either (flip trace Nothing) return $ inMsg ("While searching prop "++prop++" in the default values") $ do
+		propPt	<- _asID ts prop
+		found	<- evalFunc ts "getDefaultPropertyFor" [pt, propPt]
+		_extractValue found
+		
+getProperty fc@(FullColoring pt ts) (Just style) prop
+ 	= either (flip trace Nothing) return $ inMsg ("While searching a value for "++show style++" and "++prop) $ do	
+		propPt	<- _asID ts prop
+		stylePt	<- _asID ts style
 		found	<- evalFunc ts "getPropertyFor" [pt, stylePt, propPt]
-		let debugMsg = "style: "++style++", prop: "++prop ++" = " ++ toParsable found
-		trace debugMsg $ case found of
-			MLiteral _ "?"	-> Left $ "No value found for style"++show style++", property "++show prop	
-			MLiteral ("color",0) str
-					-> return $ Right str
-			MLiteral ("value", 0) str
-					-> return $ Right str
-			pt		-> error $ "Coloring: unexptec parsetree "++show pt
+		_extractValue found
+
+
+_asID ts name	= parseTargetLang (get tsSyntax ts) "identifier" "coloring.hs:getProperty:id" name 
+					& inMsg ("Not a valid stylename or property name: "++name)
+
+_extractValue	:: ParseTree -> Either String (Either Int String)
+_extractValue (MLiteral _ "?")
+		= Left $ "No value found"	
+_extractValue (MLiteral ("color",0) str)
+		= return $ Right str
+_extractValue (MLiteral ("value", 0) str)
+		= return $ Right str
+_extractValue (MInt ("value", 1) i)
+		= return $ Left i
+_extractValue pt
+		= error $ "Coloring: unexpected parsetree; probably due to some weird styling file. Run with --plain to disable syntax highlighting"++show pt
+
 
 parseColoringFile	:: FilePath -> String -> Either String FullColoring
 parseColoringFile fp input
 	= do	ts	<- parseTypeSystem Assets._Style_language $ Just "Assets: Style.language"
 		pt	<- parseTargetLang (get tsSyntax ts) "styleFile" fp input
 		pt'	<- evalFunc ts "expandFile" [pt]
-		return $ FullColoring pt ts
+		return $ FullColoring pt' ts
 
 
 
@@ -86,8 +100,7 @@ intAsColor i
 
 toSVGColorScheme	:: Maybe Name -> FullColoring -> ColorScheme
 toSVGColorScheme style fc	
-	= let	style'		= fromMaybe "" style
-		property p def	= getProperty fc style' p & fromMaybe def
+	= let	property p def	= getProperty fc style p & fromMaybe def
 		property' p def	= property p (Right def) & either (const def) id 
 		properti p def	= property p (Left def) 
 					& either id (const def)	:: Int

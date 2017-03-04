@@ -23,11 +23,11 @@ normal		= "normal"
 Defaults
 ========
 
-foreground-color	: green	
-background-color	: black
+foreground-color	: black	
+background-color	: white
 font-style		: normal
 svg-line-color		: green
-svg-line-thickness 	= 2
+svg-line-thickness 	= 1
 svg-dotsize 		= 4
 svg-fontsize 		= 20
 
@@ -69,7 +69,6 @@ foreground-color: blue
 
 size		= "*2"
 font-style	: underline
-background-linecolor	: yellow
 
  header0 (header)
 -------------------
@@ -99,4 +98,3 @@ foreground-color: grey
 
 font-style: normal
 foreground-color: grey
-svg-linecolor	: grey
