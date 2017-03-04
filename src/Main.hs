@@ -17,6 +17,7 @@ import System.Environment
 import System.Exit
 
 import Text.PrettyPrint.ANSI.Leijen
+import Text.Parsec
 
 import TypeSystem
 
@@ -25,7 +26,9 @@ import ParseTreeInterpreter.RuleInterpreter
 
 {- Imports to test -}
 import SyntaxHighlighting.Coloring
-import SyntaxHighlighting.AnsiPT
+import SyntaxHighlighting.AnsiPT as Ansi
+import SyntaxHighlighting.AsHTML as HTML
+
 
 
 import AbstractInterpreter.RelationAnalysis
@@ -35,11 +38,14 @@ import AbstractInterpreter.RuleAnalysis
 import Data.Maybe
 
 import Data.Map as M
+import qualified Data.Bifunctor as BF
 
 import ParseTreeInterpreter.PropertyTester
 import Utils.ManualPreprocessor
 
 import Gradualize.Test
+
+import AssetsHelper -- TODO Remove
 
 main	:: IO ()
 main	= do	args	<- getArgs
@@ -62,6 +68,42 @@ main' args
 			let (Just parsedArgs')	= parsedArgs
 			(fc, ts)	<- runIO defaultConfig parsedArgs' (mainPure parsedArgs')
 			interactiveArg parsedArgs' |> interactive ts fc & fromMaybe pass
+			interactiveStyling parsedArgs' |> interactiveParse ts fc & fromMaybe pass
+
+
+interactiveParse	:: TypeSystem -> FullColoring -> Name -> IO ()
+interactiveParse ts fc parseRule
+	= do	putStrLn "# Interactive styling active. Please give filename + input"
+		-- fileName	<- getLine
+		input		<- getLine |> unEscape
+		let fileName	= "interactive" -- TODO
+		generateHTML ts fc parseRule (fileName, input)
+			& either (\msg -> putStrLn $ "# NO PARSE: "++msg) putStrLn
+		interactiveParse ts fc parseRule		
+
+generateHTML	:: TypeSystem -> FullColoring -> Name -> (FilePath, String) -> Either String String
+generateHTML ts fc parseRule (fileName, input)
+	= do	let syntax	= get tsSyntax ts
+		parsed		<- (runParserT (parseSyntax syntax parseRule) () fileName input
+					|> BF.first show)
+		pt		<- parsed
+		return $  "# Parsed "++ (get ptAnnot pt & toParsable)++"\n"
+			++ HTML.renderPT fc (get tsStyle ts) (deAnnot pt)
+
+thtml	= do	let html	= generateHTML AssetsHelper.stfl terminalStyle "e" ("test", "1 + 1 + (\\x : Int . x + 1) True") & either error id
+		putStrLn html
+		writeFile "test.html" (html & lines & tail & unlines)
+
+unEscape	:: String -> String
+unEscape []	= []
+unEscape ('\\':'\\':str)
+		= '\\':str
+unEscape ('\\':'n':str)
+		= '\n':str
+unEscape (c:str)
+		= c:unEscape str
+
+
 
 
 
@@ -88,6 +130,6 @@ printProof	:: TypeSystem -> FullColoring -> Relation -> Proof -> IO ()
 printProof ts fc rel proof
 	= do	let  [pt]	= _proofConcl proof & get conclusionArgs
 					& filterMode Out rel	:: [ParseTree]
-		let ptDoc	= renderPT fc (get tsStyle ts) pt
+		let ptDoc	= Ansi.renderPT fc (get tsStyle ts) pt
 		print ptDoc
 				

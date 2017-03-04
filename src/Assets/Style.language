@@ -49,6 +49,8 @@ defaultsSect	::= defaultsHeader properties nls | nls
 stylesSect	::= stylesHeader styles nls	| nls
 styleFile	::= title constantsSect defaultsSect stylesSect
 
+knownStyles	::= identifier knownStyles | identifier
+
  Syntax Style
 ==============
 
@@ -60,6 +62,17 @@ Functions
 test		: styleFile -> mvalue
 test(sf)	= getPropertyFor(expandFile(sf), "noise", "foreground-color")
 
+
+knownStyles	: styles -> knownStyles
+knownStyles(style (styles:styles))
+		= styleName(style) knownStyles(styles)
+knownStyles(style)
+		= styleName(style)
+
+
+knownStylesIn	: styleFile -> knownStyles
+knownStylesIn(_ _ _ (_ (styles:styles) _))
+		= knownStyles(styles)
 
 # Constants expansion before lookups
 

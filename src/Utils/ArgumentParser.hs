@@ -71,6 +71,7 @@ data Args = Args 	{ tsFile		:: String
 			, styleName		:: Name
 			, interactiveArg	:: Maybe Symbol
 			, noMakeupArg		:: Bool
+			, interactiveStyling	:: Maybe String
 			}
 	deriving (Show)
 
@@ -302,6 +303,11 @@ args	= Args <$> argument str
 			<> long "no-makeup"
 			<> help "Prints the parsetrees as flat text and not as colored output; usefull to capture output in e.g. LaTeX"
 			<> hidden)
+		<*> optional (strOption
+			(metavar "SYNTACTIC-FORM"
+			<> long "interactive-styling"
+			<> help "Constantly reads a textline from stdIn, gives back how to color"
+			<> hidden))
 
 
 		

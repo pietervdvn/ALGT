@@ -32,6 +32,7 @@ data LocationInfo = LocationInfo
 	} deriving (Show, Ord, Eq)
 makeLenses ''LocationInfo
 
+
 -- Annotated parse tree
 data ParseTreeA a
 	= MLiteralA 	{_ptAnnot :: a, _ptaInf :: MInfo, _ptaContents :: String}
@@ -138,5 +139,9 @@ instance ToString ParseTree where
 	toParsable	= toParsable' NoParens
 	toCoParsable	= toCoParsable' NotOnRoot
 	debug		= debug' NotOnRoot		
+
+
+instance ToString LocationInfo where
+	toParsable (LocationInfo sl sc el ec)	= show sl ++ ","++show sc++";"++show el++","++show ec
 
 

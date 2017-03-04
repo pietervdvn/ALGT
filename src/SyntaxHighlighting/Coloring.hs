@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell #-}
-module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, toSVGColorScheme, intAsColor, colorDistance) where
+module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, definedStyles, toSVGColorScheme, intAsColor, colorDistance) where
 
 {- Defines rendering properties for styles -}
 
@@ -64,6 +64,7 @@ _extractValue (MInt ("value", 1) i)
 _extractValue pt
 		= error $ "Coloring: unexpected parsetree; probably due to some weird styling file. Run with --plain to disable syntax highlighting"++show pt
 
+terminalStyle		= parseColoringFile "Assets: Terminal" Assets._Terminal_style
 
 parseColoringFile	:: FilePath -> String -> Either String FullColoring
 parseColoringFile fp input
@@ -73,8 +74,20 @@ parseColoringFile fp input
 		return $ FullColoring pt' ts
 
 
+_extractStyles	:: ParseTree -> [String]
+_extractStyles (PtSeq ("knownStyles", 0) [MLiteral _ name, rest])
+		= name : _extractStyles rest
+_extractStyles (MLiteral _ name)
+		= [name]
+_extractStyles pt
+		= error $ "Coloring: unexpected parsetree for style extraction: "++show pt
 
 
+definedStyles	:: FullColoring -> [String]
+definedStyles (FullColoring pt ts)
+	= either (error) id $ do
+		pt'	<- evalFunc ts "knownStylesIn" [pt]
+		return $ _extractStyles pt'
 
 -- Distance between hex colors
 colorDistance	:: String -> String -> Int

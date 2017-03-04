@@ -26,6 +26,8 @@ Defaults
 foreground-color	: green	
 background-color	: black
 font-style		: normal
+font-size		= 14
+
 svg-line-color		: green
 svg-line-thickness 	= 2
 svg-dotsize 		= 4
@@ -74,18 +76,18 @@ background-linecolor	: yellow
  header0 (header)
 -------------------
 
-size		= "*3"
+font-size	= 20
 
  header1 (header)
 -------------------
 
-size		= "*2"
+font-size	= 18
 
 
  header2 (header)
 -------------------
 
-size		= "*1.5"
+font-size	= 16
 
 
 

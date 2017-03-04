@@ -13,6 +13,7 @@ import TypeSystem
 import Utils.Unification
 
 import Graphs.Lattice
+import Graphs.UnionFind
 
 import Data.Map (Map, (!), member, fromList, toList)
 import qualified Data.Map as M
