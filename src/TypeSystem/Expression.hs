@@ -202,12 +202,12 @@ instance ToString' ShowParens Expression where
 
 
 	-- Show as if this was target language code. This is not always possible
-	toCoParsable' p (MParseTree pt)	= toParsable' p pt
+	toCoParsable' p (MParseTree pt)	= "("++toCoParsable' p pt++":"++typeOf pt++")"
 	toCoParsable' p (MSeq mt exprs)	= exprs |> toCoParsable' (deepen p) & unwords
-	toCoParsable' p (MVar mt n)	= n & isMeta
+	toCoParsable' p (MVar tp n)	= "("++n++":"++tp++")"
 	toCoParsable' p expr@MCall{}
-				= toParsable' p expr & isMeta
-	toCoParsable' p (MAscription as expr)	= toCoParsable' p expr & inParens & (++ isMeta (": "++as))
+				= toParsable' p expr
+	toCoParsable' p (MAscription as expr)	= toCoParsable' p expr & inParens & (++": "++as)
 	toCoParsable' p ctx@MEvalContext{}
 				= isMeta $ toParsable' p ctx
 

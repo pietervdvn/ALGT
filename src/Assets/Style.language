@@ -1,164 +1,226 @@
+
  Style
 *******
 
- Syntax
-========
+Syntax
+======
 
- dash		::= "-"
- lowerDigit	::= Lower | Digit
- value		::= String | Number
+nls		::= "\n" nls | "\n"
 
- stars		::= $ "*" stars | "*"
- equals		::= $ "=" equals | "="
- dashes		::= $ dash dashes | dash
- dots		::= $ "." dots | "."
+dash		::= "-"
+questionMark	::= "?"
 
- nl		::= $ "\n" nl | "\n"
-
- nameChar	::= lowerDigit | Upper
- name		::= $ nameChar name | nameChar
- title		::= name "\n" stars "\n\n"
-
- identifierCh	~~= lowerDigit | dash
- identifier	~~= $ identifierCh identifier | identifierCh
-
- constant	::= "$" identifier "=" value
- constants	::= constant nl constants | constant nl | nl
-
- property	::= identifier ":" identifier | identifier "=" value
- properties	::= property nl properties | property nl
-
- header1	::= name "\n" equals nl
- header2	::= name "\n" dashes nl
- header3	::= name "\n" dots nl
-
- block1 	::= header1 properties block2s | header1 properties 
- block1s	::= block1 block1s | block1
- block2		::= header2 properties block3s | header2 properties 
- block2s	::= block2 block2s | block2
- block3		::= header3 properties
- block3s	::= block3 block3s | block3
-
- styleFile	::= nl title constants properties block1s | nl title constants properties
+identChar	::= Lower | Digit | dash
+identifier	//= $ identChar identifier | identChar
+midentifier	::= identifier | "Default"
 
 
-fallbacks	::= fallback "\n" fallbacks | "$"
-fallback	::= name "->" name
+stars		::= $ "*" stars | "*"
+equals		::= $ "=" equals | "="
+dashes		::= $ dash dashes | dash
 
- Functions
-===========
+title		::= nls identifier "\n" stars nls
+
+constantsHeader	::= "Constants" "\n" equals nls
+defaultsHeader	::= "Defaults" "\n" equals nls
+stylesHeader	::= "Styles" "\n" equals
+
+
+color		//= $ "#" Hex Hex Hex Hex Hex Hex
+value		::= String | Number | color
+mvalue		::= value | questionMark
+constant	::= identifier "=" value
+constants	::= constant nls constants | constant
+
+property	::= identifier ":" identifier | constant
+properties	::= property nls properties | property
+
+
+styleHeader	::= nls identifier "(" identifier ")" nls dashes nls # with a fallback given
+		| nls identifier nls dashes nls
+style		::= styleHeader properties
+styles		::= style styles | style
+
+
+constantsSect	::= constantsHeader constants nls | nls
+defaultsSect	::= defaultsHeader properties nls | nls
+stylesSect	::= stylesHeader styles nls	| nls
+styleFile	::= title constantsSect defaultsSect stylesSect
+
+ Syntax Style
+==============
+
+
+
+Functions
+=========
+
+test		: styleFile -> mvalue
+test(sf)	= getPropertyFor(expandFile(sf), "noise", "foreground-color")
+
+
+# Constants expansion before lookups
+
+prepareFile	: styleFile -> styleFile
+prepareFile(sf)	= check(expandFile(sf))
 
 expandFile	: styleFile -> styleFile
-expandFile(nl title consts props blocks)
-	= nl title "\n" expandProps(props, consts) expandAll(blocks, consts)
-expandFile(nl title consts props)
-	= nl title "\n" expandProps(props, consts)
+expandFile(title (_ constants _) defaultSect styleSect)
+		= title "\n" expandDefaults(constants, defaultSect) expandStyleSect(constants, styleSect)
+expandFile(title nl defs styles)
+		= title nl defs styles
 
 
-# Replaces all constant names by their string
-expand					: property -> constants -> property
-expand(propName ":" key, c["$" key "=" value])	
-					= propName "=" value
-expand(propName ":" key, c)		= !error:property("Constant", key ," not defined")
-expand(propName "=" value, c)		= propName "=" value
+expandStyleSect	: constants -> stylesSect -> stylesSect
+expandStyleSect(c, h s nls)
+		= h expandStyles(c, s) nls
+expandStyleSect(_, nls)
+		= nls
+
+expandStyles : constants -> styles -> styles
+expandStyles(c, style (styles:styles))
+		= expandStyle(c, style) expandStyles(c, styles)
+expandStyles(c, style)
+		= expandStyle(c, style)
+
+expandStyle	: constants -> style -> style
+expandStyle(c, h props)
+		= h expandProperties(c, props)
+
+expandDefaults	: constants -> defaultsSect -> defaultsSect
+expandDefaults(c, h props nls)
+		= h expandProperties(c, props) nls
+expandDefaults(_, defs)
+		= defs
+
+expandProperties	: constants -> properties -> properties
+expandProperties(c, (n ":" key) nls props)
+		= (n "=" findConstant(c, key)) nls expandProperties(c, props)
+expandProperties(c, p nls props)
+		= p nls expandProperties(c, props)
+expandProperties(c, (p ":" key:property))
+		= p "=" findConstant(c, key)
+expandProperties(_, (p "=" key))
+		= p "=" key
+
+check		: styleFile -> styleFile
+check(sf)	= checkLoops(sf)
+
+checkLoops	: styleFile -> styleFile
+checkLoops(t c d (sth styles nls))
+		= t c d (sth checkAllLoops(styles, styles) nls)
+checkLoops(sf)	= sf	# the case that no styles at all are defined
+
+checkAllLoops	: styles -> styles -> styles
+checkAllLoops(allStyles, (style:style))
+		= checkLoopsFrom(allStyles, styleName(style), styleName(style))	# we've done everything
 
 
-expandProps	: properties -> constants -> properties
-expandProps(blocks[propName ":" key], constants)
-		= expandProps(blocks[expand(propName ":" key, constants)], constants)
-expandProps(blocks, c)
-		= blocks
-
-
-expandAll	: block1s -> constants -> block1s
-expandAll(blocks[propName ":" key], constants)
-		= expandAll(blocks[expand(propName ":" key, constants)], constants)
-expandAll(blocks, c)
-		= blocks
-
-
-
-
-
-h1n		: header1 -> name
-h1n(n _ _ _)	= n
-
-h2n		: header2 -> name
-h2n(n _ _ _)	= n
-
-h3n		: header3 -> name
-h3n(n _ _ _)	= n
-
-titleN		: title -> name
-titleN(n _ _ _)	= n
-
-
-
-b1n		: block1 -> name
-b1n(h _ _)	= h1n(h)
-b1n(h _)	= h1n(h)
-
-b2n		: block2 -> name
-b2n(h _ _)	= h2n(h)
-b2n(h _)	= h2n(h)
-
-b3n		: block3 -> name
-b3n(h _)	= h3n(h)
-
-
-b1p		: block1 -> properties
-b1p(_ p _)	= p
-b1p(_ p)	= p
-
-b2p		: block2 -> properties
-b2p(_ p _)	= p
-b2p(h p)	= p
-
-b3p		: block3 -> properties
-b3p(h p)	= p
-
-fallbacks	: styleFile -> fallbacks
-fallbacks(_ title _ _ b1s)
-		= fallbackN1(titleN(title), b1s)
-
-# recursive fallbacks
-fallback1	: block1 -> fallbacks
-fallback1(h1 _ b2s)
-		= fallbackN2(h1n(h1), b2s)
-fallback1(_ _)	= "$"
-
-
-fallback2	: block2 -> fallbacks
-fallback2(h2 _ b3s)
-		= fallbackN3(h2n(h2), b3s)
-fallback2(_ _)	= "$"
+checkLoopsFrom	: styles -> identifier -> midentifier -> styles
+checkLoopsFrom(styles, start, start)
+		= !error:styles("Walking in a cycle from", start)
+checkLoopsFrom(styles, start, "Default")
+		= styles # We did hit a 'no fallback' case, all done!
+checkLoopsFrom(styles, start, current)
+		= checkLoopsFrom(styles, start, fallbackFor(findStyle(styles, current)))
 
 
 
-fallbackN1	: name -> block1s -> fallbacks
-fallbackN1(n, (b1 block1s))
-	= concatFBs((b1n(b1) "->" n) "\n" fallbackN1(n, block1s), fallback1(b1))
-fallbackN1(n, b1)
-	= (b1n(b1) "->" n) "\n" fallback1(b1)
 
+# Actual lookups
 
-fallbackN2	: name -> block2s -> fallbacks
-fallbackN2(n, (b2 blocks))
-	= concatFBs((b2n(b2) "->" n) "\n" fallbackN2(n, blocks), fallback2(b2))
-fallbackN2(n, b2)
-		= (b2n(b2) "->" n) "\n" fallback2(b2)
+getPropertyFor	: styleFile -> identifier -> identifier -> mvalue
+getPropertyFor(title constants defaults styles, styleN, propN)
+		= findPropertyInDefaults(defaults, propN)
+			# "#0000ff"# withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN))
 
 
 
-fallbackN3	: name -> block3s -> fallbacks
-fallbackN3(n, b3 block3s)
-	= (b3n(b3) "->" n) "\n" fallbackN3(n, block3s)
-fallbackN3(n, b3)
-		= (b3n(b3) "->" n) "\n" "$"
+getPropertyForS	: styleFile -> style -> identifier -> mvalue
+getPropertyForS(sf, style, propN)	
+		= findPropertyIn(style, propN) 
 
-concatFBs	: fallbacks -> fallbacks -> fallbacks
-concatFBs("$", fbs)
-		= fbs
-concatFBs(fb "\n" fbs0, fbs)
-		= fb "\n" concatFBs(fbs0, fbs) 
+withDefault	: mvalue -> mvalue -> mvalue
+withDefault(default, "?")
+		= default
+withDefault(_, found)
+		= found
+
+
+
+findPropertyIn	: style -> identifier -> mvalue
+findPropertyIn(header props, id)
+		= findProperty(props, id)
+
+
+
+
+fallbackFor	: style -> midentifier
+fallbackFor((_ _ "(" fb ")" _ _ _) props)
+		= fb
+fallbackFor(_)	= "Default"
+
+
+findStyleIn	: stylesSect -> identifier -> style
+findStyleIn(_ styles _, id)
+		= findStyle(styles, id)
+findStyleIn(_, id)
+		= !error:style("No stylesection defined")
+
+
+
+findStyle	: styles -> identifier -> style
+findStyle(((_ key "(" fb ")" _ dashes _) properties) styles, key)
+		= ("\n" key "(" fb ")" "\n" dashes "\n") properties
+findStyle(((_ key _ dashes _) properties) styles, key)
+		= ("\n" key "\n" dashes "\n") properties
+findStyle(_ (styles:styles), key)
+		= findStyle(styles, key)
+findStyle((_ key "(" fb ")" _ dashes _) properties, key)
+		= ("\n" key "(" fb ")" "\n" dashes "\n") properties
+findStyle((_ key _ dashes _) properties, key)
+		= ("\n" key "\n" dashes "\n") properties
+findStyle((rest:style), styleN)
+		= ("\n" "s" "\n" "---" "\n") ("-" "="  0)
+
+
+styleName	: style -> identifier
+styleName((_ h _ _ _) _)
+		= h
+styleName((_ h "(" _ ")" _ _ _) _)
+		= h
+
+
+findProperty	: properties -> identifier -> mvalue
+findProperty((key "=" value) _ _, key)
+		= value
+findProperty((key ":" value) _ _, _)
+		= !error:value("Non-normalized input")
+findProperty(p nl (props:properties), key)
+		= findProperty(props, key)
+findProperty(key ":" value, _)
+		= !error:value("Non-normalized input")
+findProperty(key "=" value, key)
+		= value
+findProperty(_, key)
+		= "?"
+
+
+findPropertyInDefaults	: defaultsSect -> identifier -> mvalue
+findPropertyInDefaults(_ p _, key)
+		= findProperty(p, key)
+findPropertyInDefaults(defs, key)
+		= "?" 
+
+
+
+findConstant	: constants -> identifier -> value
+findConstant((key "=" value) _ _, key)
+		= value
+findConstant(cons _ (constants:constants), key)
+		= findConstant(constants, key)
+findConstant(key "=" value, key)
+		= value
+findConstant(_, key)
+		= !error:value("Constant not found: ", key)
 

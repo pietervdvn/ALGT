@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell #-}
-module SyntaxHighlighting.Coloring(Coloring(..), FullColoring, emptyFullColoring, addColoring, colorDistance, parseColoringFile, getProperty, toSVGColorScheme, intAsColor) where
+module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, toSVGColorScheme, intAsColor, colorDistance) where
 
 {- Defines rendering properties for styles -}
 
@@ -22,124 +22,45 @@ import Lens.Micro.TH
 
 import Control.Monad
 
+import Debug.Trace
+
 type Prop	= String
 
-data Coloring	= Coloring
-	{ _coloringFallback	:: Name
-	, _coloringProperties	:: Map Prop (Either Int String)
-	} deriving (Show)
-makeLenses ''Coloring
-
-rootColoring	= Coloring "" M.empty
-
 data FullColoring = FullColoring 
-	{ _fcName	:: Name
-	, _fcProps	:: Map Name Coloring
+	{ _fcPt	:: ParseTree
+	, _fcTs	:: TypeSystem
 	}
 	deriving (Show)
 makeLenses ''FullColoring
 
-emptyFullColoring nm
-	= FullColoring nm $ M.singleton "" rootColoring
-
 
 getProperty	:: FullColoring -> Name -> Prop -> Maybe (Either Int String)
-getProperty fc@(FullColoring _ fcStyles) style prop
- | style == ""	= Nothing
- | otherwise
-	= do	(Coloring fb props)	<- M.lookup style fcStyles
-		firstJusts [M.lookup prop props, getProperty fc fb prop]
-
-addColoring	:: (Name, Coloring) -> FullColoring -> Either String FullColoring
-addColoring (n, c) (FullColoring fcn fc)
-	= do	checkExists (get coloringFallback c) fc $ "Fallback style "++show (get coloringFallback c)++" does not exist"
-		return $ FullColoring fcn $ M.insert n c fc
-
+getProperty fc@(FullColoring pt ts) style prop
+ 	= either (\fail -> trace ("FAIL: "++fail) Nothing) return $ do	
+		let asID name	= parseTargetLang (get tsSyntax ts) "identifier" "coloring.hs:getProperty:id" name 
+					& inMsg ("Not a valid stylename or property name: "++name)
+		stylePt	<- asID style
+		propPt	<- asID prop
+		found	<- evalFunc ts "getPropertyFor" [pt, stylePt, propPt]
+		let debugMsg = "style: "++style++", prop: "++prop ++" = " ++ toParsable found
+		trace debugMsg $ case found of
+			MLiteral _ "?"	-> Left $ "No value found for style"++show style++", property "++show prop	
+			MLiteral ("color",0) str
+					-> return $ Right str
+			MLiteral ("value", 0) str
+					-> return $ Right str
+			pt		-> error $ "Coloring: unexptec parsetree "++show pt
 
 parseColoringFile	:: FilePath -> String -> Either String FullColoring
-parseColoringFile fp coloring
+parseColoringFile fp input
 	= do	ts	<- parseTypeSystem Assets._Style_language $ Just "Assets: Style.language"
-		pt	<- parseTargetLang (get tsSyntax ts) "styleFile" fp coloring
+		pt	<- parseTargetLang (get tsSyntax ts) "styleFile" fp input
 		pt'	<- evalFunc ts "expandFile" [pt]
-		buildFC ts pt'
+		return $ FullColoring pt ts
 
 
 
 
-buildFC		:: TypeSystem -> ParseTree -> Either String FullColoring
-buildFC ts file@(PtSeq i [ws, t, cons, defs, b1s])
-	= do	fc	<- buildFC ts (PtSeq i [ws, t, cons, defs])
-		tree	<- evalFunc ts "fallbacks" [file]
-		let fallbacks	= fallbackTree tree 
-		colorings	<- overBlocksRec coloringForBlock b1s
-					|> prepColoring fallbacks & allRight'
-		foldM (flip addColoring) fc colorings
-buildFC ts file@(PtSeq _ [_, t, _, defs])
-	= do	nmT	<- evalFunc ts "titleN" [t]
-		nm	<- fromPtToken nmT |> return & fromMaybe (Left $ "Not a token: "++toParsable nmT)
-		let defColoring	= Coloring "" $ coloring defs
-		addColoring (nm, defColoring) (emptyFullColoring nm)
-		
-
-
-prepColoring	:: Map Name Name -> (Name, Map Prop (Either Int String)) -> Either String (Name, Coloring)
-prepColoring fallBacks (nm, props)
-	= do	fallBack	<- checkExists nm fallBacks $ "Weird, no fallback for "++nm
-		return (nm, Coloring fallBack props)
-
-
-coloringForBlock	:: (Name, Char, ParseTree) -> (Name, Map Prop (Either Int String))
-coloringForBlock (nm, _, props)
-	= (nm, coloring props)
-
-overBlocks	:: ((Name, Char, ParseTree, Maybe ParseTree) -> a) -> ParseTree -> [a]
-overBlocks f (PtSeq (_,0) [blck, blcks])
-	= f (dissectBlock blck) : overBlocks f blcks
-overBlocks f blck
-	= [f $ dissectBlock blck]
-
-
-overBlocksRec	:: ((Name, Char, ParseTree) -> a) -> ParseTree -> [a]
-overBlocksRec f pt
-	= overBlocks (_overBlocksRec f) pt & concat
-
-_overBlocksRec	:: ((Name, Char, ParseTree) -> a) -> (Name, Char, ParseTree, Maybe ParseTree) -> [a]
-_overBlocksRec f (nm, chr, pt, Nothing)
-	= [f (nm, chr, pt)]
-_overBlocksRec f (nm, chr, pt, Just nested)
-	= f (nm, chr, pt) : overBlocksRec f nested
-				
-
-dissectBlock	:: ParseTree -> (Name, Char, ParseTree, Maybe ParseTree)
-dissectBlock (PtSeq _ [header@(PtSeq _ [MLiteral _ nm, _, MLiteral _ level, _]), props])
-	= (nm, head level, props, Nothing)
-dissectBlock (PtSeq _ [header@(PtSeq _ [MLiteral _ nm, _, MLiteral _ level, _]), props, blocks])
-	= (nm, head level, props, Just blocks)
-dissectBlock pt
-	= error $ "dissectBlock: fallthrough: "++debug pt
-
-coloring	::  ParseTree -> Map Prop (Either Int String)
-coloring (MLiteral _ "\n")
-	= M.empty
-coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MLiteral _ v], _])
-	= M.singleton k (Right $ init $ tail v)
-coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MLiteral _ v], _, rest])
-	= M.insert k (Right $ init $ tail v) $ coloring rest
-coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MInt _ v], _])
-	= M.singleton k (Left v)
-coloring (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "=", MInt _ v], _, rest])
-	= M.insert k (Left v) $ coloring rest
-coloring pt
-	= error $ "Coloring: fallthrough: "++debug pt
-
-
-
-fallbackTree	:: ParseTree -> Map Name Name
-fallbackTree (MLiteral _ "$")
-		= M.empty
-fallbackTree (PtSeq _ [PtSeq _ [MLiteral _ k, MLiteral _ "->", MLiteral _ v], _, fbs])
-		= M.insert k v $ fallbackTree fbs
-fallbackTree ft	= error $ "FallbackTree: fallthrough: "++toParsable ft
 
 -- Distance between hex colors
 colorDistance	:: String -> String -> Int
@@ -165,7 +86,7 @@ intAsColor i
 
 toSVGColorScheme	:: Maybe Name -> FullColoring -> ColorScheme
 toSVGColorScheme style fc	
-	= let	style'		= fromMaybe (get fcName fc) style
+	= let	style'		= fromMaybe "" style
 		property p def	= getProperty fc style' p & fromMaybe def
 		property' p def	= property p (Right def) & either (const def) id 
 		properti p def	= property p (Left def) 
@@ -183,17 +104,3 @@ toSVGColorScheme style fc
 
 
 
-instance ToString Coloring where
-	toParsable	= debug
-	toCoParsable	= debug
-	debug (Coloring fallback dict)
-		= ["Fallback: "++fallback
-			, dict |> either show id & M.toList |> (\(k, v) -> k ++ " = " ++ v) & unlines
-			] & unlines 
-
-instance ToString FullColoring where
-	toParsable	= debug
-	toCoParsable	= debug
-	debug (FullColoring n d)
-		= let fc	= d |> debug & M.toList |> (\(k, v) -> k ++ "\n" ++ indent v) & unlines in
-			inHeader "" n '-' fc

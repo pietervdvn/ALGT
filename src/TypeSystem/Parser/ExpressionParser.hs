@@ -147,7 +147,11 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
 			if not grouped then do
 				let oneOption i bnf	= inMsg ("Trying to match "++nm++"." ++ show i++" ("++toParsable bnf++")") $ 
 								matchTyping f syntax bnf (nm, i) pt
-				zip [0..] bnfASTs |> uncurry oneOption & firstRight
+				let options'	= zip [0..] bnfASTs |> uncurry oneOption		
+				let options	= options' & rights & nub
+				when (length options == 0) $ Left $ "No clauses matched:\n"++(options' & lefts & unlines & indent)
+				when (length options > 1) $ Left $ "Multiple matches: "++toCoParsable' " | " options
+				return $ head options
 			 else do
 					let noTokenMsg	= Left $ "Trying to decipher a grouped rule "++show nm++", but '"++toParsable pt++"' is not a token"
 					str		<- fromMePtToken pt |> return & fromMaybe noTokenMsg

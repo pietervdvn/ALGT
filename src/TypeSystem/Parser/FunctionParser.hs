@@ -80,7 +80,7 @@ typeClause bnfs funcs funcName tps (i, sc@(SClause patterns expr))
 		assert Left (length argTps == length patterns) $ "Expected "++show (length argTps)++" patterns, but only got "++show (length patterns)
 		patterns'	<- zip argTps patterns |> uncurry (typeAs funcs bnfs) & allRight'
 		expr'		<- typeAs funcs bnfs rType expr
-
+		unless (alwaysIsA bnfs (typeOf expr') rType) $ Left $ "The declared type does not match. Expected: "++rType++", got "++typeOf expr'
 		patternsDeclares	<- patterns' |> expectedTyping bnfs & allRight'
 		patternsDeclare		<- inMsg "While checking for conflicting declarations" $ mergeContexts bnfs patternsDeclares
 		exprNeed		<- expectedTyping bnfs expr'

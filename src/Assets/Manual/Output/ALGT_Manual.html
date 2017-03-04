@@ -10,7 +10,7 @@
 <body>
 <h1 id="overview">Overview</h1>
 <p>This document gives an overview of the <em>ALGT</em>-tool. First, a general overview of what the tool does is given and why it was developped. Second, a hands-on tutorial develops a Simply Typed Functional Language (STFL). Thirdly, the reference manual gives an in-depth overview of the possibilities and command line flags. Fourth, some concepts and algorithms are explained more thoroughly, together with properties they use. And at last, the 'dynamize' and 'gradualize' options are explained in depth, as these are what the master dissertation is about.</p>
-<p>This documentation is about version <strong>0.1.19</strong> (<code>Total Interactivity</code>), generated on 2017-3-2 .</p>
+<p>This documentation is about version <strong>0.1.20</strong> (<code>Total Not Identifier</code>), generated on 2017-3-4 .</p>
 <h1 id="what-is-algt">What is ALGT?</h1>
 <p><em>ALGT</em> (<em>Automated Language Generation Tool</em> <a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>) is a tool to formally specify any programming language. This is done by first declaring a syntax, using BNF, and then declaring semantics by introducing logical deduction rules, such as evaluation or typing rules. Eventually, properties can be introduced which can be tested. Of course, these can be run.</p>
 <p>The tool is kept as general as possible, so any language can be modelled.</p>
@@ -351,24 +351,29 @@
 <td align="left"><code>[a-z]</code></td>
 </tr>
 <tr class="odd">
-<td align="left"><code>LineChar</code></td>
-<td align="left">Matches a single character that is not a newline</td>
-<td align="left"><code>[^\n]</code></td>
-</tr>
-<tr class="even">
 <td align="left"><code>Upper</code></td>
 <td align="left">Matches an uppercase letter</td>
 <td align="left"><code>[A-Z]</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>Digit</code></td>
 <td align="left">Matches an digit</td>
 <td align="left"><code>[0-9]</code></td>
 </tr>
+<tr class="odd">
+<td align="left"><code>Hex</code></td>
+<td align="left">Matches a hexadecimal digit</td>
+<td align="left"><code>[0-9a-fA-F]</code></td>
+</tr>
 <tr class="even">
 <td align="left"><code>String</code></td>
-<td align="left">Matches a double quote delimted string</td>
+<td align="left">Matches a double quote delimted string, returns the value including the double quotes</td>
 <td align="left"><code>&quot;([^&quot;\]|\&quot;|\\)*&quot;</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>LineChar</code></td>
+<td align="left">Matches a single character that is not a newline</td>
+<td align="left"><code>[^\n]</code></td>
 </tr>
 </tbody>
 </table>
@@ -611,7 +616,7 @@ f(a, b)         = &quot;d&quot;</code></pre>
 <h3 id="totality--and-liveabilitychecks">Totality- and liveabilitychecks</h3>
 <p>Can be disabled with <code>--no-check</code>, when they take to long.</p>
 <h3 id="higher-order-functions-and-currying">Higher order functions and currying?</h3>
-<p>Are not possible for now (v 0.1.19). Perhaps in a future version or when someone really needs it and begs for it.</p>
+<p>Are not possible for now (v 0.1.20). Perhaps in a future version or when someone really needs it and begs for it.</p>
 <h3 id="builtin-functions">Builtin functions</h3>
 <table style="width:99%;">
 <colgroup>
@@ -667,10 +672,6 @@ f(a, b)         = &quot;d&quot;</code></pre>
 <td align="left">Stops the function, gives a stack trace. When used in a rule, this won't match a predicate</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>freshvar</code></td>
-<td align="left">Generates an identifier not present in the arguments. If the first argument is an identifier, identifiers are based on that form.</td>
-</tr>
-<tr class="even">
 <td align="left"><code>subs</code></td>
 <td align="left">(expression to replace, to replace with, in this expression) Replaces each occurence of the first expression by the second, in the third argument</td>
 <td align="left">Exactly 3</td>

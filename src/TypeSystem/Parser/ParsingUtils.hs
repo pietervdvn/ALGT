@@ -15,6 +15,7 @@ import Data.List (foldl1)
 digits	= ['0'..'9']
 lowers	= ['a'..'z']
 uppers	= ['A'..'Z']
+hex	= digits ++ ['a'..'f'] ++ ['A'..'F']
 whitespace = [' ','\t']
 
 builtinEscapes	:: [((Char, Char), String)]

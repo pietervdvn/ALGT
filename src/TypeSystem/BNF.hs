@@ -25,15 +25,16 @@ import Control.Arrow ((&&&))
 
 data BNF 	= Literal String	-- Literally parse 'String'
 		| BNFRuleCall Name	-- Parse the rule with the given name
-		| BNFSeq [BNF]	-- Sequence of parts
-		| Identifier		-- Parse an identifier
+		| BNFSeq [BNF]		-- Sequence of parts
+		| Identifier
 		| Any
 		| LineChar
-		| Lower			-- Lowercase letter
+		| Lower
 		| Upper
 		| Digit
-		| String		-- Double-quote delimited string
-		| Number		-- Parse a number
+		| Hex
+		| String
+		| Number
 	deriving (Show, Eq, Ord)
 
 
@@ -60,6 +61,8 @@ builtinSyntax	=
 		("Matches an uppercase letter", "[A-Z]"))
 	, (("Digit", Digit, oneOf digits |> (:[])),
 		("Matches an digit", "[0-9]"))
+	, (("Hex", Hex, oneOf hex |> (:[]))
+		, ("Matches a hexadecimal digit", "[0-9a-fA-F]"))
 	, (("String", String, dqString'),
 		("Matches a double quote delimted string, returns the value including the double quotes", "\"([^\"\\]|\\\"|\\\\)*\""))
 	, (("LineChar", LineChar, noneOf "\n" |> (:[])),
@@ -70,7 +73,7 @@ isValidBuiltin	:: BNF -> String -> Bool
 isValidBuiltin bnf s
 	= let	result	= runParserT (getParserForBuiltin bnf) () ("Pattern "++show s++" against bnf "++show bnf) s
 		in
-		isRight result
+		result |> isRight & either (const False) id
 
 isBuiltin	:: BNF -> Bool
 isBuiltin bnf	= bnf `elem` (builtinSyntax |> fst |> snd3)

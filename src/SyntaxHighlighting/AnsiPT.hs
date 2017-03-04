@@ -70,16 +70,15 @@ renderWithStyle fc styleN str
 
 applyProperty	:: FullColoring -> Name -> (Name, Either Int String -> Doc -> Doc) -> Doc -> Doc
 applyProperty fc style (prop, effect)
-	= case getProperty fc style prop of
-		Nothing		-> id
-		(Just v)	-> effect v
+	= getProperty fc style prop |> effect & fromMaybe id
 
 
 properties	:: [(Name, Either Int String -> Doc -> Doc)]
 properties
       = [ ("foreground-color", fst . closestColor)
 	, ("background-color", snd . closestColor)
-	, ("font-style", either (const id) (\v -> fromMaybe plain $ L.lookup v styles)) ]
+	, ("font-style", either (const id) (\v -> fromMaybe (debold . deunderline) $ L.lookup v styles))
+	]
 
 
 closestColor	:: Either Int String -> (Doc -> Doc, Doc -> Doc)
@@ -113,8 +112,8 @@ colors
 styles	:: [(String, Doc -> Doc)]
 styles
       = [ ("normal", deunderline . debold)
-	, ("underline", underline)
-	, ("bold", bold)
+	, ("underline", underline . debold)
+	, ("bold", bold . deunderline)
 	, ("underlinedbold", underline . bold)
 	]
 

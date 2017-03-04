@@ -51,8 +51,8 @@ number	-> "constant"
 bool	-> "constant"
 e	-> "statement"
 eL	-> "statement"
-eL.4	-> "noise"
-eL.2	-> "noise"
+eL.4	-> "n"
+eL.2	-> "n"
 
 
  Functions

@@ -2,66 +2,100 @@
  terminal
 **********
 
-$black	= "#000000"
-$white	= "#ffffff"
-$red	= "#ff0000"
-$green	= "#00ff00"
-$blue	= "#0000ff"
+Constants
+=========
 
-$grey	= "#999999"
-$darkgreen = "#009900"
+black	= #000000
+white	= #ffffff
+red	= #ff0000
+green	= #00ff00
+blue	= #0000ff
+grey	= #999999
+darkgreen = #009900
+yellow	= #ffff00
 
-$bold	= "bold"
-$under	= "underline"
-$bu	= "underlinedbold"
-$normal	= "normal"
+bold		= "bold"
+underline	= "underline"
+bu		= "underlinedbold"
+normal		= "normal"
 
 
+Defaults
+========
 
-
-foreground-color	: green
-background-color	: black
+foreground-color	: green	
+background-color	: red
+font-style		: normal
 svg-line-color		: green
 svg-line-thickness 	= 1
 svg-dotsize 		= 4
 svg-fontsize 		= 20
 
- type
+
+Styles
 ======
+
+
+ type
+------
 
 foreground-color: blue
 font-style: bold
 
+
  statement
-===========
+-----------
 
 font-style: normal
 
- identifier
-------------
+ identifier (statement)
+------------------------
 
 foreground-color: red
 
- constant
-----------
+ constant (statement)
+----------------------
 
 foreground-color: blue
 
- keyword
----------
+ keyword (statement)
+---------------------
 
  foreground-color: darkgreen
 
 
- comment
-=========
+ header
+--------
+
+size		= "*2"
+font-style	: underline
+background-linecolor	: yellow
+
+ header0 (header)
+-------------------
+
+size		= "*3"
+
+ header1 (header)
+-------------------
+
+size		= "*2"
+
+
+ header2 (header)
+-------------------
+
+size		= "*1.5"
+
+
+
+ comment 
+---------
 
 foreground-color: grey
 
- noise
--------
+ noise (comment)
+------------------
 
 font-style: normal
 foreground-color: grey
-
-
