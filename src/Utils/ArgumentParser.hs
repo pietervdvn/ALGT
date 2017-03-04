@@ -71,7 +71,6 @@ data Args = Args 	{ tsFile		:: String
 			, styleName		:: Name
 			, interactiveArg	:: Maybe Symbol
 			, noMakeupArg		:: Bool
-			, interactiveStyling	:: Maybe String
 			}
 	deriving (Show)
 
@@ -97,6 +96,7 @@ data ExampleFile	= ExFileArgs
 	, testAllProps	:: Bool
 	, verbose	:: Bool
 	, ptSvg		:: Maybe Name
+	, renderHTML	:: Bool
 	} deriving (Show)
 
 data DynamizeArgs	= DynamizeArgs
@@ -110,7 +110,7 @@ data DynamizeArgs	= DynamizeArgs
 
 instance ActionSpecified ExampleFile where
 	actionSpecified args
-		= [testAllProps] |> (args &) & or
+		= [testAllProps, renderHTML] |> (args &) & or
 			|| ([ruleSymbol, function, stepByStep, testProp, ptSvg] |> (args &) |> isJust & or)
 
 	
@@ -237,7 +237,9 @@ targetFile
 			<> long "ptsvg"
 			<> help "Create a neat svg-image of each parsetree"
 			))
-
+		<*> switch
+			(long "html"
+			<> help "Render the file as styled HTML")
 
 args	:: Parser Args
 args	= Args <$> argument str
@@ -303,11 +305,6 @@ args	= Args <$> argument str
 			<> long "no-makeup"
 			<> help "Prints the parsetrees as flat text and not as colored output; usefull to capture output in e.g. LaTeX"
 			<> hidden)
-		<*> optional (strOption
-			(metavar "SYNTACTIC-FORM"
-			<> long "interactive-styling"
-			<> help "Constantly reads a textline from stdIn, gives back how to color"
-			<> hidden))
 
 
 		

@@ -72,5 +72,5 @@ _addConstraint (nm, constraint) constraints
 
 mergeConstraints	:: Constraints -> Constraints -> Either String Constraints
 mergeConstraints a b
-	= foldM (\b constraint -> addConstraint constraint b ) b (M.toList a) 
+	= foldM (flip addConstraint) b (M.toList a) 
 

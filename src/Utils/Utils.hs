@@ -67,6 +67,8 @@ class Check' info a where
 
 inParens str	= "("++str++")"
 
+inDQ str	= "\""++str++"\""
+
 inHeader prefix str chr msg
 	= let	title	= " "++str++" "
 		line	= title |> const chr

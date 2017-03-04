@@ -25,6 +25,8 @@ import ParseTreeInterpreter.PropertyTester
 import Changer.ChangesParser
 import SyntaxHighlighting.Highlighting
 import SyntaxHighlighting.AnsiPT
+import qualified SyntaxHighlighting.AsHTML as HTML
+
 import SyntaxHighlighting.Coloring
 
 import AbstractInterpreter.AbstractInterpreter
@@ -63,6 +65,7 @@ data RunConfig	= RunConfig
 makeLenses ''RunConfig
 
 getTS		= getConfig' $ get rcTs
+getFC		= getConfig' $ get colorScheme
 
 defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False
 
@@ -154,7 +157,6 @@ saveSubtypingSVG s fp
 -------------------------------------- CHANGER ------------------------------------------------
 
 
-
 mainChange	:: TypeSystem -> FilePath -> PureIO TypeSystem
 mainChange ts filepath
 	= do	contents	<- readFile filepath
@@ -216,8 +218,28 @@ handleExampleFile parsedWith exFile pts
 		, ioIfJust' ptSvg	$ renderParseTree `onAll'` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
 					(pts |+> printPTDebug & void)
+		, ioIf' renderHTML	(pts |> snd |+> printPtHTML & void)
+	
 		] |+> (exFile &) & void
 
+
+printPtHTML	:: ParseTree -> PureIO ()
+printPtHTML pt
+	= do	ts	<- getTS
+		fc	<- getFC
+		let rendered	= HTML.renderPT fc (get tsStyle ts) pt
+		putStrLn rendered
+		writeFile "Test.html" rendered
+
+
+unEscape	:: String -> String
+unEscape []	= []
+unEscape ('\\':'\\':str)
+		= '\\':str
+unEscape ('\\':'n':str)
+		= '\n':str
+unEscape (c:str)
+		= c:unEscape str
 
 
 

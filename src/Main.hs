@@ -38,14 +38,12 @@ import AbstractInterpreter.RuleAnalysis
 import Data.Maybe
 
 import Data.Map as M
-import qualified Data.Bifunctor as BF
 
 import ParseTreeInterpreter.PropertyTester
 import Utils.ManualPreprocessor
 
 import Gradualize.Test
 
-import AssetsHelper -- TODO Remove
 
 main	:: IO ()
 main	= do	args	<- getArgs
@@ -68,42 +66,6 @@ main' args
 			let (Just parsedArgs')	= parsedArgs
 			(fc, ts)	<- runIO defaultConfig parsedArgs' (mainPure parsedArgs')
 			interactiveArg parsedArgs' |> interactive ts fc & fromMaybe pass
-			interactiveStyling parsedArgs' |> interactiveParse ts fc & fromMaybe pass
-
-
-interactiveParse	:: TypeSystem -> FullColoring -> Name -> IO ()
-interactiveParse ts fc parseRule
-	= do	putStrLn "# Interactive styling active. Please give filename + input"
-		-- fileName	<- getLine
-		input		<- getLine |> unEscape
-		let fileName	= "interactive" -- TODO
-		generateHTML ts fc parseRule (fileName, input)
-			& either (\msg -> putStrLn $ "# NO PARSE: "++msg) putStrLn
-		interactiveParse ts fc parseRule		
-
-generateHTML	:: TypeSystem -> FullColoring -> Name -> (FilePath, String) -> Either String String
-generateHTML ts fc parseRule (fileName, input)
-	= do	let syntax	= get tsSyntax ts
-		parsed		<- (runParserT (parseSyntax syntax parseRule) () fileName input
-					|> BF.first show)
-		pt		<- parsed
-		return $  "# Parsed "++ (get ptAnnot pt & toParsable)++"\n"
-			++ HTML.renderPT fc (get tsStyle ts) (deAnnot pt)
-
-thtml	= do	let html	= generateHTML AssetsHelper.stfl terminalStyle "e" ("test", "1 + 1 + (\\x : Int . x + 1) True") & either error id
-		putStrLn html
-		writeFile "test.html" (html & lines & tail & unlines)
-
-unEscape	:: String -> String
-unEscape []	= []
-unEscape ('\\':'\\':str)
-		= '\\':str
-unEscape ('\\':'n':str)
-		= '\n':str
-unEscape (c:str)
-		= c:unEscape str
-
-
 
 
 

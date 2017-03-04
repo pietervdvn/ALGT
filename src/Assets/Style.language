@@ -37,7 +37,6 @@ constants	::= constant nls constants | constant
 property	::= identifier ":" identifier | constant
 properties	::= property nls properties | property
 
-
 styleHeader	::= nls identifier "(" identifier ")" nls dashes nls # with a fallback given
 		| nls identifier nls dashes nls
 style		::= styleHeader properties
@@ -54,7 +53,15 @@ knownStyles	::= identifier knownStyles | identifier
  Syntax Style
 ==============
 
+title	-> "h1"
+color	-> "dirty-hack"
+value	-> "constant"
 
+stylesHeader	-> "h2"
+constantsHeader	-> "h2"
+identifier	-> "dirtier-hack"
+
+styleHeader	-> "h3"
 
 Functions
 =========
@@ -144,8 +151,10 @@ checkLoopsFrom(styles, start, current)
 
 # Actual lookups
 
-getPropertyFor	: styleFile -> identifier -> identifier -> mvalue
-getPropertyFor(title constants defaults styles, styleN, propN)
+getPropertyFor	: styleFile -> midentifier -> identifier -> mvalue
+getPropertyFor(sf, "Default", propN)
+		= getDefaultPropertyFor(sf, propN)
+getPropertyFor(title constants defaults styles, (styleN:identifier), propN)
 		= withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN))
 
 getDefaultPropertyFor	: styleFile -> identifier -> mvalue
@@ -154,7 +163,7 @@ getDefaultPropertyFor(title _ defaults _, propN)
 
 getPropertyForS	: styleFile -> style -> identifier -> mvalue
 getPropertyForS(sf, style, propN)	
-		= findPropertyIn(style, propN) 
+		= withDefault(getPropertyFor(sf, fallbackFor(style), propN) , findPropertyIn(style, propN))
 
 withDefault	: mvalue -> mvalue -> mvalue
 withDefault(default, "?")

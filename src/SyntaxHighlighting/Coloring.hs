@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell #-}
-module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, definedStyles, toSVGColorScheme, intAsColor, colorDistance) where
+module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, definedStyles, toSVGColorScheme, intAsColor, colorDistance, highestComponent) where
 
 {- Defines rendering properties for styles -}
 
@@ -22,7 +22,6 @@ import Lens.Micro.TH
 
 import Control.Monad
 
-import Debug.Trace
 
 type Prop	= String
 
@@ -36,13 +35,13 @@ makeLenses ''FullColoring
 
 getProperty	:: FullColoring -> Maybe Name -> Prop -> Maybe (Either Int String)
 getProperty (FullColoring pt ts) Nothing prop
-	= either (flip trace Nothing) return $ inMsg ("While searching prop "++prop++" in the default values") $ do
+	= either (const Nothing) return $ inMsg ("While searching prop "++prop++" in the default values") $ do
 		propPt	<- _asID ts prop
 		found	<- evalFunc ts "getDefaultPropertyFor" [pt, propPt]
 		_extractValue found
 		
 getProperty fc@(FullColoring pt ts) (Just style) prop
- 	= either (flip trace Nothing) return $ inMsg ("While searching a value for "++show style++" and "++prop) $ do	
+ 	= either (const Nothing) return $ inMsg ("While searching a value for "++show style++" and "++prop) $ do	
 		propPt	<- _asID ts prop
 		stylePt	<- _asID ts style
 		found	<- evalFunc ts "getPropertyFor" [pt, stylePt, propPt]
@@ -54,7 +53,7 @@ _asID ts name	= parseTargetLang (get tsSyntax ts) "identifier" "coloring.hs:getP
 
 _extractValue	:: ParseTree -> Either String (Either Int String)
 _extractValue (MLiteral _ "?")
-		= Left $ "No value found"	
+		= Left "No value found"	
 _extractValue (MLiteral ("color",0) str)
 		= return $ Right str
 _extractValue (MLiteral ("value", 0) str)
@@ -85,7 +84,7 @@ _extractStyles pt
 
 definedStyles	:: FullColoring -> [String]
 definedStyles (FullColoring pt ts)
-	= either (error) id $ do
+	= either error id $ do
 		pt'	<- evalFunc ts "knownStylesIn" [pt]
 		return $ _extractStyles pt'
 
@@ -99,6 +98,14 @@ colorDistance ('#':col0) ('#':col1)
 		abs (n r0 - n r1) + abs (n g0 - n g1) + abs (n b0 - n b1)
 colorDistance col0 col1
 	= error $ "Not colors: "++col0++", "++col1
+
+
+highestComponent	:: String -> Int
+highestComponent ('#':col)
+	= let	(r, (g, b))	= col |> digitToInt & splitAt 2 |> splitAt 2
+		n [a,b]		= 16*a + b
+		in 
+		maximum [n r, n g, n b]
 
 intAsColor	:: Int -> String
 intAsColor i

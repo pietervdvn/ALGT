@@ -1,6 +1,6 @@
 
- terminal
-**********
+terminal
+********
 
 Constants
 =========
@@ -9,15 +9,14 @@ black	= #000000
 white	= #ffffff
 red	= #ff0000
 green	= #00ff00
-blue	= #0000ff
+blue	= #5555ff
 grey	= #999999
 darkgreen = #009900
 yellow	= #ffff00
 
 bold		= "bold"
+
 underline	= "underline"
-bu		= "underlinedbold"
-normal		= "normal"
 
 
 Defaults
@@ -25,8 +24,8 @@ Defaults
 
 foreground-color	: green	
 background-color	: black
-font-style		: normal
 font-size		= 14
+font-family		= "Ubuntu Mono"
 
 svg-line-color		: green
 svg-line-thickness 	= 2
@@ -47,8 +46,7 @@ font-style: bold
 
  statement
 -----------
-
-font-style: normal
+ foreground-color: green
 
  identifier (statement)
 ------------------------
@@ -69,22 +67,22 @@ foreground-color: blue
  header
 --------
 
-size		= "*2"
-font-style	: underline
-background-linecolor	: yellow
+size		= 20
+font-style	= "underline"
+background-color: grey
+font-decoration = "underline"
 
- header0 (header)
+ h1 (header)
 -------------------
 
 font-size	= 20
 
- header1 (header)
+ h2 (header)
 -------------------
 
 font-size	= 18
 
-
- header2 (header)
+ h3 (header)
 -------------------
 
 font-size	= 16
