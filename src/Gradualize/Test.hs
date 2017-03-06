@@ -28,20 +28,22 @@ t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 
 
 		-- concretization	:: TypeSystem -> TypeName -> Name -> String -> [AbstractSet] -> ParseTree -> Either String [AbstractSet]
-		let dynSet	= [generateAbstractSet (get tsSyntax ts) "" "type"]
-		let concrFunc	= concretization (dyn, dynSet)
+		let dynSet i	= [generateAbstractSet (get tsSyntax ts) (show i) "type"]
+		let concrFunc	= concretization (dyn, dynSet)	:: ParseTree -> Arguments
 
-		let testPT1	= PtSeq ("type", -1) [MLiteral ("typeL", 1) "Bool", MLiteral ("type",0)  "->", MLiteral ("typeL", 1) "Bool"]
-		let testPT2	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", MLiteral ("typeL", 1) "Bool"]
+		let ptBool	= MLiteral ("typeL", 1) "Bool"
+		let testPT1	= PtSeq ("type", -1) [ptBool, MLiteral ("type",0)  "->", ptBool]
+		let testPT2	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", ptBool]
 		let testPT3	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", dyn]
 
-		print $ concrFunc testPT2
-		print $ concrFunc testPT3
 
-
-		--gradualizeFunc	:: TypeSystem -> TypeName -> String -> Name -> Name -> Name -> Either String Clause
-		let extraClause	= gradualizeFunc ts "type" "?" "concr" "abstract" "dom" & either error id
-		
-		putStrLn $ toParsable' ("domain-extra", 24::Int) extraClause
+		let testPT args0 args1
+				= (do	arg0	<- args0 & concrFunc
+					arg1	<- args1 & concrFunc
+					possibleResults ts "equate" [arg0, arg1] & either error id
+						 & return) |> toParsable' " | " & unlines & putStrLn
+	
+		testPT testPT3 testPT2
+		-- testPT3 & concrFunc & toParsable' " | " & putStrLn
 
 		return (ts, ch)

@@ -15,7 +15,7 @@ echo "createAssets False \"Assets\" \"Assets.hs\"" | ghci -fno-warn-tabs Utils/C
 cd ..
 
 echo "Stack build"
-stack build
+nice -n 19 stack build
 STACKEXIT="$?"
 echo "EXIT CODE: $STACKEXIT"
 

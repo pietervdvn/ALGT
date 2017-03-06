@@ -513,15 +513,15 @@ instance ToString AbstractSet where
 	toParsable (ConcreteInt _ nm)		= "Number"
 	toParsable (AsSeq _ _ ass)		= ass |> toParsable & unwords & inParens
 	
-	toCoParsable as@(EveryPossible _ n tp)		= tp++n
+	toCoParsable as@(EveryPossible _ n tp)		= tp++inParens n
 	toCoParsable as@(ConcreteLiteral _ s)		= show s ++ _to as
 	toCoParsable as@(ConcreteBuiltin _ bnf nm)	= toParsable bnf ++nm ++ _to as
 	toCoParsable as@(ConcreteInt _ nm)		= "Number"++nm ++ _to as
-	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as ++ "(gen: "++generatorOf as++"/"++show (getSeqNumber as)++")"
+	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as ++ ": "++generatorOf as++"/"++show (getSeqNumber as)
 
 
 	debug	= show
-_to as	= "::"++typeOf as
+_to as	=  "" -- "::"++typeOf as
 
 
 

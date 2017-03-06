@@ -3,15 +3,22 @@ module Gradualize.FunctionFixer where
 {-  Tries to figure out what f(?) should be -}
 
 import Utils.Utils
+import Utils.ToString
 
 import Changer.Changes
 
 import AbstractInterpreter.AbstractSet
+import AbstractInterpreter.FunctionAnalysis
 
 import TypeSystem
 
+import qualified Data.Map as M
+import Data.List as L
+
 import AbstractInterpreter.AbstractFunctionInterpreter
 import ParseTreeInterpreter.FunctionInterpreter as PTI
+
+import Debug.Trace
 
 {-
 Introduces a dynamic type "?" into the typeRule at syntax; extends the concretization function with "concretization("?") = "?"
@@ -48,18 +55,25 @@ Gradualizes a function
 -}
 
 gradualizeFunc	:: TypeSystem -> TypeName -> String -> Name -> Name -> Name -> Either String Clause
-gradualizeFunc ts dynSet dyn concrN absN funcN
-	= do	concr	<- checkFunctionExists ts concrN
-		abs	<- checkFunctionExists ts absN
-		func	<- checkFunctionExists ts funcN
-		error "hi"
+gradualizeFunc ts dynSet dyn  absN funcN
+	= do	error "hi"
 
+
+
+possibleResults	:: TypeSystem -> Name -> Arguments -> Either String [AbstractSet]
+possibleResults ts funcN args
+	= do	function	<- checkFunctionExists ts funcN
+		let fanalysis	= analyzeFunction ts function args
+		let analysises	= fanalysis & get clauseAnalysises |> get results
+		let results	= analysises >>= M.elems 
+		--analyzeFunction	::  TypeSystem -> Function -> Arguments -> FunctionAnalysis
+		trace ("INPUT: "++toCoParsable' ", " args ++ toParsable' (funcN, 24::Int, function) fanalysis) $ return $ nub results
 
 
 {- Given an abstract set as input, gives possible output as result from concretization; -}
-concretization	:: (ParseTree, [AbstractSet]) -> ParseTree -> [AbstractSet]
+concretization	:: (ParseTree, Int -> [AbstractSet]) -> ParseTree -> [AbstractSet]
 concretization (dyn, dynSet) pt
 	= do	let dynAS	= dyn & fromParseTree "dyn"
 		let baseAS	= pt & fromParseTree "base"
 		let dynPaths	= baseAS & searchPathAS (== dynAS)
-		foldl (\ass p -> [ replaceAS as p option | option <- dynSet, as <- ass ]) [baseAS] dynPaths		
+		foldl (\ass (i, p) -> [ replaceAS as p option | option <- dynSet i, as <- ass ]) [baseAS] (mapi dynPaths)		

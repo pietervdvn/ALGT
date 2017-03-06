@@ -1,5 +1,4 @@
 
- 
  Language
 **********
 
@@ -9,36 +8,49 @@
 stars ::= $ "*" stars | "*"
 equals ::= $ "=" equals | "="
 
-syntaxHeader ::= "Syntax" nls equals nls
 
-titleChar::= Upper| Lower| Digit | " "
+
+syntaxHeader ::= "Syntax" nl equals nls
+
+titleChar::= Upper| Lower| digit | " "
 titleLine ::= $ titleChar titleLine | titleChar
 title ::= nls titleLine nls stars | titleLine nls stars
 
 commentLine ::= LineChar commentLine | LineChar
 comment ::= "#" commentLine
 
-nls ::= "
-" comment nls | "
-" nls | "
-" 
+nl ::= "\n"
+nls ::= nl comment nls | nl nls | nl
 
-rest ::= $ Any rest | Any
+rest ::= $ Any rest | Any 
 
-### All about Syntax
+### All about syntax 
 
 identifier ::= Identifier
+digit ::= Digit
 
 wsMode ::= "::=" "$" | "::=" | "~~=" "$" | "~~="
 
-bnfTerm ::= String | identifier | bnfBuiltin
-bnfBuiltin ::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar"
+bnfTerm ::= styleName | identifier | bnfBuiltin | String
+bnfBuiltin ::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar" | "Identifier"
 bnfExpression ::= bnfTerm "|" bnfExpression | bnfTerm bnfExpression | bnfTerm
 
 bnf ::= identifier wsMode bnfExpression
-bnfs ::= bnf nls bnfs | bnf
+bnfs ::= bnf nls bnfs | bnf nls
 
-language ::= title nls syntaxHeader bnfs rest
+### All about syntax styling
+
+styleHeader ::= "Syntax Style" nl equals nls
+styleName ::= "\"" identifier "\""
+
+styleChoice ::= digit styleChoice | digit
+
+styleLine ::= identifier "." styleChoice "->" styleName | identifier "->" styleName 
+styleLines ::= styleLine nls styleLines | styleLine
+ 
+### Main file
+
+language ::= title nls syntaxHeader bnfs styleHeader styleLines rest  
 
 
 
@@ -48,12 +60,18 @@ language ::= title nls syntaxHeader bnfs rest
 rest -> "type"
 title -> "h1"
 syntaxHeader -> "h2"
+styleHeader -> "h2"
+equals -> "noise"
 identifier -> "type"
 wsMode -> "operator"
 bnfExpression.0 -> "constant"
 bnfTerm -> "statement"
 bnfBuiltin -> "keyword"
 comment -> "comment"
+
+styleLine -> "noise"
+styleName -> "dirtier-hack"
+
 
 
 

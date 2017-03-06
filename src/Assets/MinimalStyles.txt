@@ -1,0 +1,45 @@
+# This file defines what styles a .style should at least define
+
+# Most languages:
+
+statement
+identifier
+type
+constant
+keyword
+special-char
+number
+float
+builtin
+variable
+proprocessor
+
+# comments and markup
+comment
+noise
+header1
+header2
+header3
+header4
+header5
+header6
+emph
+bold
+url
+monospace
+
+hline
+
+
+
+
+warning
+note
+
+
+# editor specific
+
+cursor
+linehighlight
+selection
+
