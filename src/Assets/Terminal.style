@@ -36,6 +36,11 @@ svg-fontsize 		= 20
 Styles
 ======
 
+ error
+-------
+
+foreground-color: black
+background-color: red
 
  type
 ------

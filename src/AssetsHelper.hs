@@ -25,6 +25,7 @@ terminalStyle	= Assets._Terminal_style
 			& parseColoringFile "Assets/Terminal.style"
 			& either error id
 
+knownStyles	:: M.Map Name FullColoring
 knownStyles	= Assets.allAssets & filter ((".style" `isSuffixOf`) . fst)
 			|> (fst &&& (\(fp, style) -> parseColoringFile ("Assets: "++fp) style & either error id))
 			& M.fromList

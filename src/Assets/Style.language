@@ -59,9 +59,11 @@ value	-> "constant"
 
 stylesHeader	-> "h2"
 constantsHeader	-> "h2"
+defaultsHeader	-> "h3"
 identifier	-> "dirtier-hack"
 
 styleHeader	-> "h3"
+equals		-> "noise"
 
 Functions
 =========

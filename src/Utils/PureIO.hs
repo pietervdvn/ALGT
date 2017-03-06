@@ -61,7 +61,7 @@ runInput fn	=  filesNeeded fn |> (id &&& IO.readFile) |+> sndEffect |> M.fromLis
 
 checkInput	:: (NeedsFiles a) => a -> PureIO' config ()
 checkInput fn
-	= do	let needed	= filesNeeded fn
+	= do	let needed	= filesNeeded fn & nub
 		inp		<- getInputs
 		let found	= inp & M.keys
 		let missing	= needed \\ found
@@ -126,12 +126,13 @@ runPureOutput config inp pureIO
 	= runPure config inp (pureIO & isolateFailure') & either (error "Bug") id & snd 
 
 
+runIO			:: (NeedsFiles a) => config -> a -> PureIO' config x -> IO x
+runIO c a io	= runIOWith c M.empty a io
 
-
-runIO		:: (NeedsFiles a) => config -> a -> PureIO' config x -> IO x
-runIO config needsFiles f
+runIOWith		:: (NeedsFiles a) => config -> Input -> a -> PureIO' config x -> IO x
+runIOWith config extraInput needsFiles f
 	= do	inp	<- runInput needsFiles
-		case runPure config inp f of
+		case runPure config (M.union extraInput inp) f of
 			Left msg	-> error msg
 			Right (x, output)	-> runOutput output >> return x
 

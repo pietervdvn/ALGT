@@ -196,6 +196,12 @@ mainExFilePure args
 		parsed		<- mapi inputs |> parseWith path ts (parser args) |+> liftEith
 		let parsed'	= zip inputs parsed
 		handleExampleFile (parser args) args parsed'
+
+		when (renderHTML args) $ do
+			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
+					& liftEith
+			printPtHTML pts'
+
 		return parsed'
 
 parseWith	:: FilePath -> TypeSystem -> Name -> (Int, String) -> Either String ParseTree
@@ -218,18 +224,17 @@ handleExampleFile parsedWith exFile pts
 		, ioIfJust' ptSvg	$ renderParseTree `onAll'` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
 					(pts |+> printPTDebug & void)
-		, ioIf' renderHTML	(pts |> snd |+> printPtHTML & void)
 	
 		] |+> (exFile &) & void
 
 
-printPtHTML	:: ParseTree -> PureIO ()
+printPtHTML	:: ParseTreeA LocationInfo -> PureIO ()
 printPtHTML pt
 	= do	ts	<- getTS
 		fc	<- getFC
-		let rendered	= HTML.renderPT fc (get tsStyle ts) pt
+		let rendered	= HTML.renderPT fc (get tsStyle ts) $ deAnnot pt
+		putStrLn $ " # Parsed and rendered: "++(pt & get ptAnnot & toParsable)
 		putStrLn rendered
-		writeFile "Test.html" rendered
 
 
 unEscape	:: String -> String

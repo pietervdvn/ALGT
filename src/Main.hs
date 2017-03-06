@@ -15,6 +15,7 @@ import Control.Monad
 
 import System.Environment
 import System.Exit
+import System.IO
 
 import Text.PrettyPrint.ANSI.Leijen
 import Text.Parsec
@@ -64,9 +65,19 @@ main' args
 			when (isNothing parsedArgs) $
 				error  "No typesystem file given. See -h"
 			let (Just parsedArgs')	= parsedArgs
-			(fc, ts)	<- runIO defaultConfig parsedArgs' (mainPure parsedArgs')
+			let needsInput	= parsedArgs' & exampleFiles |> fileName |> (== ".") & or	-- we give each exampleFile config the same input
+			extraFile 	<- if needsInput then readLines else return []
+			let extraInput	= M.singleton "." $ unlines extraFile
+			
+			(fc, ts)	<- runIOWith defaultConfig extraInput parsedArgs' (mainPure parsedArgs')
 			interactiveArg parsedArgs' |> interactive ts fc & fromMaybe pass
 
+readLines	:: IO [String]
+readLines 	= do	end	<- isEOF
+			if end then return [] else do
+				inp	<- getLine
+				rest	<- readLines
+				return (inp:rest)
 
 
 interactive	:: TypeSystem -> FullColoring -> Symbol -> IO ()
@@ -75,23 +86,21 @@ interactive ts fc symbol
 		let inTypes	= relTypesWith In rel
 		unless (length inTypes == 1) $ print "expected exactly one input type for interactive mode"
 		let [inType]	= inTypes
-		repl ts fc inType rel
+		interact (repl ts fc inType rel)
 		
-repl		:: TypeSystem -> FullColoring -> TypeName -> Relation -> IO ()
-repl ts fc tn rel
-	= do	input	<- getLine
-		unless (Prelude.null input || input == "\EOT") $ do
-			let parsed	= parseTargetLang (get tsSyntax ts) tn "Interactive" input
-			case parsed of
-				Left err	-> putStrLn err
-				Right pt	-> proofThat ts rel [pt]
-							& either putStrLn (printProof ts fc rel)
-			repl ts fc tn rel
+repl		:: TypeSystem -> FullColoring -> TypeName -> Relation -> String -> String
+repl _ _ _ _ ""	= ""
+repl ts fc tn rel input
+	= either id id $
+	  do	parsed	<- parseTargetLang (get tsSyntax ts) tn "Interactive" input
+		proof	<- proofThat ts rel [parsed]
+		return $ printProof ts fc rel proof
+			
 
-printProof	:: TypeSystem -> FullColoring -> Relation -> Proof -> IO ()
+printProof	:: TypeSystem -> FullColoring -> Relation -> Proof -> String
 printProof ts fc rel proof
-	= do	let  [pt]	= _proofConcl proof & get conclusionArgs
+	= let 	[pt]	= _proofConcl proof & get conclusionArgs
 					& filterMode Out rel	:: [ParseTree]
-		let ptDoc	= Ansi.renderPT fc (get tsStyle ts) pt
-		print ptDoc
+		ptDoc	= Ansi.renderPT fc (get tsStyle ts) pt
+		in show ptDoc
 				

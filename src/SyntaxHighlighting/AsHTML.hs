@@ -18,27 +18,31 @@ renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> String
 renderPT fc style pt
 	= let	ptannot		= determineStyle' style pt
 		ptannot'	= ptannot |> styleElem
-		head		= cssFor fc & comment & inT "style"
-		body		= _renderPT ptannot' & inT "body"
+		head		= cssFor fc & comment & inLT "style"
+		body		= _renderPT ptannot' & inLT "body"
 		in
-		(head ++ body) & inT "html"
+		(head ++ body) & inLT "html"
 		
 		
 
 
 _renderPT	:: ParseTreeA (Name, [Attr]) -> String
 _renderPT (MLiteralA ("dirty-hack", attrs) _ token)
-		= inLT' "span" [SA "style" ("color:"++token++";background:"++contrastColor token)] $ insertBR token
+		= inTag "span" [SA "style" ("color:"++token++";background:"++contrastColor token)] $ insertBR token
 _renderPT (MLiteralA ("dirtier-hack", attrs) _ token)
-		= inLT' "span" [SA "class" token] $ insertBR token
-
+		= inTag "span" [SA "class" token] $ insertBR token
 _renderPT (MLiteralA (tag, attrs) _ token)
-		= inLT' tag attrs $ insertBR token
+		= inTag tag attrs $ insertBR token
 _renderPT (MIntA t m token)
 		= _renderPT (MLiteralA t m $ show token)
 _renderPT (PtSeqA (tag, attrs) _ pts)
-		= pts |> _renderPT & unlines & inT' tag attrs
+		= let	rendered	= pts |> _renderPT & concat in
+			rendered & if null attrs then id else inTag tag attrs
 
+inTag		:: Name -> [Attr] -> String -> String
+inTag _ _ ""	= ""
+inTag _ [] c	= c
+inTag n a c	= inLT' n a c
 
 contrastColor	:: String -> String
 contrastColor color
@@ -49,9 +53,20 @@ contrastColor color
 insertBR	:: String -> String
 insertBR []	= []
 insertBR ('\n':str)
-		= "<br />"++str
+		= "<br />"++insertBR str
 insertBR (' ':str)
-		= "&nbsp;"++str
+		= "&nbsp;"++insertBR str
+insertBR('<':str)
+		= "&lt;"++insertBR str
+insertBR('>':str)
+		= "&gt;"++insertBR str
+insertBR('\t':str)
+		= "&#9;"++insertBR str
+insertBR('\'':str)
+		= "&apos;"++insertBR str
+insertBR('"':str)
+		= "&quot;"++insertBR str
+
 insertBR(c:str)	= c:insertBR str
 
 

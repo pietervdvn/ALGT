@@ -5,7 +5,7 @@ This module defines parsing of the arguments and reading/writing of the config f
 -}
 
 import TypeSystem
-import AssetsHelper
+import AssetsHelper as AH
 
 import Utils.Utils
 import Utils.PureIO hiding (writeFile, readFile, putStrLn)
@@ -49,6 +49,7 @@ data MainArgs	= MainArgs
 			, realArgs	:: Maybe Args
 			, runTests	:: Bool
 			, saveGTKSourceview	:: Bool
+			, styles	:: Bool
 			}
 
 instance ActionSpecified MainArgs where
@@ -115,7 +116,7 @@ instance ActionSpecified ExampleFile where
 
 	
 instance NeedsFiles ExampleFile where
-	filesNeeded exfile	= [fileName exfile]
+	filesNeeded exfile	= [fileName exfile | fileName exfile /= "."]
 
 
 data Config	= Config 	
@@ -129,7 +130,7 @@ emptyConfig
 parseArgs	:: ([Int], String) -> [String] -> IO (Bool, Maybe Args)
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		MainArgs doShowVersion saveManPDF saveManHTML args runTests saveGTKSourceview
+		MainArgs doShowVersion saveManPDF saveManHTML args runTests saveGTKSourceview styles
 				<- handleParseResult result
 		return $ doShowVersion ()
 		when saveManPDF $ do
@@ -143,6 +144,9 @@ parseArgs version strs
 		when saveGTKSourceview $ do
 			writeFile "language.lang" _language_lang
 			putStrLn "Saved 'language.lang' to current directory. Move it to: '~/.local/share/gtksourceview-3.0/language-specs' to enable highlighting"
+			exitSuccess
+		when styles $ do
+			putStrLn $ AH.knownStyles & M.keys & unlines
 			exitSuccess
 		return (runTests, args)
 
@@ -191,7 +195,7 @@ targetFile
 	= ExFileArgs <$> 
 		argument str
 			(metavar "TARGET-PROGRAM-FILE"
-			<> help "Filepath of the target programming language"
+			<> help "Filepath of the target programming language; use . to read from stdIn"
 			<> action "file")
 		<*> argument str
 			(metavar "PARSE-TYPE"
@@ -349,4 +353,6 @@ mainArgs versionMsg
 		<*> switch
 			(long "install-gtk-sourceview"
 			<> help "Saves the language spec for .language files. Move it to the language specs file for gtk-sourceview to enable syntax highlighting in editors using GTK-sourceview (GEdit, Pluma,...")
-		
+		<*> switch
+			(long "styles"
+			<> help "What styles are default?")

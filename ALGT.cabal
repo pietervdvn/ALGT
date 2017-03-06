@@ -125,5 +125,8 @@ executable ALGT
         Gradualize.Test
         Graphs.UnionFind
         SyntaxHighlighting.ParseTreeImage
+        AbstractInterpreter.Constraints
+        SyntaxHighlighting.AsHTML
+
 
 
