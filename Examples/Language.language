@@ -1,0 +1,65 @@
+
+ 
+ Language
+**********
+
+ Syntax
+========
+
+stars ::= $ "*" stars | "*"
+equals ::= $ "=" equals | "="
+
+syntaxHeader ::= "Syntax" nls equals nls
+
+titleChar::= Upper| Lower| Digit | " "
+titleLine ::= $ titleChar titleLine | titleChar
+title ::= nls titleLine nls stars | titleLine nls stars
+
+commentLine ::= LineChar commentLine | LineChar
+comment ::= "#" commentLine
+
+nls ::= "
+" comment nls | "
+" nls | "
+" 
+
+rest ::= $ Any rest | Any
+
+### All about Syntax
+
+identifier ::= Identifier
+
+wsMode ::= "::=" "$" | "::=" | "~~=" "$" | "~~="
+
+bnfTerm ::= String | identifier | bnfBuiltin
+bnfBuiltin ::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar"
+bnfExpression ::= bnfTerm "|" bnfExpression | bnfTerm bnfExpression | bnfTerm
+
+bnf ::= identifier wsMode bnfExpression
+bnfs ::= bnf nls bnfs | bnf
+
+language ::= title nls syntaxHeader bnfs rest
+
+
+
+ Syntax Style
+==============
+
+rest -> "type"
+title -> "h1"
+syntaxHeader -> "h2"
+identifier -> "type"
+wsMode -> "operator"
+bnfExpression.0 -> "constant"
+bnfTerm -> "statement"
+bnfBuiltin -> "keyword"
+comment -> "comment"
+
+
+
+
+
+
+
+
+

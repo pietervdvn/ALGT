@@ -1,0 +1,51 @@
+ 
+ Markdown 
+**********
+
+ Syntax
+========
+
+
+mod		~~= "*" | "_"
+italic		~~= mod mod words mod mod
+bold		~~= mod words mod
+wordChar	::= Lower | Upper | Digit
+word		//= $ wordChar word | wordChar
+words		//= word ws word
+
+lineElem	::= italic | bold | words
+lineConts	::= ws lineElem ws lineConts | lineElem ws lineConts | lineElem lineConts | lineElem
+
+weirdLineCont	::= $ LineChar weirdLineCont | LineChar
+weirdLine	::= weirdLineCont nl
+wsChar		::= " " | "\t"
+ws		::= wsChar ws | wsChar
+
+line		~~= ws lineConts emptyLine | lineConts emptyLine
+emptyLine	~~= $ ws nl | nl
+nl		//= "\n"
+
+equals		::= $ "=" equals | "="
+dashes		::= $ "-" dashes | "-"
+
+header1		::= line equals nl | "#" line
+header2		::= line dashes nl | "##" line
+header3		::= "###" line
+
+paragraph	::= line paragraph | line
+
+markdownElem	::= header1 | header2 | header3 | paragraph | emptyLine | weirdLine
+
+markdown	::= markdownElem markdown | markdownElem
+
+
+ Syntax Style
+==============
+
+header1	-> "h1"
+header2 -> "h2"
+header3 -> "h3"
+
+italic	-> "keyword"
+bold	-> "type"
+
