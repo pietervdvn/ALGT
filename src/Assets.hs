@@ -13,6 +13,7 @@ import Data.ByteString.Lazy (toStrict)
 
 allAssets = [("White.style", _White_style)
 			, ("White.style1", _White_style1)
+			, ("WhiteFlat.style", _WhiteFlat_style)
 			, ("language-changes.lang", _language_changes_lang)
 			, ("Style.language", _Style_language)
 			, ("Terminal.style", _Terminal_style)
@@ -20,6 +21,7 @@ allAssets = [("White.style", _White_style)
 			, ("language.lang", _language_lang)
 			, ("MinimalStyles.txt", _MinimalStyles_txt)
 			, ("Manual/TypeTrees1.svg", _Manual_TypeTrees1_svg)
+			, ("Manual/2.3Tut-Relations.md", _Manual_2_3Tut_Relations_md)
 			, ("Manual/2.0Tut-Intro.md", _Manual_2_0Tut_Intro_md)
 			, ("Manual/6Thanks.md", _Manual_6Thanks_md)
 			, ("Manual/TypeTrees2.svg", _Manual_TypeTrees2_svg)
@@ -138,6 +140,10 @@ _White_style
 _White_style1
 	 = unsafePerformIO $ readFile "src/Assets/White.style1"
 
+{-# NOINLINE _WhiteFlat_style #-}
+_WhiteFlat_style
+	 = unsafePerformIO $ readFile "src/Assets/WhiteFlat.style"
+
 {-# NOINLINE _language_changes_lang #-}
 _language_changes_lang
 	 = unsafePerformIO $ readFile "src/Assets/language-changes.lang"
@@ -165,6 +171,10 @@ _MinimalStyles_txt
 {-# NOINLINE _Manual_TypeTrees1_svg #-}
 _Manual_TypeTrees1_svg
 	 = unsafePerformIO $ readFile "src/Assets/Manual/TypeTrees1.svg"
+
+{-# NOINLINE _Manual_2_3Tut_Relations_md #-}
+_Manual_2_3Tut_Relations_md
+	 = unsafePerformIO $ readFile "src/Assets/Manual/2.3Tut-Relations.md"
 
 {-# NOINLINE _Manual_2_0Tut_Intro_md #-}
 _Manual_2_0Tut_Intro_md

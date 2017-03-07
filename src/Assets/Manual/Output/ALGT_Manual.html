@@ -10,7 +10,7 @@
 <body>
 <h1 id="overview">Overview</h1>
 <p>This document gives an overview of the <em>ALGT</em>-tool. First, a general overview of what the tool does is given and why it was developped. Second, a hands-on tutorial develops a Simply Typed Functional Language (STFL). Thirdly, the reference manual gives an in-depth overview of the possibilities and command line flags. Fourth, some concepts and algorithms are explained more thoroughly, together with properties they use. And at last, the 'dynamize' and 'gradualize' options are explained in depth, as these are what the master dissertation is about.</p>
-<p>This documentation is about version <strong>0.1.20</strong> (<code>Total Not Identifier</code>), generated on 2017-3-4 .</p>
+<p>This documentation is about version <strong>0.1.22.1</strong> (<code>Totally HTML</code>), generated on 2017-3-7 .</p>
 <h1 id="what-is-algt">What is ALGT?</h1>
 <p><em>ALGT</em> (<em>Automated Language Generation Tool</em> <a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>) is a tool to formally specify any programming language. This is done by first declaring a syntax, using BNF, and then declaring semantics by introducing logical deduction rules, such as evaluation or typing rules. Eventually, properties can be introduced which can be tested. Of course, these can be run.</p>
 <p>The tool is kept as general as possible, so any language can be modelled.</p>
@@ -261,10 +261,16 @@
 <h3 id="codomain">Codomain</h3>
 <p><code>codomain</code> can be implemented totally analogously:</p>
 
-<h2 id="relations-and-rules">Relations and Rules</h2>
-<h2 id="building-smallstep">Building smallstep</h2>
-<h2 id="building-bigstep">Building bigstep</h2>
-<h2 id="building-a-typechecker">Building a typechecker</h2>
+<h2 id="relations-and-rules-building-the-evaluator">Relations and Rules: building the evaluator</h2>
+<p>While we could build an function which evaluates our programming languages, language designers love <em>natural deduction</em> more. Don't worry if you never heard about that before, we'll explain it right away!</p>
+<h3 id="declaring-a-relation">Declaring a relation</h3>
+<p>First, we declare a new section inside our <em>STFL.language</em>, with a relation declaration inside:</p>
+
+<p>Let's break this line down.</p>
+<p>The first part, <code>(→)</code>, says that we declare a relation with name <code>→</code>. Except from some builtin symbols, you can use whatever string you want, including unicode<a href="#fn8" class="footnoteRef" id="fnref8"><sup>8</sup></a>. If you don't want to use the unicode-arrow for this tutorial, you can replace <code>→</code> by <code>-&gt;</code>.</p>
+<p>The second part, <code>: expr (in), expr (out)</code> states that this is a relation between two <code>expr</code>. As example, <code>2 + 3</code> , <code>5</code> will be in <code>(→)</code> or written more conventionally <code>2 + 3 →</code> <code>5</code>.</p>
+<p>What about the <code>(in)</code> and <code>(out)</code> parts? These are to help the computer. Given <code>2 + 3</code>, it's pretty easy for the computer to calculate <code>5</code>. Given <code>5</code>, the computer can't magically deduce that this was computed by calculating <code>2 + 3</code>, especially because an infinite amount of possible calculations might lead to the result <code>5</code>. We call this the <em>mode</em> of the argument.</p>
+<p>The last part, <code>Pronounced as &quot;evaluation&quot;</code> defines a name for the relation. It's just an extra, to help users of your language to know what a relation is supposed to do or to help them searching it on a search engine.</p>
 <h2 id="properties">Properties</h2>
 <h2 id="recap-used-command-line-arguments">Recap: used command line arguments</h2>
 <h1 id="reference-manual">Reference manual</h1>
@@ -616,7 +622,7 @@ f(a, b)         = &quot;d&quot;</code></pre>
 <h3 id="totality--and-liveabilitychecks">Totality- and liveabilitychecks</h3>
 <p>Can be disabled with <code>--no-check</code>, when they take to long.</p>
 <h3 id="higher-order-functions-and-currying">Higher order functions and currying?</h3>
-<p>Are not possible for now (v 0.1.20). Perhaps in a future version or when someone really needs it and begs for it.</p>
+<p>Are not possible for now (v 0.1.22.1). Perhaps in a future version or when someone really needs it and begs for it.</p>
 <h3 id="builtin-functions">Builtin functions</h3>
 <table style="width:99%;">
 <colgroup>
@@ -678,7 +684,7 @@ f(a, b)         = &quot;d&quot;</code></pre>
 </tr>
 </tbody>
 </table>
-<h2 id="relations-and-rules-1">Relations and Rules</h2>
+<h2 id="relations-and-rules">Relations and Rules</h2>
 <h2 id="properties-1">Properties</h2>
 <h2 id="command-line-flags">Command line flags</h2>
 <h1 id="used-concepts-and-algorithms">Used concepts and algorithms</h1>
@@ -700,6 +706,7 @@ f(a, b)         = &quot;d&quot;</code></pre>
 <li id="fn5"><p>These images can be created with <code>ALGT STLF.language examples.stfl -l --ptsvg Outputname</code><a href="#fnref5">↩</a></p></li>
 <li id="fn6"><p>These images can be created with <code>ALGT STLF.language examples.stfl -l --ptsvg Outputname</code><a href="#fnref6">↩</a></p></li>
 <li id="fn7"><p>Creating this svg might take a long time for complicated syntaxes, as ALGT calculates the ordering of labels resulting in the least intersecting lines.<a href="#fnref7">↩</a></p></li>
+<li id="fn8"><p>to enter an unicode character on a linux machine, type <code>Left-Ctrl + Shift + U</code>, release, and type the hexcode of the desired character, e.g. <code>2192</code> to get the right-arrow<a href="#fnref8">↩</a></p></li>
 </ol>
 </div>
 </body>

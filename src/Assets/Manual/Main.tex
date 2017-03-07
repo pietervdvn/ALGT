@@ -20,15 +20,20 @@
 \usepackage{color}
 \usepackage{amssymb,amsmath}
 
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2192}{$\rightarrow$}
+
+
 
 \definecolor{gray}{rgb}{0.9,0.9,0.9}
 \definecolor{black}{rgb}{0,0,0}
 \definecolor{white}{rgb}{1,1,1}
 
 \lstset{
-  backgroundcolor=\color{gray},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  backgroundcolor=\color{gray},
   basicstyle=\footnotesize\ttfamily,
-  frame=l
+  frame=l,
+  literate={→}{{$\rightarrow$}}1
 }
 
 \lstdefinestyle{terminal}{

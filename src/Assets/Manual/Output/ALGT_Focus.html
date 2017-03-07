@@ -8,6 +8,21 @@
   <style type="text/css">code{white-space: pre;}</style>
 </head>
 <body>
+<h2 id="relations-and-rules-building-the-evaluator">Relations and Rules: building the evaluator</h2>
+<p>While we could build an function which evaluates our programming languages, language designers love <em>natural deduction</em> more. Don't worry if you never heard about that before, we'll explain it right away!</p>
+<h3 id="declaring-a-relation">Declaring a relation</h3>
+<p>First, we declare a new section inside our <em>STFL.language</em>, with a relation declaration inside:</p>
 
+<p>Let's break this line down.</p>
+<p>The first part, <code>(→)</code>, says that we declare a relation with name <code>→</code>. Except from some builtin symbols, you can use whatever string you want, including unicode<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. If you don't want to use the unicode-arrow for this tutorial, you can replace <code>→</code> by <code>-&gt;</code>.</p>
+<p>The second part, <code>: expr (in), expr (out)</code> states that this is a relation between two <code>expr</code>. As example, <code>2 + 3</code> , <code>5</code> will be in <code>(→)</code> or written more conventionally <code>2 + 3 →</code> <code>5</code>.</p>
+<p>What about the <code>(in)</code> and <code>(out)</code> parts? These are to help the computer. Given <code>2 + 3</code>, it's pretty easy for the computer to calculate <code>5</code>. Given <code>5</code>, the computer can't magically deduce that this was computed by calculating <code>2 + 3</code>, especially because an infinite amount of possible calculations might lead to the result <code>5</code>. We call this the <em>mode</em> of the argument.</p>
+<p>The last part, <code>Pronounced as &quot;evaluation&quot;</code> defines a name for the relation. It's just an extra, to help users of your language to know what a relation is supposed to do or to help them searching it on a search engine.</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>to enter an unicode character on a linux machine, type <code>Left-Ctrl + Shift + U</code>, release, and type the hexcode of the desired character, e.g. <code>2192</code> to get the right-arrow<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
 </body>
 </html>

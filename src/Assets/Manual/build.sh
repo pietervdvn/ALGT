@@ -26,26 +26,26 @@ do
 	fi
 done
 
-PANDOC_EXTENSIONS=" --tab-stop=8 -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references --latex-engine=xelatex"
-for SET in *.slideshow
-do
-	SETNAME=${SET%.slideshow}
-	OUTFILE="$SETNAME-slides.md"
-	echo -n "Building slideshow $SET (dumpfile $OUTFILE) with lines: "
-	rm $OUTFILE 2> /dev/null
-	for FILE in `cat $SET`
-	do
-		cat $FILE | sed "s/\[style=terminal\]//g" >> $OUTFILE
-	done
-	cat $OUTFILE | wc -l
-	
-	echo "Running pandoc for slides on $OUTFILE"
-	cat $OUTFILE
-	rm "Slides_$SETNAME.pdf" 2> /dev/null
-	pandoc $PANDOC_EXTENSIONS --slide-level 2 --listings -t beamer $OUTFILE -o "Slides_$SETNAME.pdf" # --variable mainfont="Ubuntu"
-	cp "Slides_$SETNAME.pdf" ../Output/
+PANDOC_EXTENSIONS=" --tab-stop=8 -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references"
+#for SET in *.slideshow
+#do
+#	SETNAME=${SET%.slideshow}
+#	OUTFILE="$SETNAME-slides.md"
+#	echo -n "Building slideshow $SET (dumpfile $OUTFILE) with lines: "
+#	rm $OUTFILE 2> /dev/null
+#	for FILE in `cat $SET`
+#	do
+#		cat $FILE | sed "s/\[style=terminal\]//g" >> $OUTFILE
+#	done
+#	cat $OUTFILE | wc -l
+#	
+#	echo "Running pandoc for slides on $OUTFILE"
+#	cat $OUTFILE
+#	rm "Slides_$SETNAME.pdf" 2> /dev/null
+#	pandoc $PANDOC_EXTENSIONS --slide-level 2 --listings -t beamer $OUTFILE -o "Slides_$SETNAME.pdf"  --variable mainfont="Ubuntu"
+#	cp "Slides_$SETNAME.pdf" ../Output/
 
-done
+#done
 
 for SET in *.generate
 do
@@ -78,14 +78,14 @@ do
 	
 	echo "Running pdf latex..."
 	rm "ALGT_$SETNAME.pdf"
-	LATEX_OUTPUT=`lualatex -halt-on-error "ALGT_$SETNAME.tex" | sed "s/^/§LATEX-$SETNAME: /g"`
+	LATEX_OUTPUT=`pdflatex -halt-on-error "ALGT_$SETNAME.tex" | sed "s/^/§LATEX-$SETNAME: /g"`
+	echo $LATEX_OUTPUT | sed "s/§/\\n/g"
 	cp "ALGT_$SETNAME.pdf" ../Output/
 	if [ $? -eq 0 ]
 	then
 		echo "Pdf-compilation successfull"
 	else
 		echo "NO PDF FOUND"
-		echo $LATEX_OUTPUT | sed "s/§/\\n/g"
 	fi
 done
 
