@@ -5,14 +5,9 @@ Warning:
     Following calls will fall through:
       abstract(("Bool" (type typeSet)))
       abstract(("Int" (type typeSet)))
-  While checking the totality of function "codomains":
+  While checking the totality of function "equate":
     Following calls will fall through:
-      codomains("$")
-      codomains((typeL typeSet))
-  While checking the totality of function "domains":
-    Following calls will fall through:
-      domains("$")
-      domains((typeL typeSet))
+      equate(type, type)
   
 # True applied to ::
 # Proof weight: 3, proof depth: 3
@@ -391,7 +386,7 @@ If ( If True Then False Else True ) Then 123456 Else 42 :: Int
 
 
 
-# Could not apply relation :: to relation the input (\x : Int . x + 1) True, because:
+# Could not apply relation :: to the input "(\\x : Int . x + 1) True", because:
 While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
   Not a single rule matched:
   While trying to intepret the rule TEmptyCtx with ( \ x : Int . x + 1 ) True:

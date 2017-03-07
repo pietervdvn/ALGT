@@ -5,16 +5,11 @@ Warning:
     Following calls will fall through:
       abstract(("Bool" (type typeSet)))
       abstract(("Int" (type typeSet)))
-  While checking the totality of function "codomains":
+  While checking the totality of function "equate":
     Following calls will fall through:
-      codomains("$")
-      codomains((typeL typeSet))
-  While checking the totality of function "domains":
-    Following calls will fall through:
-      domains("$")
-      domains((typeL typeSet))
+      equate(type, type)
   
-# Could not apply relation → to relation the input True, because:
+# Could not apply relation → to the input "True", because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with True:
@@ -43,7 +38,7 @@ While trying to proof that (→) is applicable to "True":
   While trying to intepret the rule EvalLamApp with True:
     :
       FT: Could not pattern match '"True"' over '("(" "\\" var ":" type "." e ")") arg'
-# Could not apply relation → to relation the input False, because:
+# Could not apply relation → to the input "False", because:
 While trying to proof that (→) is applicable to "False":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with False:
@@ -94,7 +89,7 @@ If ( If True Then False Else True ) Then False Else True → If ( False ) Then F
 
 
 
-# Could not apply relation → to relation the input 42, because:
+# Could not apply relation → to the input "42", because:
 While trying to proof that (→) is applicable to "42":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with 42:
@@ -187,7 +182,7 @@ If True Then True Else True → True
 
 
 
-# Could not apply relation → to relation the input True, because:
+# Could not apply relation → to the input "True", because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with True:

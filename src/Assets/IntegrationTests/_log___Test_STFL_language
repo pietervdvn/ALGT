@@ -5,13 +5,8 @@ Warning:
     Following calls will fall through:
       abstract(("Bool" (type typeSet)))
       abstract(("Int" (type typeSet)))
-  While checking the totality of function "codomains":
+  While checking the totality of function "equate":
     Following calls will fall through:
-      codomains("$")
-      codomains((typeL typeSet))
-  While checking the totality of function "domains":
-    Following calls will fall through:
-      domains("$")
-      domains((typeL typeSet))
+      equate(type, type)
   
  # Language file parsed. No action specified, see -h or --manual to specify other options
