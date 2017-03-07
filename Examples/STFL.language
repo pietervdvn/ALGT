@@ -16,9 +16,8 @@ typeL	::= "Int" | "Bool" | "(" type ")"
 type	::= typeL "->" type | typeL
 
 
-
-var	::= Identifier
 number	::= Number
+var	::= Identifier
 value	::= bool | number
 
 e	::= eL "+" e 

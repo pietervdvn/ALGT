@@ -56,7 +56,7 @@ _extractValue (MLiteral _ "?")
 		= Left "No value found"	
 _extractValue (MLiteral ("color",0) str)
 		= return $ Right str
-_extractValue (MLiteral ("value", 0) str)
+_extractValue (MLiteral ("String", 0) str)
 		= return $ Right str
 _extractValue (MInt ("value", 1) i)
 		= return $ Left i

@@ -33,7 +33,7 @@ type GeneratingType	= TypeName
 data AbstractSet
 	= EveryPossible 	GeneratingType Name TypeName	-- The name is used to identify different expressions, used to diverge on pattern matching
 	| ConcreteLiteral 	GeneratingType String
-	| ConcreteBuiltin	GeneratingType BNF Name		-- Some possible builtin, e.g. Any, Identifier, ...
+	| ConcreteBuiltin	GeneratingType TypeName Name		-- Some possible builtin, e.g. Any, Identifier, ...
 	| ConcreteInt 		GeneratingType Name
 	| AsSeq 		GeneratingType Int [AbstractSet]		-- Sequence, generated with choice
 	deriving (Ord, Eq, Show)
@@ -62,8 +62,10 @@ generateAbstractSet' s n tp
 
 _generateAbstractSet					:: Syntax -> TypeName -> Name -> (Int, BNF) -> AbstractSet
 _generateAbstractSet r generator n (_, Literal s)	= ConcreteLiteral generator s
-_generateAbstractSet r generator n (_, Number)		= ConcreteInt generator n
+_generateAbstractSet r generator n (_, BNFRuleCall "Number")		= ConcreteInt generator n	-- TODO dehardcode this
 _generateAbstractSet r generator n (_, BNFRuleCall tp)
+	| isBuiltinName tp
+			= ConcreteBuiltin generator tp n
 	| tp `member` getBNF r
 			= EveryPossible generator n tp
 	| otherwise	= error $ "No bnf-rule with the name " ++ tp
@@ -71,8 +73,6 @@ _generateAbstractSet r generator n (choice, BNFSeq bnfs)
 			= mapi bnfs
 				|> (\(i, bnf) -> _generateAbstractSet r generator (n++":"++show i) (choice, bnf))
 				& AsSeq generator choice
-_generateAbstractSet r generator n (_, builtin)
-			= ConcreteBuiltin generator builtin n
 
 
 
@@ -252,9 +252,9 @@ toBNF (EveryPossible _ _ tp)
 toBNF (ConcreteLiteral mi s)
 			= Literal s
 toBNF (ConcreteBuiltin _ bnf _)
-			= bnf
+			= BNFRuleCall bnf
 toBNF (ConcreteInt _ _)
-			= Number
+			= BNFRuleCall "Number" -- TODO DEhardcode this
 toBNF (AsSeq _ _ ass)	= ass |> toBNF & BNFSeq
 
 
@@ -509,13 +509,13 @@ instance Refactorable TypeName AbstractSet where
 instance ToString AbstractSet where
 	toParsable (EveryPossible _ _ name)	= name 
 	toParsable (ConcreteLiteral _ s)	= show s
-	toParsable (ConcreteBuiltin _ bnf nm)	= toParsable bnf
-	toParsable (ConcreteInt _ nm)		= "Number"
+	toParsable (ConcreteBuiltin _ tp _)	= tp
+	toParsable (ConcreteInt _ _)		= "Number"
 	toParsable (AsSeq _ _ ass)		= ass |> toParsable & unwords & inParens
 	
 	toCoParsable as@(EveryPossible _ n tp)		= tp++inParens n
 	toCoParsable as@(ConcreteLiteral _ s)		= show s ++ _to as
-	toCoParsable as@(ConcreteBuiltin _ bnf nm)	= toParsable bnf ++nm ++ _to as
+	toCoParsable as@(ConcreteBuiltin _ tp nm)	= tp++nm ++ _to as
 	toCoParsable as@(ConcreteInt _ nm)		= "Number"++nm ++ _to as
 	toCoParsable as@(AsSeq _ _ ass)			= ass |> toCoParsable & unwords & inParens ++ _to as ++ ": "++generatorOf as++"/"++show (getSeqNumber as)
 

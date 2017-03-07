@@ -25,7 +25,6 @@ import Control.Arrow ((&&&))
 
 import Control.Monad.State as ST
 
-
 type Builtin	= Bool
 
 {-
@@ -86,13 +85,14 @@ usedFunctions _			= []
 -- walks a  expression, gives which variables have what types
 expectedTyping	:: Syntax -> Expression -> Either String (Map Name TypeName)
 expectedTyping _ (MVar mt nm)	= return $ M.singleton nm mt
-expectedTyping r (MSeq _ mes)		= mes |+> expectedTyping r >>= mergeContexts r
-expectedTyping r (MCall _ _ _ mes)	= mes |+> expectedTyping r >>= mergeContexts r
-expectedTyping r (MAscription _ e)		= expectedTyping r e
+expectedTyping r (MSeq _ mes)	= mes |+> expectedTyping r >>= mergeContexts r
 expectedTyping r (MEvalContext tp fnm hole)
-					= expectedTyping r hole >>= mergeContext r (M.singleton fnm tp)
+				= expectedTyping r hole >>= mergeContext r (M.singleton fnm tp)
+expectedTyping r (MCall _ _ _ mes)
+				= mes |+> expectedTyping r >>= mergeContexts r
 expectedTyping _ (MParseTree _)	= return M.empty
-
+expectedTyping r (MAscription _ e)		
+				= expectedTyping r e
 
 bnfAsExpr	:: BNF -> Expression
 bnfAsExpr bnf	= evalState (_bnfAsExpr bnf) (negate 1::Int)
@@ -100,14 +100,10 @@ bnfAsExpr bnf	= evalState (_bnfAsExpr bnf) (negate 1::Int)
 _bnfAsExpr	:: BNF -> State Int Expression
 _bnfAsExpr (Literal str)
 		= return $ MParseTree (MLiteral _mi str)
-_bnfAsExpr Identifier
-		= do	i	<- getIndex
-			return $ MVar "Identifier" ("ident"++i)
-_bnfAsExpr Number
-		= do	i	<- getIndex
-			return $ MVar "Number" ("number"++i)
-_bnfAsExpr (BNFRuleCall r)
-		= do	i	<- getIndex
+_bnfAsExpr bnf@(BNFRuleCall r)
+ | isBuiltin bnf
+		= return $ MParseTree (MLiteral _mi r)
+ | otherwise	= do	i	<- getIndex
 			return $ MAscription r $ MVar r (r ++ i)
 _bnfAsExpr (BNFSeq bnfs)
 		= bnfs |+> _bnfAsExpr |> MSeq _mi
@@ -141,7 +137,8 @@ mergeTypes syntax varName t1 t2
  | t1 == t2	= Right t1
  | otherwise
 		= do	let msg	= varName ++ " is typed as both "++show t1++" and "++show t2++", which don't have a common supertype"
-			maybe (Left msg) Right $ biggestCommonType syntax t1 t2
+			let bct	= 		biggestCommonType syntax t1 t2	
+			maybe (Left msg) Right $ bct
 
 
 -- Merges two contexts, according to valid combination. 

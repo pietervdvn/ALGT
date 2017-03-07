@@ -43,8 +43,15 @@ makeLenses ''Lattice
 
 
 makeLattice	:: (Show a, Ord a) => a -> a -> Map a (Set a) -> Either [[a]] (Lattice a, [(a, a)])
-makeLattice bottom top isSubsetOf
-	= do	(lattice, unneeded)	<- removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
+makeLattice bottom top isSubsetOf'
+	= let	elements	= M.keys isSubsetOf' ++ (M.elems isSubsetOf' >>= S.toList)
+		restToBottom	= M.singleton bottom (S.fromList elements)
+		topToRest	= zip elements (repeat $ S.singleton top) & M.fromList
+		isSubsetOf	= M.union isSubsetOf'
+						(M.union restToBottom topToRest)	-- add bottom to elements with no subtypes
+		
+		in do
+		(lattice, unneeded)	<- removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
 		let lattice'		= set isSupersetOfEvery (invertDict $ get isSubsetOfEvery lattice) lattice
 		return (lattice', unneeded)
 
@@ -135,7 +142,7 @@ allElems	:: (Ord a) => Lattice a -> [a]
 allElems l	= get top l:get bottom l:(get isSubsetOfEvery l & M.keys)
 
 
--- Direct supersets, tus all sets of which set 'a' is a part
+-- Direct supersets, thus all sets of which set 'a' is a part
 supersetsOf		:: (Ord a) => Lattice a -> a -> Set a
 supersetsOf lattice a
 	= get isSubsetOfEvery lattice & M.findWithDefault S.empty a
@@ -145,12 +152,15 @@ supersetsOf lattice a
 infimum		:: (Eq a, Ord a, Show a) => Lattice a -> a -> a -> a
 infimum l a b
  | a == b				= a
+ | a == get bottom l			= a
+ | b == get bottom l			= b
  | a `S.member` allSubsetsOf l b	= a
  | b `S.member` allSubsetsOf l a	= b
- | otherwise	= supremums l $ S.intersection (allSubsetsOf l a) (allSubsetsOf l b)
+ | otherwise	= infimums l $ S.intersection (subsetsOf l a) (subsetsOf l b)
 
 infimums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
 infimums l as
+ | length as == 0	= get top l
  | length as == 1	= minimum as
  | otherwise	= L.foldl1 (infimum l) as 
 
@@ -158,25 +168,40 @@ infimums l as
 supremum	:: (Eq a, Ord a, Show a) => Lattice a -> a -> a -> a
 supremum l a b
  | a == b				= a
+ | a == get top l			= a
+ | b == get top l			= b
  | a `S.member` allSupersetsOf l b	= a
  | b `S.member` allSupersetsOf l a	= b
- | otherwise			= infimums l $ S.intersection (allSupersetsOf l a) (allSupersetsOf l b)
+ | otherwise			= supremums l $ S.intersection (supersetsOf l a) (supersetsOf l b)	-- Empty intersections can not occur here, there will always be top
+
+-- a `elem` c, d
+-- b `elem` c, d
+
+-- a `elem` b
+-- b `elem` c
+-- 
 
 supremums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
-supremums l as	
+supremums l as
+ | length as == 0	= get bottom l
  | length as == 1	= maximum as
- | otherwise = L.foldl1 (supremum l) as 
+ | otherwise 		= L.foldl1 (supremum l) as 
 
 
 
 ------------------- CODE TO SHOW A FANCY SVG ---------------------
 
+-- Gives true if only supertype is top and only subtype is bottom
+isDisconnected		:: (Ord a) => Lattice a -> a -> Bool
+isDisconnected l a
+ 	= subsetsOf l a == S.singleton (get bottom l) 
+		&& supersetsOf l a == S.singleton (get top l)
 
 asSVG			:: (Ord a, Show a) => (a -> String) -> (a -> Bool) -> Int -> ColorScheme -> Lattice a -> String
 asSVG shw doDash pxW cs lattice
 	= let	(groups, conn, dashed)	= flatRepresentation lattice doDash
 		shwTpl (a, b)		= (shw a, shw b)
-		in latticeSVG  pxW cs (groups ||>> shw, conn |> shwTpl, dashed |> shwTpl)
+		in latticeSVG  pxW cs (groups |> filter (not . isDisconnected lattice) ||>> shw, conn |> shwTpl, dashed |> shwTpl)
 		
 
 -- calculates how many steps might be taken from the top
@@ -228,9 +253,9 @@ debugLattice show l
 
 debugSubsOf	:: (Ord a) => (a -> String) -> Lattice a -> a -> String
 debugSubsOf show l a
-	= let	subs	= subsetsOf l a & S.toList & filter (/= get bottom l)
+	= let	subs	= subsetsOf l a & S.toList
 		subs'	= subs |> show |> indent & unlines
 		title	= show a ++ " has following subtypes:"
 		in
-		if null subs then "" else title++subs'
+		title ++ if null subs then "<no subs>\n" else subs'
 

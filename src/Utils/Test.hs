@@ -35,8 +35,8 @@ testArgs      = [ ["Test/STFL.language"]
 		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
 		, ["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "--dlf"]
 		, ["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "-c", "Test/GradualizeSTFL.language-changes", "--dlf"]
-		, ["Test/STFL.language", "--ira"]
-		, ["Test/STFL.language", "--irasvg", "SyntaxIRA.svg"]
+		-- , ["Test/STFL.language", "--ira"]
+		-- , ["Test/STFL.language", "--irasvg", "SyntaxIRA.svg"]
 		, ["Test/STFL.language", "--ir", "EvalCtx"]
 		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l",  "--tp", "Progress" ]
 		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa" ]
@@ -47,7 +47,7 @@ testArgs      = [ ["Test/STFL.language"]
 		] & nub
 
 
-slow		= [10]
+slow		= []
 
 testArgs'	= mapi testArgs
 

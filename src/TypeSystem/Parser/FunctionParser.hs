@@ -73,20 +73,21 @@ typeFunction bnfs typings (SFunction nm tp body)
 		return (nm, MFunction tp clauses)
 
 typeClause	:: Syntax -> Map Name Type -> Name -> Type -> (Int, SClause) -> Either String Clause
-typeClause bnfs funcs funcName tps (i, sc@(SClause patterns expr))
+typeClause syntax funcs funcName tps (i, sc@(SClause patterns expr))
 	= inMsg ("In clause "++show (i+1)++", this is \n"++indent (funcName ++ show sc)) $
           do	let argTps	= init tps
 		let rType	= last tps
 		assert Left (length argTps == length patterns) $ "Expected "++show (length argTps)++" patterns, but only got "++show (length patterns)
-		patterns'	<- zip argTps patterns |> uncurry (typeAs funcs bnfs) & allRight'
-		expr'		<- typeAs funcs bnfs rType expr
-		unless (alwaysIsA bnfs (typeOf expr') rType) $ Left $ "The declared type does not match. Expected: "++rType++", got "++typeOf expr'
-		patternsDeclares	<- patterns' |> expectedTyping bnfs & allRight'
-		patternsDeclare		<- inMsg "While checking for conflicting declarations" $ mergeContexts bnfs patternsDeclares
-		exprNeed		<- expectedTyping bnfs expr'
+		patterns'	<- zip argTps patterns |> uncurry (typeAs funcs syntax) & allRight'
+		expr'		<- typeAs funcs syntax rType expr
+		unless (alwaysIsA syntax (typeOf expr') rType) $ Left $ "The declared type does not match. Expected: "++rType++", got "++typeOf expr'
+		patternsDeclares	<- patterns' |> expectedTyping syntax & allRight'
+		patternsDeclare		<- inMsg "While checking for conflicting declarations" $ mergeContexts syntax patternsDeclares
+		
+		exprNeed		<- expectedTyping syntax expr'
 		let unknown		= exprNeed `M.difference` patternsDeclare & M.keys
 		assert Left (null unknown) ("Undeclared variable(s): "++show unknown)
-		inMsg "While checking for conflicting typings of variables by using them" $ mergeContext bnfs patternsDeclare exprNeed
+		inMsg "While checking for conflicting typings of variables by using them" $ mergeContext syntax patternsDeclare exprNeed
 		return $ MClause patterns' expr'
 
 

@@ -114,10 +114,7 @@ asLattice	:: Map Name [BNF] -> Either [[TypeName]] (Lattice TypeName, [(TypeName
 asLattice syntax
 	= let	relations	= syntax ||>> fromRuleCall |> catMaybes
 					|> S.fromList & invertDict	:: Map Name (Set Name)
-		nms		= syntax & M.keys
-		topBottom	= M.fromList ((bottomSymbol, S.fromList nms): zip nms (repeat $ S.singleton topSymbol))
-		relations'	= M.unionWith S.union relations topBottom
-		in makeLattice bottomSymbol topSymbol relations' 
+		in makeLattice bottomSymbol topSymbol relations
 
 latticeAsSVG	:: ColorScheme -> Syntax -> String
 latticeAsSVG cs s
@@ -162,7 +159,8 @@ alwaysIsA rules 'y' 'x'	--> True
 -}
 alwaysIsA	:: Syntax -> TypeName -> TypeName -> Bool
 alwaysIsA syntax sub super
-	= biggestCommonType syntax sub super |> (== super) & fromMaybe False
+	= let	supr	= supremum (get lattice syntax) sub super
+		in supr == super
 				
 alwaysIsA'	:: (SimplyTyped a) => Syntax -> a -> a -> Bool
 alwaysIsA' syntax sub super
@@ -239,6 +237,8 @@ reachableVia rules
 
 _reachableVia	:: Syntax -> [TypeName] -> TypeName -> [TypeName]
 _reachableVia syntax alreadyVisited root
+ | isBuiltinName root	= [root]
+ | otherwise
 	= let	called	= get bnf syntax & M.findWithDefault (error $ root ++ " not found in syntax") root
 				>>= calledRules	:: [TypeName]
 		new	= called & filter (`notElem` alreadyVisited)	:: [TypeName]
@@ -250,18 +250,6 @@ _reachableVia syntax alreadyVisited root
 
 
 ---------------------------- Transforming regexes ------------------------------
-
-
-
-startRegex	:: Syntax -> BNF -> String
-startRegex _ (Literal s)	= translateRegex s
-startRegex _ Identifier	=  "[a-z][a-zA-Z0-9]*"
-startRegex _ Number	= "-?[0-9]*"
-startRegex syntax (BNFRuleCall c)
-	= syntax & getBNF & (M.! c) |> startRegex syntax & intercalate "|"
-startRegex syntax (BNFSeq (bnf:_))
-	= startRegex syntax bnf
-
 
 
 -- Used for syntax highlightingx
@@ -306,36 +294,40 @@ inline' syntax
 makeSyntax	:: [(Name, ([BNF], WSMode, Bool))] -> Either String Syntax
 makeSyntax vals
 	= do	let bnfs	= vals & M.fromList |> fst3 ||>> normalize
-		let bnfr	= BNFRules bnfs (vals ||>> snd3 & M.fromList) (vals ||>> trd3 & M.fromList) (asLattice' bnfs)
+		let supertypings	= asLattice' bnfs
+		let bnfr	= BNFRules bnfs (vals ||>> snd3 & M.fromList) (vals ||>> trd3 & M.fromList) supertypings
 		checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times")
 		return bnfr
 
 
-instance Check' Syntax (Name, [BNF]) where
+instance Check' Syntax (Name, ([BNF], WSMode, Bool)) where
 	check' s rule@(n, bnfs)
-		= [checkUnknownRuleCall s, checkNoDuplicateChoices, checkTrivial] 
-			|> (rule &) & allRight_
+	      = [checkUnknownRuleCall s
+		, checkNoDuplicateChoices
+		, checkTrivial] |> (rule &) & allRight_
 			& inMsg ("While checking the syntax rule "++show n)
 
 
-checkTrivial	:: (Name, [BNF]) -> Either String ()
-checkTrivial (nm, [BNFRuleCall _])
+checkTrivial	:: (Name, ([BNF], WSMode, Bool)) -> Either String ()
+checkTrivial (nm, ([BNFRuleCall n], _, False))
+ | not (isBuiltinName n)
 	= inMsg "While checking for triviality" $
 		Left $ "The rule "++show nm++" only calls another rule and is trivial. Please remove it"
 checkTrivial	_	= pass
 
-checkNoDuplicateChoices	:: (Name, [BNF]) -> Either String ()
-checkNoDuplicateChoices (n, asts)
-	= inMsg "While checking for duplicate choices" $
+checkNoDuplicateChoices	:: (Name, ([BNF], a, b)) -> Either String ()
+checkNoDuplicateChoices (n, (asts, _, _))
+	= inMsg ("While checking for duplicate choices in rule "++n) $
 	  checkNoDuplicates asts (\dups -> "The choice "++showComma dups++" appears multiple times")
 
-checkUnknownRuleCall	:: Syntax -> (Name, [BNF]) -> Either String ()
-checkUnknownRuleCall bnfs' (n, asts)
+checkUnknownRuleCall	:: Syntax -> (Name, ([BNF], a, b)) -> Either String ()
+checkUnknownRuleCall bnfs' (n, (asts, _, _))
 	= inMsg "While checking for unknowns" $
 	  do	let bnfs	= getBNF bnfs'
 		mapi asts |> (\(i, ast) ->
 			inMsg ("While checking choice "++show i++", namely '"++toParsable ast++"'") $
-			do	let unknowns = calledRules ast & filter (`M.notMember` bnfs) 
+			do	let unknowns = calledRules ast & filter (not . isBuiltinName)
+						& filter (`M.notMember` bnfs) 
 				assert Left (null unknowns) $ "Unknown type "++showComma unknowns
 			) & allRight_ & ammendMsg (++"Known rules are "++ showComma (bnfNames bnfs'))
 		pass		
@@ -343,14 +335,15 @@ checkUnknownRuleCall bnfs' (n, asts)
 
 
 instance Check Syntax where
-	check syntax	= inMsg "While checking the syntax" $
+	check syntax	= inMsg "While checking the syntax" $ do
 		  		allRight_ $
 					[checkLeftRecursion syntax
 					, checkAllUnique syntax
 					, checkNoCommonSubsets syntax
 					, checkUnneededTransitive syntax
-					, checkDeadChoices syntax
-					] ++ (syntax & getBNF & M.toList |> check' syntax)
+					] ++ (syntax & get fullSyntax' & M.toList |> check' syntax)
+				-- we check dead choices afterwards, as common subsets might cause this test to hang
+				checkDeadChoices syntax 
 
 
 checkLeftRecursion	:: Syntax -> Either String ()
@@ -471,7 +464,7 @@ getsKilledBy s victim killer
 					|> uncurry (bnfAlwaysIsA s)
 					& and
 		in
-		length victim' >= length killer' && prefixIsSub	
+		length victim' >= length killer' && prefixIsSub
 
 
 bnfAlwaysIsA	:: Syntax -> BNF -> BNF -> Bool

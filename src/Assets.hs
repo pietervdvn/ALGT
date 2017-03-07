@@ -26,6 +26,7 @@ allAssets = [("White.style", _White_style)
 			, ("Manual/6Thanks.md", _Manual_6Thanks_md)
 			, ("Manual/TypeTrees2.svg", _Manual_TypeTrees2_svg)
 			, ("Manual/2Tutorial.md", _Manual_2Tutorial_md)
+			, ("Manual/Manual.genPaused", _Manual_Manual_genPaused)
 			, ("Manual/2.1Tut-Syntax.md", _Manual_2_1Tut_Syntax_md)
 			, ("Manual/Focus.generate", _Manual_Focus_generate)
 			, ("Manual/TypeTrees0.svg", _Manual_TypeTrees0_svg)
@@ -124,6 +125,7 @@ allAssets = [("White.style", _White_style)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_r_", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r_)
+			, ("IntegrationTests/___RMFailed.sh", _IntegrationTests____RMFailed_sh)
 			, ("IntegrationTests/Parsetrees_7.svg", _IntegrationTests_Parsetrees_7_svg)
 			, ("IntegrationTests/_log___Test_STFL_language__ira", _IntegrationTests__log___Test_STFL_language__ira)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l_r_", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l_r_)
@@ -195,6 +197,10 @@ _Manual_2Tutorial_md
 {-# NOINLINE _Manual_hofstadter_png #-}
 _Manual_hofstadter_png
 	 = unsafePerformIO $ B.readFile "src/Assets/Manual/hofstadter.png"
+
+{-# NOINLINE _Manual_Manual_genPaused #-}
+_Manual_Manual_genPaused
+	 = unsafePerformIO $ readFile "src/Assets/Manual/Manual.genPaused"
 
 {-# NOINLINE _Manual_2_1Tut_Syntax_md #-}
 _Manual_2_1Tut_Syntax_md
@@ -607,6 +613,10 @@ _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp
 {-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r_ #-}
 _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r_
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_r_"
+
+{-# NOINLINE _IntegrationTests____RMFailed_sh #-}
+_IntegrationTests____RMFailed_sh
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/___RMFailed.sh"
 
 {-# NOINLINE _IntegrationTests_Parsetrees_7_svg #-}
 _IntegrationTests_Parsetrees_7_svg

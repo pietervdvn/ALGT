@@ -23,7 +23,6 @@ import ParseTreeInterpreter.RuleInterpreter
 import ParseTreeInterpreter.PropertyTester
 
 import Changer.ChangesParser
-import SyntaxHighlighting.Highlighting
 import SyntaxHighlighting.AnsiPT
 import qualified SyntaxHighlighting.AsHTML as HTML
 

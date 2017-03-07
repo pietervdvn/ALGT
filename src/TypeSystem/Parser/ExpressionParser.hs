@@ -74,10 +74,10 @@ matchTyping f r bnf tp c@(MePtAscription as expr)
 			= Left $ "Invalid cast: '"++toParsable c++"' could not be matched with '"++toParsable bnf++"'"
 
 matchTyping _ _ (BNFRuleCall ruleCall) tp (MePtVar nm)
- | nm == "_"		= return $ MVar bottomSymbol "_"
+ | nm == "_"		= return $ MVar topSymbol "_"
  | otherwise		= return $ MVar ruleCall nm
 matchTyping _ _ exp tp (MePtVar nm)
- | nm == "_"		= return $ MVar bottomSymbol "_"
+ | nm == "_"		= return $ MVar topSymbol "_"
  | otherwise		
 			= Left $ "Non-rulecall (expected: "++toParsable exp++") with a var "++ nm
 
@@ -140,7 +140,16 @@ matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
  | otherwise		= Left $ "Seq could not match " ++ toParsable' " " bnfs ++ " ~ " ++ toParsable' " " pts 
 
 
+matchTyping _ _ (BNFRuleCall "Number") tp (MePtToken s) -- TODO Dehardcode this
+			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
+matchTyping _ _ (BNFRuleCall "Number") tp (MePtInt i)	-- TODO dehardcode this
+			= return $ MParseTree $ MInt tp i
 matchTyping f syntax (BNFRuleCall nm) _ pt
+ | isBuiltinName nm
+		= do	contents	<- fromMePtToken pt |> return & fromMaybe (Left $ "Builtin with no token matched")
+			unless (isValidBuiltin (BNFRuleCall nm) contents) $  Left $ contents ++" is not a "++nm 
+			MLiteral (nm, 0) contents & MParseTree & return
+
  | nm `M.member` get bnf syntax
 		= do	let bnfASTs	= get bnf syntax M.! nm
 			let grouped	= get groupModes syntax M.! nm
@@ -163,22 +172,10 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
  | otherwise	= Left $ "No bnf rule with name " ++ nm
 
 -- Simpler cases
-
-
 matchTyping _ _ (Literal s) tp (MePtToken s')
  | s == s'		= MLiteral tp s & MParseTree & return
  | otherwise		= Left $ "Not the right literal: "++show s++" ~ "++show s'
-matchTyping _ _ Number tp (MePtToken s)
-			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
-matchTyping _ _ Number tp (MePtInt i)
-			= return $ MParseTree $ MInt tp i
 
-matchTyping _ _ builtinBNF tp pt@(MePtToken s)
- | not (isBuiltin builtinBNF)
-			=  Left $ "Could not match "++toParsable builtinBNF ++" with token "++toParsable pt
- | isValidBuiltin builtinBNF s
-			= MLiteral tp s & MParseTree & return
- | otherwise		= Left $ s ++" is not a "++toParsable builtinBNF
 matchTyping _ _ bnf _ pt
 	= Left $ "Could not match "++toParsable bnf++" ~ "++toParsable pt
 

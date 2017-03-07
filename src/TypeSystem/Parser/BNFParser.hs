@@ -30,13 +30,16 @@ bnfLiteral	= dqString
 
 builtins	= builtinSyntax |> fst
 
+bnfBuiltin	:: Parser u BNF
 bnfBuiltin
 	= builtins
-		|> (\(str, val, _) -> string str >> return val)
+		|> fst
+		|> (\str -> string str |> BNFRuleCall)
 		|> try
 		& L.foldl1 (<|>)
 
 
+bnfRuleCall	:: Parser u BNF
 bnfRuleCall
 	= identifier |> BNFRuleCall
 

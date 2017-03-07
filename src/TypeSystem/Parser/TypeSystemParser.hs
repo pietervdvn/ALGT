@@ -5,6 +5,7 @@ This module parses typesystem-files
 -}
 
 import Utils.Utils
+import Utils.ToString
 import TypeSystem.Parser.ParsingUtils
 
 import Control.Arrow ((&&&))
@@ -121,7 +122,6 @@ typeSystemFile fp
 				nl
 				inWs $ many1 $ char '*'
 				return $ unwords n
-
 		bnfs	<- option [] $ try $ do 
 				nls
 				header "Syntax"
@@ -129,7 +129,7 @@ typeSystemFile fp
 				many (try (nls >> parseBnfRule)) 
 
 		syntax	<- lift $ makeSyntax bnfs
-
+		-- TODO DEBUG error $ show syntax
 		syntaxStyle
 			<- option (SyntaxStyle M.empty M.empty M.empty) $ try $ do
 				nls

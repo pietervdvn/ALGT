@@ -91,15 +91,16 @@ parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
 			tail	<- bnfs |+> parsePart' rules tp wsMode 
 			end	<- sourcePos
 			return $ PtSeqA (locationInfo start end) tp $ head:tail
-parsePart rules _ wsMode (BNFRuleCall nm)
+parsePart _ tp _ (BNFRuleCall "Number") -- TODO dehardcode this
+		= annotLi (number |> MInt tp)
+parsePart rules _ wsMode bnf@(BNFRuleCall nm)
+ | isBuiltin bnf
+		= do	let parser	= getParserForBuiltin bnf
+			annotLi (parser |> MLiteral (nm, 0))
+ | otherwise
 		= parseSyntax' rules nm wsMode
 parsePart _ tp _ (Literal str)
 		= annotLi (string str |> MLiteral tp)
-parsePart _ tp _ Number
-		= annotLi (number |> MInt tp)
-parsePart _ tp _ builtinBNF
-		= do	let parser	= getParserForBuiltin builtinBNF
-			annotLi (parser |> MLiteral tp)
 
 
 annotLi		:: Parser u ParseTree -> Parser u ParseTreeLi

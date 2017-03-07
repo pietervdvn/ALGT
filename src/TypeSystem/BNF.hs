@@ -16,6 +16,7 @@ import TypeSystem.Parser.ParsingUtils
 
 import Data.Maybe
 import Data.Either
+import Data.Char (toLower)
 
 import Lens.Micro hiding ((&))
 import Control.Arrow ((&&&))
@@ -24,17 +25,8 @@ import Control.Arrow ((&&&))
 
 
 data BNF 	= Literal String	-- Literally parse 'String'
-		| BNFRuleCall Name	-- Parse the rule with the given name
+		| BNFRuleCall Name	-- Parse the rule with the given name. The boolean indicitas builtinness
 		| BNFSeq [BNF]		-- Sequence of parts
-		| Identifier
-		| Any
-		| LineChar
-		| Lower
-		| Upper
-		| Digit
-		| Hex
-		| String
-		| Number
 	deriving (Show, Eq, Ord)
 
 
@@ -49,23 +41,23 @@ wsModeInfo
 -- Also update: matchTyping in the expressionParser; TargetLanguageParser
 -- ((BNF-Name; BNF-representation; targetLang-parser (is wrapped in a MLiteral afterwards); check that something is valid) (documentation, documentation regex)
 builtinSyntax	= 
-	[ (("Identifier", Identifier, identifier), 
+	[ (("Identifier", identifier), 
 		("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
-	, (("Number", Number, number |> show), 
+	, (("Number", number |> show), 
 		("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
-	, (("Any", Any, anyChar |> (:[])),
+	, (("Any", anyChar |> (:[])),
 		 ("Matches a single character, whatever it is, including newline characters", "."))
-	, (("Lower", Lower, oneOf lowers |> (:[])), 
+	, (("Lower", oneOf lowers |> (:[])), 
 		("Matches a lowercase letter", "[a-z]"))
-	, (("Upper", Upper, oneOf uppers |> (:[])),
+	, (("Upper", oneOf uppers |> (:[])),
 		("Matches an uppercase letter", "[A-Z]"))
-	, (("Digit", Digit, oneOf digits |> (:[])),
+	, (("Digit", oneOf digits |> (:[])),
 		("Matches an digit", "[0-9]"))
-	, (("Hex", Hex, oneOf hex |> (:[]))
+	, (("Hex", oneOf hex |> (:[]))
 		, ("Matches a hexadecimal digit", "[0-9a-fA-F]"))
-	, (("String", String, dqString'),
+	, (("String", dqString'),
 		("Matches a double quote delimted string, returns the value including the double quotes", "\"([^\"\\]|\\\"|\\\\)*\""))
-	, (("LineChar", LineChar, noneOf "\n" |> (:[])),
+	, (("LineChar", noneOf "\n" |> (:[])),
 		("Matches a single character that is not a newline", "[^\\n]"))
 	]
 
@@ -76,13 +68,20 @@ isValidBuiltin bnf s
 		result |> isRight & either (const False) id
 
 isBuiltin	:: BNF -> Bool
-isBuiltin bnf	= bnf `elem` (builtinSyntax |> fst |> snd3)
+isBuiltin (BNFRuleCall x)
+		= isBuiltinName x
+isBuiltin _	= False
+
+isBuiltinName	:: Name -> Bool
+isBuiltinName x
+		= x `elem` (builtinSyntax |> fst |> fst)
+
 
 
 
 getParserForBuiltin	:: BNF -> Parser u String
-getParserForBuiltin bnf
-	= builtinSyntax |> fst |> dropFst3 & lookup bnf & fromMaybe (error $ "No builtin for parser defined for "++show bnf++", this is a bug")
+getParserForBuiltin (BNFRuleCall bnf)
+	= builtinSyntax |> fst & lookup bnf & fromMaybe (error $ "No builtin for parser defined for "++show bnf++", this is a bug")
 
 
 
@@ -173,8 +172,6 @@ toStr			:: (BNF -> String) -> BNF -> String
 toStr _ (Literal str)	= show str
 toStr f (BNFSeq asts)	= asts |> f & unwords
 toStr _ (BNFRuleCall n)	= n
-toStr _ builtin		= builtinSyntax |> fst |> dropTrd3 |> swap & lookup builtin
-				& fromMaybe (error $ "BUG: you added a new syntactic form "++show builtin++" which you didn't add to the builtinSytnax yet")
 
 instance ToString WSMode where
 	toParsable IgnoreWS	= "::="
@@ -188,8 +185,8 @@ instance ToString (Name, Int, WSMode, Bool, String, [BNF]) where
 			if null bnfs then "< no bnfs declared >"
 				else toParsable' ("\n" ++ replicate i ' ' ++  "| ") bnfs
 
-_showGroup True	= " $"
-_showGroup False= ""
+_showGroup True		= " $"
+_showGroup False	= ""
 
 instance Refactorable TypeName BNF where
 	refactor ftn (BNFRuleCall nm)	= BNFRuleCall $ ftn nm

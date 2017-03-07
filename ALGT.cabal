@@ -82,7 +82,6 @@ executable ALGT
         PureMain
         SyntaxHighlighting.AnsiPT
         SyntaxHighlighting.Coloring
-        SyntaxHighlighting.Highlighting
         TypeSystem
         TypeSystem.BNF
         TypeSystem.Expression
