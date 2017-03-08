@@ -1,4 +1,4 @@
-module TypeSystem.Parser.BNFParser where
+module TypeSystem.Parser.BNFParser (parseBnfRule, parseWSMode, bnfLine, bnfLiteral) where
 
 {-
 This module parses the syntax part of a typesystem to a BNF-AST
@@ -25,7 +25,8 @@ import Lens.Micro hiding ((&))
 
 
 
-bnfLiteral	= dqString
+bnfLiteral	= do	str	<- dqString
+			return $ Literal str
 
 
 builtins	= builtinSyntax |> fst
@@ -43,7 +44,7 @@ bnfRuleCall	:: Parser u BNF
 bnfRuleCall
 	= identifier |> BNFRuleCall
 
-bnfExpr	= bnfBuiltin <|> (bnfLiteral |> Literal) <|> bnfRuleCall
+bnfExpr	= bnfBuiltin <|> bnfLiteral <|> bnfRuleCall
 
 bnfExpr'	
 	= do	e	<- many $ inWs bnfExpr

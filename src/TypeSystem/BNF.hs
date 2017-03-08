@@ -25,7 +25,7 @@ import Control.Arrow ((&&&))
 
 
 data BNF 	= Literal String	-- Literally parse 'String'
-		| BNFRuleCall Name	-- Parse the rule with the given name. The boolean indicitas builtinness
+		| BNFRuleCall Name	-- Parse the rule with the given name.
 		| BNFSeq [BNF]		-- Sequence of parts
 	deriving (Show, Eq, Ord)
 
@@ -192,8 +192,10 @@ instance ToString (Name, Int, WSMode, Bool, String, [BNF]) where
 _showGroup True		= " $"
 _showGroup False	= ""
 
+
 instance Refactorable TypeName BNF where
-	refactor ftn (BNFRuleCall nm)	= BNFRuleCall $ ftn nm
+	refactor ftn (BNFRuleCall nm)
+					= BNFRuleCall $ ftn nm
 	refactor ftn (BNFSeq seq)	= seq |> refactor ftn & BNFSeq
 	refactor _   bnf		= bnf
 

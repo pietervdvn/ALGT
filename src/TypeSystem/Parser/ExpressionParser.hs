@@ -249,7 +249,7 @@ mePtPart ident	= try mePtToken
 			<|> mePtVar ident
 
 meNested ident	= char '(' *> ws *> mePt ident <* ws <* char ')'
-mePtToken	= bnfLiteral	|> MePtToken
+mePtToken	= dqString	|> MePtToken
 mePtVar		:: Parser u Name-> Parser u MEParseTree
 mePtVar ident	= do	nm	<- try ident 
 					<|> (char '_' |> (:[]))

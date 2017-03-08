@@ -11,7 +11,7 @@ bool	::= "True" | "False"
 
 
 # Types
-typeL	::= "Int" | "Bool" | "(" type ")"
+typeL	::= "Int" | "Bool" | _"(" type _")"
 type	::= typeL "->" type | typeL
 
 
@@ -30,6 +30,9 @@ eL	::= value
 	| "(" "\\" var ":" type "." e ")" 
 	| "If" e "Then" e "Else" e 
 	| "(" e ")"
+
+
+
 
 
 typing			::= var ":" type

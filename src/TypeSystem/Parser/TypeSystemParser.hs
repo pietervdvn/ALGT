@@ -54,16 +54,16 @@ styleRule syntax
 		t	<- choose $ bnfNames syntax
 		i	<- optionMaybe $ try (char '.' >> number)
 		inWs arrow
-		val	<- bnfLiteral
+		val	<- dqString
 		ws
 		return (t, i, val)
 	
 
 styleRemap	:: Parser u (String, String)
 styleRemap	= do	ws
-			k	<- bnfLiteral
+			k	<- dqString
 			inWs arrow
-			v	<- bnfLiteral
+			v	<- dqString
 			ws
 			return (k, v)
 
@@ -105,7 +105,7 @@ relationDecl r	= do	symbol	<- relationSymb r
 			ws
 			types <- typeMode r `sepBy` char ','
 			ws
-			pronounciation	<- try (string "Pronounced as" >> ws >> bnfLiteral |> Just) <|> return Nothing
+			pronounciation	<- try (string "Pronounced as" >> ws >> dqString |> Just) <|> return Nothing
 			ws
 			return $ Relation symbol types pronounciation
 	

@@ -107,7 +107,7 @@ relationOption syntax rels
 		pronounce <- optionMaybe $ do
 			inWs $ char ','
 			inWs $ string "pronounced as"
-			bnfLiteral
+			dqString
 
 		let oldTyping	= (rels M.! symb) & get relTypesModes
 		return $ cons symb nsymb (Relation nsymb oldTyping pronounce)
