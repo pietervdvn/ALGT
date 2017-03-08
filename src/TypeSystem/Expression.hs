@@ -99,10 +99,10 @@ bnfAsExpr bnf	= evalState (_bnfAsExpr bnf) (negate 1::Int)
 
 _bnfAsExpr	:: BNF -> State Int Expression
 _bnfAsExpr (Literal str)
-		= return $ MParseTree (MLiteral _mi str)
+		= return $ MParseTree (MLiteral () _mi str)
 _bnfAsExpr bnf@(BNFRuleCall r)
  | isBuiltin bnf
-		= return $ MParseTree (MLiteral _mi r)
+		= return $ MParseTree (MLiteral () _mi r)
  | otherwise	= do	i	<- getIndex
 			return $ MAscription r $ MVar r (r ++ i)
 _bnfAsExpr (BNFSeq bnfs)
@@ -242,6 +242,6 @@ expressionExamples
 		"Sequence", "Splits the parse tree in the appropriate parts, pattern matches the subparts", "Builds the parse tree")
 	]
 
-_lit str	= MLiteral ("sr", 0) str & MParseTree
-_int i		= MInt ("sr", 0) i & MParseTree
+_lit str	= MLiteral () ("sr", 0) str & MParseTree
+_int i		= MInt () ("sr", 0) i & MParseTree
 

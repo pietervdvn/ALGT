@@ -93,12 +93,12 @@ fromExpression s n (MEvalContext tn _ _)
 
 
 
-fromParseTree			:: Name -> ParseTree -> AbstractSet
-fromParseTree _ (MLiteral mi l)
+fromParseTree			:: Name -> ParseTreeA a -> AbstractSet
+fromParseTree _ (MLiteral _ mi l)
 				= ConcreteLiteral (fst mi) l
-fromParseTree n (MInt mi _)
+fromParseTree n (MInt _ mi _)
 				= ConcreteInt (fst mi) n
-fromParseTree n (PtSeq (gen, i) pts)
+fromParseTree n (PtSeq _ (gen, i) pts)
 				= mapi pts |> (\(i, pt) -> fromParseTree (n++":"++show i) pt)
 					& AsSeq gen i
 
@@ -279,7 +279,7 @@ _toExpression _ exp (genWith, _) (EveryPossible _ _ tp)
 			-- expected type is bigger than actual type: ascription
 			return $ MAscription tp var
 _toExpression _ _ mi (ConcreteLiteral _ str)
-	= return $ MParseTree $ MLiteral mi str
+	= return $ MParseTree $ MLiteral () mi str
 _toExpression _ _ mi (ConcreteBuiltin genTp _ _)
 	= do	nm	<- _getName genTp
 		return $ MVar genTp nm

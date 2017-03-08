@@ -58,7 +58,7 @@ parseSyntax' bnf@(BNFRules rules wsModes group _) nm wsModeParent
 			pt	<- parseChoice bnf nm newWSMode choices |> removeEmptyTokens
 			let (a, minf, flat)	= flatten pt
 			return $ if doGroup then
-				MLiteralA a minf flat
+				MLiteral a minf flat
 				else pt
 			
 
@@ -74,11 +74,11 @@ parseChoice rules name wsMode ((bnf,i): rest)
 parsePart'	:: Syntax -> (TypeName, Int) -> WSMode' -> BNF -> Parser u ParseTreeLi
 parsePart' rules pt wsMode bnf
 		= do	start		<- sourcePos
-			(wsPt', li)	<- (parseWS' wsMode ||>> MLiteral ("ws", 0) ) & locInfoFor
+			(wsPt', li)	<- (parseWS' wsMode ||>> MLiteral () ("ws", 0) ) & locInfoFor
 			pt	<- parsePart rules pt wsMode bnf
 			end	<- sourcePos
 			let wsPt	= wsPt' |> annot li 
-						|> (\wsPt' -> PtSeqA (locationInfo start end) ("ws", 1) [wsPt', pt])
+						|> (\wsPt' -> PtSeq (locationInfo start end) ("ws", 1) [wsPt', pt])
 			return $ fromMaybe pt wsPt
 
 parsePart	:: Syntax -> (TypeName, Int) -> WSMode' -> BNF -> Parser u ParseTreeLi
@@ -89,17 +89,17 @@ parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
 			head	<- parsePart rules tp wsMode bnf
 			tail	<- bnfs |+> parsePart' rules tp wsMode 
 			end	<- sourcePos
-			return $ PtSeqA (locationInfo start end) tp $ head:tail
+			return $ PtSeq (locationInfo start end) tp $ head:tail
 parsePart _ tp _ (BNFRuleCall "Number") -- TODO dehardcode this
-		= annotLi (number |> MInt tp)
+		= annotLi (number |> MInt () tp)
 parsePart rules _ wsMode bnf@(BNFRuleCall nm)
  | isBuiltin bnf
 		= do	let parser	= getParserForBuiltin bnf
-			annotLi (parser |> MLiteral (nm, 0))
+			annotLi (parser |> MLiteral () (nm, 0))
  | otherwise
 		= parseSyntax' rules nm wsMode
 parsePart _ tp _ (Literal str)
-		= annotLi (string str |> MLiteral tp)
+		= annotLi (string str |> MLiteral () tp)
 
 
 annotLi		:: Parser u ParseTree -> Parser u ParseTreeLi

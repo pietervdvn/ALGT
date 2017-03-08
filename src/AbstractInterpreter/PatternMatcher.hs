@@ -32,12 +32,12 @@ patternMatch _ MCall{} _
 
 patternMatch r (MVar _ v) as
 		= assign v as 
-patternMatch r (MParseTree (MLiteral _ s1)) (ConcreteLiteral _ s2)
+patternMatch r (MParseTree (MLiteral _ _ s1)) (ConcreteLiteral _ s2)
 	| s1 == s2		= returnE
 	| otherwise		= returnF $ "Not the same literal: "++s1++ " /= " ++ s2
-patternMatch r (MParseTree (MInt _ s1)) (ConcreteInt _ n)
+patternMatch r (MParseTree (MInt _ _ s1)) (ConcreteInt _ n)
 	= returnE
-patternMatch r (MParseTree (PtSeq mi pts)) pt
+patternMatch r (MParseTree (PtSeq _ mi pts)) pt
 	= patternMatch r (MSeq mi (pts |> MParseTree)) pt
 patternMatch r s1@(MSeq _ seq1) s2@(AsSeq _ _ seq2)
  | length seq1 /= length seq2	= returnF $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++toParsable s2

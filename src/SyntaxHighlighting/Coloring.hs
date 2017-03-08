@@ -52,13 +52,13 @@ _asID ts name	= parseTargetLang (get tsSyntax ts) "identifier" "coloring.hs:getP
 					& inMsg ("Not a valid stylename or property name: "++name)
 
 _extractValue	:: ParseTree -> Either String (Either Int String)
-_extractValue (MLiteral _ "?")
+_extractValue (MLiteral _ _ "?")
 		= Left "No value found"	
-_extractValue (MLiteral ("color",0) str)
+_extractValue (MLiteral _ ("color",0) str)
 		= return $ Right str
-_extractValue (MLiteral ("String", 0) str)
+_extractValue (MLiteral _ ("String", 0) str)
 		= return $ Right str
-_extractValue (MInt ("value", 1) i)
+_extractValue (MInt _ ("value", 1) i)
 		= return $ Left i
 _extractValue pt
 		= error $ "Coloring: unexpected parsetree; probably due to some weird styling file. Run with --plain to disable syntax highlighting"++show pt
@@ -74,9 +74,9 @@ parseColoringFile fp input
 
 
 _extractStyles	:: ParseTree -> [String]
-_extractStyles (PtSeq ("knownStyles", 0) [MLiteral _ name, rest])
+_extractStyles (PtSeq _ ("knownStyles", 0) [MLiteral _ _ name, rest])
 		= name : _extractStyles rest
-_extractStyles (MLiteral _ name)
+_extractStyles (MLiteral _ _ name)
 		= [name]
 _extractStyles pt
 		= error $ "Coloring: unexpected parsetree for style extraction: "++show pt

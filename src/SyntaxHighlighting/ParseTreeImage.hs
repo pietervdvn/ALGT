@@ -90,7 +90,7 @@ withName i st	= do	oldName	<- get' currName
 
 
 pointPositions	:: ParseTreeA (Maybe Name) -> State PPS ([Point], W, H)
-pointPositions (MLiteralA style _ content)
+pointPositions (MLiteral style _ content)
 	= do	w	<- get' fs
 		ds	<- get' (cs . dotSize)
 		let w'	= w * length content
@@ -99,9 +99,9 @@ pointPositions (MLiteralA style _ content)
 				(w' `div` 2) (ds*2) True
 				style
 		return ([p], w', 2*(ds + w))
-pointPositions (MIntA style mi i)
-	= pointPositions (MLiteralA style mi $ show i)
-pointPositions (PtSeqA style mi@(tpName, choice) pts)
+pointPositions (MInt style mi i)
+	= pointPositions (MLiteral style mi $ show i)
+pointPositions (PtSeq style mi@(tpName, choice) pts)
 	= do	(pointss, ws, hs)
 			<- pts	|> pointPositions
 				 & mapi |+> uncurry withName

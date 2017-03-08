@@ -30,7 +30,7 @@ fixSyntax ts dynName typeType
 
 		let dynIndex		= length bnfs
 		-- dynamic type parsetree representation
-		let dyn			= MLiteral (typeType, dynIndex) dynName
+		let dyn			= MLiteral () (typeType, dynIndex) dynName
 
 		
 		let changes	= Changes "Gradualized" [syntaxPatch]

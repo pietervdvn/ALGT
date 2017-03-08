@@ -123,15 +123,15 @@ patternMatch _ _ (MVar _ v) expr
  | v == "_"	= return M.empty
  | otherwise
 	= return $ M.singleton v (expr, Nothing)
-patternMatch _ _ (MParseTree (MLiteral _ s1)) (MLiteral _ s2)
+patternMatch _ _ (MParseTree (MLiteral _ _ s1)) (MLiteral _ _ s2)
 	| s1 == s2		= return M.empty
 	| otherwise		= Left $ "Not the same literal: "++s1++ " /= " ++ s2
-patternMatch _ _ (MParseTree (MInt _ s1)) (MInt _ s2)
+patternMatch _ _ (MParseTree (MInt _ _ s1)) (MInt _ _ s2)
 	| s1 == s2		= return M.empty
 	| otherwise		=  Left $ "Not the same int: "++show s1++ " /= " ++ show s2
-patternMatch ctx f (MParseTree (PtSeq mi pts)) pt
+patternMatch ctx f (MParseTree (PtSeq _ mi pts)) pt
 	= patternMatch ctx f (MSeq mi (pts |> MParseTree)) pt
-patternMatch ctx f s1@(MSeq _ seq1) s2@(PtSeq _ seq2)
+patternMatch ctx f s1@(MSeq _ seq1) s2@(PtSeq _ _ seq2)
  | length seq1 /= length seq2	= Left $ "Sequence lengths are not the same: "++toParsable s1 ++ " /= "++toCoParsable s2
  | otherwise			= zip seq1 seq2 |+> uncurry (patternMatch ctx f) >>= foldM mergeVars M.empty
 
@@ -141,7 +141,7 @@ patternMatch ctx f (MAscription as expr') expr
  | otherwise	
 	= Left $ toCoParsable expr ++" is not a "++show as
 
-patternMatch ctx extraCheck (MEvalContext tp name hole) value@(PtSeq _ _)
+patternMatch ctx extraCheck (MEvalContext tp name hole) value@(PtSeq _ _ _)
 	= patternMatchContxt ctx extraCheck (tp, name, hole) value
 patternMatch ctx extraCheck (MEvalContext tp name hole) literal
 	= Left "Evaluation contexts only searching within a parse tree and don't handle literals"
@@ -156,7 +156,7 @@ patternMatch ctx _ pat expr
 
 
 patternMatchContxt	:: Ctx -> (VariableAssignments -> Either String ()) -> (TypeName, Name, Expression) -> ParseTree -> Either String VariableAssignments
-patternMatchContxt r extraCheck evalCtx@(tp, nm, expr) fullContext@(PtSeq _ values)
+patternMatchContxt r extraCheck evalCtx@(tp, nm, expr) fullContext@(PtSeq _ _ values)
 	= inMsg ("While pattern matching evaluation context "++toParsable (MEvalContext tp nm expr)) $
 	  do	let matchMaker (pt, p)	
 			= inMsg ("While trying to fill the hole with '" ++ toParsable pt++"'") $ makeMatch r extraCheck evalCtx fullContext (pt, p)	
@@ -179,7 +179,7 @@ depthFirstSearch' matchMaker path values
 		firstRight deeper
 
 depthFirstSearch	:: ((ParseTree, Path) -> Either String VariableAssignments) -> Path -> ParseTree -> Either String VariableAssignments
-depthFirstSearch matchMaker path pt@(PtSeq _ values)
+depthFirstSearch matchMaker path pt@(PtSeq _ _ values)
 	= do	let deeper	= depthFirstSearch' matchMaker path values
 		let self	= matchMaker (pt, path)
 		firstRight [deeper, self]
@@ -218,7 +218,7 @@ _applyBuiltinFunction ctx (BuiltinFunction funcName _ (Left (_, atLeastNeeded)) 
 _runBIFunc	:: Ctx -> Name -> [Expression] -> Either ([Int] -> Int) ([ParseTree] -> ParseTree) -> Either String ParseTree
 _runBIFunc ctx funcName es (Left intFunc)
 	= do 	is	<- asInts ctx funcName es	-- asInts does evaluation as well
-		return $ MInt ("Number", 0) (intFunc is)
+		return $ MInt () ("Number", 0) (intFunc is)
 _runBIFunc ctx _ es (Right ptFunc)
 	= do	es'	<- es |+> evaluate ctx
 		return $ ptFunc es'
@@ -254,7 +254,7 @@ evaluate ctx (MEvalContext _ nm hole)
 
 
 evaluate ctx (MSeq tp vals)	= do	vals'	<- vals |+> evaluate ctx 
-					return $ PtSeq tp vals'
+					return $ PtSeq () tp vals'
 evaluate ctx (MParseTree pt)	= return pt
 evaluate ctx (MAscription tn expr)
 				= evaluate ctx expr
@@ -271,12 +271,12 @@ showAssgn (pt, mPath)
 		maybe "" (\path -> "\tContext path is "++show path) mPath
 
 evalErr		:: Ctx -> String -> Either String ParseTree
-evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ("", -1) ("Undefined behaviour: "++msg)]
+evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral () ("", -1) ("Undefined behaviour: "++msg)]
 
 asInts ctx bi exprs	
 	= exprs |+> evaluate ctx 
 		|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
-		||>> (\(MInt _ i) -> i)
+		||>> (\(MInt _ _ i) -> i)
 
 buildStackEl	:: (Name, [ParseTree]) -> String
 buildStackEl (func, args)

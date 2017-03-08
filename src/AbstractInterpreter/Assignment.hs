@@ -76,11 +76,11 @@ evalExpr f assgns e
 
 
 _evalExpr	:: Map Name TypeName -> Assignments -> Expression -> Either String AbstractSet
-_evalExpr _ assgns (MParseTree (MLiteral mi token))
+_evalExpr _ assgns (MParseTree (MLiteral _ mi token))
 		= return $ ConcreteLiteral (fst mi) token
-_evalExpr _ assgns (MParseTree (MInt mi i))
+_evalExpr _ assgns (MParseTree (MInt _ mi i))
 		= return $ ConcreteLiteral (fst mi) (show i)
-_evalExpr _ assgns (MParseTree seq@(PtSeq mi _))
+_evalExpr _ assgns (MParseTree seq@(PtSeq _ mi _))
 		= return $ ConcreteLiteral (fst mi) (show seq)
 _evalExpr _ assgns (MVar _ n)
 		= checkExists n assgns ("Unknown variable: "++show n) |> fst

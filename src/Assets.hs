@@ -71,29 +71,37 @@ allAssets = [("White.style", _White_style)
 			, ("Test/STFL.language", _Test_STFL_language)
 			, ("IntegrationTests/_log___Test_STFL_language__dlf__plain", _IntegrationTests__log___Test_STFL_language__dlf__plain)
 			, ("IntegrationTests/Parsetrees_13.svg", _IntegrationTests_Parsetrees_13_svg)
+			, ("IntegrationTests/_log___Test_STFL_language__ifacod__plain.FAILED", _IntegrationTests__log___Test_STFL_language__ifacod__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_12.svg", _IntegrationTests_Parsetrees_12_svg)
 			, ("IntegrationTests/_Test_STFL_language__irdouble_pointdouble_point__plain", _IntegrationTests__Test_STFL_language__irdouble_pointdouble_point__plain)
 			, ("IntegrationTests/_Test_STFL_language__ifaequate__plain", _IntegrationTests__Test_STFL_language__ifaequate__plain)
 			, ("IntegrationTests/_log___Test_STFL_language_cTest_DynamizeSTFL_language_changes_cTest_GradualizeSTFL_language_changes__dlf__plain", _IntegrationTests__log___Test_STFL_language_cTest_DynamizeSTFL_language_changes_cTest_GradualizeSTFL_language_changes__dlf__plain)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_6.svg", _IntegrationTests_Parsetrees_6_svg)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l_rarrow__plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l_rarrow__plain)
 			, ("IntegrationTests/Parsetrees_1.svg", _IntegrationTests_Parsetrees_1_svg)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_0.svg", _IntegrationTests_Parsetrees_0_svg)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l_r____plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l_r____plain)
 			, ("IntegrationTests/Parsetrees_9.svg", _IntegrationTests_Parsetrees_9_svg)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_2.svg", _IntegrationTests_Parsetrees_2_svg)
 			, ("IntegrationTests/_log___Test_STFL_language__ifadom__plain", _IntegrationTests__log___Test_STFL_language__ifadom__plain)
 			, ("IntegrationTests/_Test_STFL_language__ifadom__plain", _IntegrationTests__Test_STFL_language__ifadom__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__irarrow__plain.FAILED", _IntegrationTests__log___Test_STFL_language__irarrow__plain_FAILED)
 			, ("IntegrationTests/_Test_STFL_language__ifaeval__plain", _IntegrationTests__Test_STFL_language__ifaeval__plain)
 			, ("IntegrationTests/_Test_CommonSubset_language__dlf__plain", _IntegrationTests__Test_CommonSubset_language__dlf__plain)
 			, ("IntegrationTests/Parsetrees_17.svg", _IntegrationTests_Parsetrees_17_svg)
 			, ("IntegrationTests/_Test_STFL_language__dlf__plain", _IntegrationTests__Test_STFL_language__dlf__plain)
 			, ("IntegrationTests/_log___Test_STFL_language__irarrow__plain", _IntegrationTests__log___Test_STFL_language__irarrow__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__ifadom__plain.FAILED", _IntegrationTests__log___Test_STFL_language__ifadom__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_20.svg", _IntegrationTests_Parsetrees_20_svg)
 			, ("IntegrationTests/_log___Test_STFL_language__ifaequate__plain", _IntegrationTests__log___Test_STFL_language__ifaequate__plain)
 			, ("IntegrationTests/_Test_STFL_language__ir___plain", _IntegrationTests__Test_STFL_language__ir___plain)
+			, ("IntegrationTests/_log___Test_STFL_language__ifaequate__plain.FAILED", _IntegrationTests__log___Test_STFL_language__ifaequate__plain_FAILED)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__lsvgSyntax_svg__plain.FAILED", _IntegrationTests__log___Test_STFL_language__lsvgSyntax_svg__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_23.svg", _IntegrationTests_Parsetrees_23_svg)
 			, ("IntegrationTests/_log___Test_STFL_language__plain", _IntegrationTests__log___Test_STFL_language__plain)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain)
@@ -111,6 +119,8 @@ allAssets = [("White.style", _White_style)
 			, ("IntegrationTests/_log___Test_STFL_language__lsvgSyntax_svg__plain", _IntegrationTests__log___Test_STFL_language__lsvgSyntax_svg__plain)
 			, ("IntegrationTests/_Test_STFL_language__irEvalCtx__plain", _IntegrationTests__Test_STFL_language__irEvalCtx__plain)
 			, ("IntegrationTests/_Test_STFL_language_cTest_DynamizeSTFL_language_changes__dlf__plain", _IntegrationTests__Test_STFL_language_cTest_DynamizeSTFL_language_changes__dlf__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__plain.FAILED", _IntegrationTests__log___Test_STFL_language__plain_FAILED)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain_FAILED)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__plain)
 			, ("IntegrationTests/_log___Test_TypeErrFunc_language__dlf__plain", _IntegrationTests__log___Test_TypeErrFunc_language__dlf__plain)
 			, ("IntegrationTests/_log___Test_STFL_language__irEvalCtx__plain", _IntegrationTests__log___Test_STFL_language__irEvalCtx__plain)
@@ -123,6 +133,8 @@ allAssets = [("White.style", _White_style)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain)
 			, ("IntegrationTests/_log___Test_STFL_language__irarrowstart__plain", _IntegrationTests__log___Test_STFL_language__irarrowstart__plain)
 			, ("IntegrationTests/_log___Test_STFL_language__ifacod__plain", _IntegrationTests__log___Test_STFL_language__ifacod__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__ia__plain.FAILED", _IntegrationTests__log___Test_STFL_language__ia__plain_FAILED)
+			, ("IntegrationTests/_log___Test_STFL_language__dlf__plain.FAILED", _IntegrationTests__log___Test_STFL_language__dlf__plain_FAILED)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__tpa__plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpa__plain)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain)
 			, ("IntegrationTests/_log___Test_STFL_language__ir____plain", _IntegrationTests__log___Test_STFL_language__ir____plain)
@@ -133,14 +145,18 @@ allAssets = [("White.style", _White_style)
 			, ("IntegrationTests/_Test_STFL_language__ir____plain", _IntegrationTests__Test_STFL_language__ir____plain)
 			, ("IntegrationTests/Parsetrees_11.svg", _IntegrationTests_Parsetrees_11_svg)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__plain_FAILED)
+			, ("IntegrationTests/_log___Test_STFL_language__irdouble_pointdouble_point__plain.FAILED", _IntegrationTests__log___Test_STFL_language__irdouble_pointdouble_point__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_8.svg", _IntegrationTests_Parsetrees_8_svg)
 			, ("IntegrationTests/Syntax.svg", _IntegrationTests_Syntax_svg)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain)
 			, ("IntegrationTests/Parsetrees_10.svg", _IntegrationTests_Parsetrees_10_svg)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain_FAILED)
 			, ("IntegrationTests/_Test_STFL_language__irarrow__plain", _IntegrationTests__Test_STFL_language__irarrow__plain)
 			, ("IntegrationTests/_Test_STFL_language__irarrowstart__plain", _IntegrationTests__Test_STFL_language__irarrowstart__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__ifaeval__plain.FAILED", _IntegrationTests__log___Test_STFL_language__ifaeval__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_18.svg", _IntegrationTests_Parsetrees_18_svg)
 			, ("IntegrationTests/_log___Test_STFL_language__ifaeval__plain", _IntegrationTests__log___Test_STFL_language__ifaeval__plain)
 			, ("IntegrationTests/_Test_STFL_language__plain", _IntegrationTests__Test_STFL_language__plain)
@@ -149,9 +165,13 @@ allAssets = [("White.style", _White_style)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_r___plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r___plain)
 			, ("IntegrationTests/Parsetrees_15.svg", _IntegrationTests_Parsetrees_15_svg)
 			, ("IntegrationTests/_Test_STFL_language__ifacod__plain", _IntegrationTests__Test_STFL_language__ifacod__plain)
+			, ("IntegrationTests/_log___Test_STFL_language__irarrowstart__plain.FAILED", _IntegrationTests__log___Test_STFL_language__irarrowstart__plain_FAILED)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain_FAILED)
 			, ("IntegrationTests/_log___Test_STFL_language__irdouble_pointdouble_point__plain", _IntegrationTests__log___Test_STFL_language__irdouble_pointdouble_point__plain)
+			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain.FAILED", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain_FAILED)
 			, ("IntegrationTests/Parsetrees_7.svg", _IntegrationTests_Parsetrees_7_svg)
 			, ("IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__tpProgress__plain", _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpProgress__plain)
+			, ("IntegrationTests/_log___Style_languageTerminal_stylestyleFile__html__plain.FAILED", _IntegrationTests__log___Style_languageTerminal_stylestyleFile__html__plain_FAILED)
 			, ("IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_r____plain", _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r____plain)
 			, ("IntegrationTests/_log___Test_FuncTypeErr_language__dlf__plain", _IntegrationTests__log___Test_FuncTypeErr_language__dlf__plain)
 			, ("IntegrationTests/Parsetrees_21.svg", _IntegrationTests_Parsetrees_21_svg)
@@ -418,6 +438,10 @@ _IntegrationTests__log___Test_STFL_language__dlf__plain
 _IntegrationTests_Parsetrees_13_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_13.svg"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__ifacod__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__ifacod__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__ifacod__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests_Parsetrees_12_svg #-}
 _IntegrationTests_Parsetrees_12_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_12.svg"
@@ -434,6 +458,10 @@ _IntegrationTests__Test_STFL_language__ifaequate__plain
 _IntegrationTests__log___Test_STFL_language_cTest_DynamizeSTFL_language_changes_cTest_GradualizeSTFL_language_changes__dlf__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language_cTest_DynamizeSTFL_language_changes_cTest_GradualizeSTFL_language_changes__dlf__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests_Parsetrees_6_svg #-}
 _IntegrationTests_Parsetrees_6_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_6.svg"
@@ -445,6 +473,10 @@ _IntegrationTests__Test_STFL_languageTest_examples_stfle_l_rarrow__plain
 {-# NOINLINE _IntegrationTests_Parsetrees_1_svg #-}
 _IntegrationTests_Parsetrees_1_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_1.svg"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plain.FAILED"
 
 {-# NOINLINE _IntegrationTests_Parsetrees_0_svg #-}
 _IntegrationTests_Parsetrees_0_svg
@@ -462,6 +494,10 @@ _IntegrationTests_Parsetrees_9_svg
 _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests_Parsetrees_2_svg #-}
 _IntegrationTests_Parsetrees_2_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_2.svg"
@@ -473,6 +509,10 @@ _IntegrationTests__log___Test_STFL_language__ifadom__plain
 {-# NOINLINE _IntegrationTests__Test_STFL_language__ifadom__plain #-}
 _IntegrationTests__Test_STFL_language__ifadom__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_language__ifadom__plain"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__irarrow__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__irarrow__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__irarrow__plain.FAILED"
 
 {-# NOINLINE _IntegrationTests__Test_STFL_language__ifaeval__plain #-}
 _IntegrationTests__Test_STFL_language__ifaeval__plain
@@ -494,6 +534,10 @@ _IntegrationTests__Test_STFL_language__dlf__plain
 _IntegrationTests__log___Test_STFL_language__irarrow__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__irarrow__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__ifadom__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__ifadom__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__ifadom__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests_Parsetrees_20_svg #-}
 _IntegrationTests_Parsetrees_20_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_20.svg"
@@ -506,9 +550,17 @@ _IntegrationTests__log___Test_STFL_language__ifaequate__plain
 _IntegrationTests__Test_STFL_language__ir___plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_language__ir___plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__ifaequate__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__ifaequate__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__ifaequate__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain #-}
 _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__lsvgSyntax_svg__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__lsvgSyntax_svg__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__lsvgSyntax_svg__plain.FAILED"
 
 {-# NOINLINE _IntegrationTests_Parsetrees_23_svg #-}
 _IntegrationTests_Parsetrees_23_svg
@@ -578,6 +630,14 @@ _IntegrationTests__Test_STFL_language__irEvalCtx__plain
 _IntegrationTests__Test_STFL_language_cTest_DynamizeSTFL_language_changes__dlf__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_language_cTest_DynamizeSTFL_language_changes__dlf__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__plain.FAILED"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__plain #-}
 _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__plain"
@@ -626,6 +686,14 @@ _IntegrationTests__log___Test_STFL_language__irarrowstart__plain
 _IntegrationTests__log___Test_STFL_language__ifacod__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__ifacod__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__ia__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__ia__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__ia__plain.FAILED"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__dlf__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__dlf__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__dlf__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpa__plain #-}
 _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpa__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__tpa__plain"
@@ -666,6 +734,14 @@ _IntegrationTests_Parsetrees_11_svg
 _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rdouble_pointdouble_point__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__plain.FAILED"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__irdouble_pointdouble_point__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__irdouble_pointdouble_point__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__irdouble_pointdouble_point__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests_Parsetrees_8_svg #-}
 _IntegrationTests_Parsetrees_8_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_8.svg"
@@ -690,6 +766,10 @@ _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpa__ppp__plai
 _IntegrationTests_Parsetrees_10_svg
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/Parsetrees_10.svg"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l_rarrow__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests__Test_STFL_language__irarrow__plain #-}
 _IntegrationTests__Test_STFL_language__irarrow__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_language__irarrow__plain"
@@ -697,6 +777,10 @@ _IntegrationTests__Test_STFL_language__irarrow__plain
 {-# NOINLINE _IntegrationTests__Test_STFL_language__irarrowstart__plain #-}
 _IntegrationTests__Test_STFL_language__irarrowstart__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_language__irarrowstart__plain"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__ifaeval__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__ifaeval__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__ifaeval__plain.FAILED"
 
 {-# NOINLINE _IntegrationTests_Parsetrees_18_svg #-}
 _IntegrationTests_Parsetrees_18_svg
@@ -730,9 +814,21 @@ _IntegrationTests_Parsetrees_15_svg
 _IntegrationTests__Test_STFL_language__ifacod__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_language__ifacod__plain"
 
+{-# NOINLINE _IntegrationTests__log___Test_STFL_language__irarrowstart__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_language__irarrowstart__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__irarrowstart__plain.FAILED"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__tpProgress__ppp__plain.FAILED"
+
 {-# NOINLINE _IntegrationTests__log___Test_STFL_language__irdouble_pointdouble_point__plain #-}
 _IntegrationTests__log___Test_STFL_language__irdouble_pointdouble_point__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_language__irdouble_pointdouble_point__plain"
+
+{-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain_FAILED #-}
+_IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Test_STFL_languageTest_examples_stfle_l__ptsvgParsetrees__plain.FAILED"
 
 {-# NOINLINE _IntegrationTests_Parsetrees_7_svg #-}
 _IntegrationTests_Parsetrees_7_svg
@@ -741,6 +837,10 @@ _IntegrationTests_Parsetrees_7_svg
 {-# NOINLINE _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpProgress__plain #-}
 _IntegrationTests__Test_STFL_languageTest_examples_stfle_l__tpProgress__plain
 	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_Test_STFL_languageTest_examples_stfle_l__tpProgress__plain"
+
+{-# NOINLINE _IntegrationTests__log___Style_languageTerminal_stylestyleFile__html__plain_FAILED #-}
+_IntegrationTests__log___Style_languageTerminal_stylestyleFile__html__plain_FAILED
+	 = unsafePerformIO $ readFile "src/Assets/IntegrationTests/_log___Style_languageTerminal_stylestyleFile__html__plain.FAILED"
 
 {-# NOINLINE _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r____plain #-}
 _IntegrationTests__log___Test_STFL_languageTest_examples_stfle_l_r____plain

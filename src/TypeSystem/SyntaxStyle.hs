@@ -40,7 +40,7 @@ determineStyle styling pt
 		style			= firstJusts [specificStyle, baseStyle]
 		in
 		case pt of
-			PtSeqA a i pts	-> pts |> determineStyle styling & PtSeqA (a, style) i
+			PtSeq a i pts	-> pts |> determineStyle styling & PtSeq (a, style) i
 			pt		-> pt |> (\a -> (a, style))
 			
 

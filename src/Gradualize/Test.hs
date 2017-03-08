@@ -34,10 +34,10 @@ t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 		let dynSet i	= [generateAbstractSet (get tsSyntax ts) (show i) "type"]
 		let concrFunc	= concretization (dyn, dynSet)	:: ParseTree -> Arguments
 
-		let ptBool	= MLiteral ("typeL", 1) "Bool"
-		let testPT1	= PtSeq ("type", -1) [ptBool, MLiteral ("type",0)  "->", ptBool]
-		let testPT2	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", ptBool]
-		let testPT3	= PtSeq ("type", -1) [dyn, MLiteral ("type",0)  "->", dyn]
+		let ptBool	= MLiteral () ("typeL", 1) "Bool"
+		let testPT1	= PtSeq () ("type", -1) [ptBool, MLiteral () ("type",0)  "->", ptBool]
+		let testPT2	= PtSeq () ("type", -1) [dyn, MLiteral () ("type",0)  "->", ptBool]
+		let testPT3	= PtSeq () ("type", -1) [dyn, MLiteral () ("type",0)  "->", dyn]
 
 
 		let testPT args0 args1

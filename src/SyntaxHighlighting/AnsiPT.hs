@@ -32,11 +32,11 @@ renderPT fc style pt
 
 
 renderDoc	:: ParseTreeA (String -> Doc) -> Doc
-renderDoc (MLiteralA f _ s)
+renderDoc (MLiteral f _ s)
 		= f s
-renderDoc (MIntA f _ i)
+renderDoc (MInt f _ i)
 		= f $ show i
-renderDoc (PtSeqA _ _ pts)
+renderDoc (PtSeq _ _ pts)
 		= pts |> renderDoc & foldl1 (<+>)
 
 renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
@@ -55,7 +55,7 @@ styleMI		:: ParseTreeA a -> String
 styleMI pt'	= get ptaInf pt' & (\(tn, i) -> tn++ "." ++ show i)
 
 renderDocDebug	:: ParseTreeA (String -> Doc) -> [(String, Doc)]
-renderDocDebug (PtSeqA _ _ pts)
+renderDocDebug (PtSeq _ _ pts)
 		= let	(meta, h:t)	= (pts >>= renderDocDebug) & unzip in
 			zip meta $ (text "+ " <+> h) : (t |> ( text "| " <+>))
 renderDocDebug pt

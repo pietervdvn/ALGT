@@ -27,15 +27,15 @@ renderPT fc style pt
 
 
 _renderPT	:: ParseTreeA (Name, [Attr]) -> String
-_renderPT (MLiteralA ("dirty-hack", attrs) _ token)
+_renderPT (MLiteral ("dirty-hack", attrs) _ token)
 		= inTag "span" [SA "style" ("color:"++token++";background:"++contrastColor token)] $ insertBR token
-_renderPT (MLiteralA ("dirtier-hack", attrs) _ token)
+_renderPT (MLiteral ("dirtier-hack", attrs) _ token)
 		= inTag "span" [SA "class" token] $ insertBR token
-_renderPT (MLiteralA (tag, attrs) _ token)
+_renderPT (MLiteral (tag, attrs) _ token)
 		= inTag tag attrs $ insertBR token
-_renderPT (MIntA t m token)
-		= _renderPT (MLiteralA t m $ show token)
-_renderPT (PtSeqA (tag, attrs) _ pts)
+_renderPT (MInt t m token)
+		= _renderPT (MLiteral t m $ show token)
+_renderPT (PtSeq (tag, attrs) _ pts)
 		= let	rendered	= pts |> _renderPT & concat in
 			rendered & if null attrs then id else inTag tag attrs
 

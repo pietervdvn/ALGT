@@ -239,23 +239,23 @@ escapeWeirdChars 'Γ'	= "§"
 escapeWeirdChars c	= [c]
 
 matchOptionBody	:: ParseTree -> String -> String
-matchOptionBody (PtSeq _ [body, MLiteral _ ",", body']) str
+matchOptionBody (PtSeq _ _ [body, MLiteral _ _ ",", body']) str
 	= let	action	= matchOptionBody body
 		action'	= matchOptionBody body'
 		in
 		action str ++ "\n" ++ action' str
-matchOptionBody (PtSeq _ [parO, MInt _ i, MLiteral _ "..", MInt _ j, parC]) str
+matchOptionBody (PtSeq _ _ [parO, MInt _ _ i, MLiteral _ _ "..", MInt _ _ j, parC]) str
 	= let	i'	= if inclusivePar parO then i-1 else i
 		j'	= if not $ inclusivePar parC then j else j-1
 		in
 		str & lines & take j' & drop i' & unlines
-matchOptionBody (PtSeq _ [parO, MInt _ i, MLiteral _ "..", parC]) str
+matchOptionBody (PtSeq _ _ [parO, MInt _ _ i, MLiteral _ _ "..", parC]) str
 	= let	i'	= if inclusivePar parO then i-1 else i
 		action	= if not $ inclusivePar parC then id else init
 		in
 		str & lines & action & drop i' & intercalate "\n"
 
-matchOptionBody (MInt _ i) str
+matchOptionBody (MInt _ _ i) str
 	= let	lined	= lines str in
 		if i <= length lined then lined !! (i-1)
 			else error $ "To little lines to get nr "++show i++" out of\n"++(str & lines & mapi |> (\(i, l) -> padR 3 ' ' (show $ 1 + i) ++ l) & unlines)
@@ -264,8 +264,8 @@ matchOptionBody pt str
 
 
 inclusivePar	:: ParseTree -> Bool
-inclusivePar (MLiteral _ "[")	= True
-inclusivePar (MLiteral _ "]")	= False
+inclusivePar (MLiteral _ _ "[")	= True
+inclusivePar (MLiteral _ _ "]")	= False
 
 
 

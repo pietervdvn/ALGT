@@ -168,15 +168,15 @@ matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
 
 
 matchTyping _ _ (BNFRuleCall "Number") tp (MePtToken s) -- TODO Dehardcode this
-			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt tp |> MParseTree
+			= readMaybe s & maybe (Left $ "Not a valid int: "++s) return |> MInt () tp |> MParseTree
 matchTyping _ _ (BNFRuleCall "Number") tp (MePtInt i)	-- TODO dehardcode this
-			= return $ MParseTree $ MInt tp i
+			= return $ MParseTree $ MInt () tp i
 matchTyping f syntax (BNFRuleCall nm) _ pt
  | isBuiltinName nm
 		= do	contents	<- maybe (Left "Builtin with no token matched") return $
 						fromMePtToken pt
 			unless (isValidBuiltin (BNFRuleCall nm) contents) $  Left $ contents ++" is not a "++nm 
-			MLiteral (nm, 0) contents & MParseTree & return
+			MLiteral () (nm, 0) contents & MParseTree & return
  | nm == topSymbol
 		= dynamicTranslate f syntax nm pt
  | nm `M.member` get bnf syntax
@@ -202,7 +202,7 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
 
 -- Simpler cases
 matchTyping _ _ (Literal s) tp (MePtToken s')
- | s == s'		= MLiteral tp s & MParseTree & return
+ | s == s'		= MLiteral () tp s & MParseTree & return
  | otherwise		= Left $ "Not the right literal: "++show s++" ~ "++show s'
 
 matchTyping _ _ bnf _ pt
@@ -213,10 +213,10 @@ matchTyping _ _ bnf _ pt
 
 -- only used for builtin functions, as it's arguments do not have a typing. (If this were so, we wouldn't be ably to handle arbitrary syntaxes)
 dynamicTranslate	:: Map Name Type -> Syntax -> TypeName -> MEParseTree -> Either String Expression
-dynamicTranslate _ _ tp (MePtToken s)	= MLiteral (tp, -1) s & MParseTree & return
-dynamicTranslate f s tp (MePtSeq pts)	= pts |+> dynamicTranslate f s tp |> MSeq (tp, -1) 
+dynamicTranslate _ _ tp (MePtToken  s)	= MLiteral () (tp, -1) s & MParseTree & return
+dynamicTranslate f s tp (MePtSeq  pts)	= pts |+> dynamicTranslate f s tp |> MSeq (tp, -1) 
 dynamicTranslate _ _ tp (MePtVar nm)	= MVar tp nm & return
-dynamicTranslate _ _ tp (MePtInt i)	= MInt (tp, -1) i & MParseTree & return
+dynamicTranslate _ _ tp (MePtInt i)	= MInt () (tp, -1) i & MParseTree & return
 dynamicTranslate f s _ ascr@(MePtAscription tp e)	
 					= typeAs f s tp e
 dynamicTranslate f s tp call@(MePtCall nm _ bi _)

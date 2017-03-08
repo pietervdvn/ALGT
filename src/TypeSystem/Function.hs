@@ -114,10 +114,10 @@ builtinFunctions
 		$ Left (\[i] -> -1)
 	, BuiltinFunction "equal" "Checks that all the arguments are equal. Gives 1 if so, 0 if not."
 		(Right [topSymbol, topSymbol]) "Number"
-		$ Right (\(e:es) -> MInt ("Number", 0) $ if all (e ==) es then 1 else 0)
+		$ Right (\(e:es) -> MInt () ("Number", 0) $ if all (e ==) es then 1 else 0)
 	, BuiltinFunction "error" "Stops the function, gives a stack trace. When used in a rule, this won't match a predicate"
 		(Left (topSymbol, 0)) bottomSymbol 
-		$ Right (\pts -> pts & toParsable' " " & MLiteral (bottomSymbol, 0))
+		$ Right (\pts -> pts & toParsable' " " & MLiteral () (bottomSymbol, 0))
 				
 	, BuiltinFunction "subs" ("(expression to replace, to replace with, in this expression) "
 			++ "Replaces each occurence of the first expression by the second, in the third argument."
