@@ -20,39 +20,20 @@ Warning:
     ......................
     
     Clause: 
-      cod("(" T ")")           = cod(T)
+      cod(T1 "->" T2)          = T2
     
     Possible inputs at this point: 
     #  (type)
     
     
     Possible results: 
-    0   ("(" type(0/1/2:1) ")"): typeL/2	--> type( (Function call - ID not retrievable)) : "type"
+    0   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> type(0/0:2)     : "type"
     
     
     
     
     
      Analysis of clause 1 
-    ......................
-    
-    Clause: 
-      cod(T1 "->" T2)          = T2
-    
-    Possible inputs at this point: 
-    #  ("Bool")
-    #  ("Int")
-    #  ((typeL "->" type))
-    
-    
-    Possible results: 
-    1   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> type(0/0:2)     : "type"
-    
-    
-    
-    
-    
-     Analysis of clause 2 
     ......................
     
     Clause: 
@@ -64,13 +45,13 @@ Warning:
     
     
     Possible results: 
-    2   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    1   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     
     
     
-     Analysis of clause 3 
+     Analysis of clause 2 
     ......................
     
     Clause: 
@@ -81,7 +62,7 @@ Warning:
     
     
     Possible results: 
-    3   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     

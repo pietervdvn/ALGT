@@ -22,7 +22,6 @@ Warning:
 #   EvalPlus
 #   EvalAscrBool
 #   EvalAscrInt
-#   EvalAscrPar
 #   EvalParens
 #   EvalIfTrue
 #   EvalIfFalse
@@ -38,7 +37,6 @@ Applicable to:
   (number "+" number)
   (bool "::" "Bool")
   (number "::" "Int")
-  (eL "::" ("(" type ")"))
   ("If" "True" "Then" e "Else" e)
   ("If" "False" "Then" e "Else" e)
   (("(" "\\" var ":" type "." e ")") e)
@@ -66,8 +64,6 @@ Results:
   (number(0:0) "+" number(0:2)): e/0 → number( (Function call - ID not retrievable))
   (bool(0:0) "::" "Bool"): e/1 → bool(0:0)
   (number(0:0) "::" "Int"): e/1 → number(0:0)
-  (eL(0:0) "::" ("(" type(0:2:1) ")"): typeL/2): e/1 → eL(0:0)
-  	 where (recursion) (eL(0:0) "::" type(0:2:1)): e/1 → eL(0:0)
   ("(" e(0:1) ")"): eL/4 → e(0:1)
   ("If" "True" "Then" e(0:3) "Else" e(0:5)): eL/3 → e(0:3)
   ("If" "False" "Then" e(0:3) "Else" e(0:5)): eL/3 → e(0:5)
@@ -134,17 +130,6 @@ Applicable to:
   (number "::" "Int")
 Results:
   (number(0:0) "::" "Int"): e/1 → number(0:0)
-
-
-
- Analysis of rule "EvalAscrPar" 
---------------------------------
-
-Applicable to:
-  (eL "::" ("(" type ")"))
-Results:
-  (eL(0:0) "::" ("(" type(0:2:1) ")"): typeL/2): e/1 → eL(0:0)
-  	 where (recursion) (eL(0:0) "::" type(0:2:1)): e/1 → eL(0:0)
 
 
 

@@ -25,9 +25,6 @@ While trying to proof that (→) is applicable to "True":
   While trying to intepret the rule EvalAscrInt with True:
     :
       FT: Could not pattern match '"True"' over 'i "::" "Int"'
-  While trying to intepret the rule EvalAscrPar with True:
-    :
-      FT: Could not pattern match '"True"' over 'e "::" ("(" t ")")'
   While trying to intepret the rule EvalParens with True:
     :
       FT: Could not pattern match '"True"' over '"(" e ")"'
@@ -54,9 +51,6 @@ While trying to proof that (→) is applicable to "False":
   While trying to intepret the rule EvalAscrInt with False:
     :
       FT: Could not pattern match '"False"' over 'i "::" "Int"'
-  While trying to intepret the rule EvalAscrPar with False:
-    :
-      FT: Could not pattern match '"False"' over 'e "::" ("(" t ")")'
   While trying to intepret the rule EvalParens with False:
     :
       FT: Could not pattern match '"False"' over '"(" e ")"'
@@ -73,8 +67,8 @@ While trying to proof that (→) is applicable to "False":
 # Proof weight: 1, proof depth: 1
 
 
------------------------------------- [EvalIfTrue]
-If True Then False Else True → False
+-------------------------------------------------- [EvalIfTrue]
+"If" "True" "Then" "False" "Else" "True" → "False"
 
 
 
@@ -83,10 +77,10 @@ If True Then False Else True → False
 # Proof weight: 2, proof depth: 2
 
 
------------------------------------- [EvalIfTrue]
-If True Then False Else True → False
--------------------------------------------------------------------------------------------- [EvalCtx]
-If ( If True Then False Else True ) Then False Else True → If ( False ) Then False Else True
+-------------------------------------------------- [EvalIfTrue]
+"If" "True" "Then" "False" "Else" "True" → "False"
+-------------------------------------------------------------------------------------------------------------------------------------------- [EvalCtx]
+"If" ("(" ("If" "True" "Then" "False" "Else" "True") ")") "Then" "False" "Else" "True" → "If" ("(" "False" ")") "Then" "False" "Else" "True"
 
 
 
@@ -105,9 +99,6 @@ While trying to proof that (→) is applicable to "42":
   While trying to intepret the rule EvalAscrInt with 42:
     :
       FT: Could not pattern match '42' over 'i "::" "Int"'
-  While trying to intepret the rule EvalAscrPar with 42:
-    :
-      FT: Could not pattern match '42' over 'e "::" ("(" t ")")'
   While trying to intepret the rule EvalParens with 42:
     :
       FT: Could not pattern match '42' over '"(" e ")"'
@@ -126,7 +117,7 @@ While trying to proof that (→) is applicable to "42":
 
 1 : number    2 : number
 ------------------------ [EvalPlus]
-1 + 2 → 3
+1 "+" 2 → 3
 
 
 
@@ -135,8 +126,8 @@ While trying to proof that (→) is applicable to "42":
 # Proof weight: 1, proof depth: 1
 
 
--------------------------------------------------------------------------- [EvalLamApp]
-( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) → ( \ i : Int . i + 1 ) 5
+--------------------------------------------------------------------------------------------------------------------------------------------------- [EvalLamApp]
+("(" "\\" "f" ":" ("Int" "->" "Int") "." ("f" 5) ")") ("(" "\\" "i" ":" "Int" "." ("i" "+" 1) ")") → ("(" "\\" "i" ":" "Int" "." ("i" "+" 1) ")") 5
 
 
 
@@ -145,8 +136,8 @@ While trying to proof that (→) is applicable to "42":
 # Proof weight: 1, proof depth: 1
 
 
---------------- [EvalParens]
-( True ) → True
+----------------------- [EvalParens]
+"(" "True" ")" → "True"
 
 
 
@@ -155,9 +146,9 @@ While trying to proof that (→) is applicable to "42":
 # Proof weight: 2, proof depth: 2
 
 
-False : bool
---------------------- [EvalAscrBool]
-False :: Bool → False
+"False" : bool
+----------------------------- [EvalAscrBool]
+"False" "::" "Bool" → "False"
 
 
 
@@ -166,8 +157,8 @@ False :: Bool → False
 # Proof weight: 1, proof depth: 1
 
 
---------------- [EvalParens]
-( True ) → True
+----------------------- [EvalParens]
+"(" "True" ")" → "True"
 
 
 
@@ -176,10 +167,10 @@ False :: Bool → False
 # Proof weight: 2, proof depth: 2
 
 
----------------------------------- [EvalIfTrue]
-If True Then True Else True → True
----------------------------------------------------------- [EvalCtx]
-( If True Then True Else True ) :: Bool → ( True ) :: Bool
+------------------------------------------------ [EvalIfTrue]
+"If" "True" "Then" "True" "Else" "True" → "True"
+---------------------------------------------------------------------------------------------- [EvalCtx]
+("(" ("If" "True" "Then" "True" "Else" "True") ")") "::" "Bool" → ("(" "True" ")") "::" "Bool"
 
 
 
@@ -198,9 +189,6 @@ While trying to proof that (→) is applicable to "True":
   While trying to intepret the rule EvalAscrInt with True:
     :
       FT: Could not pattern match '"True"' over 'i "::" "Int"'
-  While trying to intepret the rule EvalAscrPar with True:
-    :
-      FT: Could not pattern match '"True"' over 'e "::" ("(" t ")")'
   While trying to intepret the rule EvalParens with True:
     :
       FT: Could not pattern match '"True"' over '"(" e ")"'
@@ -217,8 +205,8 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 1, proof depth: 1
 
 
------------------ [EvalParens]
-( False ) → False
+------------------------- [EvalParens]
+"(" "False" ")" → "False"
 
 
 
@@ -227,9 +215,9 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 2, proof depth: 2
 
 
-True : bool
-------------------- [EvalAscrBool]
-True :: Bool → True
+"True" : bool
+--------------------------- [EvalAscrBool]
+"True" "::" "Bool" → "True"
 
 
 
@@ -238,8 +226,8 @@ True :: Bool → True
 # Proof weight: 1, proof depth: 1
 
 
----------------------------- [EvalIfTrue]
-If True Then 42 Else 43 → 42
+------------------------------------ [EvalIfTrue]
+"If" "True" "Then" 42 "Else" 43 → 42
 
 
 
@@ -248,8 +236,8 @@ If True Then 42 Else 43 → 42
 # Proof weight: 1, proof depth: 1
 
 
------------------------------ [EvalIfFalse]
-If False Then 23 Else 44 → 44
+------------------------------------- [EvalIfFalse]
+"If" "False" "Then" 23 "Else" 44 → 44
 
 
 
@@ -260,7 +248,7 @@ If False Then 23 Else 44 → 44
 
 5 : number    6 : number
 ------------------------ [EvalPlus]
-5 + 6 → 11
+5 "+" 6 → 11
 
 
 
@@ -271,9 +259,9 @@ If False Then 23 Else 44 → 44
 
 6 : number    7 : number
 ------------------------ [EvalPlus]
-6 + 7 → 13
+6 "+" 7 → 13
 ------------------------- [EvalCtx]
-5 + 6 + 7 → 5 + 13
+5 "+" (6 "+" 7) → 5 "+" 13
 
 
 
@@ -282,8 +270,8 @@ If False Then 23 Else 44 → 44
 # Proof weight: 1, proof depth: 1
 
 
-------------------------------- [EvalLamApp]
-( \ x : Int . x + 1 ) 5 → 5 + 1
+-------------------------------------------------------- [EvalLamApp]
+("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") 5 → 5 "+" 1
 
 
 
@@ -292,10 +280,10 @@ If False Then 23 Else 44 → 44
 # Proof weight: 2, proof depth: 2
 
 
------------------------------------- [EvalIfTrue]
-If True Then False Else True → False
------------------------------------------------------------------------------------------- [EvalCtx]
-If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 123456 Else 42
+-------------------------------------------------- [EvalIfTrue]
+"If" "True" "Then" "False" "Else" "True" → "False"
+---------------------------------------------------------------------------------------------------------------------------------- [EvalCtx]
+"If" ("(" ("If" "True" "Then" "False" "Else" "True") ")") "Then" 123456 "Else" 42 → "If" ("(" "False" ")") "Then" 123456 "Else" 42
 
 
 
@@ -306,9 +294,9 @@ If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 12
 
 6 : number    7 : number
 ------------------------ [EvalPlus]
-6 + 7 → 13
-------------------------- [EvalCtx]
-5 + ( 6 + 7 ) → 5 + ( 13 )
+6 "+" 7 → 13
+---------------------------------------------- [EvalCtx]
+5 "+" ("(" (6 "+" 7) ")") → 5 "+" ("(" 13 ")")
 
 
 
@@ -319,9 +307,9 @@ If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 12
 
 5 : number    6 : number
 ------------------------ [EvalPlus]
-5 + 6 → 11
------------------------------------------- [EvalCtx]
-( 5 + 6 ) + ( 7 + 8 ) → ( 11 ) + ( 7 + 8 )
+5 "+" 6 → 11
+---------------------------------------------------------------------------------- [EvalCtx]
+("(" (5 "+" 6) ")") "+" ("(" (7 "+" 8) ")") → ("(" 11 ")") "+" ("(" (7 "+" 8) ")")
 
 
 
@@ -332,9 +320,9 @@ If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 12
 
 7 : number    8 : number
 ------------------------ [EvalPlus]
-7 + 8 → 15
------------------------------------------- [EvalCtx]
-5 + ( 6 + ( 7 + 8 ) ) → 5 + ( 6 + ( 15 ) )
+7 "+" 8 → 15
+---------------------------------------------------------------------------------- [EvalCtx]
+5 "+" ("(" (6 "+" ("(" (7 "+" 8) ")")) ")") → 5 "+" ("(" (6 "+" ("(" 15 ")")) ")")
 
 
 
@@ -343,8 +331,8 @@ If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 12
 # Proof weight: 1, proof depth: 1
 
 
-------------------------------------- [EvalLamApp]
-( \ x : Int . x + 1 ) True → True + 1
+------------------------------------------------------------------ [EvalLamApp]
+("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" → "True" "+" 1
 
 
 

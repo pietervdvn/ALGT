@@ -30,9 +30,6 @@ Property successfull
     While trying to intepret the rule EvalAscrInt with True:
       :
         FT: Could not pattern match '"True"' over 'i "::" "Int"'
-    While trying to intepret the rule EvalAscrPar with True:
-      :
-        FT: Could not pattern match '"True"' over 'e "::" ("(" t ")")'
     While trying to intepret the rule EvalParens with True:
       :
         FT: Could not pattern match '"True"' over '"(" e ")"'
@@ -63,9 +60,6 @@ Property successfull
     While trying to intepret the rule EvalAscrInt with False:
       :
         FT: Could not pattern match '"False"' over 'i "::" "Int"'
-    While trying to intepret the rule EvalAscrPar with False:
-      :
-        FT: Could not pattern match '"False"' over 'e "::" ("(" t ")")'
     While trying to intepret the rule EvalParens with False:
       :
         FT: Could not pattern match '"False"' over '"(" e ")"'
@@ -168,9 +162,6 @@ Property successfull
     While trying to intepret the rule EvalAscrInt with 42:
       :
         FT: Could not pattern match '42' over 'i "::" "Int"'
-    While trying to intepret the rule EvalAscrPar with 42:
-      :
-        FT: Could not pattern match '42' over 'e "::" ("(" t ")")'
     While trying to intepret the rule EvalParens with 42:
       :
         FT: Could not pattern match '42' over '"(" e ")"'
@@ -220,18 +211,16 @@ Property successfull
   # Predicate satisfied:
   # e0 :: T
   
-                                                                                                                                                                                     T1 = Int = T2                      
-                                                                                                                                                                                     ------------- [EqBase]             
-                                                5 : number                                T1 = Int = T2                                           1 : number                         Int == Int                         T1 = Int = T2
-    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
-    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
-    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
-    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        ( Int ) -> Int == Int -> Int
-    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
-    {} ⊢ ( \ f : Int -> Int . f 5 ), ( Int -> Int ) -> Int                                                          {} ⊢ ( \ i : Int . i + 1 ), ( Int ) -> Int                       ( Int ) -> Int == ( Int -> Int )
-    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
+                                                5 : number                                T1 = Int = T2                                           1 : number                         
+    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    
+    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              
+    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    
+    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        T1 = Int -> Int = T2
+    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------ [EqBase]
+    {} ⊢ ( \ f : Int -> Int . f 5 ), Int -> Int -> Int                                                              {} ⊢ ( \ i : Int . i + 1 ), Int -> Int                           Int -> Int == Int -> Int
+    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
     {} ⊢ ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ), Int
-    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
     ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) :: Int
   
   # Predicate satisfied:
@@ -247,14 +236,14 @@ Property successfull
   
                                 1 : number                                                  
   --------------------- [Tx]    --------------------- [Tnumber]                             
-  i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int                                       T1 = Int = T2
-  ----------------------------------------------------- [TPlus]                             ------------- [EqBase]
-  i : Int , {} ⊢ i + 1, Int                                        5 : number               Int == Int
-  --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
-  {} ⊢ ( \ i : Int . i + 1 ), ( Int ) -> Int                       {} ⊢ 5, Int              Int == ( Int )
-  ------------------------------------------------------------------------------------------------------------------ [Tapp]
+  i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int                                       
+  ----------------------------------------------------- [TPlus]                             
+  i : Int , {} ⊢ i + 1, Int                                        5 : number               T1 = Int = T2
+  --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ------------- [EqBase]
+  {} ⊢ ( \ i : Int . i + 1 ), Int -> Int                           {} ⊢ 5, Int              Int == Int
+  --------------------------------------------------------------------------------------------------------- [Tapp]
   {} ⊢ ( \ i : Int . i + 1 ) 5, Int
-  ------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+  ---------------------------------------------------------------------------------------------------- [TEmptyCtx]
   ( \ i : Int . i + 1 ) 5 :: Int
   
   
@@ -411,9 +400,6 @@ Property successfull
     While trying to intepret the rule EvalAscrInt with True:
       :
         FT: Could not pattern match '"True"' over 'i "::" "Int"'
-    While trying to intepret the rule EvalAscrPar with True:
-      :
-        FT: Could not pattern match '"True"' over 'e "::" ("(" t ")")'
     While trying to intepret the rule EvalParens with True:
       :
         FT: Could not pattern match '"True"' over '"(" e ")"'
@@ -628,14 +614,14 @@ Property successfull
   
                                   1 : number                                                  
     --------------------- [Tx]    --------------------- [Tnumber]                             
-    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       T1 = Int = T2
-    ----------------------------------------------------- [TPlus]                             ------------- [EqBase]
-    x : Int , {} ⊢ x + 1, Int                                        5 : number               Int == Int
-    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
-    {} ⊢ ( \ x : Int . x + 1 ), ( Int ) -> Int                       {} ⊢ 5, Int              Int == ( Int )
-    ------------------------------------------------------------------------------------------------------------------ [Tapp]
+    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       
+    ----------------------------------------------------- [TPlus]                             
+    x : Int , {} ⊢ x + 1, Int                                        5 : number               T1 = Int = T2
+    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ------------- [EqBase]
+    {} ⊢ ( \ x : Int . x + 1 ), Int -> Int                           {} ⊢ 5, Int              Int == Int
+    --------------------------------------------------------------------------------------------------------- [Tapp]
     {} ⊢ ( \ x : Int . x + 1 ) 5, Int
-    ------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+    ---------------------------------------------------------------------------------------------------- [TEmptyCtx]
     ( \ x : Int . x + 1 ) 5 :: Int
   
   # Predicate satisfied:
@@ -862,28 +848,11 @@ Property successfull
         While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
-          While trying to proof that (==) is applicable to "Bool, ( Int )":
+          While trying to proof that (==) is applicable to "Bool, Int":
             Not a single rule matched:
-            While trying to intepret the rule EqBase with Bool, ( Int ):
-              Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
-            While trying to intepret the rule EqParL with Bool, ( Int ):
-              :
-                FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
-            While trying to intepret the rule EqParR with Bool, ( Int ):
-              While trying to proof that (==) is applicable to "Bool, Int":
-                Not a single rule matched:
-                While trying to intepret the rule EqBase with Bool, Int:
-                  Equality predicate not met: T1="Bool" /= "Int"=T2
-                While trying to intepret the rule EqParL with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
-                While trying to intepret the rule EqParR with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Int"' over '"(" T2 ")"'
-                While trying to intepret the rule EqArrow with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
-            While trying to intepret the rule EqArrow with Bool, ( Int ):
+            While trying to intepret the rule EqBase with Bool, Int:
+              Equality predicate not met: T1="Bool" /= "Int"=T2
+            While trying to intepret the rule EqArrow with Bool, Int:
               :
                 FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
 # e0 → e1 failed because: 
@@ -1030,18 +999,16 @@ Property successfull
   # Predicate satisfied:
   # e0 :: T
   
-                                                                                                                                                                                     T1 = Int = T2                      
-                                                                                                                                                                                     ------------- [EqBase]             
-                                                5 : number                                T1 = Int = T2                                           1 : number                         Int == Int                         T1 = Int = T2
-    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
-    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
-    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
-    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        ( Int ) -> Int == Int -> Int
-    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
-    {} ⊢ ( \ f : Int -> Int . f 5 ), ( Int -> Int ) -> Int                                                          {} ⊢ ( \ i : Int . i + 1 ), ( Int ) -> Int                       ( Int ) -> Int == ( Int -> Int )
-    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
+                                                5 : number                                T1 = Int = T2                                           1 : number                         
+    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    
+    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              
+    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    
+    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        T1 = Int -> Int = T2
+    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------ [EqBase]
+    {} ⊢ ( \ f : Int -> Int . f 5 ), Int -> Int -> Int                                                              {} ⊢ ( \ i : Int . i + 1 ), Int -> Int                           Int -> Int == Int -> Int
+    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
     {} ⊢ ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ), Int
-    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
     ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) :: Int
   
   
@@ -1315,14 +1282,14 @@ Property successfull
   
                                   1 : number                                                  
     --------------------- [Tx]    --------------------- [Tnumber]                             
-    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       T1 = Int = T2
-    ----------------------------------------------------- [TPlus]                             ------------- [EqBase]
-    x : Int , {} ⊢ x + 1, Int                                        5 : number               Int == Int
-    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
-    {} ⊢ ( \ x : Int . x + 1 ), ( Int ) -> Int                       {} ⊢ 5, Int              Int == ( Int )
-    ------------------------------------------------------------------------------------------------------------------ [Tapp]
+    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       
+    ----------------------------------------------------- [TPlus]                             
+    x : Int , {} ⊢ x + 1, Int                                        5 : number               T1 = Int = T2
+    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ------------- [EqBase]
+    {} ⊢ ( \ x : Int . x + 1 ), Int -> Int                           {} ⊢ 5, Int              Int == Int
+    --------------------------------------------------------------------------------------------------------- [Tapp]
     {} ⊢ ( \ x : Int . x + 1 ) 5, Int
-    ------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+    ---------------------------------------------------------------------------------------------------- [TEmptyCtx]
     ( \ x : Int . x + 1 ) 5 :: Int
   
   
@@ -1479,28 +1446,11 @@ Property successfull
         While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
-          While trying to proof that (==) is applicable to "Bool, ( Int )":
+          While trying to proof that (==) is applicable to "Bool, Int":
             Not a single rule matched:
-            While trying to intepret the rule EqBase with Bool, ( Int ):
-              Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
-            While trying to intepret the rule EqParL with Bool, ( Int ):
-              :
-                FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
-            While trying to intepret the rule EqParR with Bool, ( Int ):
-              While trying to proof that (==) is applicable to "Bool, Int":
-                Not a single rule matched:
-                While trying to intepret the rule EqBase with Bool, Int:
-                  Equality predicate not met: T1="Bool" /= "Int"=T2
-                While trying to intepret the rule EqParL with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
-                While trying to intepret the rule EqParR with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Int"' over '"(" T2 ")"'
-                While trying to intepret the rule EqArrow with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
-            While trying to intepret the rule EqArrow with Bool, ( Int ):
+            While trying to intepret the rule EqBase with Bool, Int:
+              Equality predicate not met: T1="Bool" /= "Int"=T2
+            While trying to intepret the rule EqArrow with Bool, Int:
               :
                 FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
 Property Termination holds for given examples                                   
@@ -1661,18 +1611,16 @@ Property successfull
   # Predicate satisfied:
   # e :: T
   
-                                                                                                                                                                                     T1 = Int = T2                      
-                                                                                                                                                                                     ------------- [EqBase]             
-                                                5 : number                                T1 = Int = T2                                           1 : number                         Int == Int                         T1 = Int = T2
-    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    ---------------------- [EqParL]    ------------- [EqBase]
-    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              ( Int ) == Int                     Int == Int
-    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    ----------------------------------------------- [EqArrow]
-    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        ( Int ) -> Int == Int -> Int
-    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------------------------------ [EqParR]
-    {} ⊢ ( \ f : Int -> Int . f 5 ), ( Int -> Int ) -> Int                                                          {} ⊢ ( \ i : Int . i + 1 ), ( Int ) -> Int                       ( Int ) -> Int == ( Int -> Int )
-    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
+                                                5 : number                                T1 = Int = T2                                           1 : number                         
+    ----------------------------------- [Tx]    ---------------------------- [Tnumber]    ------------- [EqBase]    --------------------- [Tx]    --------------------- [Tnumber]    
+    f : Int -> Int , {} ⊢ f, Int -> Int         f : Int -> Int , {} ⊢ 5, Int              Int == Int                i : Int , {} ⊢ i, Int         i : Int , {} ⊢ 1, Int              
+    ----------------------------------------------------------------------------------------------------- [Tapp]    ----------------------------------------------------- [TPlus]    
+    f : Int -> Int , {} ⊢ f 5, Int                                                                                  i : Int , {} ⊢ i + 1, Int                                        T1 = Int -> Int = T2
+    -------------------------------------------------------------------------------------------------- [TLambda]    --------------------------------------------------- [TLambda]    ------------------------ [EqBase]
+    {} ⊢ ( \ f : Int -> Int . f 5 ), Int -> Int -> Int                                                              {} ⊢ ( \ i : Int . i + 1 ), Int -> Int                           Int -> Int == Int -> Int
+    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [Tapp]
     {} ⊢ ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ), Int
-    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
+    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ [TEmptyCtx]
     ( \ f : Int -> Int . f 5 ) ( \ i : Int . i + 1 ) :: Int
   
   
@@ -1983,14 +1931,14 @@ Property successfull
   
                                   1 : number                                                  
     --------------------- [Tx]    --------------------- [Tnumber]                             
-    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       T1 = Int = T2
-    ----------------------------------------------------- [TPlus]                             ------------- [EqBase]
-    x : Int , {} ⊢ x + 1, Int                                        5 : number               Int == Int
-    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ---------------------- [EqParR]
-    {} ⊢ ( \ x : Int . x + 1 ), ( Int ) -> Int                       {} ⊢ 5, Int              Int == ( Int )
-    ------------------------------------------------------------------------------------------------------------------ [Tapp]
+    x : Int , {} ⊢ x, Int         x : Int , {} ⊢ 1, Int                                       
+    ----------------------------------------------------- [TPlus]                             
+    x : Int , {} ⊢ x + 1, Int                                        5 : number               T1 = Int = T2
+    --------------------------------------------------- [TLambda]    ----------- [Tnumber]    ------------- [EqBase]
+    {} ⊢ ( \ x : Int . x + 1 ), Int -> Int                           {} ⊢ 5, Int              Int == Int
+    --------------------------------------------------------------------------------------------------------- [Tapp]
     {} ⊢ ( \ x : Int . x + 1 ) 5, Int
-    ------------------------------------------------------------------------------------------------------------- [TEmptyCtx]
+    ---------------------------------------------------------------------------------------------------- [TEmptyCtx]
     ( \ x : Int . x + 1 ) 5 :: Int
   
   
@@ -2177,27 +2125,10 @@ Property successfull
         While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
-          While trying to proof that (==) is applicable to "Bool, ( Int )":
+          While trying to proof that (==) is applicable to "Bool, Int":
             Not a single rule matched:
-            While trying to intepret the rule EqBase with Bool, ( Int ):
-              Equality predicate not met: T1="Bool" /= "(" "Int" ")"=T2
-            While trying to intepret the rule EqParL with Bool, ( Int ):
-              :
-                FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
-            While trying to intepret the rule EqParR with Bool, ( Int ):
-              While trying to proof that (==) is applicable to "Bool, Int":
-                Not a single rule matched:
-                While trying to intepret the rule EqBase with Bool, Int:
-                  Equality predicate not met: T1="Bool" /= "Int"=T2
-                While trying to intepret the rule EqParL with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Bool"' over '"(" T1 ")"'
-                While trying to intepret the rule EqParR with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Int"' over '"(" T2 ")"'
-                While trying to intepret the rule EqArrow with Bool, Int:
-                  :
-                    FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'
-            While trying to intepret the rule EqArrow with Bool, ( Int ):
+            While trying to intepret the rule EqBase with Bool, Int:
+              Equality predicate not met: T1="Bool" /= "Int"=T2
+            While trying to intepret the rule EqArrow with Bool, Int:
               :
                 FT: Could not pattern match '"Bool"' over 'Ta1 "->" Tb1'

@@ -60,7 +60,7 @@ Warning:
     #  ((type (type typeSet)))
     #  (("Bool" typeSet))
     #  (((typeL "->" type) typeSet))
-    #  ((("(" type ")") typeSet))
+    #  (((type) typeSet))
     
     
     Possible results: 
@@ -74,7 +74,8 @@ Warning:
     ......................
     
     Clause: 
-      abstract(("(" T ")") ts) = abstract(T ts)
+      abstract((T1 "->" T2) ts)
+                               = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
     
     Possible inputs at this point: 
     #  ((type (type typeSet)))
@@ -82,37 +83,13 @@ Warning:
     #  (("Int" (type typeSet)))
     #  (((typeL "->" type) typeSet))
     #  (((typeL "->" type) (type typeSet)))
-    #  ((("(" type ")") typeSet))
-    #  ((("(" type ")") (type typeSet)))
+    #  (((type) typeSet))
+    #  (((type) (type typeSet)))
     
     
     Possible results: 
-    3   (("(" type(0/0:0/1/2:1) ")"): typeL/2 typeSet(0/0:1)): typeSet/0	--> type( (Function call - ID not retrievable)) : "type"
-    3   (("(" type(0/0:0/1/2:1) ")"): typeL/2 (type(0/0:1/0:0) typeSet(0/0:1/0:1)): typeSet/0): typeSet/0	--> type( (Function call - ID not retrievable)) : "type"
-    
-    
-    
-    
-    
-     Analysis of clause 4 
-    ......................
-    
-    Clause: 
-      abstract((T1 "->" T2) ts)
-                               = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
-    
-    Possible inputs at this point: 
-    #  (("Bool" (type typeSet)))
-    #  (("Int" (type typeSet)))
-    #  (((typeL "->" type) typeSet))
-    #  (((typeL "->" type) "$"))
-    #  (((typeL "->" type) (type typeSet)))
-    
-    
-    Possible results: 
-    4   ((typeL(0/0:0/0:0) "->" type(0/0:0/0:2)): type/0 typeSet(0/0:1)): typeSet/0	--> (type( (Function call - ID not retrievable)) "->" type( (Function call - ID not retrievable))): type/0 : "type"
-    4   ((typeL(0/0:0/0:0) "->" type(0/0:0/0:2)): type/0 "$"): typeSet/0	--> (type( (Function call - ID not retrievable)) "->" type( (Function call - ID not retrievable))): type/0 : "type"
-    4   ((typeL(0/0:0/0:0) "->" type(0/0:0/0:2)): type/0 (type(0/0:1/0:0) typeSet(0/0:1/0:1)): typeSet/0): typeSet/0	--> (type( (Function call - ID not retrievable)) "->" type( (Function call - ID not retrievable))): type/0 : "type"
+    3   ((typeL(0/0:0/0:0) "->" type(0/0:0/0:2)): type/0 typeSet(0/0:1)): typeSet/0	--> (type( (Function call - ID not retrievable)) "->" type( (Function call - ID not retrievable))): type/0 : "type"
+    3   ((typeL(0/0:0/0:0) "->" type(0/0:0/0:2)): type/0 (type(0/0:1/0:0) typeSet(0/0:1/0:1)): typeSet/0): typeSet/0	--> (type( (Function call - ID not retrievable)) "->" type( (Function call - ID not retrievable))): type/0 : "type"
     
     
     
@@ -134,39 +111,20 @@ Warning:
     ......................
     
     Clause: 
-      cod("(" T ")")           = cod(T)
+      cod(T1 "->" T2)          = T2
     
     Possible inputs at this point: 
     #  (type)
     
     
     Possible results: 
-    0   ("(" type(0/1/2:1) ")"): typeL/2	--> type( (Function call - ID not retrievable)) : "type"
+    0   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> type(0/0:2)     : "type"
     
     
     
     
     
      Analysis of clause 1 
-    ......................
-    
-    Clause: 
-      cod(T1 "->" T2)          = T2
-    
-    Possible inputs at this point: 
-    #  ("Bool")
-    #  ("Int")
-    #  ((typeL "->" type))
-    
-    
-    Possible results: 
-    1   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> type(0/0:2)     : "type"
-    
-    
-    
-    
-    
-     Analysis of clause 2 
     ......................
     
     Clause: 
@@ -178,13 +136,13 @@ Warning:
     
     
     Possible results: 
-    2   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    1   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     
     
     
-     Analysis of clause 3 
+     Analysis of clause 2 
     ......................
     
     Clause: 
@@ -195,7 +153,7 @@ Warning:
     
     
     Possible results: 
-    3   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     
@@ -237,7 +195,8 @@ Warning:
     
     Possible inputs at this point: 
     #  ("$")
-    #  ((typeL typeSet))
+    #  (("Bool" typeSet))
+    #  (("Int" typeSet))
     
     
     Possible results: 
@@ -254,11 +213,13 @@ Warning:
       codomains(_)             = !error:ɛ("Not defined, as this is not a proper list of functions")
     
     Possible inputs at this point: 
-    #  ((typeL typeSet))
+    #  (("Bool" typeSet))
+    #  (("Int" typeSet))
     
     
     Possible results: 
-    2   (typeL(0/0:0/1) typeSet(0/0:1)): typeSet/0	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   ("Bool" typeSet(0/0:1)): typeSet/0	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   ("Int" typeSet(0/0:1)): typeSet/0	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     
@@ -300,7 +261,7 @@ Warning:
     Possible inputs at this point: 
     #  ("Int")
     #  ((typeL "->" type))
-    #  (("(" type ")"))
+    #  ((type))
     
     
     Possible results: 
@@ -318,28 +279,11 @@ Warning:
     
     Possible inputs at this point: 
     #  ((typeL "->" type))
-    #  (("(" type ")"))
+    #  ((type))
     
     
     Possible results: 
     2   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> ("(" "\\" "x" ":" typeL(0/0:0) "." eL( (Function call - ID not retrievable)) ")"): eL/2 : "eL"
-    
-    
-    
-    
-    
-     Analysis of clause 3 
-    ......................
-    
-    Clause: 
-      defaultValue("(" t ")")  = defaultValue(t)
-    
-    Possible inputs at this point: 
-    #  (("(" type ")"))
-    
-    
-    Possible results: 
-    3   ("(" type(0/1/2:1) ")"): typeL/2	--> eL( (Function call - ID not retrievable)) : "eL"
     
     
     
@@ -359,39 +303,20 @@ Warning:
     ......................
     
     Clause: 
-      dom("(" T ")")           = dom(T)
+      dom(T1 "->" T2)          = T1
     
     Possible inputs at this point: 
     #  (type)
     
     
     Possible results: 
-    0   ("(" type(0/1/2:1) ")"): typeL/2	--> typeL( (Function call - ID not retrievable)) : "typeL"
+    0   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> typeL(0/0:0)    : "typeL"
     
     
     
     
     
      Analysis of clause 1 
-    ......................
-    
-    Clause: 
-      dom(T1 "->" T2)          = T1
-    
-    Possible inputs at this point: 
-    #  ("Bool")
-    #  ("Int")
-    #  ((typeL "->" type))
-    
-    
-    Possible results: 
-    1   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> typeL(0/0:0)    : "typeL"
-    
-    
-    
-    
-    
-     Analysis of clause 2 
     ......................
     
     Clause: 
@@ -403,13 +328,13 @@ Warning:
     
     
     Possible results: 
-    2   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    1   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     
     
     
-     Analysis of clause 3 
+     Analysis of clause 2 
     ......................
     
     Clause: 
@@ -420,7 +345,7 @@ Warning:
     
     
     Possible results: 
-    3   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     
@@ -461,7 +386,8 @@ Warning:
     
     Possible inputs at this point: 
     #  ("$")
-    #  ((typeL typeSet))
+    #  (("Bool" typeSet))
+    #  (("Int" typeSet))
     
     
     Possible results: 
@@ -478,11 +404,13 @@ Warning:
       domains(_)               = !error:ɛ("Not defined, as this is not a proper list of functions")
     
     Possible inputs at this point: 
-    #  ((typeL typeSet))
+    #  (("Bool" typeSet))
+    #  (("Int" typeSet))
     
     
     Possible results: 
-    2   (typeL(0/0:0/1) typeSet(0/0:1)): typeSet/0	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   ("Bool" typeSet(0/0:1)): typeSet/0	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    2   ("Int" typeSet(0/0:1)): typeSet/0	--> ɛ( (Function call - ID not retrievable)) : "\603"
     
     
     

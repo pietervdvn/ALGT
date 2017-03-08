@@ -35,7 +35,7 @@ type             ::= typeL "->" type
                  | typeL
 typeL            ::= "Int"
                  | "Bool"
-                 | "(" type ")"
+                 | ParO type ParC
 typeSet          ::= type typeSet
                  | "$"
 typing           ::= var ":" type
@@ -70,13 +70,11 @@ abstract                 : typeSet -> type
 abstract("$")            = !error:ɛ("Undefined")
 abstract("Int" "$")      = "Int"
 abstract("Bool" "$")     = "Bool"
-abstract(("(" T ")") ts) = abstract(T ts)
 abstract((T1 "->" T2) ts)
                          = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
 
 
 cod                      : type -> type
-cod("(" T ")")           = cod(T)
 cod(T1 "->" T2)          = T2
 cod("Bool")              = !error:ɛ("Not defined for Bool")
 cod("Int")               = !error:ɛ("Not defined for Int")
@@ -93,11 +91,9 @@ defaultValue             : type -> eL
 defaultValue("Bool")     = "True"
 defaultValue("Int")      = 1
 defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
-defaultValue("(" t ")")  = defaultValue(t)
 
 
 dom                      : type -> typeL
-dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
 dom("Bool")              = !error:ɛ("Not defined for Bool")
 dom("Int")               = !error:ɛ("Not defined for Int")
@@ -182,11 +178,6 @@ rename(x, newVar, type, body)
  i: number
 -------------------  	[EvalAscrInt]
  i "::" "Int" → i
-
-
- e "::" t → e
--------------------------  	[EvalAscrPar]
- e "::" ("(" t ")") → e
 
 
  
@@ -294,8 +285,8 @@ rename(x, newVar, type, body)
 
 
  (x ":" T1) "," Γ ⊢ e, T2
---------------------------------------------------------  	[TLambda]
- Γ ⊢ "(" "\\" x ":" T1 "." e ")", ("(" T1 ")") "->" T2
+----------------------------------------------  	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
 
 
  Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
@@ -327,16 +318,6 @@ rename(x, newVar, type, body)
  T1 = T2 : type
 -----------------  	[EqBase]
  T1 == T2
-
-
- T1 == T2
--------------------  	[EqParL]
- "(" T1 ")" == T2
-
-
- T1 == T2
--------------------  	[EqParR]
- T1 == "(" T2 ")"
 
 
  Ta1 == Ta2	Tb1 == Tb2
