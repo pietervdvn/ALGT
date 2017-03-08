@@ -1,0 +1,33 @@
+ STFL 
+******
+
+# A Simply Typed Function Language
+
+ Syntax
+========
+
+bool	::= "True" | "False"
+
+
+# Types
+typeL	::= "Int" | "Bool" | "(" type ")"
+type	::= typeL "->" type | typeL
+
+
+
+
+
+ Functions
+===========
+
+
+dom 		: type -> bool
+dom("(" T ")")	= dom(T)
+dom(T1 "->" T2) = T1
+dom("Bool")	= !error:type("Not defined for Bool")
+dom("Int")	= !error:type("Not defined for Int")
+
+
+
+
+

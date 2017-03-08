@@ -1,4 +1,4 @@
-Test/STFL.language Test/examples.stfl e -l --tpa --plain
+Test/STFL.language --ir :: --plain
 
 Warning:
   While checking the totality of function "abstract":
@@ -11,6 +11,28 @@ Warning:
   
   While checking that the functions do have the strictest possible types:
     "plus" can be typed as "Number", instead of a "number"
-Property Preservation holds for given examples                                  
-Property Progress holds for given examples                                      
-Property Termination holds for given examples                                   
+
+ Analysis for rules about (::) 
+===============================
+
+# (::) 	: e (in), type (out)	Pronounced as "type in empty context"
+
+# Known rules are
+#   TEmptyCtx
+
+Applicable to:
+  e
+Results:
+  e(0) :: type(T)
+  	 where "{}" ⊢ e(0), type(T)
+
+ Analysis of rule "TEmptyCtx" 
+------------------------------
+
+Applicable to:
+  e
+Results:
+  e(0) :: type(T)
+  	 where "{}" ⊢ e(0), type(T)
+
+

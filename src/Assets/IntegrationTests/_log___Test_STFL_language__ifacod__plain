@@ -1,0 +1,94 @@
+Test/STFL.language --ifa cod --plain
+
+Warning:
+  While checking the totality of function "abstract":
+    Following calls will fall through:
+      abstract(("Bool" (type typeSet)))
+      abstract(("Int" (type typeSet)))
+  While checking the totality of function "equate":
+    Following calls will fall through:
+      equate(type, type)
+  
+  While checking that the functions do have the strictest possible types:
+    "plus" can be typed as "Number", instead of a "number"
+
+ Analysis of cod : type -> type 
+================================
+
+    
+     Analysis of clause 0 
+    ......................
+    
+    Clause: 
+      cod("(" T ")")           = cod(T)
+    
+    Possible inputs at this point: 
+    #  (type)
+    
+    
+    Possible results: 
+    0   ("(" type(0/1/2:1) ")"): typeL/2	--> type( (Function call - ID not retrievable)) : "type"
+    
+    
+    
+    
+    
+     Analysis of clause 1 
+    ......................
+    
+    Clause: 
+      cod(T1 "->" T2)          = T2
+    
+    Possible inputs at this point: 
+    #  ("Bool")
+    #  ("Int")
+    #  ((typeL "->" type))
+    
+    
+    Possible results: 
+    1   (typeL(0/0:0) "->" type(0/0:2)): type/0	--> type(0/0:2)     : "type"
+    
+    
+    
+    
+    
+     Analysis of clause 2 
+    ......................
+    
+    Clause: 
+      cod("Bool")              = !error:ɛ("Not defined for Bool")
+    
+    Possible inputs at this point: 
+    #  ("Bool")
+    #  ("Int")
+    
+    
+    Possible results: 
+    2   "Bool"                    	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    
+    
+    
+    
+    
+     Analysis of clause 3 
+    ......................
+    
+    Clause: 
+      cod("Int")               = !error:ɛ("Not defined for Int")
+    
+    Possible inputs at this point: 
+    #  ("Int")
+    
+    
+    Possible results: 
+    3   "Int"                     	--> ɛ( (Function call - ID not retrievable)) : "\603"
+    
+    
+    
+    
+  
+   Falthrough 
+  ------------
+  
+  No fallthrough is possible
+  

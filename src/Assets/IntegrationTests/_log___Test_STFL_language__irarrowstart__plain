@@ -1,0 +1,66 @@
+Test/STFL.language --ir →* --plain
+
+Warning:
+  While checking the totality of function "abstract":
+    Following calls will fall through:
+      abstract(("Bool" (type typeSet)))
+      abstract(("Int" (type typeSet)))
+  While checking the totality of function "equate":
+    Following calls will fall through:
+      equate(type, type)
+  
+  While checking that the functions do have the strictest possible types:
+    "plus" can be typed as "Number", instead of a "number"
+
+ Analysis for rules about (→*) 
+===============================
+
+# (→*) 	: e (in), value (out)	Pronounced as "big step"
+
+# Known rules are
+#   BigStepCanon
+#   BigStepRec
+#   BigStepBase
+
+Applicable to:
+  e
+Results:
+  e(0) →* e(0)
+  	 where (✓) e(0)
+  e(0) →* value(e2)
+  	 where (recursion) e(0) → e(e1), e(e1) →* value(e2)
+  e(0) →* e(e1)
+  	 where e(0) → e(e1), (✓) e(e1)
+
+ Analysis of rule "BigStepCanon" 
+---------------------------------
+
+Applicable to:
+  e
+Results:
+  e(0) →* e(0)
+  	 where (✓) e(0)
+
+
+
+ Analysis of rule "BigStepRec" 
+-------------------------------
+
+Applicable to:
+  e
+Results:
+  e(0) →* value(e2)
+  	 where (recursion) e(0) → e(e1), e(e1) →* value(e2)
+
+
+
+ Analysis of rule "BigStepBase" 
+--------------------------------
+
+Applicable to:
+  e
+Results:
+  e(0) →* e(e1)
+  	 where e(0) → e(e1), (✓) e(e1)
+
+
