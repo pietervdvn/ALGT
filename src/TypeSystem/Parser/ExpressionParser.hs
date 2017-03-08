@@ -173,7 +173,7 @@ matchTyping _ _ (BNFRuleCall "Number") tp (MePtInt i)	-- TODO dehardcode this
 			= return $ MParseTree $ MInt tp i
 matchTyping f syntax (BNFRuleCall nm) _ pt
  | isBuiltinName nm
-		= do	contents	<- maybe (Left $ "Builtin with no token matched") return $
+		= do	contents	<- maybe (Left "Builtin with no token matched") return $
 						fromMePtToken pt
 			unless (isValidBuiltin (BNFRuleCall nm) contents) $  Left $ contents ++" is not a "++nm 
 			MLiteral (nm, 0) contents & MParseTree & return
@@ -187,7 +187,7 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
 								matchTyping f syntax bnf (nm, i) pt
 				let options'	= zip [0..] bnfASTs |> uncurry oneOption		
 				let options	= options' & rights & nub
-				when (length options == 0) $ Left $ "No clauses matched:\n"++(options' & lefts & unlines & indent)
+				when (null options) $ Left $ "No clauses matched:\n"++(options' & lefts & unlines & indent)
 				when (length options > 1) $ Left $ "Multiple matches: "++toCoParsable' " | " options
 				return $ head options
 			 else do

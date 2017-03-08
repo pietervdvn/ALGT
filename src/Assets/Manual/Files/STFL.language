@@ -112,7 +112,7 @@ codomain(T1 "->" T2)		= T2
 
 
 ------------------------------------------------------------	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg, e)
+ ("(" "\\" var ":" type "." e ")") arg → !subs:expr(var, arg, e)
 
 
 

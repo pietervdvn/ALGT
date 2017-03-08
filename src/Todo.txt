@@ -21,6 +21,5 @@ Consider
 	expr	::= "(" expr ")" | arith
 
 THis should give an error, as "(" 5 ")" can be parsed as both arith and expr
-Make builtins behave as a rule/type in the syntax
-Make function types for builtins
-Remove types without super/subtypes from LSVG
+
+Allow Number (upper case) as type for functions and relations

@@ -38,6 +38,8 @@ rm ALGT-*
 
 cp .stack-work/install/x86_64-linux/lts-7.15/8.0.1/bin/ALGT ALGT
 
+./ALGT --test
+
 VERSION=`./ALGT -v | sed "s/, .*$//"`
 cp ALGT "binaries/ALGT-$VERSION"
 cp ALGT "ALGT-$VERSION"

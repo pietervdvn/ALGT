@@ -1,4 +1,4 @@
- {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses, TemplateHaskell #-} 
+ {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-} 
 module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch, buildCtx') where
 
 {-

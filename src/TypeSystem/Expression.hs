@@ -142,7 +142,7 @@ mergeTypes syntax varName t1 t2
  | otherwise
 		= do	let msg	= varName ++ " is typed as both "++show t1++" and "++show t2++", which don't have a common supertype"
 			let bct	= 		biggestCommonType syntax t1 t2	
-			maybe (Left msg) Right $ bct
+			maybe (Left msg) Right bct
 
 
 -- Merges two contexts, according to valid combination. 

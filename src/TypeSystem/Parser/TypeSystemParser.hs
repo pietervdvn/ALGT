@@ -129,7 +129,7 @@ typeSystemFile fp
 				many (try (nls >> parseBnfRule)) 
 
 		syntax	<- lift $ makeSyntax bnfs
-		-- TODO DEBUG error $ show syntax
+
 		syntaxStyle
 			<- option (SyntaxStyle M.empty M.empty M.empty) $ try $ do
 				nls

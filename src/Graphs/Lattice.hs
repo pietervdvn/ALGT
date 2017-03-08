@@ -47,7 +47,7 @@ makeLattice bottom top isSubsetOf'
 	= let	elements	= M.keys isSubsetOf' ++ (M.elems isSubsetOf' >>= S.toList)
 		restToBottom	= M.singleton bottom (S.fromList elements)
 		topToRest	= zip elements (repeat $ S.singleton top) & M.fromList
-		isSubsetOf	= M.unions [isSubsetOf' |> (S.insert top),
+		isSubsetOf	= M.unions [isSubsetOf' |> S.insert top,
 									-- Original set; keep as intact as possible
 					M.singleton top S.empty,	-- We add the top element
 					restToBottom,			-- We add the bottom element
@@ -163,7 +163,7 @@ infimum l a b
 
 infimums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
 infimums l as
- | length as == 0	= get top l
+ | null as	= get top l
  | length as == 1	= minimum as
  | otherwise	= L.foldl1 (infimum l) as 
 
@@ -186,7 +186,7 @@ supremum l a b
 
 supremums	:: (Eq a, Ord a, Foldable t, Show a) => Lattice a -> t a -> a
 supremums l as
- | length as == 0	= get bottom l
+ | null as		= get bottom l
  | length as == 1	= maximum as
  | otherwise 		= L.foldl1 (supremum l) as 
 

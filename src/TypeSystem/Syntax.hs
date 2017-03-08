@@ -115,8 +115,7 @@ asLattice syntax
 	= let	relations	= syntax ||>> fromRuleCall |> catMaybes
 					|> S.fromList & invertDict	:: Map Name (Set Name)
 		-- let's make sure the 'disconnected' elems are known to the lattice too
-		allElems	= syntax |> (const S.empty)
-									:: Map Name (Set Name)
+		allElems	= syntax |> const S.empty		:: Map Name (Set Name)
 		in makeLattice bottomSymbol topSymbol (M.union relations allElems)
 
 latticeAsSVG	:: ColorScheme -> Syntax -> String

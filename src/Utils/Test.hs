@@ -186,7 +186,7 @@ printDiffs exp act
 
 printDiff	:: Int -> [String] -> [String] -> IO ()
 printDiff idLines [] []
-	= do	putDocLn $ onyellow $ black $ text $ (show idLines ++ " identical lines at end of file\n")
+	= 	putDocLn $ onyellow $ black $ text (show idLines ++ " identical lines at end of file\n")
 printDiff idLines [] a
 	= do	putDocLn $ onyellow $ black $ text $ "Actual overshoot after "++show idLines++" identical lines:"
 		putDocLn $ red $ text $ unlines a
@@ -196,7 +196,7 @@ printDiff idLines exp []
 printDiff idLines (e:exp) (a:act)
  | e == a	= printDiff (idLines + 1) exp act
  | otherwise
-		= do	unless (idLines == 0) $ putDocLn $ onyellow $ black $ text $ (show idLines ++ " identical lines")
+		= do	unless (idLines == 0) $ putDocLn $ onyellow $ black $ text (show idLines ++ " identical lines")
 			putDocLn $ blue $ text e 
 			putDocLn $ red $ text a
 			printDiff 0 exp act
@@ -204,14 +204,15 @@ printDiff idLines (e:exp) (a:act)
 
 putDocLn doc	= putDoc doc >> putStrLn ""
 
-
+testAll'	:: Bool -> IO [Bool]
 testAll' skip	= do	putStrLn $ "Unit tests passed: "++show unitTestsOK
 			putStrLn $ "Running "++show (length testArgs)++" tests"
 			t	<- testArgs' |+> test skip
-			return $ unitTestsOK
+			return (unitTestsOK:t)
 
 runTest i	= test False (i, testArgs !! i)
 
+testAll		:: IO [Bool]
 testAll		= testAll' False
 testFast	= testAll' True & void
 
