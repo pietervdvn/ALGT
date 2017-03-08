@@ -116,11 +116,11 @@ search pred pt
 
 
 isMInt'	:: ParseTreeA a -> Bool
-isMInt' (MInt _ _ _)	= True
+isMInt' MInt{}	= True
 isMInt' _		= False
 
 isPtSeq	:: ParseTreeA a -> Bool
-isPtSeq (PtSeq _ _ _)	= True
+isPtSeq PtSeq{}		= True
 isPtSeq _		= False
 
 

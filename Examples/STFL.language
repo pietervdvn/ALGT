@@ -105,7 +105,7 @@ cod("Bool")	= !error:type("Not defined for Bool")
 cod("Int")	= !error:type("Not defined for Int")
 
 # wrappers for builtin functions, as we can't type within a builtin
-plus		: number -> e -> number
+plus		: number -> e -> Number
 plus(e1, e2)	= !plus:number(e1, e2)
 
 

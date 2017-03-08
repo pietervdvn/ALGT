@@ -31,13 +31,15 @@ class NeedsFiles a where
 data Output = Output 
 		{ _files	:: Map String String
 		, _stdOut	:: [String]
-		} deriving (Show, Ord, Eq, Read)
+		} deriving (Eq)
 makeLenses ''Output
+
+
+
 instance Monoid Output where
 	mempty	= emptyOutput
 	mappend	(Output f1 o1) (Output f2 o2)
 		= Output (M.union f2 f1 {-Reverse order: last write (f2) has priority-}) (o1 ++ o2) 
-
 
 removeCarriageReturns	:: Output -> Output
 removeCarriageReturns output
@@ -126,8 +128,8 @@ runPureOutput config inp pureIO
 	= runPure config inp (pureIO & isolateFailure') & either (error "Bug") id & snd 
 
 
-runIO			:: (NeedsFiles a) => config -> a -> PureIO' config x -> IO x
-runIO c a io	= runIOWith c M.empty a io
+runIO		:: (NeedsFiles a) => config -> a -> PureIO' config x -> IO x
+runIO c		= runIOWith c M.empty
 
 runIOWith		:: (NeedsFiles a) => config -> Input -> a -> PureIO' config x -> IO x
 runIOWith config extraInput needsFiles f

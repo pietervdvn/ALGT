@@ -247,6 +247,7 @@ unEscape (c:str)
 
 
 
+
 testAllProperties	:: Bool -> TypeName -> [(String, ParseTree)] -> PureIO ()
 testAllProperties verbose tp pts
 	= do	ts	<- getTS
@@ -296,7 +297,7 @@ testPropertyOn verbose tp pts property
 
 testProperty	:: TypeSystem -> Property -> Name -> (String, ParseTree) -> ([String], Bool)
 testProperty ts property exprName (input, pt)
-	= let	eithStrProp	= testPropOn ts property (M.singleton exprName (pt, Nothing))
+	= let	eithStrProp	= testPropOn ts property (M.singleton exprName (removeEmptyTokens pt, Nothing))
 		in either
 			(\fail	-> (["Property failed!", fail], False))
 			(\proof -> (["Property successfull", toParsable' property proof], True))
@@ -311,7 +312,7 @@ testProperty ts property exprName (input, pt)
 runRule		:: Symbol -> (String, ParseTree) -> PureIO ()
 runRule symbol (input, pt)
 	= do	ts	<- getTS		
-		let	proof	 = proofThat' ts symbol [pt]	:: Either String Proof
+		let	proof	 = proofThat' ts symbol [removeEmptyTokens pt]	:: Either String Proof
 		proof & showProofWithDepth input symbol & putStrLn
 
 
@@ -331,13 +332,13 @@ runFunc func (inp, pt)
  	= do	ts	<- getTS
 		putStrLn $ "\n# "++show inp++" applied to "++func
 		catch putStrLn $ do
-			pt'	<- evalFunc ts func [pt] & liftEith
+			pt'	<- evalFunc ts func [removeEmptyTokens pt] & liftEith
 			printPT pt'
 
 runStepByStep	:: Name -> (String, ParseTree) -> PureIO ()
 runStepByStep func (inp, pt)
 	= do	putStrLn $ "# "++show inp++" applied repeatedly to "++func
-		evalStar func pt
+		evalStar func $ removeEmptyTokens pt
 
 
 evalStar	:: Name -> ParseTree -> PureIO ()

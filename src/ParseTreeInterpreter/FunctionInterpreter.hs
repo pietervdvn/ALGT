@@ -141,7 +141,7 @@ patternMatch ctx f (MAscription as expr') expr
  | otherwise	
 	= Left $ toCoParsable expr ++" is not a "++show as
 
-patternMatch ctx extraCheck (MEvalContext tp name hole) value@(PtSeq _ _ _)
+patternMatch ctx extraCheck (MEvalContext tp name hole) value@PtSeq{}
 	= patternMatchContxt ctx extraCheck (tp, name, hole) value
 patternMatch ctx extraCheck (MEvalContext tp name hole) literal
 	= Left "Evaluation contexts only searching within a parse tree and don't handle literals"

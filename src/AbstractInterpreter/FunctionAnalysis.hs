@@ -54,8 +54,8 @@ assumptionsFor	:: TypeSystem -> a -> b -> Maybe AbstractSet
 assumptionsFor ts _ _	= Nothing
 
 analyzeFunction'	:: TypeSystem -> Function -> FunctionAnalysis
-analyzeFunction' ts f
-	= analyzeFunctionWith' ts (_genFuncSign ts, assumptionsFor ts) f
+analyzeFunction' ts
+	= analyzeFunctionWith' ts (_genFuncSign ts, assumptionsFor ts)
 
 analyzeFunctionWith'	:: TypeSystem -> (Map Name TypeName, Name -> Arguments -> Maybe AbstractSet) -> Function -> FunctionAnalysis
 analyzeFunctionWith' ts fs f
