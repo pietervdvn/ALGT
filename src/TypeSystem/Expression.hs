@@ -131,10 +131,14 @@ mergeContext syntax
 	= mergeContextWith (mergeTypes syntax)
 
 
--- Selects the biggest of two types, or gives an error msg if it doesn't exist
+-- Selects the biggest of two types, or gives an error msg if it doesn't exist (thus is top).
 mergeTypes	:: Syntax -> Name -> TypeName -> TypeName -> Either String TypeName
 mergeTypes syntax varName t1 t2
  | t1 == t2	= Right t1
+ | t1 == topSymbol
+		= Right t2	-- T1 is used as input argument to a builtin function able to handle everything. We ignore the typing here
+ | t2 == topSymbol
+		= Right t1
  | otherwise
 		= do	let msg	= varName ++ " is typed as both "++show t1++" and "++show t2++", which don't have a common supertype"
 			let bct	= 		biggestCommonType syntax t1 t2	

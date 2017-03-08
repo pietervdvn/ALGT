@@ -57,6 +57,8 @@ builtinSyntax	=
 		, ("Matches a hexadecimal digit", "[0-9a-fA-F]"))
 	, (("String", dqString'),
 		("Matches a double quote delimted string, returns the value including the double quotes", "\"([^\"\\]|\\\"|\\\\)*\""))
+	, (("StringUnesc", dqString),
+		("Matches a double quote delimeted string, returns the value without the double quotes",  "\"([^\"\\]|\\\"|\\\\)*\""))
 	, (("LineChar", noneOf "\n" |> (:[])),
 		("Matches a single character that is not a newline", "[^\\n]"))
 	]

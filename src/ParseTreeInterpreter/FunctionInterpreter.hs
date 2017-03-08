@@ -1,6 +1,5 @@
  {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses, TemplateHaskell #-} 
-module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch, builtinFunctions
-		, BuiltinFunction, bifName, bifDescr, bifMinArgs, bifMaxArgs, bifApply, buildCtx') where
+module ParseTreeInterpreter.FunctionInterpreter (evalFunc, evalExpr, VariableAssignments, mergeVars, mergeVarss, patternMatch, buildCtx') where
 
 {-
 This module defines an interpreter for functions. 
@@ -27,13 +26,6 @@ import Lens.Micro.TH
 
 type VariableAssignments	= VariableAssignmentsA ParseTree
 
-data BuiltinFunction = BuiltinFunction
-	{ _bifName	:: Name
-	, _bifDescr	:: String
-	, _bifMinArgs	:: Int
-	, _bifMaxArgs	:: Maybe Int
-	, _bifApply	:: Either ([Int] -> Int) (Ctx -> TypeName -> [ParseTree] -> Either String ParseTree)  
-	} 
 data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
 			ctxFunctions 	:: Map Name Function,
 			ctxVars		:: VariableAssignments,
@@ -41,39 +33,6 @@ data Ctx	= Ctx { ctxSyntax	:: Syntax,		-- Needed for typecasts
 			}
 buildCtx ts vars 	= Ctx (get tsSyntax ts) (get tsFunctions ts) vars []
 buildCtx' ts		= buildCtx ts M.empty
-
-makeLenses ''BuiltinFunction
-
-_builtinFunctions'
-	= builtinFunctions |> (get bifName &&& id) & M.fromList
-builtinFunctions
-      = [ BuiltinFunction "plus" "Gives a sum of all arguments (0 if none given)" 
-		0 Nothing $ Left sum
-	, BuiltinFunction "min" "Gives the first argument, minus all the other arguments"
-		1 Nothing $ Left (\(i:is) -> i - sum is)
-	, BuiltinFunction "mul" "Multiplies all the arguments. (1 if none given)"
-		0 Nothing $ Left product
-	, BuiltinFunction "div" "Gives the first argument, divided by the product of the other arguments. (Integer division, rounded down))"
-		1 Nothing $ Left (\(i:is) -> i `div` product is)
-	, BuiltinFunction "mod" "Gives the first argument, module the product of the other arguments."
-		1 Nothing $ Left (\(i:is) -> i `mod` product is)
-	, BuiltinFunction "neg" "Gives the negation of the argument"
-		1 (Just 1) $ Left (\[i] -> -1)
-	, BuiltinFunction "equal" "Checks that all the arguments are equal. Gives 1 if so, 0 if not."
-		2 Nothing $ Right (\_ tp (e:es) -> return $ MInt (tp, 0) $ if all (e ==) es then 1 else 0)
-	, BuiltinFunction "error" "Stops the function, gives a stack trace. When used in a rule, this won't match a predicate"
-		0 Nothing $ Right (\ctx tp pts ->
-			do 	let pts'	= toParsable' ", " pts
-				let msgs	= ["In evaluating a function:", pts']
-				let stack	= ctxStack ctx |> buildStackEl
-				Left $ unlines $ stack ++ msgs)
-	, BuiltinFunction "subs" ("(expression to replace, to replace with, in this expression) "
-			++ "Replaces each occurence of the first expression by the second, in the third argument")
-		3 (Just 3) $ Right (\_ tp [searchFor, replaceBy, inExpr] ->
-			do	let paths	= search (==searchFor) inExpr
-				let folded	= foldl (\pt path -> replace pt path replaceBy) inExpr paths
-				return folded)
-	]
 
 
 
@@ -236,41 +195,39 @@ depthFirstSearch matchMaker path pt
 
 
 
+_applyBuiltinFunction'	:: Ctx -> Name -> [Expression] -> Either String ParseTree
+_applyBuiltinFunction' ctx funcName es
+	= do	bif	<- checkExists funcName builtinFunctions' ("No builtin function with name "++funcName++" found")
+		_applyBuiltinFunction ctx bif es
 
 
-
-_searchBuiltinFunction	:: Name -> Either String BuiltinFunction
-_searchBuiltinFunction nm
-	= checkExists nm _builtinFunctions' ("No builtin function with name "++nm++" found")
-
-
-_applyBuiltinFunction'	:: Ctx -> TypeName -> Name -> [Expression] -> Either String ParseTree
-_applyBuiltinFunction' ctx tn funcName es
-	= do	bif	<- _searchBuiltinFunction funcName
-		_applyBuiltinFunction ctx tn bif es
-
-
-_applyBuiltinFunction	:: Ctx -> TypeName -> BuiltinFunction -> [Expression] -> Either String ParseTree
-_applyBuiltinFunction ctx tp (BuiltinFunction funcName _ atLeastNeeded atMostNeeded f) es
+_applyBuiltinFunction	:: Ctx -> BuiltinFunction -> [Expression] -> Either String ParseTree
+_applyBuiltinFunction ctx (BuiltinFunction "error" _ _ _ f) es
+	= do	pt		<- f & _runBIFunc ctx "error" es	-- The message
+		let stack	= ctxStack ctx |> buildStackEl & reverse
+		Left $ unlines $ stack ++ [toParsable pt]
+_applyBuiltinFunction ctx (BuiltinFunction funcName _ (Right fixedTypes) retType f) es
+	-- In this case, we have a fixed type and can just apply our function! The typechecker will make sure it's fine
+	= f & _runBIFunc ctx funcName es
+_applyBuiltinFunction ctx (BuiltinFunction funcName _ (Left (_, atLeastNeeded)) _ f) es
+	-- We have a variable number of elements, we check there are enough of them
 	= do	let minimumOK	= length es >= atLeastNeeded
-		let maximumOK	= atMostNeeded |> (length es <=) & fromMaybe True
-		unless minimumOK $ Left $ "Builtin integer function '!" ++ funcName++"' needs at least "++show atLeastNeeded ++" arguments"
-		unless maximumOK $ Left $ "Builtin integer function '!" ++ funcName++"' needs at most "++show (fromMaybe 0 atMostNeeded) ++" arguments"
-		f & either (_runIntFunc ctx funcName tp es)
-			(\f -> do	pts	<- es |+> evaluate ctx
-					f ctx tp pts)
-	
-_runIntFunc	:: Ctx -> Name -> TypeName -> [Expression] -> ([Int] -> Int) -> Either String ParseTree
-_runIntFunc ctx funcName tp es f
-	= do 	is	<- asInts ctx funcName es
-		return $ MInt (tp, 0) (f is)
+		unless minimumOK $ Left $ "Builtin function '!" ++ funcName++"' needs at least "++show atLeastNeeded ++" arguments"
+		f & _runBIFunc ctx funcName es
 
+_runBIFunc	:: Ctx -> Name -> [Expression] -> Either ([Int] -> Int) ([ParseTree] -> ParseTree) -> Either String ParseTree
+_runBIFunc ctx funcName es (Left intFunc)
+	= do 	is	<- asInts ctx funcName es	-- asInts does evaluation as well
+		return $ MInt ("Number", 0) (intFunc is)
+_runBIFunc ctx _ es (Right ptFunc)
+	= do	es'	<- es |+> evaluate ctx
+		return $ ptFunc es'
 			
 
 
 evaluate	:: Ctx -> Expression -> Either String ParseTree
-evaluate ctx (MCall tp nm True es)
-	= _applyBuiltinFunction' ctx tp nm es
+evaluate ctx (MCall _ nm True es)
+	= _applyBuiltinFunction' ctx nm es
 
 evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctxFunctions ctx

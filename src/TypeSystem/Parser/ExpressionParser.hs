@@ -12,6 +12,8 @@ import TypeSystem.TypeSystemData
 import Utils.Utils
 import Utils.ToString
 
+import Graphs.Lattice
+
 import Text.Parsec
 import Data.Maybe
 import Data.Char
@@ -28,7 +30,7 @@ data MEParseTree	= MePtToken String
 			| MePtSeq [MEParseTree] 
 			| MePtVar Name 
 			| MePtInt Int
-			| MePtCall Name (Maybe TypeName) [MEParseTree]	-- builtin if a type is provided
+			| MePtCall Name Bool (Maybe TypeName) [MEParseTree]	-- builtin if the bool is True, might provide a type in that case
 			| MePtAscription Name MEParseTree
 			| MePtEvalContext Name MEParseTree	-- The type of the EvaluationContext is derived... from, well the context :p
 	deriving (Show, Ord, Eq)
@@ -44,8 +46,8 @@ showMEPT (MePtToken s)	= show s
 showMEPT (MePtSeq pts)	= pts |> showMEPT & unwords & inParens
 showMEPT (MePtVar v)	= v
 showMEPT (MePtInt i)	= show i
-showMEPT (MePtCall n bi args)
-			= (if isJust bi then "!" else "") ++ n ++ maybe "" (":"++) bi ++ inParens (args |> showMEPT & intercalate ", ")
+showMEPT (MePtCall n bi biTp args)
+			= (if bi then "!" else "") ++ n ++ maybe "" (":"++) biTp ++ inParens (args |> showMEPT & intercalate ", ")
 showMEPT (MePtAscription n pt)	= inParens (showMEPT pt++" : "++n)
 showMEPT (MePtEvalContext n expr)	= n++"["++ showMEPT expr ++"]"
 
@@ -112,22 +114,47 @@ matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
 
 
 -- Builtin function
-matchTyping f s _ _ (MePtCall fNm (Just returnTyp) args)
- 	= do	args'	<- inMsg "While typing arguments in a builtin function (flying blind)" $
-			args |+> dynamicTranslate f s bottomSymbol
-		return $ MCall returnTyp fNm True args'
--- 'Normal function'
-matchTyping functions syntax (BNFRuleCall ruleName) _ (MePtCall fNm Nothing args)
- | fNm `M.notMember` functions	= Left $ "Unknwown function: "++fNm
- | ruleName `M.notMember` get bnf syntax
-			= Left $ "Unknwown type/bnfrule: "++ruleName
+matchTyping f s (BNFRuleCall ruleName) _ (MePtCall fNm True returnTypAct args)
+ 	= do	let fNm'	= show ('!':fNm)
+		let notFoundMsg	= "Builtin function "++fNm'++" is not defined. Consult the reference manual for a documentation about builtin functions."
+					++"\nKnown builtins are:\n"++(builtinFunctions' & M.keys & unlines & indent)
+		funcDef	<- checkExists fNm builtinFunctions' notFoundMsg
+		let inTps	= get bifInArgs funcDef
+
+		let outTpKnown	= get bifResultType funcDef
+		let outTpAct	= maybe outTpKnown (infimum (get lattice s) outTpKnown) returnTypAct
+		unless (alwaysIsA s outTpAct ruleName) $ Left $
+			"The builtin function returns a "++outTpAct++", but a "++ruleName++" is expected. Add (or change) an explicit typing:\n"
+			++ indent (toParsable $ MePtCall fNm True (Just ruleName) args)
+
+		args'	<- case inTps of
+			(Right knownTypes)	-> 
+				do	let nonMatchingMsg	= "Expected "++show (length knownTypes)++" arguments to "++fNm'++", but got "++show (length args)
+					unless (length args == length knownTypes) $ Left nonMatchingMsg
+					inMsg ("While typing arguments to the builtin function "++fNm') $
+							zip args knownTypes |> (\(arg, tp) -> typeAs f s tp arg) & allRight
+			(Left (shouldBe, atLeast)) ->
+				do	unless (length args >= atLeast) $ Left $ 
+						"Expected at least "++show atLeast++" arguments of type "++shouldBe++" to the bulitin function "++fNm'
+					inMsg ("While typing arguments to the builtin function "++fNm') $
+						args |> typeAs f s shouldBe & allRight
+		return $ MCall outTpAct fNm True args'
+
+-- Normal function
+matchTyping functions syntax (BNFRuleCall ruleName) _ (MePtCall fNm False _ args)
+ | fNm `M.notMember` functions	= Left $ "Unknown function: "++fNm
+ | ruleName `M.notMember` get bnf syntax && not (isBuiltinName ruleName)
+			= Left $ "Unknown type/syntactic form: "++ruleName
  | otherwise		= do	let fType		= functions M.! fNm
 				let argTypes		= init fType
 				let returnTyp		= last fType
 				assert Left (equivalent syntax returnTyp ruleName) $
 					"Actual type "++show returnTyp ++" does not match expected type "++show ruleName
-				args'			<- zip args argTypes |> (\(arg, tp) -> typeAs functions syntax tp arg) 
-								& allRight
+				let lengthMsg		= "Expected "++show (length argTypes)++" arguments to "++show fNm++", but got "++show (length args)++" arguments"
+				unless (length args == length argTypes) $ Left lengthMsg
+				args'		<- zip args argTypes
+							|> (\(arg, tp) -> typeAs functions syntax tp arg) 
+							& allRight'
 				return $ MCall returnTyp fNm False args'
 matchTyping _ _ bnf _ pt@MePtCall{}
 			= Left $ "Could not match " ++ toParsable bnf ++ " ~ " ++ toParsable pt
@@ -146,10 +173,12 @@ matchTyping _ _ (BNFRuleCall "Number") tp (MePtInt i)	-- TODO dehardcode this
 			= return $ MParseTree $ MInt tp i
 matchTyping f syntax (BNFRuleCall nm) _ pt
  | isBuiltinName nm
-		= do	contents	<- fromMePtToken pt |> return & fromMaybe (Left $ "Builtin with no token matched")
+		= do	contents	<- maybe (Left $ "Builtin with no token matched") return $
+						fromMePtToken pt
 			unless (isValidBuiltin (BNFRuleCall nm) contents) $  Left $ contents ++" is not a "++nm 
 			MLiteral (nm, 0) contents & MParseTree & return
-
+ | nm == topSymbol
+		= dynamicTranslate f syntax nm pt
  | nm `M.member` get bnf syntax
 		= do	let bnfASTs	= get bnf syntax M.! nm
 			let grouped	= get groupModes syntax M.! nm
@@ -190,7 +219,7 @@ dynamicTranslate _ _ tp (MePtVar nm)	= MVar tp nm & return
 dynamicTranslate _ _ tp (MePtInt i)	= MInt (tp, -1) i & MParseTree & return
 dynamicTranslate f s _ ascr@(MePtAscription tp e)	
 					= typeAs f s tp e
-dynamicTranslate f s tp call@(MePtCall nm bi _)
+dynamicTranslate f s tp call@(MePtCall nm _ bi _)
 	= do	tp'	<- maybe (Left $ "Could not find function "++nm) return $ firstJusts [bi, M.lookup nm f |> last]
 		typeAs f s tp' call
 dynamicTranslate f s tp (MePtEvalContext name hole)
@@ -228,11 +257,11 @@ mePtVar ident	= do	nm	<- try ident
 mePtInt		= negNumber	|> MePtInt
 mePtCall ident	= do	builtin	<- try (char '!' >> return True) <|> return False
 			nm	<- identifier	-- here we use the normal identifier, not the injected one
-			biType	<- if builtin then char ':' >> identifier |> Just else return Nothing
+			biType	<- if builtin then (char ':' >> identifier |> Just) <|> return Nothing else return Nothing
 			char '('
 			args	<- (ws *> mePt ident <* ws) `sepBy` char ','
 			char ')'
-			return $ MePtCall nm biType args
+			return $ MePtCall nm builtin biType args
 meAscription ident
 		= do	char '('
 			ws

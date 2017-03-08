@@ -114,7 +114,10 @@ asLattice	:: Map Name [BNF] -> Either [[TypeName]] (Lattice TypeName, [(TypeName
 asLattice syntax
 	= let	relations	= syntax ||>> fromRuleCall |> catMaybes
 					|> S.fromList & invertDict	:: Map Name (Set Name)
-		in makeLattice bottomSymbol topSymbol relations
+		-- let's make sure the 'disconnected' elems are known to the lattice too
+		allElems	= syntax |> (const S.empty)
+									:: Map Name (Set Name)
+		in makeLattice bottomSymbol topSymbol (M.union relations allElems)
 
 latticeAsSVG	:: ColorScheme -> Syntax -> String
 latticeAsSVG cs s
