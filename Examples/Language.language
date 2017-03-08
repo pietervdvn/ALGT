@@ -31,7 +31,7 @@ digit ::= Digit
 
 wsMode ::= "::=" "$" | "::=" | "~~=" "$" | "~~="
 
-bnfTerm ::= styleName | identifier | bnfBuiltin | String
+bnfTerm ::= styleName | identifier | bnfBuiltin | String²
 bnfBuiltin ::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar" | "Identifier"
 bnfExpression ::= bnfTerm "|" bnfExpression | bnfTerm bnfExpression | bnfTerm
 

@@ -67,7 +67,8 @@ possibleResults ts funcN args
 		let analysises	= fanalysis & get clauseAnalysises |> get results
 		let results	= analysises >>= M.elems 
 		--analyzeFunction	::  TypeSystem -> Function -> Arguments -> FunctionAnalysis
-		trace ("INPUT: "++toCoParsable' ", " args ++ toParsable' (funcN, 24::Int, function) fanalysis) $ return $ nub results
+		trace ("INPUT: "++toCoParsable' ", " args ++ toParsable' (funcN, 24::Int, function) fanalysis) $ 
+			return $ nub results
 
 
 {- Given an abstract set as input, gives possible output as result from concretization; -}
@@ -76,4 +77,5 @@ concretization (dyn, dynSet) pt
 	= do	let dynAS	= dyn & fromParseTree "dyn"
 		let baseAS	= pt & fromParseTree "base"
 		let dynPaths	= baseAS & searchPathAS (== dynAS)
-		foldl (\ass (i, p) -> [ replaceAS as p option | option <- dynSet i, as <- ass ]) [baseAS] (mapi dynPaths)		
+		foldl (\ass (i, p) -> [ replaceAS as p option | option <- dynSet i, as <- ass ]) [baseAS] (mapi dynPaths)
+	

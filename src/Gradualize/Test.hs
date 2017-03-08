@@ -12,7 +12,10 @@ import AbstractInterpreter.AbstractSet
 import Gradualize.DynamicRuntime
 import Gradualize.FunctionFixer
 
+import Text.PrettyPrint.ANSI.Leijen
+
 import Data.Map as M
+import Data.List as L
 
 import Utils.ToString
 import AssetsHelper
@@ -25,7 +28,7 @@ t	= t' >> pass
 t'	:: IO (TypeSystem, Changes)
 t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 		ts & toParsable' (24::Int) & putStrLn
-
+		let s		= get tsSyntax ts
 
 		-- concretization	:: TypeSystem -> TypeName -> Name -> String -> [AbstractSet] -> ParseTree -> Either String [AbstractSet]
 		let dynSet i	= [generateAbstractSet (get tsSyntax ts) (show i) "type"]
@@ -40,10 +43,20 @@ t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 		let testPT args0 args1
 				= (do	arg0	<- args0 & concrFunc
 					arg1	<- args1 & concrFunc
-					possibleResults ts "equate" [arg0, arg1] & either error id
-						 & return) |> toParsable' " | " & unlines & putStrLn
+					let ass	
+						= possibleResults ts "equate" [arg0, arg1] & either error id	:: [AbstractSet]
+							
+					let showed
+						= inParens (toParsable arg0 ++ ", " ++ toParsable arg1) ++ " = " ++
+							if L.null ass then "ɛ" else toParsable' "\n\t" ass
+					return showed 
+					)
+
+		testPT dyn dyn
+			|> (">>>"++) |+> putStrLn
 	
-		testPT testPT3 testPT2
 		-- testPT3 & concrFunc & toParsable' " | " & putStrLn
 
 		return (ts, ch)
+
+

@@ -46,14 +46,18 @@ data FunctionAnalysis
 makeLenses ''ClauseAnalysis
 makeLenses ''FunctionAnalysis
 
+_genFuncSign	:: TypeSystem -> Map Name TypeName
 _genFuncSign ts	= get tsFunctions ts |> typesOf |> last
 
 
-analyzeFunction'	:: TypeSystem -> Function -> FunctionAnalysis
-analyzeFunction' ts
-	= analyzeFunctionWith' ts (_genFuncSign ts)
+assumptionsFor	:: TypeSystem -> a -> b -> Maybe AbstractSet
+assumptionsFor ts _ _	= Nothing
 
-analyzeFunctionWith'	:: TypeSystem -> Map Name TypeName -> Function -> FunctionAnalysis
+analyzeFunction'	:: TypeSystem -> Function -> FunctionAnalysis
+analyzeFunction' ts f
+	= analyzeFunctionWith' ts (_genFuncSign ts, assumptionsFor ts) f
+
+analyzeFunctionWith'	:: TypeSystem -> (Map Name TypeName, Name -> Arguments -> Maybe AbstractSet) -> Function -> FunctionAnalysis
 analyzeFunctionWith' ts fs f
 	= let	syntax	= get tsSyntax ts
 		args	= generateArgs syntax (f & typesOf & init) in
@@ -62,18 +66,17 @@ analyzeFunctionWith' ts fs f
 
 analyzeFunction	::  TypeSystem -> Function -> Arguments -> FunctionAnalysis
 analyzeFunction ts
-	= analyzeFunctionWith ts (_genFuncSign ts)
+	= analyzeFunctionWith ts (_genFuncSign ts, assumptionsFor ts)
 
 
 
-
-analyzeFunctionWith	::  TypeSystem -> Map Name TypeName -> Function -> Arguments -> FunctionAnalysis
-analyzeFunctionWith ts f (MFunction _ clauses) args
+{-
+(f: when you want to 'lie' about the function types
+moreKnowledge: sometimes, you can make assumptions about what a function might return. That is expressed here
+-}
+analyzeFunctionWith	::  TypeSystem -> (Map Name TypeName, Name -> Arguments -> Maybe AbstractSet) -> Function -> Arguments -> FunctionAnalysis
+analyzeFunctionWith ts (f, extraKnowledge) (MFunction _ clauses) args
 	= analyzeClauses (get tsSyntax ts) f (mapi clauses) [args]
-
-
-
-
 
 
 

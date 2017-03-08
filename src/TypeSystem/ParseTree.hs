@@ -64,6 +64,7 @@ flatten (MLiteralA a minf str)	= (a, minf, str)
 flatten (MIntA a minf i)	= (a, minf, show i)
 flatten (PtSeqA a minf pts)	= (a, minf, (pts |> flatten) >>= trd3)
 
+
 	
 
 instance SimplyTyped ParseTree where

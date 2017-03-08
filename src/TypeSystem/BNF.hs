@@ -61,6 +61,8 @@ builtinSyntax	=
 		("Matches a double quote delimeted string, returns the value without the double quotes",  "\"([^\"\\]|\\\"|\\\\)*\""))
 	, (("LineChar", noneOf "\n" |> (:[])),
 		("Matches a single character that is not a newline", "[^\\n]"))
+	, (("ParO", char '(' >> return),
+		("Matches a '(', which will dissapear in the parsetree", "("))
 	]
 
 isValidBuiltin	:: BNF -> String -> Bool

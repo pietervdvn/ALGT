@@ -110,6 +110,10 @@ plus(e1, e2)	= !plus:number(e1, e2)
 
 
 equate		: type -> type -> type
+equate("(" T1 ")", T2)
+		= equate(T1, T2)
+equate(T1, "(" T2 ")")
+		= equate(T1, T2)
 equate(T, T)	= T
 # equate(T1, T2)	= !error:type("Not the same type")
 
@@ -334,3 +338,5 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  e :: T
 -------- [Termination]
 e →* v 
+
+

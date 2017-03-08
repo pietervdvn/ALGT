@@ -55,13 +55,12 @@ parseSyntax' bnf@(BNFRules rules wsModes group _) nm wsModeParent
 					= wsModeActual wsModeParent
 			let newWSMode	= captureMode $ strictest wsMode (enterRule wsModeParent')
 
-			pt	<- parseChoice bnf nm newWSMode choices
+			pt	<- parseChoice bnf nm newWSMode choices |> removeEmptyTokens
 			let (a, minf, flat)	= flatten pt
 			return $ if doGroup then
 				MLiteralA a minf flat
 				else pt
 			
-
 
 parseChoice	:: Syntax -> Name -> WSMode' -> [(BNF, Int)] -> Parser u ParseTreeLi
 parseChoice _ name _ []

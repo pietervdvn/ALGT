@@ -51,7 +51,7 @@ minimalTypeOf	:: TypeSystem -> Map Name TypeName -> (Name, Function) -> Maybe Ty
 minimalTypeOf ts funcSigns (name, f)
 	= let	s		= get tsSyntax ts
 		args		= typesOf f & init |> generateAbstractSet s "_"
-		analysis	= analyzeFunctionWith ts funcSigns f args
+		analysis	= analyzeFunctionWith ts (funcSigns, assumptionsFor ts) f args
 		tps		= analysis & get clauseAnalysises
 					|> get results
 					|> M.elems & concat

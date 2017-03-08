@@ -131,6 +131,11 @@ unfoldAll syntax as
 	= [as]
 
 
+unfoldDepth	:: Syntax -> Int -> AbstractSet -> [AbstractSet]
+unfoldDepth s 0 as
+		= [as]
+unfoldDepth s i as
+		= unfoldAll s as >>= unfoldDepth s (i - 1)
 
 
 

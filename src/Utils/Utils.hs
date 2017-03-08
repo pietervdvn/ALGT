@@ -413,3 +413,6 @@ fancyString' withCounter endMsg as msgs
 		endMsg'	= padR 80 ' ' endMsg
 		in
 		fancyString endMsg' as (mapi msgs' |> prepTuple)
+
+
+todo		= error "TODO"
