@@ -1,4 +1,4 @@
-module TypeSystem.Parser.ExpressionParser where
+module TypeSystem.Parser.ExpressionParser (MEParseTree, typeAs, parseExpression, parseExpression') where
 
 {-
 This module defines a parser for expressions.
@@ -60,11 +60,13 @@ the parsetree is interpreted/typed following the bnf syntax.
 typeAs		:: Map Name Type -> Syntax -> TypeName -> MEParseTree -> Either String Expression
 typeAs functions rules ruleName pt
 	= inMsg ("While typing "++toParsable pt++" against "++ruleName) $ 
+	  do	when (isDissapearing $ BNFRuleCall ruleName) $ _dissapearingMsg ruleName
 		matchTyping functions rules (BNFRuleCall ruleName) (ruleName, error "Should not be used") pt
  
 
 
-
+_dissapearingMsg ruleName
+	= Left $ "Trying to match against "++show ruleName++", which is a dissapearing builtin, thus it's no use matching it"
 
 -- we compare the expected parse type (known via the BNF) and the expression we got
 matchTyping	:: Map Name Type -> Syntax -> BNF -> (TypeName, Int) -> MEParseTree -> Either String Expression
@@ -115,7 +117,8 @@ matchTyping f r bnf (tp, _) ctx@(MePtEvalContext nm expr)
 
 -- Builtin function
 matchTyping f s (BNFRuleCall ruleName) _ (MePtCall fNm True returnTypAct args)
- 	= do	let fNm'	= show ('!':fNm)
+ 	= do	when (isDissapearing $ BNFRuleCall ruleName) $ _dissapearingMsg ruleName
+		let fNm'	= show ('!':fNm)
 		let notFoundMsg	= "Builtin function "++fNm'++" is not defined. Consult the reference manual for a documentation about builtin functions."
 					++"\nKnown builtins are:\n"++(builtinFunctions' & M.keys & unlines & indent)
 		funcDef	<- checkExists fNm builtinFunctions' notFoundMsg
@@ -172,6 +175,8 @@ matchTyping _ _ (BNFRuleCall "Number") tp (MePtToken s) -- TODO Dehardcode this
 matchTyping _ _ (BNFRuleCall "Number") tp (MePtInt i)	-- TODO dehardcode this
 			= return $ MParseTree $ MInt () tp i
 matchTyping f syntax (BNFRuleCall nm) _ pt
+ | isDissapearing (BNFRuleCall nm)
+		= _dissapearingMsg nm
  | isBuiltinName nm
 		= do	contents	<- maybe (Left "Builtin with no token matched") return $
 						fromMePtToken pt

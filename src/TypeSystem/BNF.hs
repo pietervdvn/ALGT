@@ -63,7 +63,21 @@ builtinSyntax	=
 		("Matches a single character that is not a newline", "[^\\n]"))
 	, (("ParO", char '(' >> return ""),
 		("Matches a '(', which will dissapear in the parsetree", "("))
+	, (("ParC", char ')' >> return ""),
+		("Matches a ')', which will dissapear in the parsetree", ")"))
 	]
+
+dissappearingSyntax
+	= ["ParO", "ParC"]
+
+
+isDissapearing	:: BNF -> Bool
+isDissapearing (BNFRuleCall r)
+ 	= r `elem` dissappearingSyntax
+isDissapearing (BNFSeq seq)
+	= seq |> isDissapearing & and
+isDissapearing _
+	= False
 
 isValidBuiltin	:: BNF -> String -> Bool
 isValidBuiltin bnf s

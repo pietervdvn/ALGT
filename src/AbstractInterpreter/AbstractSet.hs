@@ -70,7 +70,8 @@ _generateAbstractSet r generator n (_, BNFRuleCall tp)
 			= EveryPossible generator n tp
 	| otherwise	= error $ "No bnf-rule with the name " ++ tp
 _generateAbstractSet r generator n (choice, BNFSeq bnfs)
-			= mapi bnfs
+			= bnfs	& filter (not . isDissapearing)
+				& mapi
 				|> (\(i, bnf) -> _generateAbstractSet r generator (n++":"++show i) (choice, bnf))
 				& AsSeq generator choice
 

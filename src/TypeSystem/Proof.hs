@@ -134,4 +134,4 @@ showProofWithDepth input relation (Right proof)
 		,"# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) 
 		, ""
 		, ""
-		, toParsable proof, "", "", ""] & unlines
+		, toCoParsable proof, "", "", ""] & unlines
