@@ -259,8 +259,8 @@ Are not possible for now (v $$version). Perhaps in a future version or when some
 
 ### Builtin functions
 
- name	| Descr						| Arguments
---------+-----------------------------------------------+-------------
+ name | Descr					| Arguments	
+------+-----------------------------------------+------------------------
 $$builtinFunctions
 
 
