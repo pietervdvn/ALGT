@@ -14,7 +14,7 @@ It allows easy lookup of direct suprema/infima and a chaining
 import Utils.Utils
 import Utils.LatticeImage
 
-import Lens.Micro hiding ((&))
+import Lens.Micro hiding ((&), both)
 import Lens.Micro.TH
 
 import Data.Map (Map)
@@ -47,8 +47,11 @@ makeLattice bottom top isSubsetOf'
 	= let	elements	= M.keys isSubsetOf' ++ (M.elems isSubsetOf' >>= S.toList)
 		restToBottom	= M.singleton bottom (S.fromList elements)
 		topToRest	= zip elements (repeat $ S.singleton top) & M.fromList
-		isSubsetOf	= M.union isSubsetOf'
-						(M.union restToBottom topToRest)	-- add bottom to elements with no subtypes
+		isSubsetOf	= M.unions [isSubsetOf' |> (S.insert top),
+									-- Original set; keep as intact as possible
+					M.singleton top S.empty,	-- We add the top element
+					restToBottom,			-- We add the bottom element
+					topToRest]	-- add top to elements with no subtypes
 		
 		in do
 		(lattice, unneeded)	<- removeTransitive $ Lattice bottom top isSubsetOf (error "Lattices: isSupersetOfEvery used in intialization. This is a bug") 
@@ -200,8 +203,13 @@ isDisconnected l a
 asSVG			:: (Ord a, Show a) => (a -> String) -> (a -> Bool) -> Int -> ColorScheme -> Lattice a -> String
 asSVG shw doDash pxW cs lattice
 	= let	(groups, conn, dashed)	= flatRepresentation lattice doDash
+		l			= lattice
+		groups'			= groups |> filter (not . isDisconnected l)
+		-- Dashed ones should be the only ones containing these; but we filter anyway just incase the implementation changes
+		conn'			= conn 		& filter (both (not . isDisconnected l))
+		dashed'			= dashed 	& filter (both (not . isDisconnected l))		
 		shwTpl (a, b)		= (shw a, shw b)
-		in latticeSVG  pxW cs (groups |> filter (not . isDisconnected lattice) ||>> shw, conn |> shwTpl, dashed |> shwTpl)
+		in latticeSVG  pxW cs (groups' ||>> shw, conn' |> shwTpl, dashed' |> shwTpl)
 		
 
 -- calculates how many steps might be taken from the top
