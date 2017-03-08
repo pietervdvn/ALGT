@@ -1,4 +1,3 @@
- 
  STFL 
 ******
 
@@ -16,8 +15,9 @@ typeL	::= "Int" | "Bool" | "(" type ")"
 type	::= typeL "->" type | typeL
 
 
-number	::= Number
+
 var	::= Identifier
+number	::= Number
 value	::= bool | number
 
 e	::= eL "+" e 
@@ -90,7 +90,7 @@ defaultValue(ta "->" tr)
 			= "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
 defaultValue("(" t ")")	= defaultValue(t)
 
-dom 		: type -> type
+dom 		: type -> typeL
 dom("(" T ")")	= dom(T)
 dom(T1 "->" T2) = T1
 dom("Bool")	= !error:type("Not defined for Bool")
@@ -333,5 +333,4 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  
  e :: T
 -------- [Termination]
- e →* v 
-
+e →* v 

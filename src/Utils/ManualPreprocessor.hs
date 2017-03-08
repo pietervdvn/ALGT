@@ -66,24 +66,20 @@ buildVariables
 			|> (\(e, n, pat, expr) -> [verbatim (toParsable e), pat]
 				& intercalate " | " )
 			& unlines)
-	, ("builtinFunctions", FuncInp.builtinFunctions
+	, ("builtinFunctions", builtinFunctions
 			& advancedTable (\bif -> [verbatim $ get bifName bif, get bifDescr bif
-					, intercalate ", " $ filter (/="") 
-						[argText (get bifMinArgs bif) (get bifMaxArgs bif)
-						, either (const "Ints only") (const "") $ get bifApply bif]
+					, verbatim $ argText (get bifInArgs bif) (get bifResultType bif)
 					]))
 	] & M.fromList 
 
 
 
-argText		:: Int -> Maybe Int -> String
-argText min (Just max)
- | min == max	= "Exactly "++show min
- | min == 0	= "At most "++show max
- | otherwise	= "Between "++show min++" and "++show max
-argText min Nothing
- | min == 0	= ""
- | otherwise	= "At least "++show min
+argText		:: Either (TypeName, Int) [TypeName] -> TypeName -> String
+argText (Left (inTp, nr)) resT
+	= (inTp++" -> " >>= replicate nr) ++ inTp ++ "* -> " ++ resT
+argText (Right tps) resT
+	= (tps++[resT]) & intercalate " -> "
+
 
 advancedTable	:: (a -> [String]) -> [a] -> String
 advancedTable f as

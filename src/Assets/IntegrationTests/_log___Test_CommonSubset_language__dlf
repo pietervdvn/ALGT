@@ -1,8 +1,0 @@
-Test/CommonSubset.language --dlf
-
-Error:
-  While checking the syntax:
-    Syntactic forms d and e both have a common subset of choices.
-    Please, separate these into a new rule.
-    Common choices are: a | b
-    

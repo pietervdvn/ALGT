@@ -48,10 +48,10 @@ import Gradualize.Test
 
 main	:: IO ()
 main	= do	args	<- getArgs
-		main' args
+		main' args & void
 
 
-main'	:: [String] -> IO ()
+main'	:: [String] -> IO TypeSystem
 main' args 
 	= do	(runTests, parsedArgs)	<- parseArgs version args
 		if runTests then do
@@ -71,6 +71,7 @@ main' args
 			
 			(fc, ts)	<- runIOWith defaultConfig extraInput parsedArgs' (mainPure parsedArgs')
 			interactiveArg parsedArgs' |> interactive ts fc & fromMaybe pass
+			return ts
 
 readLines	:: IO [String]
 readLines 	= do	end	<- isEOF
