@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 
  Analysis of abstract : typeSet -> type 
 ========================================
@@ -718,7 +716,7 @@ Warning:
   No fallthrough is possible
   
 
- Analysis of plus : number -> e -> number 
+ Analysis of plus : number -> e -> Number 
 ==========================================
 
     

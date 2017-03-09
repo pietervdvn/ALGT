@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 
   STFL 
  ******
@@ -128,7 +126,7 @@ eval("(" "\\" v ":" t "." e ")")
                          = !error:ɛ("Lone lambda expression left")
 
 
-plus                     : number -> e -> number
+plus                     : number -> e -> Number
 plus(e1, e2)             = !plus:Number(e1, e2)
 
 
@@ -165,9 +163,9 @@ rename(x, newVar, type, body)
  e[e0] → e[e1]
 
 
- n1: number	n2: number
-------------------------------------  	[EvalPlus]
- (n1:number) "+" n2 → plus(n1, n2)
+ n1: Number	n2: Number
+----------------------------  	[EvalPlus]
+ n1 "+" n2 → plus(n1, n2)
 
 
  b: bool

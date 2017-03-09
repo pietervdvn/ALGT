@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 # True applied to ::
 # Proof weight: 3, proof depth: 3
 
@@ -393,9 +391,9 @@ While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
     While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
       Not a single rule matched:
       While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
-        n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
+        n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
       While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
-        b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
+        b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool" but a "e"
       While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
         Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
       While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:

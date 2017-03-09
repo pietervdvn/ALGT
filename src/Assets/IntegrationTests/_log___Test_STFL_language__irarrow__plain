@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 
  Analysis for rules about (→) 
 ==============================
@@ -34,7 +32,7 @@ Applicable to:
   ("(" "\\" var ":" type "." e ")")
   ("If" e "Then" e "Else" e)
   ("(" e ")")
-  (number "+" number)
+  (Number "+" Number)
   (bool "::" "Bool")
   (number "::" "Int")
   ("If" "True" "Then" e "Else" e)
@@ -61,7 +59,7 @@ Results:
   	 where (recursion) e(0/3/3:5$) → e(e1)
   ("(" e(0/3/4:1$) ")"): eL/4 → ("(" e(e1) ")"): eL/4
   	 where (recursion) e(0/3/4:1$) → e(e1)
-  (number(0:0) "+" number(0:2)): e/0 → number( (Function call - ID not retrievable))
+  (Number0:0 "+" Number0:2): e/0 → Number( (Function call - ID not retrievable))
   (bool(0:0) "::" "Bool"): e/1 → bool(0:0)
   (number(0:0) "::" "Int"): e/1 → number(0:0)
   ("(" e(0:1) ")"): eL/4 → e(0:1)
@@ -107,9 +105,9 @@ Results:
 -----------------------------
 
 Applicable to:
-  (number "+" number)
+  (Number "+" Number)
 Results:
-  (number(0:0) "+" number(0:2)): e/0 → number( (Function call - ID not retrievable))
+  (Number0:0 "+" Number0:2): e/0 → Number( (Function call - ID not retrievable))
 
 
 

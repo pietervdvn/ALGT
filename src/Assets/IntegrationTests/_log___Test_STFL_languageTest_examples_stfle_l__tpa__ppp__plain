@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 Property Preservation holds for given examples                                  
 Property successfull
 # Property Preservation proven by failing predicate with assignment {e0 --> True}:
@@ -23,7 +21,7 @@ Property successfull
       Evaluation contexts only searching within a parse tree and don't handle literals
     While trying to intepret the rule EvalPlus with True:
       :
-        FT: Could not pattern match '"True"' over '(n1:number) "+" n2'
+        FT: Could not pattern match '"True"' over 'n1 "+" n2'
     While trying to intepret the rule EvalAscrBool with True:
       :
         FT: Could not pattern match '"True"' over 'b "::" "Bool"'
@@ -53,7 +51,7 @@ Property successfull
       Evaluation contexts only searching within a parse tree and don't handle literals
     While trying to intepret the rule EvalPlus with False:
       :
-        FT: Could not pattern match '"False"' over '(n1:number) "+" n2'
+        FT: Could not pattern match '"False"' over 'n1 "+" n2'
     While trying to intepret the rule EvalAscrBool with False:
       :
         FT: Could not pattern match '"False"' over 'b "::" "Bool"'
@@ -155,7 +153,7 @@ Property successfull
       Evaluation contexts only searching within a parse tree and don't handle literals
     While trying to intepret the rule EvalPlus with 42:
       :
-        FT: Could not pattern match '42' over '(n1:number) "+" n2'
+        FT: Could not pattern match '42' over 'n1 "+" n2'
     While trying to intepret the rule EvalAscrBool with 42:
       :
         FT: Could not pattern match '42' over 'b "::" "Bool"'
@@ -190,7 +188,7 @@ Property successfull
   # Predicate satisfied:
   # e0 → e1
   
-    1 : number    2 : number
+    1 : Number    2 : Number
     ------------------------ [EvalPlus]
     1 + 2 → 3
   
@@ -393,7 +391,7 @@ Property successfull
       Evaluation contexts only searching within a parse tree and don't handle literals
     While trying to intepret the rule EvalPlus with True:
       :
-        FT: Could not pattern match '"True"' over '(n1:number) "+" n2'
+        FT: Could not pattern match '"True"' over 'n1 "+" n2'
     While trying to intepret the rule EvalAscrBool with True:
       :
         FT: Could not pattern match '"True"' over 'b "::" "Bool"'
@@ -553,7 +551,7 @@ Property successfull
   # Predicate satisfied:
   # e0 → e1
   
-    5 : number    6 : number
+    5 : Number    6 : Number
     ------------------------ [EvalPlus]
     5 + 6 → 11
   
@@ -587,7 +585,7 @@ Property successfull
   # Predicate satisfied:
   # e0 → e1
   
-    6 : number    7 : number
+    6 : Number    7 : Number
     ------------------------ [EvalPlus]
     6 + 7 → 13
     ------------------------- [EvalCtx]
@@ -705,7 +703,7 @@ Property successfull
   # Predicate satisfied:
   # e0 → e1
   
-    6 : number    7 : number
+    6 : Number    7 : Number
     ------------------------ [EvalPlus]
     6 + 7 → 13
     ------------------------- [EvalCtx]
@@ -747,7 +745,7 @@ Property successfull
   # Predicate satisfied:
   # e0 → e1
   
-    5 : number    6 : number
+    5 : Number    6 : Number
     ------------------------ [EvalPlus]
     5 + 6 → 11
     ------------------------------------------ [EvalCtx]
@@ -795,7 +793,7 @@ Property successfull
   # Predicate satisfied:
   # e0 → e1
   
-    7 : number    8 : number
+    7 : Number    8 : Number
     ------------------------ [EvalPlus]
     7 + 8 → 15
     ------------------------------------------ [EvalCtx]
@@ -832,9 +830,9 @@ Property successfull
       While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
-          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
+          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
         While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
-          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
+          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool" but a "e"
         While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:
@@ -989,7 +987,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  1 : number    2 : number
+  1 : Number    2 : Number
   ------------------------ [EvalPlus]
   1 + 2 → 3
   
@@ -1243,7 +1241,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  5 : number    6 : number
+  5 : Number    6 : Number
   ------------------------ [EvalPlus]
   5 + 6 → 11
   
@@ -1268,7 +1266,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  6 : number    7 : number
+  6 : Number    7 : Number
   ------------------------ [EvalPlus]
   6 + 7 → 13
   ------------------------- [EvalCtx]
@@ -1351,7 +1349,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  6 : number    7 : number
+  6 : Number    7 : Number
   ------------------------ [EvalPlus]
   6 + 7 → 13
   ------------------------- [EvalCtx]
@@ -1380,7 +1378,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  5 : number    6 : number
+  5 : Number    6 : Number
   ------------------------ [EvalPlus]
   5 + 6 → 11
   ------------------------------------------ [EvalCtx]
@@ -1413,7 +1411,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  7 : number    8 : number
+  7 : Number    8 : Number
   ------------------------ [EvalPlus]
   7 + 8 → 15
   ------------------------------------------ [EvalCtx]
@@ -1430,9 +1428,9 @@ Property successfull
       While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
-          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
+          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
         While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
-          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
+          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool" but a "e"
         While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:
@@ -1599,7 +1597,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-  1 : number    2 : number               3 : number
+  1 : Number    2 : Number               3 : number
   ------------------------ [EvalPlus]    ---------- [CanonNumber]
   1 + 2 → 3                              (✓) 3
   ------------------------------------------------- [BigStepBase]
@@ -1628,7 +1626,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-                                                                                                                                             5 : number    1 : number               6 : number
+                                                                                                                                             5 : Number    1 : Number               6 : number
                                                                                                                                              ------------------------ [EvalPlus]    ---------- [CanonNumber]
                                                                                                                                              5 + 1 → 6                              (✓) 6
                                                                                              ------------------------------- [EvalLamApp]    ------------------------------------------------- [BigStepBase]
@@ -1888,7 +1886,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-  5 : number    6 : number               11 : number
+  5 : Number    6 : Number               11 : number
   ------------------------ [EvalPlus]    ----------- [CanonNumber]
   5 + 6 → 11                             (✓) 11
   -------------------------------------------------- [BigStepBase]
@@ -1915,7 +1913,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-  6 : number    7 : number               5 : number    13 : number               18 : number
+  6 : Number    7 : Number               5 : Number    13 : Number               18 : number
   ------------------------ [EvalPlus]    ------------------------- [EvalPlus]    ----------- [CanonNumber]
   6 + 7 → 13                             5 + 13 → 18                             (✓) 18
   ------------------------- [EvalCtx]    --------------------------------------------------- [BigStepBase]
@@ -1946,7 +1944,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-                                                  5 : number    1 : number               6 : number
+                                                  5 : Number    1 : Number               6 : number
                                                   ------------------------ [EvalPlus]    ---------- [CanonNumber]
                                                   5 + 1 → 6                              (✓) 6
   ------------------------------- [EvalLamApp]    ------------------------------------------------- [BigStepBase]
@@ -2010,9 +2008,9 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-                                                                               5 : number    13 : number               18 : number
+                                                                               5 : Number    13 : Number               18 : number
                                          ----------- [EvalParens]              ------------------------- [EvalPlus]    ----------- [CanonNumber]
-  6 : number    7 : number               ( 13 ) → 13                           5 + 13 → 18                             (✓) 18
+  6 : Number    7 : Number               ( 13 ) → 13                           5 + 13 → 18                             (✓) 18
   ------------------------ [EvalPlus]    ------------------------ [EvalCtx]    --------------------------------------------------- [BigStepBase]
   6 + 7 → 13                             5 + ( 13 ) → 5 + 13                   5 + 13 →* 18
   ------------------------- [EvalCtx]    ------------------------------------------------------------------------------------------ [BigStepRec]
@@ -2043,13 +2041,13 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-                                                                                                                                                                                        11 : number    15 : number               26 : number
+                                                                                                                                                                                        11 : Number    15 : Number               26 : number
                                                                                                                                                   ----------- [EvalParens]              -------------------------- [EvalPlus]    ----------- [CanonNumber]
-                                                                                                           7 : number    8 : number               ( 15 ) → 15                           11 + 15 → 26                             (✓) 26
+                                                                                                           7 : Number    8 : Number               ( 15 ) → 15                           11 + 15 → 26                             (✓) 26
                                                                                                            ------------------------ [EvalPlus]    ------------------------ [EvalCtx]    ---------------------------------------------------- [BigStepBase]
                                                                                                            7 + 8 → 15                             11 + ( 15 ) → 11 + 15                 11 + 15 →* 26
                                                           ----------- [EvalParens]                         ------------------------- [EvalCtx]    ------------------------------------------------------------------------------------------- [BigStepRec]
-  5 : number    6 : number                                ( 11 ) → 11                                      11 + ( 7 + 8 ) → 11 + ( 15 )           11 + ( 15 ) →* 26
+  5 : Number    6 : Number                                ( 11 ) → 11                                      11 + ( 7 + 8 ) → 11 + ( 15 )           11 + ( 15 ) →* 26
   ------------------------ [EvalPlus]                     ----------------------------------- [EvalCtx]    ---------------------------------------------------------------------------------------------------------------------------------- [BigStepRec]
   5 + 6 → 11                                              ( 11 ) + ( 7 + 8 ) → 11 + ( 7 + 8 )              11 + ( 7 + 8 ) →* 26
   ------------------------------------------ [EvalCtx]    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [BigStepRec]
@@ -2084,13 +2082,13 @@ Property successfull
   # Satisfies a possible conclusion:
   # e →* v
   
-                                                                                                                                                                                         5 : number    21 : number               26 : number
+                                                                                                                                                                                         5 : Number    21 : Number               26 : number
                                                                                                                                                    ----------- [EvalParens]              ------------------------- [EvalPlus]    ----------- [CanonNumber]
-                                                                                                           6 : number    15 : number               ( 21 ) → 21                           5 + 21 → 26                             (✓) 26
+                                                                                                           6 : Number    15 : Number               ( 21 ) → 21                           5 + 21 → 26                             (✓) 26
                                                                                                            ------------------------- [EvalPlus]    ------------------------ [EvalCtx]    --------------------------------------------------- [BigStepBase]
                                                                                                            6 + 15 → 21                             5 + ( 21 ) → 5 + 21                   5 + 21 →* 26
                                                           ----------- [EvalParens]                         -------------------------- [EvalCtx]    ------------------------------------------------------------------------------------------ [BigStepRec]
-  7 : number    8 : number                                ( 15 ) → 15                                      5 + ( 6 + 15 ) → 5 + ( 21 )             5 + ( 21 ) →* 26
+  7 : Number    8 : Number                                ( 15 ) → 15                                      5 + ( 6 + 15 ) → 5 + ( 21 )             5 + ( 21 ) →* 26
   ------------------------ [EvalPlus]                     ----------------------------------- [EvalCtx]    ---------------------------------------------------------------------------------------------------------------------------------- [BigStepRec]
   7 + 8 → 15                                              5 + ( 6 + ( 15 ) ) → 5 + ( 6 + 15 )              5 + ( 6 + 15 ) →* 26
   ------------------------------------------ [EvalCtx]    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- [BigStepRec]
@@ -2109,9 +2107,9 @@ Property successfull
       While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
-          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
+          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
         While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
-          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
+          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool" but a "e"
         While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:

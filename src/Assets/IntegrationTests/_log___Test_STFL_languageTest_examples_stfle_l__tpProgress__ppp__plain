@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 Property Progress holds for given examples                                      
 Property successfull
 # Property Progress statisfied with assignment {T --> Bool, e0 --> True}
@@ -143,7 +141,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  1 : number    2 : number
+  1 : Number    2 : Number
   ------------------------ [EvalPlus]
   1 + 2 → 3
   
@@ -397,7 +395,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  5 : number    6 : number
+  5 : Number    6 : Number
   ------------------------ [EvalPlus]
   5 + 6 → 11
   
@@ -422,7 +420,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  6 : number    7 : number
+  6 : Number    7 : Number
   ------------------------ [EvalPlus]
   6 + 7 → 13
   ------------------------- [EvalCtx]
@@ -505,7 +503,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  6 : number    7 : number
+  6 : Number    7 : Number
   ------------------------ [EvalPlus]
   6 + 7 → 13
   ------------------------- [EvalCtx]
@@ -534,7 +532,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  5 : number    6 : number
+  5 : Number    6 : Number
   ------------------------ [EvalPlus]
   5 + 6 → 11
   ------------------------------------------ [EvalCtx]
@@ -567,7 +565,7 @@ Property successfull
   # Satisfies a possible conclusion:
   # e0 → e1
   
-  7 : number    8 : number
+  7 : Number    8 : Number
   ------------------------ [EvalPlus]
   7 + 8 → 15
   ------------------------------------------ [EvalCtx]
@@ -584,9 +582,9 @@ Property successfull
       While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
-          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number"
+          n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
         While trying to intepret the rule Tbool with {}, ( \ x : Int . x + 1 ) True:
-          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool"
+          b = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "bool" but a "e"
         While trying to intepret the rule TParens with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule TAscr with {}, ( \ x : Int . x + 1 ) True:

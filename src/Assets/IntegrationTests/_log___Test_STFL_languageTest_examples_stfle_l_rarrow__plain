@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 # Could not apply relation → to the input "True", because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:
@@ -18,7 +16,7 @@ While trying to proof that (→) is applicable to "True":
     Evaluation contexts only searching within a parse tree and don't handle literals
   While trying to intepret the rule EvalPlus with True:
     :
-      FT: Could not pattern match '"True"' over '(n1:number) "+" n2'
+      FT: Could not pattern match '"True"' over 'n1 "+" n2'
   While trying to intepret the rule EvalAscrBool with True:
     :
       FT: Could not pattern match '"True"' over 'b "::" "Bool"'
@@ -44,7 +42,7 @@ While trying to proof that (→) is applicable to "False":
     Evaluation contexts only searching within a parse tree and don't handle literals
   While trying to intepret the rule EvalPlus with False:
     :
-      FT: Could not pattern match '"False"' over '(n1:number) "+" n2'
+      FT: Could not pattern match '"False"' over 'n1 "+" n2'
   While trying to intepret the rule EvalAscrBool with False:
     :
       FT: Could not pattern match '"False"' over 'b "::" "Bool"'
@@ -92,7 +90,7 @@ While trying to proof that (→) is applicable to "42":
     Evaluation contexts only searching within a parse tree and don't handle literals
   While trying to intepret the rule EvalPlus with 42:
     :
-      FT: Could not pattern match '42' over '(n1:number) "+" n2'
+      FT: Could not pattern match '42' over 'n1 "+" n2'
   While trying to intepret the rule EvalAscrBool with 42:
     :
       FT: Could not pattern match '42' over 'b "::" "Bool"'
@@ -115,7 +113,7 @@ While trying to proof that (→) is applicable to "42":
 # Proof weight: 3, proof depth: 2
 
 
-1 : number    2 : number
+1 : Number    2 : Number
 ------------------------ [EvalPlus]
 1 "+" 2 → 3
 
@@ -182,7 +180,7 @@ While trying to proof that (→) is applicable to "True":
     Evaluation contexts only searching within a parse tree and don't handle literals
   While trying to intepret the rule EvalPlus with True:
     :
-      FT: Could not pattern match '"True"' over '(n1:number) "+" n2'
+      FT: Could not pattern match '"True"' over 'n1 "+" n2'
   While trying to intepret the rule EvalAscrBool with True:
     :
       FT: Could not pattern match '"True"' over 'b "::" "Bool"'
@@ -246,7 +244,7 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 3, proof depth: 2
 
 
-5 : number    6 : number
+5 : Number    6 : Number
 ------------------------ [EvalPlus]
 5 "+" 6 → 11
 
@@ -257,7 +255,7 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 4, proof depth: 3
 
 
-6 : number    7 : number
+6 : Number    7 : Number
 ------------------------ [EvalPlus]
 6 "+" 7 → 13
 ------------------------- [EvalCtx]
@@ -292,7 +290,7 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 4, proof depth: 3
 
 
-6 : number    7 : number
+6 : Number    7 : Number
 ------------------------ [EvalPlus]
 6 "+" 7 → 13
 ---------------------------------------------- [EvalCtx]
@@ -305,7 +303,7 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 4, proof depth: 3
 
 
-5 : number    6 : number
+5 : Number    6 : Number
 ------------------------ [EvalPlus]
 5 "+" 6 → 11
 ---------------------------------------------------------------------------------- [EvalCtx]
@@ -318,7 +316,7 @@ While trying to proof that (→) is applicable to "True":
 # Proof weight: 4, proof depth: 3
 
 
-7 : number    8 : number
+7 : Number    8 : Number
 ------------------------ [EvalPlus]
 7 "+" 8 → 15
 ---------------------------------------------------------------------------------- [EvalCtx]

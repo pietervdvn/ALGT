@@ -9,8 +9,6 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-  While checking that the functions do have the strictest possible types:
-    "plus" can be typed as "Number", instead of a "number"
 # "True" was parsed as:
 True    bool.0
 # "False" was parsed as:
@@ -37,11 +35,11 @@ False    bool.1
 |  Else           eL.3
 |  True           bool.0
 # "42" was parsed as:
-42    number.0
+42    Number.0
 # "1 + 2" was parsed as:
-+  1    number.0
++  1             Number.0
 |  +    e.0
-|  2    number.0
+|  2             Number.0
 # "(\\f : Int -> Int . f 5) (\\i : Int . i + 1)" was parsed as:
 +  +  (                                    eL.2
 |  |  \                                    eL.2
@@ -52,7 +50,7 @@ False    bool.1
 |  |  |  Int    typeL.0
 |  |  .                                    eL.2
 |  |  +  f                                          Identifier.0
-|  |  |  5                                 number.0
+|  |  |  5                                          Number.0
 |  |  )                                    eL.2
 |  +  (                                    eL.2
 |  |  \                                    eL.2
@@ -62,7 +60,7 @@ False    bool.1
 |  |  .                                    eL.2
 |  |  +  i                                          Identifier.0
 |  |  |  +                                 e.0
-|  |  |  1                                 number.0
+|  |  |  1                                          Number.0
 |  |  )                                    eL.2
 # "(True)" was parsed as:
 +  (       eL.4
@@ -101,26 +99,26 @@ True    bool.0
 +  If      eL.3
 |  True    bool.0
 |  Then    eL.3
-|  42      number.0
+|  42               Number.0
 |  Else    eL.3
-|  43      number.0
+|  43               Number.0
 # "If False Then 23 Else 44" was parsed as:
 +  If       eL.3
 |  False    bool.1
 |  Then     eL.3
-|  23       number.0
+|  23                Number.0
 |  Else     eL.3
-|  44       number.0
+|  44                Number.0
 # "5 + 6" was parsed as:
-+  5    number.0
++  5             Number.0
 |  +    e.0
-|  6    number.0
+|  6             Number.0
 # "5 + 6 + 7" was parsed as:
-+  5       number.0
++  5                Number.0
 |  +       e.0
-|  +  6    number.0
+|  +  6             Number.0
 |  |  +    e.0
-|  |  7    number.0
+|  |  7             Number.0
 # "(\\x : Int . x + 1) 5" was parsed as:
 +  +  (                                 eL.2
 |  |  \                                 eL.2
@@ -130,9 +128,9 @@ True    bool.0
 |  |  .                                 eL.2
 |  |  +  x                                       Identifier.0
 |  |  |  +                              e.0
-|  |  |  1                              number.0
+|  |  |  1                                       Number.0
 |  |  )                                 eL.2
-|  5                                    number.0
+|  5                                             Number.0
 # "If (If True Then False Else True) Then 123456 Else 42" was parsed as:
 +  If             eL.3
 |  +  (           eL.4
@@ -144,39 +142,39 @@ True    bool.0
 |  |  |  True     bool.0
 |  |  )           eL.4
 |  Then           eL.3
-|  123456         number.0
+|  123456                  Number.0
 |  Else           eL.3
-|  42             number.0
+|  42                      Number.0
 # "5 + (6 + 7)" was parsed as:
-+  5          number.0
++  5                   Number.0
 |  +          e.0
 |  +  (       eL.4
-|  |  +  6    number.0
+|  |  +  6             Number.0
 |  |  |  +    e.0
-|  |  |  7    number.0
+|  |  |  7             Number.0
 |  |  )       eL.4
 # "(5 + 6) + (7 + 8)" was parsed as:
 +  +  (       eL.4
-|  |  +  5    number.0
+|  |  +  5             Number.0
 |  |  |  +    e.0
-|  |  |  6    number.0
+|  |  |  6             Number.0
 |  |  )       eL.4
 |  +          e.0
 |  +  (       eL.4
-|  |  +  7    number.0
+|  |  +  7             Number.0
 |  |  |  +    e.0
-|  |  |  8    number.0
+|  |  |  8             Number.0
 |  |  )       eL.4
 # "5 + (6 + (7 + 8))" was parsed as:
-+  5                number.0
++  5                         Number.0
 |  +                e.0
 |  +  (             eL.4
-|  |  +  6          number.0
+|  |  +  6                   Number.0
 |  |  |  +          e.0
 |  |  |  +  (       eL.4
-|  |  |  |  +  7    number.0
+|  |  |  |  +  7             Number.0
 |  |  |  |  |  +    e.0
-|  |  |  |  |  8    number.0
+|  |  |  |  |  8             Number.0
 |  |  |  |  )       eL.4
 |  |  )             eL.4
 # "(\\x : Int . x + 1) True" was parsed as:
@@ -188,6 +186,6 @@ True    bool.0
 |  |  .                                 eL.2
 |  |  +  x                                       Identifier.0
 |  |  |  +                              e.0
-|  |  |  1                              number.0
+|  |  |  1                                       Number.0
 |  |  )                                 eL.2
 |  True                                 bool.0
