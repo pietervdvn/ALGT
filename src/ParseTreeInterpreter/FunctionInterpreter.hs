@@ -195,39 +195,39 @@ depthFirstSearch matchMaker path pt
 
 
 
-_applyBuiltinFunction'	:: Ctx -> Name -> [Expression] -> Either String ParseTree
-_applyBuiltinFunction' ctx funcName es
+_applyBuiltinFunction'	:: Ctx -> Name -> TypeName -> [Expression] -> Either String ParseTree
+_applyBuiltinFunction' ctx funcName tp es
 	= do	bif	<- checkExists funcName builtinFunctions' ("No builtin function with name "++funcName++" found")
-		_applyBuiltinFunction ctx bif es
+		_applyBuiltinFunction ctx tp bif es
 
 
-_applyBuiltinFunction	:: Ctx -> BuiltinFunction -> [Expression] -> Either String ParseTree
-_applyBuiltinFunction ctx (BuiltinFunction "error" _ _ _ f) es
-	= do	pt		<- f & _runBIFunc ctx "error" es	-- The message
+_applyBuiltinFunction	:: Ctx -> TypeName -> BuiltinFunction -> [Expression] -> Either String ParseTree
+_applyBuiltinFunction ctx tp (BuiltinFunction "error" _ _ _ f) es
+	= do	pt		<- f & _runBIFunc ctx "error" tp es	-- The message
 		let stack	= ctxStack ctx |> buildStackEl & reverse
 		Left $ unlines $ stack ++ [toParsable pt]
-_applyBuiltinFunction ctx (BuiltinFunction funcName _ (Right fixedTypes) retType f) es
+_applyBuiltinFunction ctx tp (BuiltinFunction funcName _ (Right fixedTypes) retType f) es
 	-- In this case, we have a fixed type and can just apply our function! The typechecker will make sure it's fine
-	= f & _runBIFunc ctx funcName es
-_applyBuiltinFunction ctx (BuiltinFunction funcName _ (Left (_, atLeastNeeded)) _ f) es
+	= f & _runBIFunc ctx funcName tp es
+_applyBuiltinFunction ctx tp (BuiltinFunction funcName _ (Left (_, atLeastNeeded)) _ f) es
 	-- We have a variable number of elements, we check there are enough of them
 	= do	let minimumOK	= length es >= atLeastNeeded
 		unless minimumOK $ Left $ "Builtin function '!" ++ funcName++"' needs at least "++show atLeastNeeded ++" arguments"
-		f & _runBIFunc ctx funcName es
+		f & _runBIFunc ctx funcName tp es
 
-_runBIFunc	:: Ctx -> Name -> [Expression] -> Either ([Int] -> Int) ([ParseTree] -> ParseTree) -> Either String ParseTree
-_runBIFunc ctx funcName es (Left intFunc)
+_runBIFunc	:: Ctx -> Name -> TypeName -> [Expression] -> Either ([Int] -> Int) (TypeName -> [ParseTree] -> ParseTree) -> Either String ParseTree
+_runBIFunc ctx funcName _ es (Left intFunc)
 	= do 	is	<- asInts ctx funcName es	-- asInts does evaluation as well
 		return $ MInt () ("Number", 0) (intFunc is)
-_runBIFunc ctx _ es (Right ptFunc)
+_runBIFunc ctx _ tp es (Right ptFunc)
 	= do	es'	<- es |+> evaluate ctx
-		return $ ptFunc es'
+		return $ ptFunc tp es'
 			
 
 
 evaluate	:: Ctx -> Expression -> Either String ParseTree
-evaluate ctx (MCall _ nm True es)
-	= _applyBuiltinFunction' ctx nm es
+evaluate ctx (MCall tp nm True es)
+	= _applyBuiltinFunction' ctx nm tp es
 
 evaluate ctx (MCall _ nm False args)
  | nm `M.member` ctxFunctions ctx
@@ -275,7 +275,7 @@ evalErr	ctx msg	= evaluate ctx $ MCall "" "error" True [MParseTree $ MLiteral ()
 
 asInts ctx bi exprs	
 	= exprs |+> evaluate ctx 
-		|++> (\e -> if isMInt' e then return e else Left $ "Not an integer in the builtin "++bi++" expecting an int: "++ toParsable e)
+		|++> (\e -> if isMInt' e then return e else Left $ "Not an Number in the builtin "++show ('!':bi) ++": "++ toParsable e)
 		||>> (\(MInt _ _ i) -> i)
 
 buildStackEl	:: (Name, [ParseTree]) -> String

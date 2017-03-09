@@ -31,7 +31,7 @@ class NeedsFiles a where
 data Output = Output 
 		{ _files	:: Map String String
 		, _stdOut	:: [String]
-		} deriving (Eq)
+		} deriving (Eq, Show, Read, Ord)
 makeLenses ''Output
 
 

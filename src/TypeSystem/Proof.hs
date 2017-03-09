@@ -126,12 +126,12 @@ showProofWith opts (Proof concl proverRule predicates)
 
 
 
-showProofWithDepth		:: String -> Symbol -> Either String Proof -> String
-showProofWithDepth input relation (Left str)	
+showProofWithDepth		:: String -> Symbol -> ProofOptions -> Either String Proof -> String
+showProofWithDepth input relation _ (Left str)	
 	= ["# Could not apply relation "++relation++" to the input "++show input++", because:",str] & unlines
-showProofWithDepth input relation (Right proof)
+showProofWithDepth input relation options (Right proof)
 	= ["# "++input++" applied to "++relation
 		,"# Proof weight: "++show (weight proof)++", proof depth: "++ show (depth proof) 
 		, ""
 		, ""
-		, toCoParsable proof, "", "", ""] & unlines
+		, toParsable' options proof, "", "", ""] & unlines

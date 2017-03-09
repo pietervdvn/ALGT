@@ -60,13 +60,14 @@ import Lens.Micro.TH
 data RunConfig	= RunConfig
 	{ _colorScheme	:: FullColoring
 	, _rcTs		:: TypeSystem
-	, _noMakeup	:: Bool}
+	, _noMakeup	:: Bool
+	, _shortProof	:: Maybe String}
 makeLenses ''RunConfig
 
 getTS		= getConfig' $ get rcTs
 getFC		= getConfig' $ get colorScheme
 
-defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False
+defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False Nothing
 
 type PureIO a	= PureIO' RunConfig a
 
@@ -76,7 +77,7 @@ mainPure args
 	= do	checkInput args
 		style		<- args & styleName & Assets.fetchStyle & liftEith
 		let ascii	= noMakeupArg args
-		withConfig' (set colorScheme style) $ withConfig' (set noMakeup ascii) $ do
+		withConfig' (set colorScheme style) $ withConfig' (set noMakeup ascii) $ withConfig' (set shortProof (shortProofs args)) $ do
 			tsContents	<- readFile (tsFile args)
 			ts		<- parseTypeSystem tsContents (Just $ tsFile args)
 						& liftEith
@@ -313,7 +314,10 @@ runRule		:: Symbol -> (String, ParseTree) -> PureIO ()
 runRule symbol (input, pt)
 	= do	ts	<- getTS		
 		let	proof	 = proofThat' ts symbol [removeEmptyTokens pt]	:: Either String Proof
-		proof & showProofWithDepth input symbol & putStrLn
+		smallProofs	<- getConfig' $ get shortProof
+		let options	= maybe defaultProofOptions (\i -> PO id False True $ replicate (read i :: Int) ' ')
+					smallProofs
+		proof & showProofWithDepth input symbol options & putStrLn
 
 
 

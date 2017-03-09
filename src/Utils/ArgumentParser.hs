@@ -72,6 +72,7 @@ data Args = Args 	{ tsFile		:: String
 			, styleName		:: Name
 			, interactiveArg	:: Maybe Symbol
 			, noMakeupArg		:: Bool
+			, shortProofs		:: Maybe String
 			}
 	deriving (Show)
 
@@ -309,6 +310,11 @@ args	= Args <$> argument str
 			<> long "no-makeup"
 			<> help "Prints the parsetrees as flat text and not as colored output; usefull to capture output in e.g. LaTeX"
 			<> hidden)
+		<*> optional (strOption
+			(long "short-proofs"
+			<> metavar "DISTANCE-BETWEEN-PREDICATES"
+			<> help "Prints proofs without their names and with given spaces in between"
+			<> hidden))
 
 
 		

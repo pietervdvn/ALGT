@@ -58,7 +58,7 @@ _extractValue (MLiteral _ ("color",0) str)
 		= return $ Right str
 _extractValue (MLiteral _ ("String", 0) str)
 		= return $ Right str
-_extractValue (MInt _ ("value", 1) i)
+_extractValue (MInt _ _ i)
 		= return $ Left i
 _extractValue pt
 		= error $ "Coloring: unexpected parsetree; probably due to some weird styling file. Run with --plain to disable syntax highlighting"++show pt

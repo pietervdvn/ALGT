@@ -138,8 +138,7 @@ unfoldDepth s 0 as
 unfoldDepth s i as
 		= unfoldAll s as >>= unfoldDepth s (i - 1)
 
-
-
+		
 
 
 
@@ -267,6 +266,22 @@ toBNF (AsSeq _ _ ass)	= ass |> toBNF & BNFSeq
 
 
 
+-- Unfolds linea recta to a concrete AbstractSet
+toConcrete		:: Syntax -> AbstractSet -> AbstractSet
+toConcrete s as@(EveryPossible _ _ n)
+	= let	minDists	= s & get minDistance & (M.! n) & snd & mapi	:: [(Int, Int)]
+		minIndex	= if null minDists then error $ "No path for "++show as
+					else minDists & sortOn snd & head & fst
+		in
+		(unfold s as !! minIndex) & toConcrete s
+toConcrete s (AsSeq gen i ass)
+	= ass |> toConcrete s & AsSeq gen i
+toConcrete _ as
+	= as
+		
+
+
+
 toExpression		:: Syntax -> AbstractSet -> Expression
 toExpression s as		
 	= evalState (_toExpression s (typeOf as) (typeOf as, error "No choice number given") as) M.empty
@@ -367,6 +382,10 @@ isConcrete ConcreteLiteral{}	= True
 isConcrete ConcreteBuiltin{}	= True
 isConcrete ConcreteInt{}	= True
 isConcrete _			= False
+
+isConcreteRec			:: AbstractSet -> Bool
+isConcreteRec (AsSeq gen i ass)	= all isConcreteRec ass
+isConcreteRec as		= isConcrete as
 
 isAsSeq				:: AbstractSet -> Bool
 isAsSeq AsSeq{}			= True

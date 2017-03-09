@@ -43,7 +43,7 @@ parseSyntax syntax capture nm
 
 
 parseSyntax'	:: Syntax -> Name -> WSMode' -> Parser u ParseTreeLi
-parseSyntax' bnf@(BNFRules rules wsModes group _) nm wsModeParent
+parseSyntax' bnf@(BNFRules rules wsModes group _ _) nm wsModeParent
  | nm `M.notMember` rules	
 		= fail $ "The BNF-syntax-rule "++nm++" is not defined in the syntax of your typesystem. Try one of "++show (bnfNames bnf)
  | otherwise	= do	let choices	= zip (rules M.! nm) [0..]
@@ -90,7 +90,7 @@ parsePart rules tp wsMode (BNFSeq (bnf:bnfs))
 			end	<- sourcePos
 			return $ PtSeq (locationInfo start end) tp $ head:tail
 parsePart _ tp _ (BNFRuleCall "Number") -- TODO dehardcode this
-		= annotLi (number |> MInt () tp)
+		= annotLi (number |> MInt () ("Number", 0))
 parsePart rules _ wsMode bnf@(BNFRuleCall nm)
  | isBuiltin bnf
 		= do	let parser	= getParserForBuiltin bnf

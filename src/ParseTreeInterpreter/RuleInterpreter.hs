@@ -81,7 +81,7 @@ proofPredicate	:: TypeSystem -> VariableAssignments -> [Predicate] -> Predicate 
 proofPredicate ts vars _ (TermIsA expr typ)
 	= do	expr'	<- evalExpr ts vars (MVar typ expr)
 		unless (alwaysIsA (get tsSyntax ts) (typeOf expr') typ) $ Left $
-			expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ
+			expr ++ " = "++ toCoParsable expr' ++ " is not a "++show typ++" but a "++show (typeOf expr')
 		return (ProofIsA expr' typ, empty)
 proofPredicate ts vars _ (Same e1 e2)
 	= do	e1'	<- evalExpr ts vars e1

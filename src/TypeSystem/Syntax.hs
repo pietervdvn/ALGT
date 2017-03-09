@@ -15,6 +15,7 @@ import TypeSystem.BNF
 
 import Graphs.SearchCycles
 import Graphs.Lattice
+import qualified Graphs.MinDistance as Grph
 
 import qualified Data.Map as M
 import Data.Map (Map)
@@ -36,6 +37,7 @@ data Syntax	= BNFRules
 			, _wsModes 	:: Map TypeName WSMode
 			, _groupModes	:: Map TypeName Bool
 			, _lattice 	:: Lattice TypeName
+			, _minDistance	:: Map Name (Int, [Int])
 			} deriving (Show)
 
 
@@ -75,11 +77,13 @@ getFullSyntax' s
 
 fromFullSyntax	:: Map TypeName ([BNF], WSMode) -> Syntax
 fromFullSyntax dict
-	= BNFRules (dict |> fst) (dict |> snd) M.empty (dict |> fst & asLattice')
+	= let syntax	= BNFRules (dict |> fst) (dict |> snd) M.empty (dict |> fst & asLattice') (distanceTillConcrete syntax) in
+		syntax
 
 fromFullSyntax' :: Map TypeName ([BNF], WSMode, Bool) -> Syntax
 fromFullSyntax' dict
-	= BNFRules (dict |> fst3) (dict |> snd3) (dict |> trd3) (dict |> fst3 & asLattice')
+	= let syntax	= BNFRules (dict |> fst3) (dict |> snd3) (dict |> trd3) (dict |> fst3 & asLattice') (distanceTillConcrete syntax) in
+		syntax
 
 
 
@@ -95,13 +99,14 @@ fullSyntax'	= lens getFullSyntax' (const fromFullSyntax')
 
 
 instance Refactorable TypeName Syntax where
-	refactor ftn (BNFRules bnfs ws group _)
+	refactor ftn (BNFRules bnfs ws group _ minDistance)
 		= let	bnfs'	= bnfs ||>> refactor ftn & M.mapKeys ftn
 			ws'	= M.mapKeys ftn ws
 			group'	= M.mapKeys ftn group
+			minDistance'	= M.mapKeys ftn minDistance
 			lattice'	= asLattice' bnfs'
 			in
-			BNFRules bnfs' ws' group' lattice'
+			BNFRules bnfs' ws' group' lattice' minDistance'
 
 ---------------------------- ABOUT SUBTYPING ------------------------------
 
@@ -255,6 +260,33 @@ _reachableVia syntax alreadyVisited root
 
 ---------------------------- Transforming regexes ------------------------------
 
+{-
+A rule containing a sequence of Literals/Builtins is concrete and has distance 0:
+
+x ::= "X"
+
+a rule calling this x has distance (x + 1):
+
+y ::= x		-> 1
+
+A rule calling both, has the minimum of them, + 1
+
+z ::= x | y	-> 1
+
+-}
+distanceTillConcrete	:: Syntax -> Map Name (Int, [Int])
+distanceTillConcrete s
+	= let	connected	= s & get bnf ||>> calledRules'	:: Map Name [[Name]]
+		initial		= connected |> (\crs -> if any null crs then Just 0 else Nothing)
+		minDist		= Grph.minDistance (connected |> S.fromList) initial
+		choicesCost	= connected ||>> (|> (minDist M.!)) 
+					||>> (\choices -> if null choices then 0::Int else maximum choices)
+					:: Map Name [Int]
+		in
+		M.intersectionWith (,) minDist choicesCost
+
+
+
 
 -- Used for syntax highlightingx
 consumeOne	:: BNF -> Maybe BNF
@@ -299,7 +331,11 @@ makeSyntax	:: [(Name, ([BNF], WSMode, Bool))] -> Either String Syntax
 makeSyntax vals
 	= do	let bnfs	= vals & M.fromList |> fst3 ||>> normalize
 		let supertypings	= asLattice' bnfs
-		let bnfr	= BNFRules bnfs (vals ||>> snd3 & M.fromList) (vals ||>> trd3 & M.fromList) supertypings
+		let bnfr	= BNFRules bnfs 
+					(vals ||>> snd3 & M.fromList) 
+					(vals ||>> trd3 & M.fromList)
+					supertypings
+					(distanceTillConcrete bnfr)	-- yeah, we're tying a knot here, no probs
 		checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times")
 		return bnfr
 
@@ -483,7 +519,7 @@ bnfAlwaysIsA _ bnf0 bnf1
 
 
 instance ToString Syntax where
-	toParsable (BNFRules rules wsModes group _)
+	toParsable (BNFRules rules wsModes group _ _)
 		= let 	width	= rules & M.keys |> length & maximum
 			merged	= M.intersectionWith (,) rules (M.intersectionWith (,) wsModes group) in
 			merged & M.toList |> (\(n, (r, (ws, group))) -> (n, width, ws, group, "", r)) 

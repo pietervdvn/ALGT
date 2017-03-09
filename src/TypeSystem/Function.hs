@@ -77,7 +77,7 @@ data BuiltinFunction = BuiltinFunction
 	, _bifDescr	:: String
 	, _bifInArgs	:: Either (TypeName, Int) [TypeName]	-- Either (at least i times someType) or (someType -> someType); .* if everything is possible 
 	, _bifResultType:: TypeName			-- Use .* if a type should be given explicitly or ɛ if any type is possible
-	, _bifApply	:: Either ([Int] -> Int) ([ParseTree] -> ParseTree)  
+	, _bifApply	:: Either ([Int] -> Int) (TypeName -> [ParseTree] -> ParseTree)  
 	} 
 makeLenses ''BuiltinFunction
 
@@ -114,19 +114,23 @@ builtinFunctions
 		$ Left (\[i] -> -1)
 	, BuiltinFunction "equal" "Checks that all the arguments are equal. Gives 1 if so, 0 if not."
 		(Right [topSymbol, topSymbol]) "Number"
-		$ Right (\(e:es) -> MInt () ("Number", 0) $ if all (e ==) es then 1 else 0)
+		$ Right (\_ (e:es) -> MInt () ("Number", 0) $ if all (e ==) es then 1 else 0)
 	, BuiltinFunction "error" "Stops the function, gives a stack trace. When used in a rule, this won't match a predicate"
 		(Left (topSymbol, 0)) bottomSymbol 
-		$ Right (\pts -> pts & toParsable' " " & MLiteral () (bottomSymbol, 0))
+		$ Right (\_ pts -> pts & toParsable' " " & MLiteral () (bottomSymbol, 0))
 				
 	, BuiltinFunction "subs" ("(expression to replace, to replace with, in this expression) "
 			++ "Replaces each occurence of the first expression by the second, in the third argument."
 			++" You'll want to explictly type this one, by using `subs:returnType(\"x\", \"41\", \"x + 1\")`")
 		(Right [topSymbol, topSymbol, topSymbol]) topSymbol
-		$ Right (\[searchFor, replaceBy, inExpr] ->
+		$ Right (\_ [searchFor, replaceBy, inExpr] ->
 			let	paths	= search (==searchFor) inExpr
 				folded	= L.foldl (\pt path -> replace pt path replaceBy) inExpr paths
 				in folded)
+	, BuiltinFunction "group" "Given a parsetree, flattens the contents of the parsetree to a single string"
+		(Right [topSymbol]) "StringUnesc"
+		$ Right (\_ [pt] -> flatten pt & trd3 & MLiteral () ("StringUnesc", 0))
+
 	]
 
 
