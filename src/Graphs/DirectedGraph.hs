@@ -1,6 +1,6 @@
-module Graphs.DirectedGraph (DG,DirectedGraph, invert, addLink, nodesFrom, leafs, dropNodes, isEmpty, empty, addLinks, fromLinks, addNode, addNodes, makeComplete) where
+module Graphs.DirectedGraph where
 
-import StdDef ((||>>),(|>))
+import Utils.Utils ((||>>),(|>), merge, unmerge)
 
 import Data.Map (Map, findWithDefault)
 import qualified Data.Map as M
@@ -64,16 +64,3 @@ dropNodes	:: (Ord n, Eq n) => Set n -> DG n -> DG n
 dropNodes ns graph
 	= S.foldr M.delete graph ns |> S.filter (`S.notMember` ns)
 
-merge		:: Eq a => [(a,b)] -> [(a,[b])]
-merge []	= []
-merge ((a,b):ls)
-		= let bs	= L.filter ((==) a . fst) ls |> snd in
-			(a,b:bs): merge (L.filter ((/=) a . fst) ls)
-
-unmerge		:: [(a,[b])] -> [(a,b)]
-unmerge 	=  concatMap (\(a,bs) -> [(a,b) | b <- bs])
-
-isEmpty	:: DG n -> Bool
-isEmpty	= M.null
-
-empty	= M.empty
