@@ -51,7 +51,7 @@ makeLenses ''Syntax
 -- The sort is added to make sure the parser first tries "abc", before trying "a". Otherwise, "a" is parsed with an "abc" resting
 bnfNames	:: Syntax -> [Name]
 bnfNames r	= let	defined	= r & getBNF & M.keys & sortOn length & reverse
-			builtin	= builtinSyntax |> fst |> fst
+			builtin	= builtinSyntax |> fst |> fst3
 			in defined ++ builtin
 
 

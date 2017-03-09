@@ -49,12 +49,12 @@ buildVariables
 				& makeTable)
 	, ("wsModeInfo", BNFParser.wsModeInfo & makeTable)
 	, ("whitespace", ParsingUtils.whitespace |> (:[]) |> show |> verbatim & intercalate ",")
-	, ("builtinSyntax", BNFParser.builtinSyntax |> over _1 fst |> unmerge3r
+	, ("builtinSyntax", BNFParser.builtinSyntax |> over _1 fst3 |> unmerge3r
 			|> (\(bnf, expl, regex) -> verbatim bnf ++ "|" ++ expl ++ "|" ++ verbatim regex)
 			& unlines)
-	, ("bnfKeywords", BNFParser.builtinSyntax |> fst |> fst & unlines)
+	, ("bnfKeywords", BNFParser.builtinSyntax |> fst |> fst3 & unlines)
 	, ("regexIdentifier", BNFParser.builtinSyntax 
-		|> over _1 fst
+		|> over _1 fst3
 		& lookup "Identifier" 
 		& fromMaybe (error "BUG in manualpreprocessor: no Identifier regex for builtin")
 		& snd)

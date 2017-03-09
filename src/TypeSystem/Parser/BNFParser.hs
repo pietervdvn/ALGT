@@ -34,7 +34,7 @@ builtins	= builtinSyntax |> fst
 bnfBuiltin	:: Parser u BNF
 bnfBuiltin
 	= builtins
-		|> fst
+		|> fst3
 		|> (\str -> string str |> BNFRuleCall)
 		|> try
 		& L.foldl1 (<|>)

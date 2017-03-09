@@ -39,31 +39,31 @@ wsModeInfo
 	] |> over _1 (toParsable &&& id)
 
 -- Also update: matchTyping in the expressionParser; TargetLanguageParser
--- ((BNF-Name; BNF-representation; targetLang-parser (is wrapped in a MLiteral afterwards); check that something is valid) (documentation, documentation regex)
+-- ((BNF-Name; targetLang-parser (is wrapped in a MLiteral afterwards); example Values) (documentation, documentation regex)
 builtinSyntax	= 
-	[ (("Identifier", identifier), 
+	[ (("Identifier", identifier, ["x", "y", "z"]), 
 		("Matches an identifier", "[a-z][a-zA-Z0-9]*"))
-	, (("Number", number |> show), 
+	, (("Number", number |> show, ["0", "1", "2"]), 
 		("Matches an (negative) integer. Integers parsed by this might be passed into the builtin arithmetic functions.", "-?[0-9]*"))
-	, (("Any", anyChar |> (:[])),
+	, (("Any", anyChar |> (:[]), ["a", "X", "\n", "→", " ", "\t", "\\"]),
 		 ("Matches a single character, whatever it is, including newline characters", "."))
-	, (("Lower", oneOf lowers |> (:[])), 
+	, (("Lower", oneOf lowers |> (:[]), ["a","b","x","y","z"]), 
 		("Matches a lowercase letter", "[a-z]"))
-	, (("Upper", oneOf uppers |> (:[])),
+	, (("Upper", oneOf uppers |> (:[]),["A","B","C"]),
 		("Matches an uppercase letter", "[A-Z]"))
-	, (("Digit", oneOf digits |> (:[])),
+	, (("Digit", oneOf digits |> (:[]), [0..9] |> show),
 		("Matches an digit", "[0-9]"))
-	, (("Hex", oneOf hex |> (:[]))
+	, (("Hex", oneOf hex |> (:[]), ([0..9] |> show) ++ ['a'..'f'] |> (:[]))
 		, ("Matches a hexadecimal digit", "[0-9a-fA-F]"))
-	, (("String", dqString'),
+	, (("String", dqString', ["\"abc\"","\"\\\" \\\\ \""]),
 		("Matches a double quote delimted string, returns the value including the double quotes", "\"([^\"\\]|\\\"|\\\\)*\""))
-	, (("StringUnesc", dqString),
+	, (("StringUnesc", dqString, ["\"abc\"","\"\\\" \\\\ \""]),
 		("Matches a double quote delimeted string, returns the value without the double quotes",  "\"([^\"\\]|\\\"|\\\\)*\""))
-	, (("LineChar", noneOf "\n" |> (:[])),
-		("Matches a single character that is not a newline", "[^\\n]"))
-	, (("ParO", char '(' >> return ""),
+	, (("LineChar", noneOf "\n" |> (:[]), ["a", "A", "x","y","z", "\r"]),
+		("Matches a single character that is not a newline. This includes \\r.", "[^\\n]"))
+	, (("ParO", char '(' >> return "", []),
 		("Matches a '(', which will dissapear in the parsetree", "("))
-	, (("ParC", char ')' >> return ""),
+	, (("ParC", char ')' >> return "", []),
 		("Matches a ')', which will dissapear in the parsetree", ")"))
 	]
 
@@ -92,14 +92,14 @@ isBuiltin _	= False
 
 isBuiltinName	:: Name -> Bool
 isBuiltinName x
-		= x `elem` (builtinSyntax |> fst |> fst)
+		= x `elem` (builtinSyntax |> fst |> fst3)
 
 
 
 
 getParserForBuiltin	:: BNF -> Parser u String
 getParserForBuiltin (BNFRuleCall bnf)
-	= builtinSyntax |> fst & lookup bnf & fromMaybe (error $ "No builtin for parser defined for "++show bnf++", this is a bug")
+	= builtinSyntax |> fst |> dropTrd3 & lookup bnf & fromMaybe (error $ "No builtin for parser defined for "++show bnf++", this is a bug")
 
 
 

@@ -280,6 +280,22 @@ toConcrete _ as
 	= as
 		
 
+toParsetree s f = _toParseTree s f (negate 1::Int)
+
+_toParseTree	:: Syntax -> ([Int], TypeName -> [String]) -> Int -> AbstractSet -> [ParseTree]
+_toParseTree s f i as@EveryPossible{}
+		= _toParseTree s f i $ toConcrete s as
+_toParseTree _ _ i (ConcreteLiteral gen s)
+		= return $ MLiteral () (gen, i) s
+_toParseTree _ (_, builtinValues) i (ConcreteBuiltin gen tp _)
+		= [MLiteral () (gen, i) biv | biv <- builtinValues tp]
+_toParseTree _ (intVals, _) i (ConcreteInt gen _)
+		= [MInt () (gen, i) biv | biv <- intVals]
+_toParseTree s f _ (AsSeq gen i ass)
+		= do	args	<- ass |> _toParseTree s f i & allCombinations
+			return $ PtSeq () (gen, i) args
+
+
 
 
 toExpression		:: Syntax -> AbstractSet -> Expression
