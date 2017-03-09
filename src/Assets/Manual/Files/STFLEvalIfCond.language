@@ -90,16 +90,9 @@ codomain(T1 "->" T2)		= T2
 
 
 
- expr0 → expr1
-----------------------------		[EvalCtx]
- expr[expr0] → expr[expr1]
-
-
-
- n1:Number		n2:Number
-------------------------------------	[EvalPlus]
- n1 "+" n2 → !plus(n1, n2)
-
+ cond0 → cond1
+--------------------------------------------------- [EvalIfCond]
+ "If" cond0 "Then" e1 "Else" e2 → "If" cond1 "Then" e1 "Else" e2
 
 
 
@@ -111,31 +104,34 @@ codomain(T1 "->" T2)		= T2
  "If" "False" "Then" e1 "Else" e2 → e2
 
 
-------------------------------------------------------	[EvalLamApp]
+------------------------------------------------------------	[EvalLamApp]
  ("(" "\\" var ":" type "." e ")") arg → !subs:expr(var, arg, e)
 
 
 
 
- (i:int)
------------			[CanonInt]
- (✓) i
 
-
- (b:bool)
------------			[CanonBool]
+ b:bool
+-------			[CanonBool]
  (✓) b
 
+ n:int
+---------		[CanonNumber]
+ (✓) n
 
 
 
  (✓) e
----------			[BigStepBase]
+--------			[BigStepCanon]
  e →* e
 
  e0 → e1	e1 →* e2
 -------------------------	[BigStepRec]
  e0 →* e2
+
+ e0 → e1	(✓) e1
+------------------------	[BigStepBase]
+ e0 →* e1
 
 
 

@@ -1,0 +1,4 @@
+Int
+Int -> Int -> Int
+(Bool -> Bool) -> Int
+(Int -> Bool)

@@ -68,7 +68,6 @@ do
 	# LaTeX
 	pandoc $PANDOC_EXTENSIONS --listings --chapters $OUTFILE -o $SETNAME.tex | sed "s/^/PANDOC-TEX /g"
 
-
 	if [ $SETNAME = "Focus" ]
 	then
 		cat Main.tex | sed "/%NOFOCUS/d " | sed "s/§/$SETNAME/" > "ALGT_$SETNAME.tex"
