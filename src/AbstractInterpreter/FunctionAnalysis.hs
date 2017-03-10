@@ -28,8 +28,6 @@ import qualified Data.Set as S
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
-import Debug.Trace
-
 data ClauseAnalysis
 		= ClauseAnalysis
 		{ _clauseIndex	:: Int
@@ -86,24 +84,17 @@ analyzeFunctionWith ts (f, extraKnowledge) (MFunction _ clauses) args
 
 analyzeClauses	:: Syntax -> Map Name TypeName -> [(Int, Clause)] -> [Arguments] -> FunctionAnalysis
 analyzeClauses _ _ [] leftOvers
-			= trace ("Left overs!"++leftOvers |> toParsable' ", " & unlines) $ FunctionAnalysis [] $ S.fromList leftOvers
+			= FunctionAnalysis [] $ S.fromList leftOvers
 analyzeClauses syntax f ((i, clause):clauses) argss
 		= let 	clauseAn	= analyzeClause syntax f (i, clause) argss
 			usedArgs	= get results clauseAn & M.keys
 			-- checks if the patterns don't use something as 'T -> T', thus a part of the argument that should be the same
 			-- this implies that the pattern might not match in some cases and falls through
 			argss'		= if get hasEquality clauseAn || get hasFunction clauseAn then argss
-						else argss >>= (\args -> let r = subtractArgs syntax args usedArgs in tracers ["SUBTRACTION: "++inParens (toParsable' ", " args) ++" - "++show usedArgs, "SUBREST is "++show r] r)
+						else argss >>= (\args -> subtractArgs syntax args usedArgs)
 			restAnalysis	= analyzeClauses syntax f clauses argss'
 			in
-			trace ("\n\nAnalysing clauses...; poss ins: "++(argss |> toParsable' ", " & unlines)++";\n redacted: "++(usedArgs |> toParsable' ", " & unlines)
-				++ "GIVING :"++(argss' |> toParsable' ", " & unlines))
-				 $ restAnalysis & over clauseAnalysises (clauseAn:)
-
-tracers	[] x
-	= x
-tracers (msg:msgs) x
-	= trace msg $ tracers msgs x
+			restAnalysis & over clauseAnalysises (clauseAn:)
 
 analyzeClause	:: Syntax -> Map Name TypeName -> (Int, Clause) -> [Arguments] -> ClauseAnalysis
 analyzeClause  syntax functionReturns (i, clause) possibleInputs
@@ -111,14 +102,7 @@ analyzeClause  syntax functionReturns (i, clause) possibleInputs
 		usesFunctions	= (mecPatterns clause >>= usedFunctions) & null & not
 		results		= possibleInputs |> analyzeClauseWith syntax functionReturns (i, clause) & M.unions
 		in
-		tracers ["Analyzed clause "++show clause, 
-			"GIVING",
-			"INPUT: "++ (possibleInputs |> toParsable' ", " & intercalate ";"),
-			"usesEquality: "++show usesEquality,
-			"usesFunctions: "++show usesFunctions, 
-			"results: "++show (results |> toParsable), 
-			"END OF GIVING"]
-			$ ClauseAnalysis i usesEquality usesFunctions (S.fromList possibleInputs) results
+		ClauseAnalysis i usesEquality usesFunctions (S.fromList possibleInputs) results
 
 analyzeClauseWith	:: Syntax -> Map Name TypeName -> (Int, Clause) -> [AbstractSet] -> Map Arguments AbstractSet
 analyzeClauseWith syntax functionReturns (i, MClause patterns expr) args
