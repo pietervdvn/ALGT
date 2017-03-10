@@ -46,8 +46,8 @@ var              ::= Identifier
 
 
 
- Syntax Highlighting 
-=====================
+ Syntax Style 
+==============
 
 bool	 -> "constant"
 e	 -> "statement"
@@ -66,7 +66,7 @@ var	 -> "identifier"
 ===========
 
 abstract                 : typeSet -> type
-abstract("$")            = !error:ɛ("Undefined")
+abstract("$")            = !error("Undefined")
 abstract("Int" "$")      = "Int"
 abstract("Bool" "$")     = "Bool"
 abstract((T1 "->" T2) ts)
@@ -75,15 +75,15 @@ abstract((T1 "->" T2) ts)
 
 cod                      : type -> type
 cod(T1 "->" T2)          = T2
-cod("Bool")              = !error:ɛ("Not defined for Bool")
-cod("Int")               = !error:ɛ("Not defined for Int")
+cod("Bool")              = !error("Not defined for Bool")
+cod("Int")               = !error("Not defined for Int")
 
 
 codomains                : typeSet -> typeSet
 codomains((_ "->" T2) ts)
                          = T2 codomains(ts)
 codomains("$")           = "$"
-codomains(_)             = !error:ɛ("Not defined, as this is not a proper list of functions")
+codomains(_)             = !error("Not defined, as this is not a proper list of functions")
 
 
 defaultValue             : type -> eL
@@ -94,14 +94,14 @@ defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
 
 dom                      : type -> typeL
 dom(T1 "->" T2)          = T1
-dom("Bool")              = !error:ɛ("Not defined for Bool")
-dom("Int")               = !error:ɛ("Not defined for Int")
+dom("Bool")              = !error("Not defined for Bool")
+dom("Int")               = !error("Not defined for Int")
 
 
 domains                  : typeSet -> typeSet
 domains((T1 "->" _) ts)  = T1 domains(ts)
 domains("$")             = "$"
-domains(_)               = !error:ɛ("Not defined, as this is not a proper list of functions")
+domains(_)               = !error("Not defined, as this is not a proper list of functions")
 
 
 equate                   : type -> type -> type
@@ -120,15 +120,15 @@ eval("If" "False" "Then" e1 "Else" e2)
 eval("If" c "Then" e1 "Else" e2)
                          = eval("If" eval(c) "Then" e1 "Else" e2)
 eval("(" e ")")          = eval(e)
-eval(e1 "+" e2)          = !plus:Number(eval(e1), eval(e2))
+eval(e1 "+" e2)          = !plus(eval(e1), eval(e2))
 eval(e "::" t)           = eval(e)
-eval((v:var))            = !error:ɛ("Unknown variable", v)
+eval((v:var))            = !error("Unknown variable", v)
 eval("(" "\\" v ":" t "." e ")")
-                         = !error:ɛ("Lone lambda expression left")
+                         = !error("Lone lambda expression left")
 
 
 plus                     : number -> e -> Number
-plus(e1, e2)             = !plus:Number(e1, e2)
+plus(e1, e2)             = !plus(e1, e2)
 
 
 rename                   : var -> var -> type -> e -> eL

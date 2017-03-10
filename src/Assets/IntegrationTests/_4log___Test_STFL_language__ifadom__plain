@@ -36,7 +36,7 @@ Warning:
     ......................
     
     Clause: 
-      dom("Bool")              = !error:ɛ("Not defined for Bool")
+      dom("Bool")              = !error("Not defined for Bool")
     
     Possible inputs at this point: 
     #  ("Bool")
@@ -54,7 +54,7 @@ Warning:
     ......................
     
     Clause: 
-      dom("Int")               = !error:ɛ("Not defined for Int")
+      dom("Int")               = !error("Not defined for Int")
     
     Possible inputs at this point: 
     #  ("Int")

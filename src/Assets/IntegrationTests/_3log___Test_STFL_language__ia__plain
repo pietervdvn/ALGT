@@ -19,7 +19,7 @@ Warning:
     ......................
     
     Clause: 
-      abstract("$")            = !error:ɛ("Undefined")
+      abstract("$")            = !error("Undefined")
     
     Possible inputs at this point: 
     #  (typeSet)
@@ -127,7 +127,7 @@ Warning:
     ......................
     
     Clause: 
-      cod("Bool")              = !error:ɛ("Not defined for Bool")
+      cod("Bool")              = !error("Not defined for Bool")
     
     Possible inputs at this point: 
     #  ("Bool")
@@ -145,7 +145,7 @@ Warning:
     ......................
     
     Clause: 
-      cod("Int")               = !error:ɛ("Not defined for Int")
+      cod("Int")               = !error("Not defined for Int")
     
     Possible inputs at this point: 
     #  ("Int")
@@ -209,7 +209,7 @@ Warning:
     ......................
     
     Clause: 
-      codomains(_)             = !error:ɛ("Not defined, as this is not a proper list of functions")
+      codomains(_)             = !error("Not defined, as this is not a proper list of functions")
     
     Possible inputs at this point: 
     #  (("Bool" typeSet))
@@ -319,7 +319,7 @@ Warning:
     ......................
     
     Clause: 
-      dom("Bool")              = !error:ɛ("Not defined for Bool")
+      dom("Bool")              = !error("Not defined for Bool")
     
     Possible inputs at this point: 
     #  ("Bool")
@@ -337,7 +337,7 @@ Warning:
     ......................
     
     Clause: 
-      dom("Int")               = !error:ɛ("Not defined for Int")
+      dom("Int")               = !error("Not defined for Int")
     
     Possible inputs at this point: 
     #  ("Int")
@@ -400,7 +400,7 @@ Warning:
     ......................
     
     Clause: 
-      domains(_)               = !error:ɛ("Not defined, as this is not a proper list of functions")
+      domains(_)               = !error("Not defined, as this is not a proper list of functions")
     
     Possible inputs at this point: 
     #  (("Bool" typeSet))
@@ -640,7 +640,7 @@ Warning:
     ......................
     
     Clause: 
-      eval(e1 "+" e2)          = !plus:Number(eval(e1), eval(e2))
+      eval(e1 "+" e2)          = !plus(eval(e1), eval(e2))
     
     Possible inputs at this point: 
     #  (var)
@@ -679,7 +679,7 @@ Warning:
     ......................
     
     Clause: 
-      eval((v:var))            = !error:ɛ("Unknown variable", v)
+      eval((v:var))            = !error("Unknown variable", v)
     
     Possible inputs at this point: 
     #  (var)
@@ -698,7 +698,7 @@ Warning:
     
     Clause: 
       eval("(" "\\" v ":" t "." e ")")
-                               = !error:ɛ("Lone lambda expression left")
+                               = !error("Lone lambda expression left")
     
     Possible inputs at this point: 
     #  (("(" "\\" var ":" type "." e ")"))
@@ -725,7 +725,7 @@ Warning:
     ......................
     
     Clause: 
-      plus(e1, e2)             = !plus:Number(e1, e2)
+      plus(e1, e2)             = !plus(e1, e2)
     
     Possible inputs at this point: 
     #  (number, e)

@@ -36,7 +36,7 @@ Warning:
     ......................
     
     Clause: 
-      cod("Bool")              = !error:ɛ("Not defined for Bool")
+      cod("Bool")              = !error("Not defined for Bool")
     
     Possible inputs at this point: 
     #  ("Bool")
@@ -54,7 +54,7 @@ Warning:
     ......................
     
     Clause: 
-      cod("Int")               = !error:ɛ("Not defined for Int")
+      cod("Int")               = !error("Not defined for Int")
     
     Possible inputs at this point: 
     #  ("Int")

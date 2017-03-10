@@ -12,15 +12,14 @@ Warning:
   While checking the totality of function "defaultValue":
     Following calls will fall through:
       defaultValue("?")
-  While checking the totality of function "equate":
-    Following calls will fall through:
-      equate("Bool", gtype)
-      equate("Int", gtype)
-      equate((gtypeL "->" gtype), gtype)
-      equate((gtype), gtype)
   While checking the totality of function "eval":
     Following calls will fall through:
       eval("TYPE ERROR")
+  
+  While checking liveability of every clause in function "equate":
+    equate(t, "?")           = t will never match anything, as the possible arguments are already consumed
+    equate(t11 "->" t12, t21 "->" t22)
+                             = equate(t11, t21) "->" equate(t12, t22) will never match anything, as the possible arguments are already consumed
   
 
   Gradualized Dynamized STFL 
@@ -60,8 +59,8 @@ var              ::= Identifier
 
 
 
- Syntax Highlighting 
-=====================
+ Syntax Style 
+==============
 
 bool	 -> "constant"
 e	 -> "statement"
@@ -80,7 +79,7 @@ var	 -> "identifier"
 ===========
 
 abstract                 : typeSet -> gtype
-abstract("$")            = !error:ɛ("Undefined")
+abstract("$")            = !error("Undefined")
 abstract("Int" "$")      = "Int"
 abstract("Bool" "$")     = "Bool"
 abstract((T1 "->" T2) ts)
@@ -89,8 +88,8 @@ abstract((T1 "->" T2) ts)
 
 cod                      : gtype -> gtype
 cod(T1 "->" T2)          = T2
-cod("Bool")              = !error:ɛ("Not defined for Bool")
-cod("Int")               = !error:ɛ("Not defined for Int")
+cod("Bool")              = !error("Not defined for Bool")
+cod("Int")               = !error("Not defined for Int")
 cod("?")                 = "?"
 
 
@@ -98,7 +97,7 @@ codomains                : typeSet -> typeSet
 codomains((_ "->" T2) ts)
                          = T2 codomains(ts)
 codomains("$")           = "$"
-codomains(_)             = !error:ɛ("Not defined, as this is not a proper list of functions")
+codomains(_)             = !error("Not defined, as this is not a proper list of functions")
 
 
 defaultValue             : gtype -> eL
@@ -109,21 +108,23 @@ defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
 
 dom                      : gtype -> gtypeL
 dom(T1 "->" T2)          = T1
-dom("Bool")              = !error:ɛ("Not defined for Bool")
-dom("Int")               = !error:ɛ("Not defined for Int")
+dom("Bool")              = !error("Not defined for Bool")
+dom("Int")               = !error("Not defined for Int")
 dom("?")                 = "?"
 
 
 domains                  : typeSet -> typeSet
 domains((T1 "->" _) ts)  = T1 domains(ts)
 domains("$")             = "$"
-domains(_)               = !error:ɛ("Not defined, as this is not a proper list of functions")
+domains(_)               = !error("Not defined, as this is not a proper list of functions")
 
 
 equate                   : gtype -> gtype -> gtype
 equate(T, T)             = T
 equate("?", t)           = t
-equate(t, t)             = t
+equate(t, "?")           = t
+equate(t11 "->" t12, t21 "->" t22)
+                         = equate(t11, t21) "->" equate(t12, t22)
 
 
 eval                     : e -> value
@@ -138,15 +139,15 @@ eval("If" "False" "Then" e1 "Else" e2)
 eval("If" c "Then" e1 "Else" e2)
                          = eval("If" eval(c) "Then" e1 "Else" e2)
 eval("(" e ")")          = eval(e)
-eval(e1 "+" e2)          = !plus:Number(eval(e1), eval(e2))
+eval(e1 "+" e2)          = !plus(eval(e1), eval(e2))
 eval(e "::" t)           = eval(e)
-eval((v:var))            = !error:ɛ("Unknown variable", v)
+eval((v:var))            = !error("Unknown variable", v)
 eval("(" "\\" v ":" t "." e ")")
-                         = !error:ɛ("Lone lambda expression left")
+                         = !error("Lone lambda expression left")
 
 
 plus                     : number -> e -> Number
-plus(e1, e2)             = !plus:Number(e1, e2)
+plus(e1, e2)             = !plus(e1, e2)
 
 
 rename                   : var -> var -> gtype -> e -> eL

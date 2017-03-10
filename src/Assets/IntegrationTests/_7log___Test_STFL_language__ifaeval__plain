@@ -201,7 +201,7 @@ Warning:
     ......................
     
     Clause: 
-      eval(e1 "+" e2)          = !plus:Number(eval(e1), eval(e2))
+      eval(e1 "+" e2)          = !plus(eval(e1), eval(e2))
     
     Possible inputs at this point: 
     #  (var)
@@ -240,7 +240,7 @@ Warning:
     ......................
     
     Clause: 
-      eval((v:var))            = !error:ɛ("Unknown variable", v)
+      eval((v:var))            = !error("Unknown variable", v)
     
     Possible inputs at this point: 
     #  (var)
@@ -259,7 +259,7 @@ Warning:
     
     Clause: 
       eval("(" "\\" v ":" t "." e ")")
-                               = !error:ɛ("Lone lambda expression left")
+                               = !error("Lone lambda expression left")
     
     Possible inputs at this point: 
     #  (("(" "\\" var ":" type "." e ")"))
