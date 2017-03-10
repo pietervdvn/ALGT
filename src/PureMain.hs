@@ -53,7 +53,7 @@ import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
 
-
+import System.Random
 
 
 
@@ -69,7 +69,7 @@ getFC		= getConfig' $ get colorScheme
 
 defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False Nothing
 
-type PureIO a	= PureIO' RunConfig a
+type PureIO a	= PureIO' RunConfig StdGen a
 
 
 mainPure	:: Args -> PureIO (FullColoring, TypeSystem)
@@ -188,7 +188,7 @@ dynamizeTS (DynamizeArgs rule error relsToAnalyze relsToAdd)
 
 mainExFilePure	:: ExampleFile -> PureIO [(String, ParseTree)]
 mainExFilePure args
-	= isolateFailure [] $ 
+	= isolateFailure' (const $ return []) $ 
 	  do	ts		<- getTS
 		let path	= fileName args
 		contents	<- readFile path

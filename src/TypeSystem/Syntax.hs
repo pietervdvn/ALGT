@@ -339,6 +339,10 @@ makeSyntax vals
 		checkNoDuplicates (vals |> fst) (\duplicates -> "The rule "++showComma duplicates++"is defined multiple times")
 		return bnfr
 
+remakeSyntax	:: Syntax -> Either String Syntax
+remakeSyntax s
+	= s & get fullSyntax' & M.toList & makeSyntax
+
 
 instance Check' Syntax (Name, ([BNF], WSMode, Bool)) where
 	check' s rule@(n, bnfs)

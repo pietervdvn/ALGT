@@ -8,7 +8,7 @@
 ================
 
 
-eL 	::= ... | "TYPE ERROR"
+eL	::= ... | "TYPE ERROR"
 
 
 

@@ -143,21 +143,25 @@ editSyntax False n (oldBNFs, oldWS, oldGroup) (newBNF, newWS, newGroup)
 		return (oldBNFs ++ newBNF, newWS, newGroup)
 
 
-
-
 editFunction	:: Syntax -> Bool -> Name -> Function -> Function -> Either String Function
+editFunction s b n fnew fOld
+	= inMsg ("While updating function "++show n) $
+		_editFunction s b n fnew fOld
+
+_editFunction	:: Syntax -> Bool -> Name -> Function -> Function -> Either String Function
 -- We overwrite. The new function type is a *subtype* of the old type
-editFunction syntax True nm old new
+_editFunction syntax True nm old new
 	= do	-- check for *subtyping*
 		let sType x	= intercalate " -> " (typesOf x)
 		unless (alwaysAreA' syntax new old ) $ Left $ "The original function has a type "++ sType old++
 			", but the new function has type "++ sType new++" which is not a subtype"
 		return new
 -- We add a function clauses. Types should be exactly the same
-editFunction syntax False nm old@(MFunction tOld clauses) new@(MFunction tNew clauses')	-- edit case
+_editFunction syntax False nm old@(MFunction tOld clauses) new@(MFunction tNew clauses')	-- edit case
 	= do	-- check for *type equality*
-		unless (tOld == tNew) $ Left $ "Types don't match. Expected type: "++ intercalate " -> " tOld ++
-			", actual type: "++ intercalate " -> " tNew
+		inMsg "Types don't match" $ unless (tOld == tNew) $ Left $
+			("Expected type of the changed one to be: "++ intercalate " -> " tOld ++
+			"\n, but actual type is: "++ intercalate " -> " tNew) & indent
 		return $ MFunction tNew $ clauses ++ clauses'
 		
 
@@ -184,8 +188,7 @@ editRule syntax false nm old new
 
 applyChanges	:: Changes -> TypeSystem -> Either String TypeSystem
 applyChanges changes ts
-		= (ts	& applyNameChange (get changesName changes)
-			& return)
+	= (ts	& applyNameChange (get changesName changes) & return)
 			>>= applySyntaxChanges (get changedSyntax changes)
 			>>= applyFuncChanges (get changedFuncs changes)
 			>>= applyRelChanges (get changedRels changes)
@@ -194,8 +197,10 @@ applyChanges changes ts
 applyNameChange name
 	= over tsName ((name++" ")++) 
 
-applySyntaxChanges bnfCh'
-	= applyChangesOn editSyntax id bnfCh' (tsSyntax . fullSyntax')
+applySyntaxChanges bnfCh' ts
+	= do	ts'	<- applyChangesOn editSyntax id bnfCh' (tsSyntax . fullSyntax') ts
+		syntax'	<- remakeSyntax (get tsSyntax ts')
+		return (set tsSyntax syntax' ts')
 
 applyFuncChanges funcCh' ts
 	= applyChangesOn (editFunction (get tsSyntax ts)) liftFunctionName funcCh' tsFunctions ts

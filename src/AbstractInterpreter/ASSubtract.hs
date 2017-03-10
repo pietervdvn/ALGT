@@ -15,6 +15,8 @@ import Data.Map (Map, member, (!))
 
 import qualified Data.Map as M
 
+import Debug.Trace
+
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtract s	= subtractWith s M.empty
@@ -83,7 +85,8 @@ trace' debug msg e emin
 	= let	msg'	= ">> "++msg++" with:\n"
 				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
 				++"   emin = "++toParsable emin++"\t: "++typeOf emin
-		in if debug then {- trace msg'-} error $ "Tracing not enabled; anyway: "++msg' else id
+		in if True then  trace msg'-- error $ "Tracing not enabled; anyway: "++msg'
+			else id
 
 
 _subtract'	:: Bool -> Syntax -> Map (TypeName, TypeName) [AbstractSet] -> AbstractSet -> AbstractSet -> [AbstractSet]
@@ -159,7 +162,7 @@ prototypesMatch (a:as) (b:bs)
 
 getPrototype	:: Syntax -> (TypeName, Int) -> [BNF]
 getPrototype s (tn, choice)
-	= let 	bnfseq	= fromSeq' $ (get bnf s ! tn) !! choice in
+	= let 	bnfseq	= fromSeq' $ (get bnf s ! tn) & safeIndex ("getPrototype: no prototype defined for type "++tn) choice in
 		bnfseq |> (\bnf -> if isRuleCall bnf then BNFRuleCall "" else bnf)
 
 {-

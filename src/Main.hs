@@ -43,6 +43,8 @@ import Data.Map as M
 import ParseTreeInterpreter.PropertyTester
 import Utils.ManualPreprocessor
 
+import System.Random
+
 import Gradualize.Test
 
 
@@ -68,8 +70,8 @@ main' args
 			let needsInput	= parsedArgs' & exampleFiles |> fileName |> (== ".") & or	-- we give each exampleFile config the same input
 			extraFile 	<- if needsInput then readLines else return []
 			let extraInput	= M.singleton "." $ unlines extraFile
-			
-			(fc, ts)	<- runIOWith defaultConfig extraInput parsedArgs' (mainPure parsedArgs')
+			gen		<- getStdGen
+			(fc, ts)	<- runIOWith defaultConfig gen extraInput parsedArgs' (mainPure parsedArgs')
 			interactiveArg parsedArgs' |> interactive ts fc & fromMaybe pass
 			return ts
 

@@ -244,7 +244,10 @@ foldGroup syntax revTable ass
 			-- now, all 'indices' should be the same, except for one focus point
 			if length diffPts /= 1 then ass else do
 				let i		= head diffPts
-				a		<- (seqqed !! i) & refold' syntax revTable	:: [AbstractSet]
+				let diffPointErrMsg
+						= "Trying to fold "++ (ass & toParsable' " | ") 
+							++", but sequence seqqed does not have enough elements"
+				a		<- (seqqed & safeIndex diffPointErrMsg i) & refold' syntax revTable	:: [AbstractSet]
 				let mergedSeq	= take i seqqed' ++ [a] ++ drop (i + 1) seqqed'
 				return $ AsSeq tp choice mergedSeq
 
@@ -273,7 +276,7 @@ toConcrete s as@(EveryPossible _ _ n)
 		minIndex	= if null minDists then error $ "No path for "++show as
 					else minDists & sortOn snd & head & fst
 		in
-		(unfold s as !! minIndex) & toConcrete s
+		(unfold s as & safeIndex ("toConcrete of "++toParsable as) minIndex) & toConcrete s
 toConcrete s (AsSeq gen i ass)
 	= ass |> toConcrete s & AsSeq gen i
 toConcrete _ as
@@ -319,8 +322,8 @@ _toExpression _ _ mi (ConcreteInt genTp _)
 	= do	nm	<- _getName genTp
 		return $ MVar genTp nm
 
-_toExpression s _ _ (AsSeq gen choice seq)
-	= do	let prototype	= (get bnf s ! gen !! choice) & fromSeq'	:: [BNF]
+_toExpression s _ _ asSeq@(AsSeq gen choice seq)
+	= do	let prototype	= (get bnf s ! gen & safeIndex ("toExpression of "++toParsable asSeq) choice) & fromSeq'	:: [BNF]
 		let prototypeNms	= prototype |> fromRuleCall |> fromJust	:: [TypeName]
 		zip prototypeNms seq
 			|+> (\(bnf, as) -> 
