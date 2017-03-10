@@ -125,7 +125,8 @@ t3	= guard (not $ alwaysIsA stflSyntax "type" "typeL")
 t4	= UnificationTest.tests |> inMsg "Unificationtests" & allRight_
 t5	= do	let stflRepr	= stfl & toParsable' (24::Int)
 		stfl'	<- parseTypeSystem stflRepr Nothing
-		unless (stfl == stfl') $ Left $ "stfl /= parseTypesystem (toParsable stfl)"
+		unless (stfl == stfl') $ 
+			Left "stfl /= parseTypesystem (toParsable stfl)"
 
 f0	= Left ()
 

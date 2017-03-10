@@ -82,19 +82,19 @@ update	:: (Ord n, Eq n) => (Int -> Int) -> n -> St n
 update f node
 	= do	initialV	<- gets (get initial) |> M.lookup node
 		when (isNothing initialV) $ do
-		known		<- gets (get calculated)
-		let currV	= known & M.lookup node 
-		buildsOn	<- gets (get dg) |> (M.! node)
-		let newV'	= buildsOn & S.toList
-					||>> (`M.lookup` known) 
-					|> catMaybes & L.filter (not . L.null)
-					|> maximum 
-		let newV	= if L.null newV' then Nothing else newV' & minimum & f & Just
-		unless (newV == currV) $ do
-			-- smaller path found!
-			modify (over calculated $ M.insert node $ fromJust newV)
-			supports	<- gets (get dgi) |> (M.! node)
-			modify (over queue (nub . (++S.toList supports)))
+			known		<- gets (get calculated)
+			let currV	= known & M.lookup node 
+			buildsOn	<- gets (get dg) |> (M.! node)
+			let newV'	= buildsOn & S.toList
+						||>> (`M.lookup` known) 
+						|> catMaybes & L.filter (not . L.null)
+						|> maximum 
+			let newV	= if L.null newV' then Nothing else newV' & minimum & f & Just
+			unless (newV == currV) $ do
+				-- smaller path found!
+				modify (over calculated $ M.insert node $ fromJust newV)
+				supports	<- gets (get dgi) |> (M.! node)
+				modify (over queue (nub . (++S.toList supports)))
 
 
 

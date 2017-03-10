@@ -17,13 +17,12 @@ import AssetsHelper
 
 
 randomParseTrees		:: (RandomGen random) => Int -> Syntax -> TypeName -> Int -> random -> ([ParseTree], random)
-randomParseTrees neededPts s tn depth r
-	= runState (replicateM neededPts $ _generateRandomPT s tn depth) r
+randomParseTrees neededPts s tn depth
+	= runState (replicateM neededPts $ _generateRandomPT s tn depth)
 
 randomParseTree		:: (RandomGen random) => Syntax -> TypeName -> Int -> random -> (ParseTree, random)
-randomParseTree s tn depth r
-	= runState (_generateRandomPT s tn depth) r
-
+randomParseTree s tn depth
+	= runState (_generateRandomPT s tn depth)
 
 
 _generateRandomPT	:: (RandomGen random) => Syntax -> TypeName -> Int -> State random ParseTree
