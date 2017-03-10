@@ -250,7 +250,7 @@ camelCase []	= []
 replacePointwise	:: [a] -> [[a]] -> [[a]]
 replacePointwise origs pointwise
 	= do	i	<- [0..length origs -1]
-		ai'	<- pointwise !! i
+		ai'	<- pointwise !! i	-- Safe !!
 		return $ replaceN i ai' origs
 
 
@@ -416,3 +416,9 @@ fancyString' withCounter endMsg as msgs
 
 
 todo		= error "TODO"
+
+safeIndex	:: String -> Int -> [a] -> a
+safeIndex msg i as
+ | i < length as
+		= as !! i	-- When grepping on !!; this safe-index... Don't panic :p; Safe !!
+ | otherwise	= error $ "Safe index: index to large: "++show i++"("++show (length as)++" available elements) , msg: "++msg

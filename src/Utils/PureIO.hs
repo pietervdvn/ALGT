@@ -30,10 +30,14 @@ class NeedsFiles a where
 
 
 data Output = Output 
-		{ _files	:: Map String String
+		{ _files	:: Map String (Bool, String)
 		, _stdOut	:: [String]
 		} deriving (Eq, Show, Read, Ord)
 makeLenses ''Output
+
+changedFiles	:: Output -> KnownFiles
+changedFiles (Output f stdOut)
+	= f & M.filter fst |> snd
 
 
 type KnownFiles	= Map FilePath String
@@ -45,7 +49,7 @@ type PureIO a		= PureIO' () a
 
 
 instance Monoid Output where
-	mempty	= emptyOutput
+	mempty	= Output M.empty []
 	mappend	(Output f1 o1) (Output f2 o2)
 		= Output (M.union f2 f1 {-Reverse order: last write (f2) has priority-}) (o1 ++ o2) 
 
@@ -53,12 +57,15 @@ removeCarriageReturns	:: Output -> Output
 removeCarriageReturns output
 	= output & over stdOut (>>= lines) & over stdOut (|> (\l -> l & reverse & takeWhile (/='\r') & reverse)) 
 
-emptyOutput	= Output M.empty []
+
+removeUnchanged	:: Output -> Output
+removeUnchanged
+	= over files (M.filter fst)
 
 runOutput	:: Output -> IO ()
-runOutput (Output files stdOut)
+runOutput output@(Output files stdOut)
 	= do	(stdOut >>= lines) |+> IO.putStrLn
-		let files'	= files & M.toList
+		let files'	= changedFiles output & M.toList
 		unless (null files') $ IO.putStrLn $ fancyString' True "" files' (files & M.keys |> ("Rendering file "++))
 		files' |+> uncurry IO.writeFile
 		pass
@@ -78,7 +85,7 @@ checkInput fn
 
 
 getKnownFiles :: PureIO' config state KnownFiles
-getKnownFiles	= PureIO (\(_, output, state) -> return (get files output, output, state))
+getKnownFiles	= PureIO (\(_, output, state) -> return (get files output |> snd, output, state))
 
 getConfig	:: PureIO' config state config
 getConfig	= PureIO (\(c, output, s) -> return (c, output, s))
@@ -126,7 +133,7 @@ instance Monad (PureIO' config state) where
 
 runPure		:: config -> state -> KnownFiles -> PureIO' config state a -> Either String (a, Output, state)
 runPure config state inp (PureIO i2a)
-	= i2a (config, Output inp [],  state)
+	= i2a (config, Output (inp |> (\c -> (False, c))) [],  state)
 
 runPureOutput	:: config -> state -> KnownFiles -> PureIO' config state a -> Output
 runPureOutput config state inp pureIO
@@ -168,13 +175,13 @@ putDocLn doc	= putStrLn $ show doc
 writeFile	:: FilePath -> String -> PureIO' config state ()
 writeFile fp contents
 	= PureIO $ \(_, Output files stdOut, state)
-			-> Right ((), Output (M.insert fp contents files) stdOut, state)
+			-> Right ((), Output (M.insert fp (True, contents) files) stdOut, state)
 
 readFile	:: FilePath -> PureIO' config state String
 readFile fp
-	= PureIO $ \(c, (Output i _), state) -> 
-			do	contents	<- checkExists fp i ("No file "++fp++" found")
-				return (contents, emptyOutput, state)
+	= PureIO $ \(c, output@(Output files _), state) -> 
+		do	contents	<- checkExists fp files ("No file "++fp++" found") -- : try one of:\n"++indent (M.keys files & showComma))
+			return (snd contents, output, state)
 
 
 liftEith	:: Either String x -> PureIO' config state x

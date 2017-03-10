@@ -38,6 +38,8 @@ import Control.Monad
 
 import Control.Concurrent
 
+import System.Random
+
 import Lens.Micro hiding ((&))
 
 buildVariables	:: Map String String
@@ -155,7 +157,7 @@ preprocess target vars ('$':'$':'(':str)
 		
 
 		let output	= mainPure parsedArgs
-					& runPureOutput defaultConfig input
+					& runPureOutput defaultConfig (mkStdGen 0) input
 					& removeCarriageReturns
 					& get stdOut & unlines
 
@@ -173,11 +175,11 @@ preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
 				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor svgs") args'
 
 		let output	= mainPure parsedArgs
-					& runPure defaultConfig input
+					& runPure defaultConfig (mkStdGen 0) input
 					& inMsg ("While generating the svg with "++args)
-					& either error snd
+					& either error snd3
 		
-		let svgs	= output & get files
+		let svgs	= output & changedFiles
 					& M.toList
 		svgs |+> (\(n, v) -> 
 			do	fileExists	<- doesFileExist n

@@ -1,9 +1,12 @@
-module Utils.Test (runTest, recreateTest, testAll, testFast, recreateAllTests, recreateTests, recreateTestsFast) where
+module Utils.Test (runTest, runTests, recreateTest, testAll, testFast, recreateAllTests, recreateTests, recreateTestsFast) where
 
+import Prelude hiding (exp)
 import Utils.Utils
+import Utils.ToString
 import Utils.ArgumentParser
 import PureMain
 import Utils.PureIO hiding (writeFile, readFile, putStrLn, putDocLn)
+import qualified Utils.PureIO as PureIO
 
 import Text.PrettyPrint.ANSI.Leijen
 
@@ -16,55 +19,72 @@ import Data.List (nub)
 
 import Control.Monad
 
+import System.Random
 
+import AssetsHelper
 
 import Utils.Tests
 
+import Lens.Micro hiding ((&))
 
 
 
+-- Expectations
+noExp args	= (args, "")
+exp str args	= (args, str)
 
 
+testArgs	:: [([String], String)]
+testArgs      = [ exp "No action specified" ["Test/STFL.language"]
+		, exp (stfl & toParsable' (24::Int)) ["Test/STFL.language", "--dlf"]
+		, noExp ["Test/STFL.language", "--lsvg", "Syntax.svg"]
+		, noExp ["Test/STFL.language", "--ia"]
+		, exp " Analysis of dom : type -> typeL "  ["Test/STFL.language", "--ifa", "dom"]
+{-5-}		, noExp ["Test/STFL.language", "--ifa", "cod"]
+		, noExp ["Test/STFL.language", "--ifa", "equate"]
+		, noExp ["Test/STFL.language", "--ifa", "eval"]
 
-testArgs      = [ ["Test/STFL.language"]
-		, ["Test/STFL.language", "--dlf"]
-		, ["Test/STFL.language", "--lsvg", "Syntax.svg"]
-		, ["Test/STFL.language", "--ia"]
-		, ["Test/STFL.language", "--ifa", "dom"]
-		, ["Test/STFL.language", "--ifa", "cod"]
-		, ["Test/STFL.language", "--ifa", "equate"]
-		, ["Test/STFL.language", "--ifa", "eval"]
+		, exp "Analysis for rules about (→)"
+			["Test/STFL.language", "--ir", "→"]
+		, noExp["Test/STFL.language", "--ir", "→*"]
+{-10-}		, noExp["Test/STFL.language", "--ir", "::"]
 
-		, ["Test/STFL.language", "--ir", "→"]
-		, ["Test/STFL.language", "--ir", "→*"]
-		, ["Test/STFL.language", "--ir", "::"]
-
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "-r", "→" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "-r", "::" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--ptsvg", "Parsetrees"]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
-		, ["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "--dlf"]
-		, ["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "-c", "Test/GradualizeSTFL.language-changes", "--dlf"]
+		, exp "# \"True\" was parsed as:" 
+			["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
+		, exp "If True Then False Else True → False"
+			["Test/STFL.language", "Test/examples.stfl", "e", "-l", "-r", "→" ]
+		, exp "{} ⊢ ( \\ f : Int -> Int . f 5 ) ( \\ i : Int . i + 1 ), Int"
+			["Test/STFL.language", "Test/examples.stfl", "e", "-l", "-r", "::" ]
+		, noExp ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--ptsvg", "Parsetrees"]
+		, exp "# \"True\" was parsed as:" ["Test/STFL.language", "Test/examples.stfl", "e", "-l" ]
+{-15-}		, exp "Dynamized STFL"["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "--dlf"]
+		, noExp["Test/STFL.language", "-c", "Test/DynamizeSTFL.language-changes", "-c", "Test/GradualizeSTFL.language-changes", "--dlf"]
 		-- , ["Test/STFL.language", "--ira"]
 		-- , ["Test/STFL.language", "--irasvg", "SyntaxIRA.svg"]
-		, ["Test/STFL.language", "--ir", "EvalCtx"]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l",  "--tp", "Progress" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tp", "Progress", "--ppp" ]
-		, ["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa", "--ppp" ]
-		, ["Test/Recursive.language", "--dlf"]
-		, ["Test/CommonSubset.language", "--dlf"]
-		, ["Test/FuncTypeErr.language", "--dlf"]
-		, ["Style.language", "Terminal.style", "styleFile", "--html"]
-		] |> (++["--plain"]) & nub
+		, exp " Analysis for rules about (→) " ["Test/STFL.language", "--ir", "→"]
+		, exp "Property Progress holds for given examples " ["Test/STFL.language", "Test/examples.stfl", "e", "-l",  "--tp", "Progress" ]
+		, exp (   "Property Preservation holds for given examples                                  \n"
+			++"Property Progress holds for given examples                                      \n"
+			++"Property Termination holds for given examples                                   ")
+			["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa" ]
+{-20-}		, exp "# Property Progress proven by failing predicate with assignment {e0 --> ( \\ x : Int . x + 1 ) True}:"
+			["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tp", "Progress", "--ppp" ]
+		, exp "# Property Preservation proven by failing predicate with assignment {e0 --> True}:" 
+			["Test/STFL.language", "Test/examples.stfl", "e", "-l", "--tpa", "--ppp" ]
+		, exp "expr ⊂ expr"
+			["Test/Recursive.language", "--dlf"]
+		, exp "Common choices are: a | b" ["Test/CommonSubset.language", "--dlf"]
+		, exp "T1 is typed as both \"typeL\" and \"bool\", which don't have a common supertype"
+			["Test/FuncTypeErr.language", "--dlf"]
+{-25-}		, exp "<html>" ["Style.language", "Terminal.style", "styleFile", "--html"]
+		] |> over _1 (++["--plain"]) & nub
 
 
 slow		= []
 
 testArgs'	= mapi testArgs
 
-defaultInput	= allAssets & M.fromList	:: Input
+defaultInput	= allAssets & M.fromList
 
 
 directoryFor	:: [String] -> String
@@ -85,17 +105,18 @@ runTestWith		:: [String] -> IO Output
 runTestWith args
 	= do	(_, Just parsedArgs)
 				<- parseArgs ([-1::Int], "Integration tests") args
+		gen	<- getStdGen
 		let output
-			= mainPure parsedArgs
-				& runPureOutput defaultConfig defaultInput
-		return $ removeCarriageReturns output
+			= mainPure parsedArgs & void & isolateFailure' PureIO.putStrLn
+				& runPureOutput defaultConfig gen defaultInput
+		removeCarriageReturns output & removeUnchanged & return
 
 recreateAllTests	
 	= do	autoCreateAssets
-		testArgs' |+> createTestResult & void
+		testArgs'|+> createTestResult & void
 
 recreateTest i
-	= (i, testArgs !! i) & createTestResult
+	= (i, testArgs !! i) & createTestResult	-- unSafe !! ; but not a problem
 
 recreateTests is
 	= is |+> recreateTest & void
@@ -104,15 +125,24 @@ recreateTestsFast
 	= [0..length testArgs - 1] & L.filter (`notElem` slow)
 		|+> recreateTest
 
+checkAssumedString output exp
+	= do	let isContained	= exp `isInfixOf` (output & get stdOut & unlines)
+		unless isContained $ do
+			putStrLn ""
+			putDoc $ ondullred $ green $ text ("Missing: "++exp)
+		return isContained
+		
 
-createTestResult	:: (Int, [String]) -> IO ()
-createTestResult (i, args)
+createTestResult	:: (Int, ([String], String)) -> IO ()
+createTestResult (i, (args, exp))
 	= do	putStrLn $ "Creating output for test "++show i++": "++unwords args 
 		output	<- runTestWith args
-		let log	= get stdOut output & unlines
-		writeFile (directoryFor args) (show output)
-		get files output & M.toList |+> (\(fp, contents) -> writeFile ("src/Assets/IntegrationTests/"++fp) contents)
-		writeFile (directoryFor $ "log___":args) (unwords args ++"\n\n"++ log)
+		met	<- checkAssumedString output exp
+		when met $ do
+			let log	= get stdOut output & unlines
+			writeFile (directoryFor args) (show output)
+			changedFiles output & M.toList |+> (\(fp, contents) -> writeFile ("src/Assets/IntegrationTests/"++fp) contents)
+			writeFile (directoryFor $ show i:"log___":args) ("Testcase "++show i ++"\n" ++ unwords args ++"\n\n"++ log)
 
 getTestResult		:: [String] -> IO Output
 getTestResult args
@@ -120,8 +150,8 @@ getTestResult args
 		let output	= read cont	:: Output
 		return output
 
-test		:: Bool -> (Int, [String]) -> IO Bool
-test skipSlow (i, args)	
+test		:: Bool -> (Int, ([String], String)) -> IO Bool
+test skipSlow (i, (args, exp))	
 	= do	let msg	=  "Test "++show i++": "++unwords args 
 		putStr $ "[       ] " ++ msg
 		if skipSlow && (i `elem` slow) then do
@@ -131,8 +161,9 @@ test skipSlow (i, args)
 			expected	<- getTestResult args
 			actual		<- runTestWith args
 			let log		= get stdOut actual & unlines	:: String
-			let errMsg	= "\r[ FAILS ]"
-			let success	= expected == actual
+			meetsExtra	<- checkAssumedString actual exp
+			let success	= expected == actual && meetsExtra 
+			let errMsg	= if not meetsExtra then "\r[ASSUMPT]" else "\r[ FAILS ]"
 			if success then putStrLn "\r[   ✓   ]"
 				else do	putStrLn errMsg
 					writeFile (directoryFor ("log___":args) ++ ".FAILED") 
@@ -210,7 +241,8 @@ testAll' skip	= do	putStrLn $ "Unit tests passed: "++show unitTestsOK
 			t	<- testArgs' |+> test skip
 			return (unitTestsOK:t)
 
-runTest i	= test False (i, testArgs !! i)
+runTest i	= test False (i, testArgs !! i)	-- unSafe !! ; but not a problem
+runTests is	= is |+> runTest
 
 testAll		:: IO [Bool]
 testAll		= testAll' False
