@@ -10,6 +10,9 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
+Done quickchecking property Preservation with 8 examples                        
+Done quickchecking property Progress with 8 examples                            
+Done quickchecking property Termination with 8 examples                         
 Property Preservation holds for given examples                                  
 Property Progress holds for given examples                                      
 Property Termination holds for given examples                                   

@@ -10,4 +10,7 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
+Done quickchecking property Preservation with 8 examples                        
+Done quickchecking property Progress with 8 examples                            
+Done quickchecking property Termination with 8 examples                         
  # Language file parsed. No action specified, see -h or --manual to specify other options

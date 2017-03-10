@@ -13,6 +13,9 @@ Warning:
     Following calls will fall through:
       eval("TYPE ERROR")
   
+Done quickchecking property Preservation with 8 examples                        
+Done quickchecking property Progress with 8 examples                            
+Done quickchecking property Termination with 8 examples                         
 
   Dynamized STFL 
  ****************

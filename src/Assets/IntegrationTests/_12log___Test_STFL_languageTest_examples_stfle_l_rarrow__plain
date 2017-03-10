@@ -10,6 +10,9 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
+Done quickchecking property Preservation with 8 examples                        
+Done quickchecking property Progress with 8 examples                            
+Done quickchecking property Termination with 8 examples                         
 # Could not apply relation → to the input "True", because:
 While trying to proof that (→) is applicable to "True":
   Not a single rule matched:

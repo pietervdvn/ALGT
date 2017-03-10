@@ -21,6 +21,9 @@ Warning:
     equate(t11 "->" t12, t21 "->" t22)
                              = equate(t11, t21) "->" equate(t12, t22) will never match anything, as the possible arguments are already consumed
   
+Done quickchecking property Preservation with 8 examples                        
+Done quickchecking property Progress with 8 examples                            
+Done quickchecking property Termination with 8 examples                         
 
   Gradualized Dynamized STFL 
  ****************************
