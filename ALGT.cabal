@@ -126,6 +126,9 @@ executable ALGT
         SyntaxHighlighting.ParseTreeImage
         AbstractInterpreter.Constraints
         SyntaxHighlighting.AsHTML
+        Graphs.DirectedGraph
+        Graphs.MinDistance
+
 
 
 
