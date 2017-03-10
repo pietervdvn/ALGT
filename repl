@@ -1,2 +1,2 @@
-stack ghci --ghci-options "-ghci-script ~/.ghci"
+stack ghci --ghci-options "+RTS -M2g -RTS -ghci-script ~/.ghci"
 
