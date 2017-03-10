@@ -17,7 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     ALGT
   ghc-options:         -fno-warn-tabs
-  build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative >= 0.13, directory, microlens, microlens-th, text, blaze-svg, hashable, time, process, bytestring, ansi-wl-pprint
+  build-depends:       base >= 4.7 && < 5, containers, mtl, parsec, optparse-applicative >= 0.13, directory, microlens, microlens-th, text, blaze-svg, hashable, time, process, bytestring, ansi-wl-pprint, random
   default-language:    Haskell2010
   other-modules:
         Graphs.Lattice
@@ -49,6 +49,8 @@ library
         Utils.ToString
         Utils.ToStringExtra
         Utils.Utils
+        Graphs.DirectedGraph
+        Graphs.MinDistance
 
 
 executable ALGT
@@ -128,6 +130,7 @@ executable ALGT
         SyntaxHighlighting.AsHTML
         Graphs.DirectedGraph
         Graphs.MinDistance
+        AbstractInterpreter.QuickCheck
 
 
 

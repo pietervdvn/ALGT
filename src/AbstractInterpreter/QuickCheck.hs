@@ -30,7 +30,7 @@ data PropFail	= PropFail
 
 instance ToString PropFail where
 	toParsable (PropFail nm msg assgn)
-		= let 	assgnMsg	= assgn |> fst |> toParsable |> (" = "++) & M.toList |> (uncurry (++)) & unlines in
+		= let 	assgnMsg	= assgn |> fst |> toParsable |> (" = "++) & M.toList |> uncurry (++) & unlines in
 			"# Property "++show nm++" failed with assignment:\n"++indent assgnMsg++"\nBecause:\n"++indent msg
 
 

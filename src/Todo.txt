@@ -4,10 +4,6 @@ Fix abstract interpretatie voor concretizatie + abstractie + domain
 No matches for [Tx]
 	Prob Cause: merging of vars is conservative (for function analysis) but should be liberal for rule analysis and possible matches
 
-Properties: quickchecking
-	- Generate ParseTree from AbsSet
-	- Unfold parseTree till certain depth
-
 Safety lang paper lezen
 Interior = opstellen + genereren
 Subtyping taal opstellen

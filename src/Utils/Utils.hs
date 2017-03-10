@@ -261,7 +261,7 @@ replacePointwise origs pointwise
 	= error $ "Replace pointwise: lengths don't match, got "++show (length origs)++" original elements and "++show (length pointwise)++" lists of choices to choose from"
  | otherwise
 	= do	i	<- [0..length origs -1]
-		choice	<- pointwise & safeIndex ("Pointswise: origs has length ") i	-- Safe !!; gaurded
+		choice	<- pointwise & safeIndex "Pointswise: origs has length " i	
 		return $ replaceN i choice origs
 
 
