@@ -1,0 +1,412 @@
+Testcase 16
+Test/STFL.language -c Test/DynamizeSTFL.language-changes -c Test/GradualizeSTFL.language-changes --dlf --plain
+
+Warning:
+  While checking the totality of function "abstract":
+    Following calls will fall through:
+      abstract(("?" typeSet))
+      abstract(("?" "$"))
+      abstract(("?" (gtype typeSet)))
+      abstract(("Bool" (gtype typeSet)))
+      abstract(("Int" (gtype typeSet)))
+  While checking the totality of function "defaultValue":
+    Following calls will fall through:
+      defaultValue("?")
+  While checking the totality of function "equate":
+    Following calls will fall through:
+      equate("Bool", gtype)
+      equate("Int", gtype)
+      equate((gtypeL "->" gtype), gtype)
+      equate((gtype), gtype)
+  While checking the totality of function "eval":
+    Following calls will fall through:
+      eval("TYPE ERROR")
+  
+
+  Gradualized Dynamized STFL 
+ ****************************
+
+
+ Syntax 
+========
+
+bool             ::= "True"
+                 | "False"
+e                ::= eL "+" e
+                 | eL "::" gtype
+                 | eL e
+                 | eL
+eL               ::= value
+                 | var
+                 | "(" "\\" var ":" gtype "." e ")"
+                 | "If" e "Then" e "Else" e
+                 | "(" e ")"
+                 | "TYPE ERROR"
+gtype            ::= gtypeL "->" gtype
+                 | gtypeL
+gtypeL           ::= "Int"
+                 | "Bool"
+                 | ParO gtype ParC
+                 | "?"
+number           ::= Number
+typeSet          ::= gtype typeSet
+                 | "$"
+typing           ::= var ":" gtype
+typingEnvironment::= typing "," typingEnvironment
+                 | "{}"
+value            ::= bool
+                 | number
+var              ::= Identifier
+
+
+
+ Syntax Highlighting 
+=====================
+
+bool	 -> "constant"
+e	 -> "statement"
+eL	 -> "statement"
+eL.2	 -> "noise"
+eL.4	 -> "noise"
+gtype	 -> "type"
+gtypeL	 -> "type"
+number	 -> "constant"
+var	 -> "identifier"
+
+
+
+
+ Functions 
+===========
+
+abstract                 : typeSet -> gtype
+abstract("$")            = !error:ɛ("Undefined")
+abstract("Int" "$")      = "Int"
+abstract("Bool" "$")     = "Bool"
+abstract((T1 "->" T2) ts)
+                         = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
+
+
+cod                      : gtype -> gtype
+cod(T1 "->" T2)          = T2
+cod("Bool")              = !error:ɛ("Not defined for Bool")
+cod("Int")               = !error:ɛ("Not defined for Int")
+cod("?")                 = "?"
+
+
+codomains                : typeSet -> typeSet
+codomains((_ "->" T2) ts)
+                         = T2 codomains(ts)
+codomains("$")           = "$"
+codomains(_)             = !error:ɛ("Not defined, as this is not a proper list of functions")
+
+
+defaultValue             : gtype -> eL
+defaultValue("Bool")     = "True"
+defaultValue("Int")      = 1
+defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
+
+
+dom                      : gtype -> gtypeL
+dom(T1 "->" T2)          = T1
+dom("Bool")              = !error:ɛ("Not defined for Bool")
+dom("Int")               = !error:ɛ("Not defined for Int")
+dom("?")                 = "?"
+
+
+domains                  : typeSet -> typeSet
+domains((T1 "->" _) ts)  = T1 domains(ts)
+domains("$")             = "$"
+domains(_)               = !error:ɛ("Not defined, as this is not a proper list of functions")
+
+
+equate                   : gtype -> gtype -> gtype
+equate(T, T)             = T
+equate("?", t)           = t
+equate(t, t)             = t
+
+
+eval                     : e -> value
+eval((v:value))          = v
+eval(("(" "\\" x ":" t "." e ")") arg)
+                         = eval(!subs:e(x, arg, e))
+eval(f a)                = eval(eval(f) a)
+eval("If" "True" "Then" e1 "Else" e2)
+                         = eval(e1)
+eval("If" "False" "Then" e1 "Else" e2)
+                         = eval(e2)
+eval("If" c "Then" e1 "Else" e2)
+                         = eval("If" eval(c) "Then" e1 "Else" e2)
+eval("(" e ")")          = eval(e)
+eval(e1 "+" e2)          = !plus:Number(eval(e1), eval(e2))
+eval(e "::" t)           = eval(e)
+eval((v:var))            = !error:ɛ("Unknown variable", v)
+eval("(" "\\" v ":" t "." e ")")
+                         = !error:ɛ("Lone lambda expression left")
+
+
+plus                     : number -> e -> Number
+plus(e1, e2)             = !plus:Number(e1, e2)
+
+
+rename                   : var -> var -> gtype -> e -> eL
+rename(x, newVar, type, body)
+                         = "(" "\\" newVar ":" type "." !subs:e(x, newVar, body) ")"
+
+
+
+
+ Relations 
+===========
+
+(::) 	: e (in), gtype (out)	Pronounced as "type in empty context"
+(~) 	: gtype (in), gtype (in)	Pronounced as "is consistent"
+(→) 	: e (in), e (out)	Pronounced as "evaluation"
+(→*) 	: e (in), value (out)	Pronounced as "big step"
+(⊢) 	: typingEnvironment (in), e (in), gtype (out)	Pronounced as "context entails typing"
+(✓) 	: e (in)	Pronounced as "is canonical"
+
+
+
+ Rules 
+=======
+
+
+
+#  Rules about "type in empty context", with symbol (::) 
+# -------------------------------------------------------
+
+
+ "{}" ⊢ e, T
+--------------  	[TEmptyCtx]
+ e :: T
+
+
+
+
+
+
+#  Rules about "is consistent", with symbol (~) 
+# ----------------------------------------------
+
+
+ 
+----------  	[ConsLeft]
+ "?" ~ T
+
+
+ 
+----------  	[ConsRight]
+ T ~ "?"
+
+
+ Ta1 ~ Ta2	Tb1 ~ Tb2
+------------------------------  	[EqArrow]
+ Ta1 "->" Tb1 ~ Ta2 "->" Tb2
+
+
+ T1 = T2 : gtype
+------------------  	[EqBase]
+ T1 ~ T2
+
+
+
+
+
+
+#  Rules about "evaluation", with symbol (→) 
+# -------------------------------------------
+
+
+ b: bool
+--------------------  	[EvalAscrBool]
+ b "::" "Bool" → b
+
+
+ i: number
+-------------------  	[EvalAscrInt]
+ i "::" "Int" → i
+
+
+ e: number
+-------------------------------  	[EvalCastBoolErr]
+ e "::" "Bool" → "TYPE ERROR"
+
+
+ e: bool
+------------------------------  	[EvalCastIntErr]
+ e "::" "Int" → "TYPE ERROR"
+
+
+ 
+-----------------  	[EvalCastUnkown]
+ e "::" "?" → e
+
+
+ e0 → e1
+----------------  	[EvalCtx]
+ e[e0] → e[e1]
+
+
+ 
+--------------------------------------------------------  	[EvalIfErr]
+ "If" (cond:number) "Then" e1 "Else" e2 → "TYPE ERROR"
+
+
+ 
+----------------------------------------  	[EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ 
+---------------------------------------  	[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+ (✓) arg	arg "::" gtype → arg'
+-----------------------------------------------------------------  	[EvalLamApp']
+ ("(" "\\" var ":" gtype "." e ")") arg → !subs:e(var, arg', e)
+
+
+ 
+----------------  	[EvalParens]
+ "(" e ")" → e
+
+
+ n1: Number	n2: Number
+----------------------------  	[EvalPlus]
+ n1 "+" n2 → plus(n1, n2)
+
+
+ 
+----------------------------------  	[EvalPlusErrL]
+ (n1:bool) "+" n2 → "TYPE ERROR"
+
+
+ 
+----------------------------------  	[EvalPlusErrR]
+ n1 "+" (n2:bool) → "TYPE ERROR"
+
+
+
+
+
+
+#  Rules about "big step", with symbol (→*) 
+# ------------------------------------------
+
+
+ e0 → e1	(✓) e1
+------------------------  	[BigStepBase]
+ e0 →* e1
+
+
+ (✓) e
+---------  	[BigStepCanon]
+ e →* e
+
+
+ e0 → e1	e1 →* e2
+--------------------------  	[BigStepRec]
+ e0 →* e2
+
+
+
+
+
+
+#  Rules about "context entails typing", with symbol (⊢) 
+# -------------------------------------------------------
+
+
+ Γ ⊢ e, T'	T' ~ T
+------------------------  	[TAscr]
+ Γ ⊢ e "::" T, T'
+
+
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl ~ Tr
+---------------------------------------------------------  	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
+
+
+ (x ":" T1) "," Γ ⊢ e, T2
+----------------------------------------------  	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
+
+
+ Γ ⊢ e, T
+-------------------  	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+-------------------------------  	[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ ~ dom(Tfunc)
+---------------------------------------------------  	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+ b: bool
+----------------  	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+ n: number
+---------------  	[Tnumber]
+ Γ ⊢ n, "Int"
+
+
+ 
+--------------------  	[Tx]
+ Γ[x ":" T] ⊢ x, T
+
+
+
+
+
+
+#  Rules about "is canonical", with symbol (✓) 
+# ---------------------------------------------
+
+
+ b: bool
+----------  	[CanonBool]
+ (✓) b
+
+
+ 
+-------------------  	[CanonError]
+ (✓) "TYPE ERROR"
+
+
+ n: number
+------------  	[CanonNumber]
+ (✓) n
+
+
+
+
+
+
+ Properties 
+============
+
+
+ e0 :: T	e0 → e1
+-------------------------  	[Preservation]
+ e1 :: T
+
+
+ e0 :: T
+---------------------------  	[Progress]
+ (✓) e0 	| e0 → e1
+
+
+ e :: T
+---------  	[Termination]
+ e →* v
+
+

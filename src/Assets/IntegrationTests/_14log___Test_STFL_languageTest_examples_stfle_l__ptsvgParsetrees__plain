@@ -1,4 +1,5 @@
-Test/STFL.language --lsvg Syntax.svg --plain
+Testcase 14
+Test/STFL.language Test/examples.stfl e -l --ptsvg Parsetrees --plain
 
 Warning:
   While checking the totality of function "abstract":

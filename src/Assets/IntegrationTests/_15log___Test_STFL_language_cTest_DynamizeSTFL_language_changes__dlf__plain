@@ -1,4 +1,5 @@
-Test/STFL.language --dlf --plain
+Testcase 15
+Test/STFL.language -c Test/DynamizeSTFL.language-changes --dlf --plain
 
 Warning:
   While checking the totality of function "abstract":
@@ -8,10 +9,13 @@ Warning:
   While checking the totality of function "equate":
     Following calls will fall through:
       equate(type, type)
+  While checking the totality of function "eval":
+    Following calls will fall through:
+      eval("TYPE ERROR")
   
 
-  STFL 
- ******
+  Dynamized STFL 
+ ****************
 
 
  Syntax 
@@ -28,6 +32,7 @@ eL               ::= value
                  | "(" "\\" var ":" type "." e ")"
                  | "If" e "Then" e "Else" e
                  | "(" e ")"
+                 | "TYPE ERROR"
 number           ::= Number
 type             ::= typeL "->" type
                  | typeL
@@ -140,159 +145,17 @@ rename(x, newVar, type, body)
  Relations 
 ===========
 
-(→) 	: e (in), e (out)	Pronounced as "evaluation"
-(→*) 	: e (in), value (out)	Pronounced as "big step"
-(✓) 	: e (in)	Pronounced as "is canonical"
-(⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
 (::) 	: e (in), type (out)	Pronounced as "type in empty context"
 (==) 	: type (in), type (in)	Pronounced as "equals"
+(→) 	: e (in), e (out)	Pronounced as "evaluation"
+(→*) 	: e (in), value (out)	Pronounced as "big step"
+(⊢) 	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
+(✓) 	: e (in)	Pronounced as "is canonical"
 
 
 
  Rules 
 =======
-
-
-
-#  Rules about "evaluation", with symbol (→) 
-# -------------------------------------------
-
-
- e0 → e1
-----------------  	[EvalCtx]
- e[e0] → e[e1]
-
-
- n1: Number	n2: Number
-----------------------------  	[EvalPlus]
- n1 "+" n2 → plus(n1, n2)
-
-
- b: bool
---------------------  	[EvalAscrBool]
- b "::" "Bool" → b
-
-
- i: number
--------------------  	[EvalAscrInt]
- i "::" "Int" → i
-
-
- 
-----------------  	[EvalParens]
- "(" e ")" → e
-
-
- 
----------------------------------------  	[EvalIfTrue]
- "If" "True" "Then" e1 "Else" e2 → e1
-
-
- 
-----------------------------------------  	[EvalIfFalse]
- "If" "False" "Then" e1 "Else" e2 → e2
-
-
- 
----------------------------------------------------------------  	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg, e)
-
-
-
-
-
-
-#  Rules about "big step", with symbol (→*) 
-# ------------------------------------------
-
-
- (✓) e
----------  	[BigStepCanon]
- e →* e
-
-
- e0 → e1	e1 →* e2
---------------------------  	[BigStepRec]
- e0 →* e2
-
-
- e0 → e1	(✓) e1
-------------------------  	[BigStepBase]
- e0 →* e1
-
-
-
-
-
-
-#  Rules about "is canonical", with symbol (✓) 
-# ---------------------------------------------
-
-
- b: bool
-----------  	[CanonBool]
- (✓) b
-
-
- n: number
-------------  	[CanonNumber]
- (✓) n
-
-
-
-
-
-
-#  Rules about "context entails typing", with symbol (⊢) 
-# -------------------------------------------------------
-
-
- n: number
----------------  	[Tnumber]
- Γ ⊢ n, "Int"
-
-
- b: bool
-----------------  	[Tbool]
- Γ ⊢ b, "Bool"
-
-
- Γ ⊢ e, T
--------------------  	[TParens]
- Γ ⊢ "(" e ")", T
-
-
- Γ ⊢ e, T'	T' == T
--------------------------  	[TAscr]
- Γ ⊢ e "::" T, T'
-
-
- 
---------------------  	[Tx]
- Γ[x ":" T] ⊢ x, T
-
-
- Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
--------------------------------  	[TPlus]
- Γ ⊢ n1 "+" n2, "Int"
-
-
- Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
-----------------------------------------------------------  	[TIf]
- Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
-
-
- (x ":" T1) "," Γ ⊢ e, T2
-----------------------------------------------  	[TLambda]
- Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
-
-
- Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
-----------------------------------------------------  	[Tapp]
- Γ ⊢ e1 e2, cod(Tfunc)
-
-
-
 
 
 
@@ -313,14 +176,186 @@ rename(x, newVar, type, body)
 # ----------------------------------------
 
 
+ Ta1 == Ta2	Tb1 == Tb2
+-------------------------------  	[EqArrow]
+ Ta1 "->" Tb1 == Ta2 "->" Tb2
+
+
  T1 = T2 : type
 -----------------  	[EqBase]
  T1 == T2
 
 
- Ta1 == Ta2	Tb1 == Tb2
--------------------------------  	[EqArrow]
- Ta1 "->" Tb1 == Ta2 "->" Tb2
+
+
+
+
+#  Rules about "evaluation", with symbol (→) 
+# -------------------------------------------
+
+
+ b: bool
+--------------------  	[EvalAscrBool]
+ b "::" "Bool" → b
+
+
+ i: number
+-------------------  	[EvalAscrInt]
+ i "::" "Int" → i
+
+
+ e: number
+-------------------------------  	[EvalCastBoolErr]
+ e "::" "Bool" → "TYPE ERROR"
+
+
+ e: bool
+------------------------------  	[EvalCastIntErr]
+ e "::" "Int" → "TYPE ERROR"
+
+
+ e0 → e1
+----------------  	[EvalCtx]
+ e[e0] → e[e1]
+
+
+ 
+--------------------------------------------------------  	[EvalIfErr]
+ "If" (cond:number) "Then" e1 "Else" e2 → "TYPE ERROR"
+
+
+ 
+----------------------------------------  	[EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ 
+---------------------------------------  	[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+ (✓) arg	arg "::" type → arg'
+----------------------------------------------------------------  	[EvalLamApp]
+ ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg', e)
+
+
+ 
+----------------  	[EvalParens]
+ "(" e ")" → e
+
+
+ n1: Number	n2: Number
+----------------------------  	[EvalPlus]
+ n1 "+" n2 → plus(n1, n2)
+
+
+ 
+----------------------------------  	[EvalPlusErrL]
+ (n1:bool) "+" n2 → "TYPE ERROR"
+
+
+ 
+----------------------------------  	[EvalPlusErrR]
+ n1 "+" (n2:bool) → "TYPE ERROR"
+
+
+
+
+
+
+#  Rules about "big step", with symbol (→*) 
+# ------------------------------------------
+
+
+ e0 → e1	(✓) e1
+------------------------  	[BigStepBase]
+ e0 →* e1
+
+
+ (✓) e
+---------  	[BigStepCanon]
+ e →* e
+
+
+ e0 → e1	e1 →* e2
+--------------------------  	[BigStepRec]
+ e0 →* e2
+
+
+
+
+
+
+#  Rules about "context entails typing", with symbol (⊢) 
+# -------------------------------------------------------
+
+
+ Γ ⊢ e, T'	T' == T
+-------------------------  	[TAscr]
+ Γ ⊢ e "::" T, T'
+
+
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
+----------------------------------------------------------  	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
+
+
+ (x ":" T1) "," Γ ⊢ e, T2
+----------------------------------------------  	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
+
+
+ Γ ⊢ e, T
+-------------------  	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+-------------------------------  	[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
+----------------------------------------------------  	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+ b: bool
+----------------  	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+ n: number
+---------------  	[Tnumber]
+ Γ ⊢ n, "Int"
+
+
+ 
+--------------------  	[Tx]
+ Γ[x ":" T] ⊢ x, T
+
+
+
+
+
+
+#  Rules about "is canonical", with symbol (✓) 
+# ---------------------------------------------
+
+
+ b: bool
+----------  	[CanonBool]
+ (✓) b
+
+
+ 
+-------------------  	[CanonError]
+ (✓) "TYPE ERROR"
+
+
+ n: number
+------------  	[CanonNumber]
+ (✓) n
 
 
 

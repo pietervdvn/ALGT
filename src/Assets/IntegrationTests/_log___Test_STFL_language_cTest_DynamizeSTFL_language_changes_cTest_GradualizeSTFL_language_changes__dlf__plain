@@ -1,5 +1,0 @@
-Test/STFL.language -c Test/DynamizeSTFL.language-changes -c Test/GradualizeSTFL.language-changes --dlf --plain
-
-"Test/DynamizeSTFL.language-changes" (line 11, column 13):
-unexpected '.'
-expecting "\n", "#", "Delete", "Copy", "Rename", "New Functions", "Function Changes", "New Relations", "Relation Changes", "New Rules", "Rule Changes" or end of input

@@ -1,4 +1,5 @@
-Test/STFL.language Test/examples.stfl e -l --tp Progress --plain
+Testcase 0
+Test/STFL.language --plain
 
 Warning:
   While checking the totality of function "abstract":
@@ -9,4 +10,4 @@ Warning:
     Following calls will fall through:
       equate(type, type)
   
-Property Progress holds for given examples                                      
+ # Language file parsed. No action specified, see -h or --manual to specify other options
