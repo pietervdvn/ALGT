@@ -15,8 +15,6 @@ import Data.Map (Map, member, (!))
 
 import qualified Data.Map as M
 
-import Debug.Trace
-
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtract s	= subtractWith s M.empty
@@ -62,7 +60,7 @@ subtractArg s args minus
  | length args /= length minus	= error "Length of arguments in minus don't match; this is weird"
  | otherwise	= let	pointWise	= zip args minus |> (\(e, emin) -> subtract s [e] emin)
 			in	
-			replacePointwise args pointWise
+			allCombinations pointWise
 
 
 -------------------------------------------------------- Actual subtraction algorithm  ----------------------------------------------------
@@ -85,7 +83,7 @@ trace' debug msg e emin
 	= let	msg'	= ">> "++msg++" with:\n"
 				++"   e = "++toParsable e++"\t: "++typeOf e++"\n"
 				++"   emin = "++toParsable emin++"\t: "++typeOf emin
-		in if True then  trace msg'-- error $ "Tracing not enabled; anyway: "++msg'
+		in if debug then {- trace msg'--} error $ "Tracing not enabled; anyway: "++msg'
 			else id
 
 
@@ -117,7 +115,7 @@ _subtract debug s k e@EveryPossible{} emin	-- e is no subset of emin, emin is (a
 		-- if nothing has changed, just return [e]
 		in if unfolded == subbed then [e] else subbed
 _subtract debug s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin)
-	-- If the bnf-choice generating it is the same, then we roll! We should lookup, for the case of an identical choice in different rules
+	-- If the bnf-choice generating it is the same, then we roll! We should lookup the protoypes, for the case of an identical choice in different rules
  | prototypesMatch' s (gen, choice) (genMin, choiceMin)
 	= do	let diffPoints	= getPrototype s (gen, choice)	-- Don't use genMin as prototype here, it might have more literals
 					|> isRuleCall	:: [Bool]
