@@ -49,9 +49,9 @@ proofAConclusion ts mconcl vars
 		let possProofs		= conclChoices |> proofConclusion ts vars & mapi |> sndEffect
 		let successFull		= rights possProofs
 
-		let errMsg (concl, Left msg)	= "# "++toParsable concl ++" failed because:\n"++msg
+		let errMsg (concl, Left msg)	= toParsable concl ++"      failed because:\n"++msg
 		when (null successFull) $ Left $ 
-			"Could not proof a single conclusion: " ++ (zip conclChoices possProofs |> errMsg & unlines)
+			"Could not proof a single conclusion:\n" ++ (zip conclChoices possProofs |> errMsg & unlines)
 		let selectedProof	= head successFull
 		return selectedProof
 

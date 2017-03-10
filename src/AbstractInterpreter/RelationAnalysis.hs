@@ -30,6 +30,8 @@ import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
 
+import Debug.Trace --todo
+
 -------------------------------------------- TYPENAMESPEC ---------------------------------------------
 
 data TypeNameSpec	= TypeNameSpec 
@@ -296,7 +298,7 @@ debugTrace ts msg ra
 
 createRuleSyntax	:: TypeSystem -> RelationAnalysis
 createRuleSyntax ts
-	= let	tr msg ra	= {--} ra  {-}  trace (debugTrace ts msg ra) ra --}
+	= let	tr msg ra	= {- -} ra  {- }  trace (debugTrace ts msg ra) ra --}
 		ra	= prepareSyntax ts	& tr "prepped" 			-- Prepare the syntax, add empty rules for all possible forms
 				& addSubchoices ts	& tr "subs added"	-- Add extra choices, e.g. add (eL)(→)in0 as choice to (e)(→)in0
 				& rebuildSubtypings' ts	& tr "rebuild"

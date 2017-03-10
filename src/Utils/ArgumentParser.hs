@@ -62,6 +62,7 @@ data Args = Args 	{ tsFile		:: String
 			, changeFiles		:: [FilePath]
 			, dumpTS		:: Bool
 			, noCheck		:: Bool
+			, numberOfQuickChecks	:: String
 			, interpretAbstract	:: Bool
 			, interpretFunctionAbs	:: [String]
 			, interpretRulesAbstract:: Bool
@@ -264,7 +265,12 @@ args	= Args <$> argument str
 			<> help "Dump the parsed type system, usefull for debugging purposes")
 		<*> switch
 			(long "no-check"
-			<> help "Supress liveabilitychecks")
+			<> help "Supress liveabilitychecks, totality checker, quickcheck and others")
+		<*> strOption
+			(long "quickcheck-runs"
+			<> metavar "NUMBER-OF-TESTS"
+			<> value "8"
+			<> help "Number of times each property is tested against random arguments. Default: 100")
 		<*> switch
 			(long "interpret-abstractly"
 			<> long "ia"

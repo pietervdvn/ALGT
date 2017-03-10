@@ -58,35 +58,34 @@ tsRelations'	=  lens (\ts -> get tsRelations ts |> (get relSymbol &&& id) & M.fr
 tsRulesOnName	:: Lens' TypeSystem (Map Name Rule)
 tsRulesOnName	=  tsRules' . rulesOnName
 			
-			
-
 findRelation	:: TypeSystem -> Symbol -> Maybe Relation
 findRelation rels s
 	= find ((==) s . get relSymbol) $ get tsRelations rels
 
+_checkExists	:: (TypeSystem -> Map Name v) -> String -> TypeSystem -> Name -> Either String v
+_checkExists getter category ts n
+	= do	let msg		= category ++" "++ show n ++ " not found"
+		checkExistsSugg show n (getter ts) msg
 
 checkSyntaxExists	:: TypeSystem -> Name -> Either String ([BNF], WSMode, Bool)
-checkSyntaxExists ts nm
-	= do	let syntax	= get (tsSyntax . fullSyntax') ts
-		let available	= syntax & M.keys & unlines & indent
-		let msg		= "Syntactic form "++show nm++" not found; perhaps you meant:\n"++available
-		checkExists nm syntax msg
+checkSyntaxExists
+	= _checkExists (get (tsSyntax . fullSyntax')) "Syntactic form"
 		
 
 checkRelationExists	:: TypeSystem -> Symbol -> Either String Relation
-checkRelationExists ts s
-	= do	let available	= get tsRelations' ts & M.keys & unlines & indent
-		let msg		= "Relation "++show s ++" not found; perhaps you meant:\n"++available
-		checkExists s (get tsRelations' ts) msg
+checkRelationExists
+	= _checkExists (get tsRelations') "Relation"
 
 
 
 checkFunctionExists	:: TypeSystem -> Name -> Either String Function
-checkFunctionExists ts nm
-	= do	let fs		= get tsFunctions ts
-		let available	= fs & M.keys & unlines & indent
-		let msg		= "Function "++show nm++" not found; perhaps you meant one of:\n"++available
-		checkExists nm fs msg
+checkFunctionExists
+	= _checkExists (get tsFunctions) "Function"
+
+checkPropertyExists	:: TypeSystem -> Name -> Either String Property
+checkPropertyExists ts nm
+	= do	let props ts	= get tsProps ts |> (get propName &&& id) & M.fromList
+		_checkExists props "Property" ts nm
 
 
 instance Refactorable TypeName TypeSystem where

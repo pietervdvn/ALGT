@@ -29,12 +29,14 @@ import qualified SyntaxHighlighting.AsHTML as HTML
 import SyntaxHighlighting.Coloring
 
 import AbstractInterpreter.AbstractInterpreter
+import AbstractInterpreter.QuickCheck
+
 import Dynamize.Dynamize
 
 import Control.Monad
 import Control.Arrow ((&&&))
 
-import Text.Parsec
+import Text.Parsec hiding (getState)
 import Text.PrettyPrint.ANSI.Leijen (Doc, plain)
 
 import Data.Maybe
@@ -61,13 +63,14 @@ data RunConfig	= RunConfig
 	{ _colorScheme	:: FullColoring
 	, _rcTs		:: TypeSystem
 	, _noMakeup	:: Bool
-	, _shortProof	:: Maybe String}
+	, _shortProof	:: Maybe String
+	, _quickCheckRuns	:: Int}
 makeLenses ''RunConfig
 
 getTS		= getConfig' $ get rcTs
 getFC		= getConfig' $ get colorScheme
 
-defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False Nothing
+defaultConfig	= RunConfig (error "No style set") (error "No typesystem loaded") False Nothing 100
 
 type PureIO a	= PureIO' RunConfig StdGen a
 
@@ -77,15 +80,23 @@ mainPure args
 	= do	checkInput args
 		style		<- args & styleName & Assets.fetchStyle & liftEith
 		let ascii	= noMakeupArg args
-		withConfig' (set colorScheme style) $ withConfig' (set noMakeup ascii) $ withConfig' (set shortProof (shortProofs args)) $ do
+
+		withConfig' (set colorScheme style) $
+			withConfig' (set noMakeup ascii) $ 
+			withConfig' (set shortProof (shortProofs args)) $ do
 			tsContents	<- readFile (tsFile args)
 			ts		<- parseTypeSystem tsContents (Just $ tsFile args)
 						& liftEith
 			changedTs	<- foldM mainChange ts (changeFiles args)
+			
 			check   changedTs & inMsg "Error" & liftEith
+			
 			unless (noCheck args) (checkTS changedTs & isolateCheck)
-
-			withConfig' (set rcTs changedTs) $ mainPureOn args changedTs
+			let nrOfQCRuns	= read (numberOfQuickChecks args) :: Int
+			withConfig' (set rcTs changedTs) $ do
+				unless (noCheck args || nrOfQCRuns == 0) (testAllPropertiesRand nrOfQCRuns) 
+				mainPureOn args changedTs
+			
 			fc	<- getConfig' $ get colorScheme
 			return (fc, changedTs)
 
@@ -108,6 +119,25 @@ mainPureOn args ts
 
 
 -------------------------------- ABSTRACT INTERPRETERS ----------------------------------------
+
+testAllPropertiesRand	:: Int -> PureIO ()
+testAllPropertiesRand times
+	= do	props	<- getTS |> get tsProps ||>> get propName
+		props |+> testPropertyRand times
+		pass
+
+
+testPropertyRand	:: Int -> Name -> PureIO ()
+testPropertyRand runs property
+	= do	ts	<- getTS
+		rands	<- getState |> genRandoms
+		let tests	= rands & take runs |> quickCheckProp ts property 64
+					||>> snd	:: [Either String (Maybe PropFail)]
+		putStrLn $ fancyString' True ("Done quickchecking property "++property++" with "++show runs++" examples") tests (repeat $ "Quickchecking property "++property)
+		failed	<- tests & allRight & liftEith
+		failed & catMaybes & take 3 |> toParsable |+> putStrLn
+		pass
+
 
 runRuleAbstract'	:: TypeSystem -> Symbol -> PureIO ()
 runRuleAbstract' ts symb

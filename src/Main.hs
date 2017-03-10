@@ -45,8 +45,7 @@ import Utils.ManualPreprocessor
 
 import System.Random
 
-import Gradualize.Test
-
+import AbstractInterpreter.QuickCheck
 
 main	:: IO ()
 main	= do	args	<- getArgs

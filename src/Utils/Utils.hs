@@ -24,8 +24,15 @@ import qualified Data.Set as Set
 
 import Lens.Micro.Extras as LME
 
+import System.Random
+
 get	= LME.view
 
+
+genRandoms		:: (RandomGen random) => random -> [random]
+genRandoms r	= let	(r0, r1)	= split r
+			in 
+			r0:genRandoms r1
 
 -------------------- usefull types -------------------------------------------------------
 
@@ -308,6 +315,12 @@ checkExists k dict msg
 			= return $ dict Map.! k
  | otherwise		= Left msg
 
+
+checkExistsSugg		:: (Ord k) => (k -> String) -> k -> Map k v -> String -> Either String v
+checkExistsSugg show k dict msg
+	= do	let available	= dict & Map.keys |> show & intercalate ", "
+		checkExists k dict (msg ++ "\nAvailable options are " ++ available)
+		
 
 checkAllExists		:: (Ord k) => [k] -> Map k v -> (k -> String) -> Either String [v]
 checkAllExists ks dict msg

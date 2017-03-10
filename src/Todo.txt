@@ -8,7 +8,6 @@ Properties: quickchecking
 	- Generate ParseTree from AbsSet
 	- Unfold parseTree till certain depth
 
-Figure 4 van ALGT uitpluizen
 Safety lang paper lezen
 Interior = opstellen + genereren
 Subtyping taal opstellen

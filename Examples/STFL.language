@@ -320,4 +320,3 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 -------- [Termination]
 e →* v 
 
-
