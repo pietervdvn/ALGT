@@ -146,7 +146,7 @@ data Property	= Property 	{ _propName	:: Name
 
 
 newtype Rules	= Rules {_rules :: Map Symbol [Rule]}
-			deriving (Show)
+			deriving (Show, Eq)
 
 
 makeLenses ''ConclusionA

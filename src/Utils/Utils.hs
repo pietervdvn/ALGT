@@ -229,6 +229,7 @@ validLines fileConts
 replaceN	:: Int -> a -> [a] -> [a]
 replaceN 0 a (_:as)
 		= a : as
+replaceN i _ []	= error $ "Replace at index N: index to large. Overshoot: "++show i
 replaceN i a (h:as)
 		= h : replaceN (i-1) a as
 
@@ -246,12 +247,15 @@ camelCase (c:str)
 camelCase []	= []
 
 
--- Replaces each element of origs by a choice of pointwise. If a pointwise is empty, the original element is returned
+-- Replaces each element of origs by a choice of pointwise (from a respective column. If a pointwise is empty, the original element is returned
 replacePointwise	:: [a] -> [[a]] -> [[a]]
 replacePointwise origs pointwise
+ | length origs /= length pointwise
+	= error $ "Replace pointwise: lengths don't match, got "++show (length origs)++" original elements and "++show (length pointwise)++" lists of choices to choose from"
+ | otherwise
 	= do	i	<- [0..length origs -1]
-		ai'	<- pointwise !! i	-- Safe !!
-		return $ replaceN i ai' origs
+		choice	<- pointwise & safeIndex ("Pointswise: origs has length ") i	-- Safe !!; gaurded
+		return $ replaceN i choice origs
 
 
 

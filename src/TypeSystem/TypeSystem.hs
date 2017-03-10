@@ -36,7 +36,7 @@ data TypeSystem
 			-- predicates and inference rules of the type system, most often used for evaluation and/or typing rules; sorted by conclusion relation
 			, _tsRules' 	:: Rules
 			, _tsProps	:: [Property]
-			} deriving (Show)
+			} deriving (Show, Eq)
 makeLenses ''TypeSystem
 
 
@@ -116,7 +116,7 @@ instance ToString' Int TypeSystem where
 	toParsable' i ts@(TypeSystem name syntax syntaxStyle functions relations rules properties)
 		=  inHeader " " name '*' $ intercalate "\n\n"
 			[ inHeader' "Syntax" $ toParsable syntax
-			, inHeader' "Syntax Highlighting" $ toParsable syntaxStyle
+			, inHeader' "Syntax Style" $ toParsable syntaxStyle
 			, inHeader' "Functions"
 				(functions & M.toList |> (\(nm, func) -> toParsable' (nm, i) func) & intercalate "\n\n")
 			, inHeader' "Relations" $ toParsable' "\n" relations

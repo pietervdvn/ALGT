@@ -38,7 +38,7 @@ data Syntax	= BNFRules
 			, _groupModes	:: Map TypeName Bool
 			, _lattice 	:: Lattice TypeName
 			, _minDistance	:: Map Name (Int, [Int])
-			} deriving (Show)
+			} deriving (Show, Eq)
 
 
 makeLenses ''Syntax

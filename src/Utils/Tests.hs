@@ -28,6 +28,8 @@ import qualified Utils.UnificationTest as UnificationTest
 import AbstractInterpreter.AbstractSet
 import AbstractInterpreter.ASSubtract as AS
 
+import Debug.Trace
+
 
 subTestSynt   = [ "bool ::= \"True\" | \"False\""
 		, "number ::= \"0\""
@@ -121,15 +123,19 @@ t1	= guard (alwaysIsA testSyntax "b" "a")
 t2	= guard (alwaysIsA stflSyntax "typeL" "type")
 t3	= guard (not $ alwaysIsA stflSyntax "type" "typeL")
 t4	= UnificationTest.tests |> inMsg "Unificationtests" & allRight_
+t5	= do	let stflRepr	= stfl & toParsable' (24::Int)
+		stfl'	<- parseTypeSystem stflRepr Nothing
+		unless (stfl == stfl') $ Left $ "stfl /= parseTypesystem (toParsable stfl)"
 
 f0	= Left ()
 
 
 f	= [f0] & rights & null & flip (assert Left) "Some failer went wrong"
 
-unitTest= [f, t0,t1, t2, t3, t4, guard (and testSubs)] & allRight_
+unitTest= [f, t0,t1, t2, t3, t4, t5, guard (and testSubs)] & allRight_
 
 unitTestsOK
-	= isRight unitTest
-
+	= case inMsg "UNITTESTS" unitTest of
+		Left msg	-> trace msg False
+		_		-> True
 

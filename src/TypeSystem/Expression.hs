@@ -190,9 +190,11 @@ instance ToString' ShowParens Expression where
 	toParsable' _ (MVar _ n)	= n
 	toParsable' p (MSeq _ exprs)	= exprs |> toParsable' (deepen p) & unwords & inParens' p
 	toParsable' p (MCall tp nm builtin args)
-				= let args'	= args |> toParsable' (least NotOnRoot p) & commas & inParens
+				= let	args'	= args |> toParsable' (least NotOnRoot p) & commas & inParens
+				 	typeSign	= if isBuiltinName tp || tp == bottomSymbol then ""
+								else ":" ++ tp
 				  in if builtin then
-					"!" ++ nm ++ ":" ++ tp ++ args' 
+					"!" ++ nm ++ typeSign  ++ args' 
 					else nm ++ args'
 	toParsable' p (MAscription nm expr)	= (toParsable' (least NotOnRoot p) expr ++ ":" ++ nm) & inParens
 	toParsable' p (MEvalContext tp fullName hole)

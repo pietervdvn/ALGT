@@ -24,7 +24,7 @@ data SyntaxStyle = SyntaxStyle
 	{ _baseStyles	:: Map TypeName Name
 	, _extraStyles	:: Map (TypeName, Int) Name
 	, _styleRemaps	:: Map Name Name	-- e.g. noise maps to comment
-	} deriving (Show)
+	} deriving (Show, Eq)
 
 makeLenses ''SyntaxStyle
 

@@ -37,7 +37,7 @@ data Lattice a	= Lattice
 	, _top		:: a
 	, _isSubsetOfEvery	:: Map a (Set a)	-- every 'a' is also every element of the corresponding set	
 	, _isSupersetOfEvery	:: Map a (Set a)
-	} deriving (Show)
+	} deriving (Show, Eq)
 
 makeLenses ''Lattice
 
