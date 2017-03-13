@@ -18,6 +18,7 @@ import Data.List
 import Data.Bifunctor (first)
 
 import Control.Monad
+import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
 
@@ -30,7 +31,19 @@ proofThat ts
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
 proofThats' ts symbol args
 	= inMsg ("While trying to proof that ("++symbol++") is applicable to \""++ toParsable' ", " args ++"\"") $
-	  do	rules	<- ts & get tsRules |> return & findWithDefault (Left $ "No rules about a relation with symbol "++show symbol) symbol
+	  do	relation	<- checkRelationExists ts symbol
+		let inArgs	= relation & relTypesWith In
+		unless (length inArgs == length args) $ Left $ "Expected "++show (length inArgs)++" arguments to relation "++symbol++", but only got "++show (length args)
+		let typesFaulty	= zip (args |> typeOf)  inArgs
+					|> (id &&& uncurry (alwaysIsA (get tsSyntax ts)))
+					& mapi
+					& filter (not . snd . snd) ||>> fst	:: [(Int, (TypeName, TypeName))]
+		let typesFaultyMsg
+				= typesFaulty |> (\(i, (tpExp, tpAct)) -> inMsg ("In argument "++show i) $
+					 Left $ "Expected argument of type "++show tpExp++", but got a "++show tpAct++" instead")
+		typesFaultyMsg & allRight'
+		
+		rules	<- checkRelationRulesExists ts symbol
 		let results	= rules |> flip (interpretRule ts) args
 		let successfull	= rights results
 		assert Left (not $ null successfull) $ "Not a single rule matched:\n"++unlines (lefts results)
