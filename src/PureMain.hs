@@ -43,7 +43,7 @@ import Data.Maybe
 import Data.Either
 import Data.Map (Map, fromList, keys, toList)
 import qualified Data.Map as M
-import Data.List (intercalate, nub, (\\))
+import Data.List (intercalate, nub, (\\), isSuffixOf)
 import qualified Data.List as L
 import Data.Monoid ((<>))
 import Data.Hashable
@@ -78,7 +78,10 @@ type PureIO a	= PureIO' RunConfig StdGen a
 mainPure	:: Args -> PureIO (FullColoring, TypeSystem)
 mainPure args
 	= do	checkInput args
-		style		<- args & styleName & Assets.fetchStyle & liftEith
+		style		<- if ".style" `isSuffixOf` styleName args then do
+						styleContents	<- readFile $ styleName args
+						liftEith $ parseColoringFile (styleName args) styleContents 
+					else styleName args & Assets.fetchStyle & liftEith
 		let ascii	= noMakeupArg args
 
 		withConfig' (set colorScheme style) $

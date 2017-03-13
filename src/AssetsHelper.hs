@@ -35,3 +35,7 @@ fetchStyle name
 					++ (knownStyles & M.keys & unlines & indent)
 			in
 			checkExists (name++".style") knownStyles errMsg
+
+
+minimalStyleTypes
+	= Assets._MinimalStyles_txt & validLines

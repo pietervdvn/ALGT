@@ -11,7 +11,7 @@ import Utils.Utils
 import Utils.PureIO hiding (writeFile, readFile, putStrLn)
 
 import Data.Monoid ((<>))
-import Data.List (intercalate, isPrefixOf)
+import Data.List (intercalate, isPrefixOf, isSuffixOf)
 import Data.Maybe
 import qualified Data.Map as M
 
@@ -78,7 +78,10 @@ data Args = Args 	{ tsFile		:: String
 	deriving (Show)
 
 instance NeedsFiles Args where
-	filesNeeded args	= tsFile args : (changeFiles args ++ (exampleFiles args >>= filesNeeded))
+	filesNeeded args	
+		= let	exFiles		= exampleFiles args >>= filesNeeded
+			styleFile	= [styleName args | ".style" `isSuffixOf` styleName args]
+			in tsFile args : (changeFiles args ++ exFiles ++ styleFile)
 
 instance ActionSpecified Args where
 	actionSpecified args

@@ -31,10 +31,13 @@ monospace
 hline
 
 
+# highlights
 
-
-warning
 note
+warning
+error
+todo
+fixme
 
 
 # editor specific
@@ -42,4 +45,5 @@ note
 cursor
 linehighlight
 selection
+linenumbers
 
