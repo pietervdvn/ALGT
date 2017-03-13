@@ -304,6 +304,7 @@ testPropertyOn' verbose tp pts nm
 testPropertyOn	:: Bool -> TypeName -> [(String, ParseTree)] -> Property -> PureIO ()
 testPropertyOn verbose tp pts property
 	= do	ts	<- getTS
+		options	<- getProofOptions
 		let needed	= neededVars property
 		let nm		= get propName property
 		let errMsg	= "Properties tested against examples should have exactly one input, of type "++ tp ++" (as this is the used parser)"
@@ -314,7 +315,7 @@ testPropertyOn verbose tp pts property
 		unless (t == tp) $ fail errMsg
 
 
-		let proofs	= pts |> testProperty ts property n
+		let proofs	= pts |> testProperty options ts property n
 		let max		= show $ length pts
 		let prepMsg inp
 				= "Testing '"++nm++"' on input "++inp++" "
@@ -331,12 +332,13 @@ testPropertyOn verbose tp pts property
 		pass
 
 
-testProperty	:: TypeSystem -> Property -> Name -> (String, ParseTree) -> ([String], Bool)
-testProperty ts property exprName (input, pt)
-	= let	eithStrProp	= testPropOn ts property (M.singleton exprName (removeEmptyTokens pt, Nothing))
-		in either
+testProperty	:: ProofOptions -> TypeSystem -> Property -> Name -> (String, ParseTree) -> ([String], Bool)
+testProperty options ts property exprName (input, pt)
+	= let eithStrProp	= testPropOn ts property (M.singleton exprName (removeEmptyTokens pt, Nothing))
+		in
+		either
 			(\fail	-> (["Property failed!", fail], False))
-			(\proof -> (["Property successfull", toParsable' property proof], True))
+			(\proof -> (["Property successfull", toParsable' (options, property) proof], True))
 			eithStrProp
 
 
@@ -349,12 +351,16 @@ runRule		:: Symbol -> (String, ParseTree) -> PureIO ()
 runRule symbol (input, pt)
 	= do	ts	<- getTS
 		let	proof	 = proofThat' ts symbol [removeEmptyTokens pt]	:: Either String Proof
-		smallProofs	<- getConfig' $ get shortProof
-		let options	= maybe defaultProofOptions (\i -> PO id False True $ replicate (read i :: Int) ' ')
-					smallProofs
+		options	<- getProofOptions
 		proof & showProofWithDepth input symbol options & putStrLn
 
 
+getProofOptions	:: PureIO ProofOptions
+getProofOptions
+	= do	smallProofs	<- getConfig' $ get shortProof
+		let options	= maybe defaultProofOptions (\i -> PO id False True $ replicate (read i :: Int) ' ')
+					smallProofs
+		return options
 
 
 renderParseTree	:: Name -> (Int, ParseTree) -> PureIO ()

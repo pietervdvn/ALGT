@@ -291,7 +291,7 @@ outputFile fp
 autoPreprocess	:: IO ()
 autoPreprocess
 	= do	preprocessDir "src/Assets/Manual" outputFile (outputFile' "src/Assets/Manual/")
-		runCommand "src/Assets/Manual/build.sh > buildlog.txt &"
+		runCommand "src/Assets/Manual/build.sh"
 		pass
 
 contentsChanged	:: FilePath -> IO (Map FilePath UTCTime)

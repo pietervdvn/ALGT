@@ -1,4 +1,4 @@
- {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses #-}
+ {-# LANGUAGE TemplateHaskell, MultiParamTypeClasses, FlexibleInstances #-}
 module TypeSystem.PropertyProof where
 
 {-  -}
@@ -31,31 +31,31 @@ data PropertyProof
 makeLenses ''PropertyProof
 
 
-instance ToString' Property PropertyProof where
-	toParsable'	= _propProofToString toParsable toParsable
-	toCoParsable'	= _propProofToString toCoParsable toCoParsable
-	debug'		= _propProofToString debug debug
+instance ToString' (ProofOptions, Property) PropertyProof where
+	toParsable'	= _propProofToString toParsable toParsable'
+	toCoParsable'	= _propProofToString toCoParsable toCoParsable'
+	debug'		= _propProofToString debug debug'
 	show'		= const show
 	
 
 
-_propProofToString		:: (Predicate -> String) -> (Proof -> String) -> Property -> PropertyProof -> String
-_propProofToString sPred sProof prop (PropertyProof vars predProofs provenWith proof)
+_propProofToString		:: (Predicate -> String) -> (ProofOptions -> Proof -> String) -> (ProofOptions, Property) -> PropertyProof -> String
+_propProofToString sPred sProof (proofOptions, prop) (PropertyProof vars predProofs provenWith proof)
 	= let	header		= "# Property "++get propName prop++" statisfied with assignment {"++ toParsable' ", " vars ++"}\n"
 		predsC		= get propPreds prop
 		showPred (pred, proof)
 				= ["# Predicate satisfied:\n# "++sPred pred
 					, ""
-				  	, indent (sProof proof)] & unlines
+				  	, indent (sProof proofOptions proof)] & unlines
 		preamble	= zip predsC predProofs |> showPred & unlines
 		provenConcl	= get (propConcl . multiConcls) prop !! provenWith
 		conclMsg	= ["# Satisfies a possible conclusion:\n# "++ sPred (Needed provenConcl)
 					, ""
-					, sProof proof] & unlines
+					, sProof proofOptions proof] & unlines
 		in
 		header ++ indent (unlines [preamble, "", conclMsg])
 
-_propProofToString sPred sProof prop (PredicateFailed vars predProofs)
+_propProofToString sPred sProof (proofOptions, prop) (PredicateFailed vars predProofs)
 	= let	header	= "# Property "++ get propName prop++" proven by failing predicate with assignment {"++ toParsable' ", " vars ++"}:"
 		predsC	= get propPreds prop
 		failOverview

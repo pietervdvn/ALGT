@@ -464,24 +464,31 @@
 <p>The last fundamental part of our language are it's properties.</p>
 <p>Arbitrary properties can be stated just as rules can.</p>
 <p>ALGT will check that these properties hold, by trying a bunch of random examples, effectively quickchecking your language implementation.</p>
-<p>Most languages are concerned about two properties: <em>preservation</em> and <em>progress</em>.</p>
+<p>Most languages are concerned about two important properties: <em>preservation</em> and <em>progress</em>.</p>
 <h3 id="stating-preservation">Stating Preservation</h3>
 <p><em>Preservation</em> is the property that, when an expression <code>e0</code> of type <code>T</code> is evaluated, the new expression <code>e1</code> is still of type <code>T</code>. Without this property, our typechecker would be useless...</p>
 <p>Now, we can state this property in the <code>Properties</code>-section of the file:</p>
-TODO lines
 
+<p>This is the same as a rule in a relation: given the predicates (<code>e0 :: T</code> and <code>e0 → e1</code>), the consequent (<code>e1 :: T</code>) can always be proven.</p>
 <p>As our implementation is correct, we can just run our program as following, and see it did try to proof us wrong:</p>
-TODO
 
 <p>We can ask ALGT to try more examples, with the <code>--quickcheck-runs NUMBER-OF-RUNS</code> flag:</p>
-TODO
 
-<p>Pfew, luckily we didn't find a counter example.</p>
+<p>Note that we can also run these properties on our own examples, with <code>--test-property NAME OF PROPERTY --ppp</code> or <code>--test-all-properties --ppp</code>. By default, property proofs are not printed (as they tend to be long), <code>--ppp</code> says to Print the Property Proofs.</p>
+
 <h3 id="stating-progress">Stating progress</h3>
-<p>Another important property is <em>progress</em>. It states that, if an expression is well-typed, we can either in canonical form (a simple value, the result of our calculation).</p>
-<h3 id="testing-examples-from-a-file-against-a-property">Testing examples from a file against a property</h3>
+<p>Another important property is <em>progress</em>. This states that, if an expression is well-typed, it either is in canonical form (a simple value) or we can evaluate for another step.</p>
+<p>This is quite an important check to, as it means we can't have a <em>stuck</em> state, in which the evaluation doesn't know how to progress. Turing complete programming language (which <strong>STFL</strong> is <em>not</em>) might get stuck in a infinite loop though, but it is because a certain expression would yield exactly the same expression, but with at least some steps in between.</p>
+<p>This property can be stated as following:</p>
+
+<p>Here, <em>choice</em> is used in the consequent: given the predicates (<code>e0 :: T</code>), at least one of the choices must be proven:</p>
+
+
+<p>Does ALGT find counterexamples for this property?</p>
+
+<p>Phew! No counterexamples found! Our language is probably <em>sound</em>.</p>
 <h3 id="disabling-quickchecks-and-symbolic-checks">Disabling quickchecks and symbolic checks</h3>
-<p>If the quickchecks take to long, you can disable them, using <code>--quickcheck-runs 0</code>. When the other checks takes to long (liveability and totality), add <code>--no-check</code> to disable them all.</p>
+<p>If the quickchecks take to long, you can disable them, using <code>--quickcheck-runs 0</code>. When the other checks takes to long (such as minimal typing of functions, liveability and totality), add <code>--no-check</code> to disable them all.</p>
 <h2 id="properties-1">Properties</h2>
 <h2 id="recap-used-command-line-arguments">Recap: used command line arguments</h2>
 <h1 id="reference-manual">Reference manual</h1>
