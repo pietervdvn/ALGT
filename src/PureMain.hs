@@ -85,13 +85,18 @@ mainPure args
 			withConfig' (set noMakeup ascii) $ 
 			withConfig' (set shortProof (shortProofs args)) $ do
 			tsContents	<- readFile (tsFile args)
+
+			let changeFileMsg	= if not $ null $ changeFiles args then changeFiles args & showComma & (" with changes: "++) else ""
+			let wrapMsg	= inMsg ("While checking file "++tsFile args++changeFileMsg)
+
 			ts		<- parseTypeSystem tsContents (Just $ tsFile args)
-						& liftEith
+						& wrapMsg & liftEith
 			changedTs	<- foldM mainChange ts (changeFiles args)
 			
-			check   changedTs & inMsg "Error" & liftEith
+			check   changedTs & wrapMsg & inMsg "Error" & liftEith
 			
-			unless (noCheck args) (checkTS changedTs & isolateCheck)
+			unless (noCheck args) $ isolateCheck $
+				wrapMsg (checkTS changedTs)
 			let nrOfQCRuns	= read (numberOfQuickChecks args) :: Int
 			withConfig' (set rcTs changedTs) $ do
 				unless (noCheck args || nrOfQCRuns == 0) (testAllPropertiesRand nrOfQCRuns) 
@@ -342,7 +347,7 @@ testProperty ts property exprName (input, pt)
 
 runRule		:: Symbol -> (String, ParseTree) -> PureIO ()
 runRule symbol (input, pt)
-	= do	ts	<- getTS		
+	= do	ts	<- getTS
 		let	proof	 = proofThat' ts symbol [removeEmptyTokens pt]	:: Either String Proof
 		smallProofs	<- getConfig' $ get shortProof
 		let options	= maybe defaultProofOptions (\i -> PO id False True $ replicate (read i :: Int) ' ')

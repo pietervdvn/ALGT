@@ -77,6 +77,10 @@ checkRelationExists
 	= _checkExists (get tsRelations') "Relation"
 
 
+checkRelationRulesExists		:: TypeSystem -> Name -> Either String [Rule]
+checkRelationRulesExists
+	= _checkExists (get tsRules) "Rule"
+
 
 checkFunctionExists	:: TypeSystem -> Name -> Either String Function
 checkFunctionExists
