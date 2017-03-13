@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass[a4paper]{report}
 \usepackage{hyperref}
 \hypersetup{unicode=true,
             pdftitle={ALGT-Manual},
@@ -7,7 +7,7 @@
 
 
 
-
+\usepackage{fullpage}
 
 \usepackage{listings}
 
@@ -21,9 +21,14 @@
 \usepackage{amssymb,amsmath}
 
 \usepackage[utf8]{inputenc}
+
+% Warning: unicode should be uppercase!
 \DeclareUnicodeCharacter{2192}{$\rightarrow$}
 \DeclareUnicodeCharacter{25B}{$\varepsilon$}
 \DeclareUnicodeCharacter{2713}{$\checkmark$}
+\DeclareUnicodeCharacter{0393}{$\Gamma$}
+\DeclareUnicodeCharacter{22A2}{$\vdash$}
+
 
 
 
@@ -36,7 +41,7 @@
   backgroundcolor=\color{gray},
   basicstyle=\footnotesize\ttfamily,
   frame=l,
-  literate={→}{{$\rightarrow$}}1 {ɛ}{{$\varepsilon$}}1 {✓}{{$\checkmark$}}1
+  literate={→}{{$\rightarrow$}}1 {ɛ}{{$\varepsilon$}}1 {✓}{{$\checkmark$}}1 {Γ}{{$\Gamma$}}1 {⊢}{{$\vdash$}}1 
 }
 
 \lstdefinestyle{terminal}{

@@ -64,7 +64,7 @@ codomain(T1 "->" T2)		= T2
 (→*)	: expr (in), expr (out)		Pronounced as "big step"
 (✓)	: expr (in)			Pronounced as "is canonical"
 
-(⊢)	: typingEnvironment (in), expr (in), type (out)	Pronounced as "context entails typing"
+(⊢)	: typingEnvironment (in), expr (in), type (out)	Pronounced as "entails typing"
 
 (::)	: expr (in), type (out)	Pronounced as "type in empty context"
 
@@ -148,14 +148,19 @@ codomain(T1 "->" T2)		= T2
 
 
 
+----------------	[TboolTrue]
+ Γ ⊢ "True", "Bool"
+
+
+----------------	[TboolFalse]
+ Γ ⊢ "False", "Bool"
+
+
  n:int
 ---------------		[Tnumber] 
  Γ ⊢ n, "Int"
 
 
- b:bool
-----------------	[Tbool]
- Γ ⊢ b, "Bool"
 
 
 
@@ -172,12 +177,12 @@ codomain(T1 "->" T2)		= T2
 
 
  Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
---------------------------------------------------------	[TIf]
+-------------------------------------------------------- [TIf]
  Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
 
 
 
- ((x ":" T1) "," Γ) ⊢ e, T2
+ (x ":" T1) "," Γ ⊢ e, T2
 -------------------------------------------------------	[TLambda]
  Γ ⊢ "(" "\\" x ":" T1 "." e ")", ( "(" T1 ")") "->" T2
 

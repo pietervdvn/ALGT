@@ -8,87 +8,27 @@
   <style type="text/css">code{white-space: pre;}</style>
 </head>
 <body>
-<h2 id="relations-and-rules-building-the-evaluator">Relations and Rules: building the evaluator</h2>
-<p>While we could build an function which evaluates our programming languages, language designers love <em>natural deduction</em> more. Don't worry if you never heard about that before, we'll explain it right away!</p>
-<h3 id="declaring-relation-evaluation">Declaring relation &quot;evaluation&quot;</h3>
-<p>First, we declare a new section inside our <em>STFL.language</em>, with a relation declaration inside:</p>
+<h2 id="properties">Properties</h2>
+<p>The last fundamental part of our language are it's properties.</p>
+<p>Arbitrary properties can be stated just as rules can.</p>
+<p>ALGT will check that these properties hold, by trying a bunch of random examples, effectively quickchecking your language implementation.</p>
+<p>Most languages are concerned about two properties: <em>preservation</em> and <em>progress</em>.</p>
+<h3 id="stating-preservation">Stating Preservation</h3>
+<p><em>Preservation</em> is the property that, when an expression <code>e0</code> of type <code>T</code> is evaluated, the new expression <code>e1</code> is still of type <code>T</code>. Without this property, our typechecker would be useless...</p>
+<p>Now, we can state this property in the <code>Properties</code>-section of the file:</p>
+TODO lines
 
-<p>Let us break this line down.</p>
-<p>The first part, <code>(→)</code>, says that we declare a relation with name <code>→</code>. Except from some builtin symbols, you can use whatever string you want, including unicode<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. If you don't want to use the unicode-arrow for this tutorial, you can replace <code>→</code> by <code>-&gt;</code>.</p>
-<p>The second part, <code>: expr (in), expr (out)</code> states that this is a relation between two <code>expr</code>. As example, <code>2 + 3</code> , <code>5</code> will be in <code>(→)</code> or written more conventionally <code>2 + 3 →</code> <code>5</code>.</p>
-<p>What about the <code>(in)</code> and <code>(out)</code> parts? These are to help the computer. Given <code>2 + 3</code>, it's pretty easy for the computer to calculate <code>5</code>. Given <code>5</code>, the computer can't magically deduce that this was computed by calculating <code>2 + 3</code>, especially because an infinite amount of possible calculations might lead to the result <code>5</code>. We call this the <em>mode</em> of the argument.</p>
-<p>The last part, <code>Pronounced as &quot;evaluation&quot;</code> defines a name for the relation. It's just an extra, to help users of your language to know what a relation is supposed to do or to help them searching it on a search engine.</p>
-<p>Note that the goal of <code>→</code> is to make a small, fundamental step - just one addition or simplification, e.g. <code>1 + 2 + 3</code> <code>→</code> <code>1 + 5</code>. We'll design another relation later on which will give us the end result immediatly, giving us <code>6</code>.</p>
-<h3 id="defining-relation-evaluation">Defining relation &quot;evaluation&quot;</h3>
-<h4 id="simple-deduction-rules-if">Simple deduction rules: If</h4>
-<p>Defining relations works with one or more rules.</p>
-<p>We start with a simple one:</p>
+<p>As our implementation is correct, we can just run our program as following, and see it did try to proof us wrong:</p>
+TODO
 
-<p>How should you read this rule? The part under the line says that this is part of the relation; in other words; <code>&quot;If&quot; &quot;True&quot; &quot;Then&quot; e1 &quot;Else&quot; e2</code> will evaluate to <code>e1</code>. This is equivalent to writing the function <code>eval(&quot;If&quot; &quot;True&quot; &quot;Then&quot; e1 &quot;Else&quot; e2) = e1</code>.</p>
-<p>The part on the right of the line <code>[EvalIfTrue]</code> gives the name of the rule. You can put there pretty much everything you want.</p>
-<p>Analogously, you can add a rule for <code>If False</code>:</p>
+<p>We can ask ALGT to try more examples, with the <code>--quickcheck-runs NUMBER-OF-RUNS</code> flag:</p>
+TODO
 
-<p>This is already enough to run our third example. To run a relation, specify <code>-r &lt;name-of-relation&gt;</code>, thus <code>./ALGT STFL.language examples.stfl expr -l -r →</code>:</p>
-
-<h4 id="deduction-rules-with-predicates-plus">Deduction rules with predicates: plus</h4>
-<p>How do we add numbers? We can add a deduction rule just as well for this:</p>
-
-<p>First, take a look at the bottom line. The left part is straightforward; we match a parsetree with form <code>n1 + n2</code>. But what is this <code>!plus(n1, n2)</code>. It's a function call with arguments <code>n1</code> and <code>n2</code>. The exclamation mark <code>!</code> indicates that this is a builtin function.</p>
-<p>In other words, this rule indicates that <code>1 + 2</code> should be evaluated with <code>!plus(1,2)</code>, giving three.</p>
-<p>There is a catch, though. <code>!plus</code> has type <code>Number -&gt; Number -&gt; Number</code> (recall, this means that plus takes two <code>Numbers</code> and gives us a <code>Number</code> in return). We can't pass in other types, or it would fail. We thus have to check that we get correct input for this rule. To do this, we have those predicates on top: <code>n1:Number</code> (read this as <em><code>n1</code> is of syntactic form <code>Number</code></em>) and <code>n2:Number</code>.</p>
-<p>Let give this a run!</p>
-
-<p>We can see that our simple example, <code>20 + 22</code> neatly gives us the answer<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. The other example, <code>1 + 2 + 3</code> however, fails. Note that it gives a detailed overview of what rules it attempted to apply and why those rules failed.</p>
-<h4 id="if-with-complicated-conditions">If with complicated conditions</h4>
-<p>But what with our fourth example, <code>If If True Then False Else True Then True Else False</code>? The condition itself as an <code>If</code>-expression as well.</p>
-<p>Herefore we introduce a more complicated rule:</p>
-
-<p>The part above the line should be read as a condition. It states that, whenever <code>cond0</code> evaluates to <code>cond1</code>, then we can evaluate the bigger expression.</p>
-<h4 id="evaluation-contexts-for-congruence-rules">Evaluation contexts for congruence rules</h4>
-<p>However, there is a way to write this even shorter:</p>
-
-<p>The part <code>expr[expr0]</code> will search, within the expression we want to evaluate, a nested expression that satisfies the conditions. In other words, it will search in the parsetree (<code>If (If True Then False Else False) Then True Else False</code>) a part that can be evaluated (e.g. <code>If True Then False Else False</code>).</p>
-<p>The evaluated expression will then be put back in the original, bigger parsetree at the same location.</p>
-<p>Make sure to name the nested expr <code>expr0</code>, thus <em>syntactic-form-name</em> followed by a number. That's how the tool figures out what kind of parsetree to search for.</p>
-
-<p>As a bonus, it'll also solve our <code>1 + 2 + 3</code>!</p>
-
-<p>These proofs are getting a bit harder to read, but always start from the bottom if you get lost.</p>
-<p>It basically states that <code>1 + (2 + 3)</code> makes a step to <code>1 + 5</code>, because of rule <code>EvalCtx</code>; this rule could be used because <code>2 + 3</code> evaluates to <code>5</code>.</p>
-<p>The proof for that part of the relation is given more on top, by rule <code>EvalPlus</code>, which could be invoked because both <code>2</code> and <code>3</code> are <code>Number</code>s.</p>
-<h4 id="application">Application</h4>
-<p>As last, we'd like to apply functions, such as <code>(\\x : Int . x + 1) 41</code>.</p>
-<p>Our intution is that, given something as <code>(\\x : someType . someExpr) someArg</code>, we want to evaluate this to <code>someExpr</code>, where we replace every <code>x</code> in <code>someExpr</code>. However, a builtin function does exactly that: <code>!subs</code>. This gives us the following rule:</p>
-
-
-<h3 id="evaluation-relation-recap">Evaluation-relation: recap</h3>
-<p>Our evaluation rule is defined as:</p>
-
-<h3 id="is-canonical">Is canonical</h3>
-<p>It is usefull to known when an expression is <em>canonical</em>, thus is fully evaluated. This can be simply stated by a relation taking just one argument and <em>giving no output</em><a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. It would contain exactly the <code>Number</code>s, <code>True</code> and <code>False</code>.</p>
-<p>First, the declaration in the <code>Relations</code>-section:</p>
-
-<p>And the implementation:</p>
-
-<h3 id="bigstep">Bigstep</h3>
-<p>Of course, when we input <code>1 + 2 + 3</code>, we would like te get <code>6</code>, and not <code>1 + 5</code>. For this, we can define a second relation,</p>
-<p>First, let us declare this:</p>
-
-<p>First, the basecase. If something is canonical, we are done and just return that unchanged. We express this as following:</p>
-
-<p>What if we are not done? That means that we can make a single step, <code>e0 → e1</code> and that we calculate this <code>e1</code> to its canonical from <code>e2</code> with the relation itself!</p>
-
-<p>So, we finally did it! Time to see our examples in all their glory!</p>
-
-
-<h2 id="building-the-typechecker">Building the typechecker</h2>
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn1"><p>to enter an unicode character on a linux machine, type <code>Left-Ctrl + Shift + U</code>, release, and type the hexcode of the desired character, e.g. <code>2192</code> to get the right-arrow<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>Luckily, your computer didn't have to run for 10 million years. And it conveniently gave the question too, so that we wouldn't forget it.<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>Mathematicians would call this a <em>set</em>.<a href="#fnref3">↩</a></p></li>
-</ol>
-</div>
+<p>Pfew, luckily we didn't find a counter example.</p>
+<h3 id="stating-progress">Stating progress</h3>
+<p>Another important property is <em>progress</em>. It states that, if an expression is well-typed, we can either in canonical form (a simple value, the result of our calculation).</p>
+<h3 id="testing-examples-from-a-file-against-a-property">Testing examples from a file against a property</h3>
+<h3 id="disabling-quickchecks-and-symbolic-checks">Disabling quickchecks and symbolic checks</h3>
+<p>If the quickchecks take to long, you can disable them, using <code>--quickcheck-runs 0</code>. When the other checks takes to long (liveability and totality), add <code>--no-check</code> to disable them all.</p>
 </body>
 </html>
