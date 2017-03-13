@@ -143,42 +143,35 @@ genArgs vars str
 
 
 
-preprocess	:: (FilePath -> FilePath) -> Map String String -> String -> IO String
-preprocess _ _ []	= return ""
-preprocess target vars ('$':'$':'(':str)
+runIsolated	:: (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO (Output, String -> String, String)
+runIsolated line target vars str
 	= do	let (args, (action, rest))
 				= break (==')') str 
 					|> tail
 					|> options
-		
-		(args', input)	<- genArgs vars (args ++ " --plain")
-		let (_, Just parsedArgs)
-				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor tests") args'
-		
-
+		putStrLn $ show line ++ " Running with input args "++show args
+		(args', input)	<- genArgs vars (args ++ " --plain" ++ " --style WhiteFlat")
+		(_, Just parsedArgs)
+				<- parseArgs ([-1::Int], "ManualPreprocessor run") args'
 		let output	= mainPure parsedArgs
+					& isolateFailure
 					& runPureOutput defaultConfig (mkStdGen 0) input
 					& removeCarriageReturns
-					& get stdOut & unlines
+					& removeUnchanged
+		rest'	<- preprocess line target vars rest
+		return (output, action, rest')
 
-		rest'	<- preprocess target vars rest
+
+preprocess	:: (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO String
+preprocess _ _ _ []	= return ""
+preprocess line target vars ('$':'$':'(':str)
+	= do	
+		(output', action, rest)		<- runIsolated line target vars str
+		let output		= get stdOut output' & unlines
 		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\n\\end{lstlisting}"
-		return (output & action & wrapFile ++ rest')
-preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
-	= do	let (args, (action, rest))
-				= break (==')') str 
-					|> tail
-					|> options
-		
-		(args', input)	<- genArgs vars (args++" --style WhiteFlat")
-		let (_, Just parsedArgs)
-				= unsafePerformIO $ parseArgs ([-1::Int], "ManualPreprocessor svgs") args'
-
-		let output	= mainPure parsedArgs
-					& runPure defaultConfig (mkStdGen 0) input
-					& inMsg ("While generating the svg with "++args)
-					& either error snd3
-		
+		return (output & action & wrapFile ++ rest)
+preprocess line destination vars ('$':'$':'s':'v':'g':'(':str)
+	= do	(output, action, rest)	<- runIsolated line destination vars str
 		let svgs	= output & changedFiles
 					& M.toList
 		svgs |+> (\(n, v) -> 
@@ -189,19 +182,25 @@ preprocess destination vars ('$':'$':'s':'v':'g':'(':str)
 		let dropExt s	= if ".svg" `isSuffixOf` s then s & reverse & drop 4 & reverse else error $ "File without svg extension: "++s
 		let named	= svgs |> fst |> (\n -> "("++ dropExt n++".png)") & concat
 
-		rest'	<- preprocess destination vars rest
+		rest'	<- preprocess line destination vars rest
 		return (action named ++ rest')
 
-preprocess target vars ('$':'$':str)
+preprocess line target vars ('$':'$':str)
 	= do	let (name, (action, rest))
 				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
 					|> options
 		value		<- checkExists name vars ("No variable $$"++name) & either error return
-		rest'		<- preprocess target vars rest
+		rest'		<- preprocess line target vars rest
 		return (action value ++ rest')
-preprocess target vars (ch:str)
-	= do	rest	<- preprocess target vars str
+preprocess (file, line) target vars ('\n':str)
+	= do	rest	<- preprocess (file, line + 1) target vars str
+		return $ '\n':rest
+preprocess line target vars (ch:str)
+	= do	rest	<- preprocess line target vars str
 		return $ ch:rest
+
+
+
 
 
 options	:: String -> (String -> String, String)
@@ -218,10 +217,6 @@ options('!':'f':'i':'l':'e':rest)
 		wrapFile str	= "\\begin{lstlisting}\n"++str++"\\end{lstlisting}\n"
 		in
 		(\str -> str & wrapFile & action, rest')
-options('!':'s':'a':'f':'e':rest)
-	= let	(action, rest')	= options rest
-		in
-		(\str -> (str >>= escapeWeirdChars) & action, rest')
 options ('!':rest)
 	= let	(option, str)	= span (`elem` "0123456789[].,") rest
 		pt	= parseTargetLang optionsSyntax "option" "Assets/Manual/Options.language" option
@@ -233,12 +228,6 @@ options str
 	= (id, str)
 
 
-escapeWeirdChars	:: Char -> String
-escapeWeirdChars '→'	= "->"
-escapeWeirdChars '✓'	= "~"
-escapeWeirdChars '⊢'	= "|-"
-escapeWeirdChars 'Γ'	= "§"
-escapeWeirdChars c	= [c]
 
 matchOptionBody	:: ParseTree -> String -> String
 matchOptionBody (PtSeq _ _ [body, MLiteral _ _ ",", body']) str
@@ -275,8 +264,8 @@ preprocessTo	:: FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> 
 preprocessTo inp destination svgDestination
 	= do	str		<- readFile inp
 		vars		<- buildVariablesIO
-		putStr $ "Processing "++inp++"..."
-		str'		<- preprocess svgDestination vars str
+		putStrLn $ "Processing "++inp++"..."
+		str'		<- preprocess (inp, 1) svgDestination vars str
 		writeFile (destination inp) str'
 		putStrLn $ "\rProcessed "++inp++" and saved it as "++destination inp
 
@@ -302,7 +291,7 @@ outputFile fp
 autoPreprocess	:: IO ()
 autoPreprocess
 	= do	preprocessDir "src/Assets/Manual" outputFile (outputFile' "src/Assets/Manual/")
-		runCommand "src/Assets/Manual/build.sh"
+		runCommand "src/Assets/Manual/build.sh > buildlog.txt &"
 		pass
 
 contentsChanged	:: FilePath -> IO (Map FilePath UTCTime)

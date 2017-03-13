@@ -265,6 +265,7 @@ args	= Args <$> argument str
 			<> help "Dump the parsed type system, usefull for debugging purposes")
 		<*> switch
 			(long "no-check"
+			<> long "nc"
 			<> help "Supress liveabilitychecks, totality checker, quickcheck and others")
 		<*> strOption
 			(long "quickcheck-runs"

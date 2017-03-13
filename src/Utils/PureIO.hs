@@ -220,6 +220,9 @@ onAll' f pts a
 	= pts |> f a |+> catch putStrLn & void
 		
 
+isolateFailure	:: PureIO' config state x -> PureIO' config state ()
+isolateFailure action
+	= isolateFailure' putStrLn (action & void)
 
 
 isolateFailure'	:: (String -> PureIO' config state x ) -> PureIO' config state x -> PureIO' config state x
