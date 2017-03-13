@@ -1,18 +1,19 @@
 Testcase 15
 Test/STFL.language -c Test/DynamizeSTFL.language-changes --dlf --plain
 
-Warning:
-  While checking the totality of function "abstract":
-    Following calls will fall through:
-      abstract(("Bool" (type typeSet)))
-      abstract(("Int" (type typeSet)))
-  While checking the totality of function "equate":
-    Following calls will fall through:
-      equate(type, type)
-  While checking the totality of function "eval":
-    Following calls will fall through:
-      eval("TYPE ERROR")
-  
+While checking file Test/STFL.language with changes: "Test/DynamizeSTFL.language-changes":
+  Warning:
+    While checking the totality of function "abstract":
+      Following calls will fall through:
+        abstract(("Bool" (type typeSet)))
+        abstract(("Int" (type typeSet)))
+    While checking the totality of function "equate":
+      Following calls will fall through:
+        equate(type, type)
+    While checking the totality of function "eval":
+      Following calls will fall through:
+        eval("TYPE ERROR")
+    
 Done quickchecking property Preservation with 8 examples                        
 Done quickchecking property Progress with 8 examples                            
 Done quickchecking property Termination with 8 examples                         

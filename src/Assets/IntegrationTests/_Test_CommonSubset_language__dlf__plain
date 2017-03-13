@@ -1,1 +1,1 @@
-Output {_files = fromList [], _stdOut = ["Error:","  While checking the syntax:","    Syntactic forms d and e both have a common subset of choices.","    Please, separate these into a new rule.","    Common choices are: a | b","    "]}
+Output {_files = fromList [], _stdOut = ["Error:","  While checking file Test/CommonSubset.language:","    While checking the syntax:","      Syntactic forms d and e both have a common subset of choices.","      Please, separate these into a new rule.","      Common choices are: a | b","      "]}

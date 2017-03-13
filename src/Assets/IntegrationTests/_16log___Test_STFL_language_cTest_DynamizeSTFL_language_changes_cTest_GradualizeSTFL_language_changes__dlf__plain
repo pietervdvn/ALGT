@@ -1,26 +1,27 @@
 Testcase 16
 Test/STFL.language -c Test/DynamizeSTFL.language-changes -c Test/GradualizeSTFL.language-changes --dlf --plain
 
-Warning:
-  While checking the totality of function "abstract":
-    Following calls will fall through:
-      abstract(("?" typeSet))
-      abstract(("?" "$"))
-      abstract(("?" (gtype typeSet)))
-      abstract(("Bool" (gtype typeSet)))
-      abstract(("Int" (gtype typeSet)))
-  While checking the totality of function "defaultValue":
-    Following calls will fall through:
-      defaultValue("?")
-  While checking the totality of function "eval":
-    Following calls will fall through:
-      eval("TYPE ERROR")
-  
-  While checking liveability of every clause in function "equate":
-    equate(t, "?")           = t will never match anything, as the possible arguments are already consumed
-    equate(t11 "->" t12, t21 "->" t22)
-                             = equate(t11, t21) "->" equate(t12, t22) will never match anything, as the possible arguments are already consumed
-  
+While checking file Test/STFL.language with changes: "Test/DynamizeSTFL.language-changes", "Test/GradualizeSTFL.language-changes":
+  Warning:
+    While checking the totality of function "abstract":
+      Following calls will fall through:
+        abstract(("?" typeSet))
+        abstract(("?" "$"))
+        abstract(("?" (gtype typeSet)))
+        abstract(("Bool" (gtype typeSet)))
+        abstract(("Int" (gtype typeSet)))
+    While checking the totality of function "defaultValue":
+      Following calls will fall through:
+        defaultValue("?")
+    While checking the totality of function "eval":
+      Following calls will fall through:
+        eval("TYPE ERROR")
+    
+    While checking liveability of every clause in function "equate":
+      equate(t, "?")           = t will never match anything, as the possible arguments are already consumed
+      equate(t11 "->" t12, t21 "->" t22)
+                               = equate(t11, t21) "->" equate(t12, t22) will never match anything, as the possible arguments are already consumed
+    
 Done quickchecking property Preservation with 8 examples                        
 Done quickchecking property Progress with 8 examples                            
 Done quickchecking property Termination with 8 examples                         

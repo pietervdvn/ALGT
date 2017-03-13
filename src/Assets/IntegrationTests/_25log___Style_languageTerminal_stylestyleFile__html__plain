@@ -1,88 +1,89 @@
 Testcase 25
 Style.language Terminal.style styleFile --html --plain
 
-Warning:
-  While checking the totality of function "getDefaultPropertyFor":
-    Following calls will fall through:
-      getDefaultPropertyFor(styleFile, identifier)
-  While checking the totality of function "knownStylesIn":
-    Following calls will fall through:
-      knownStylesIn(styleFile)
-  While checking the totality of function "styleName":
-    Following calls will fall through:
-      styleName(style)
-  
-  While checking liveability of every clause in function "checkLoopsFrom":
-    checkLoopsFrom(styles, start, current)
-                             = checkLoopsFrom(styles, start, fallbackFor(findStyle(styles, current))) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "expandDefaults":
-    expandDefaults(_, defs)  = defs will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "expandFile":
-    expandFile(title (_ (constants:constants) _) defaultSect styleSect)
-                             = title "\n" expandDefaults(constants, defaultSect) expandStyleSect(constants, styleSect) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "expandProperties":
-    expandProperties(c, p nls props)
-                             = p nls expandProperties(c, props) will never match anything, as the possible arguments are already consumed
-    expandProperties(c, (p ":" key:property))
-                             = p "=" findConstant(c, key) will never match anything, as the possible arguments are already consumed
-    expandProperties(_, p "=" key)
-                             = p "=" key will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "expandStyleSect":
-    expandStyleSect(_, nls)  = nls will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "expandStyles":
-    expandStyles(c, style)   = expandStyle(c, style) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "fallbackFor":
-    fallbackFor((_ _ "(" fb ")" _ _ _) props)
-                             = fb will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "findConstant":
-    findConstant((key "=" value) _ _, key)
-                             = value will never match anything, as the possible arguments are already consumed
-    findConstant(key "=" value, key)
-                             = value will never match anything, as the possible arguments are already consumed
-    findConstant(_, key)     = !error("Constant not found: ", key) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "findProperty":
-    findProperty((key "=" value:property) _ _, key)
-                             = value will never match anything, as the possible arguments are already consumed
-    findProperty((key ":" value) _ _, _)
-                             = !error("Non-normalized input") will never match anything, as the possible arguments are already consumed
-    findProperty(key ":" value, _)
-                             = !error("Non-normalized input") will never match anything, as the possible arguments are already consumed
-    findProperty(key "=" value, key)
-                             = value will never match anything, as the possible arguments are already consumed
-    findProperty(_, key)     = "?" will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "findPropertyInDefaults":
-    findPropertyInDefaults(_ (p:properties) _, key)
-                             = findProperty(p, key) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "findStyle":
-    findStyle((_ key "(" fb ")" _ dashes _) properties, key)
-                             = ("\n" key "(" fb ")" "\n" dashes "\n") properties will never match anything, as the possible arguments are already consumed
-    findStyle((_ key _ dashes _) properties, key)
-                             = ("\n" key "\n" dashes "\n") properties will never match anything, as the possible arguments are already consumed
-    findStyle((rest:style), styleN)
-                             = ("\n" "s" "\n" "---" "\n") ("-" "=" 0) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "findStyleIn":
-    findStyleIn(_ (styles:styles) _, id)
-                             = findStyle(styles, id) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "getDefaultPropertyFor":
-    getDefaultPropertyFor(title _ defaults _, propN)
-                             = findPropertyInDefaults(defaults, propN) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "getPropertyFor":
-    getPropertyFor(title constants defaults styles, (styleN:identifier), propN)
-                             = withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN)) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "knownStyles":
-    knownStyles(style)       = styleName(style) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "knownStylesIn":
-    knownStylesIn(_ _ _ (_ (styles:styles) _))
-                             = knownStyles(styles) will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "styleName":
-    styleName((_ h _ _ _) _) = h will never match anything, as the possible arguments are already consumed
-    styleName((_ h "(" _ ")" _ _ _) _)
-                             = h will never match anything, as the possible arguments are already consumed
-  While checking liveability of every clause in function "withDefault":
-    withDefault(_, found)    = found will never match anything, as the possible arguments are already consumed
-  
-  While checking that the functions do have the strictest possible types:
-    "findPropertyInDefaults" can be typed as "questionMark", instead of a "mvalue"
+While checking file Style.language:
+  Warning:
+    While checking the totality of function "getDefaultPropertyFor":
+      Following calls will fall through:
+        getDefaultPropertyFor(styleFile, identifier)
+    While checking the totality of function "knownStylesIn":
+      Following calls will fall through:
+        knownStylesIn(styleFile)
+    While checking the totality of function "styleName":
+      Following calls will fall through:
+        styleName(style)
+    
+    While checking liveability of every clause in function "checkLoopsFrom":
+      checkLoopsFrom(styles, start, current)
+                               = checkLoopsFrom(styles, start, fallbackFor(findStyle(styles, current))) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "expandDefaults":
+      expandDefaults(_, defs)  = defs will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "expandFile":
+      expandFile(title (_ (constants:constants) _) defaultSect styleSect)
+                               = title "\n" expandDefaults(constants, defaultSect) expandStyleSect(constants, styleSect) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "expandProperties":
+      expandProperties(c, p nls props)
+                               = p nls expandProperties(c, props) will never match anything, as the possible arguments are already consumed
+      expandProperties(c, (p ":" key:property))
+                               = p "=" findConstant(c, key) will never match anything, as the possible arguments are already consumed
+      expandProperties(_, p "=" key)
+                               = p "=" key will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "expandStyleSect":
+      expandStyleSect(_, nls)  = nls will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "expandStyles":
+      expandStyles(c, style)   = expandStyle(c, style) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "fallbackFor":
+      fallbackFor((_ _ "(" fb ")" _ _ _) props)
+                               = fb will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "findConstant":
+      findConstant((key "=" value) _ _, key)
+                               = value will never match anything, as the possible arguments are already consumed
+      findConstant(key "=" value, key)
+                               = value will never match anything, as the possible arguments are already consumed
+      findConstant(_, key)     = !error("Constant not found: ", key) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "findProperty":
+      findProperty((key "=" value:property) _ _, key)
+                               = value will never match anything, as the possible arguments are already consumed
+      findProperty((key ":" value) _ _, _)
+                               = !error("Non-normalized input") will never match anything, as the possible arguments are already consumed
+      findProperty(key ":" value, _)
+                               = !error("Non-normalized input") will never match anything, as the possible arguments are already consumed
+      findProperty(key "=" value, key)
+                               = value will never match anything, as the possible arguments are already consumed
+      findProperty(_, key)     = "?" will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "findPropertyInDefaults":
+      findPropertyInDefaults(_ (p:properties) _, key)
+                               = findProperty(p, key) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "findStyle":
+      findStyle((_ key "(" fb ")" _ dashes _) properties, key)
+                               = ("\n" key "(" fb ")" "\n" dashes "\n") properties will never match anything, as the possible arguments are already consumed
+      findStyle((_ key _ dashes _) properties, key)
+                               = ("\n" key "\n" dashes "\n") properties will never match anything, as the possible arguments are already consumed
+      findStyle((rest:style), styleN)
+                               = ("\n" "s" "\n" "---" "\n") ("-" "=" 0) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "findStyleIn":
+      findStyleIn(_ (styles:styles) _, id)
+                               = findStyle(styles, id) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "getDefaultPropertyFor":
+      getDefaultPropertyFor(title _ defaults _, propN)
+                               = findPropertyInDefaults(defaults, propN) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "getPropertyFor":
+      getPropertyFor(title constants defaults styles, (styleN:identifier), propN)
+                               = withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN)) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "knownStyles":
+      knownStyles(style)       = styleName(style) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "knownStylesIn":
+      knownStylesIn(_ _ _ (_ (styles:styles) _))
+                               = knownStyles(styles) will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "styleName":
+      styleName((_ h _ _ _) _) = h will never match anything, as the possible arguments are already consumed
+      styleName((_ h "(" _ ")" _ _ _) _)
+                               = h will never match anything, as the possible arguments are already consumed
+    While checking liveability of every clause in function "withDefault":
+      withDefault(_, found)    = found will never match anything, as the possible arguments are already consumed
+    
+    While checking that the functions do have the strictest possible types:
+      "findPropertyInDefaults" can be typed as "questionMark", instead of a "mvalue"
  # Parsed and rendered: 1,1;108,1
 <html><style><!-- body {background-color:#000000;color:#00ff00;font-size:14px;font-family:"Ubuntu Mono";}
 .error {background-color:#ff0000;color:#000000;font-size:14px;font-family:"Ubuntu Mono";}

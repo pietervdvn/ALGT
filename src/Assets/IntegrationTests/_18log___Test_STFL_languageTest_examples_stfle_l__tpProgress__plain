@@ -1,15 +1,16 @@
 Testcase 18
 Test/STFL.language Test/examples.stfl e -l --tp Progress --plain
 
-Warning:
-  While checking the totality of function "abstract":
-    Following calls will fall through:
-      abstract(("Bool" (type typeSet)))
-      abstract(("Int" (type typeSet)))
-  While checking the totality of function "equate":
-    Following calls will fall through:
-      equate(type, type)
-  
+While checking file Test/STFL.language:
+  Warning:
+    While checking the totality of function "abstract":
+      Following calls will fall through:
+        abstract(("Bool" (type typeSet)))
+        abstract(("Int" (type typeSet)))
+    While checking the totality of function "equate":
+      Following calls will fall through:
+        equate(type, type)
+    
 Done quickchecking property Preservation with 8 examples                        
 Done quickchecking property Progress with 8 examples                            
 Done quickchecking property Termination with 8 examples                         
