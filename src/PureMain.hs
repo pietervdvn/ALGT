@@ -83,7 +83,6 @@ mainPure args
 						liftEith $ parseColoringFile (styleName args) styleContents 
 					else styleName args & Assets.fetchStyle & liftEith
 		let ascii	= noMakeupArg args
-
 		withConfig' (set colorScheme style) $
 			withConfig' (set noMakeup ascii) $ 
 			withConfig' (set shortProof (shortProofs args)) $ do
@@ -226,12 +225,12 @@ dynamizeTS (DynamizeArgs rule error relsToAnalyze relsToAdd)
 
 mainExFilePure	:: ExampleFile -> PureIO [(String, ParseTree)]
 mainExFilePure args
-	= isolateFailure' (const $ return []) $ 
+	= isolateFailure' (\msg -> putStrLn msg >> return []) $ 
 	  do	ts		<- getTS
 		let path	= fileName args
 		contents	<- readFile path
 		let inputs	= (if lineByLine args then filter (/= "") . lines else (:[])) contents
-		parsed		<- mapi inputs |> parseWith path ts (parser args) |+> liftEith
+		parsed		<- mapi inputs |> parseWith path ts (parser args) & allRight' & liftEith
 		let parsed'	= zip inputs parsed
 		handleExampleFile (parser args) args parsed'
 
