@@ -68,7 +68,7 @@ codomain(T1 "->" T2)		= T2
 
 (::)	: expr (in), type (out)	Pronounced as "type in empty context"
 
-(==)	: type (in), type (in)	Pronounced as "equals"
+
 
 
 
@@ -117,12 +117,12 @@ codomain(T1 "->" T2)		= T2
 
 
 
- (i:int)
+ i:int
 -----------			[CanonInt]
  (✓) i
 
 
- (b:bool)
+ b:bool
 -----------			[CanonBool]
  (✓) b
 
@@ -176,8 +176,8 @@ codomain(T1 "->" T2)		= T2
  Γ ⊢ n1 "+" n2, "Int"
 
 
- Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
--------------------------------------------------------- [TIf]
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl = Tr : type
+--------------------------------------------------------------- [TIf]
  Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
 
 
@@ -188,8 +188,8 @@ codomain(T1 "->" T2)		= T2
 
 
 
- Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == domain(Tfunc)
-------------------------------------------------------	[Tapp]
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ = domain(Tfunc) : type
+-------------------------------------------------------------	[Tapp]
  Γ ⊢ e1 e2, codomain(Tfunc)
 
 
@@ -197,23 +197,23 @@ codomain(T1 "->" T2)		= T2
 
 
 
- T1 = T2 : type
---------------- [EqBase]
- T1 == T2
 
 
- T1 == T2
------------------ [EqParL]
- "(" T1 ")" == T2
-
- T1 == T2
------------------ [EqParR]
- T1 == "(" T2 ")"
 
 
- Ta1 == Ta2	Tb1 == Tb2
----------------------------------- [EqArrow]
- Ta1 "->" Tb1   ==   Ta2 "->" Tb2
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
  Properties

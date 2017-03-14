@@ -1,0 +1,34 @@
+ 
+ STFL 
+******
+
+# A Simply Typed Functional Language
+
+ Syntax
+========
+
+basetype::= "Bool" | "Int" | "(" type ")"
+type	::= basetype "->" type | basetype
+
+bool	::= "True" | "False"
+int	::= Number
+var	::= Identifier
+
+expr	::= term "+" expr
+	| term expr
+	| term
+
+
+term	::= "If" expr "Then" expr "Else" expr
+	| "(" "\\" var ":" type "." expr ")"
+	| bool
+	| int
+	| var
+typing			::= var ":" type
+typingEnvironment	::= typing "," typingEnvironment | "{}"
+
+ Syntax Style
+==============
+
+bool	-> "constant"
+

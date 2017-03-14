@@ -1,0 +1,1 @@
+(\ cond : Bool . If cond Then 41 + 1 Else 0) True
