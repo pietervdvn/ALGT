@@ -103,6 +103,7 @@ data ExampleFile	= ExFileArgs
 	, verbose	:: Bool
 	, ptSvg		:: Maybe Name
 	, renderHTML	:: Bool
+	, renderLatex	:: Bool
 	} deriving (Show)
 
 data DynamizeArgs	= DynamizeArgs
@@ -116,7 +117,7 @@ data DynamizeArgs	= DynamizeArgs
 
 instance ActionSpecified ExampleFile where
 	actionSpecified args
-		= [testAllProps, renderHTML] |> (args &) & or
+		= [testAllProps, renderHTML, renderLatex] |> (args &) & or
 			|| ([ruleSymbol, function, stepByStep, testProp, ptSvg] |> (args &) |> isJust & or)
 
 	
@@ -249,6 +250,9 @@ targetFile
 		<*> switch
 			(long "html"
 			<> help "Render the file as styled HTML")
+		<*> switch
+			(long "latex"
+			<> help "Render the file as styled LaTeX")
 
 args	:: Parser Args
 args	= Args <$> argument str

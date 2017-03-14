@@ -1,61 +1,61 @@
  {-# LANGUAGE TemplateHaskell #-}
 module PureMain where
 
-import TypeSystem
 import Prelude hiding (writeFile, putStrLn, readFile)
-
-import Utils.ToString
-import Utils.Utils
-import Utils.ArgumentParser
-import Graphs.Lattice 
-import Utils.LatticeImage (terminalCS, whiteCS)
-import SyntaxHighlighting.ParseTreeImage
-import Utils.PureIO hiding (PureIO)
-
 import AssetsHelper as Assets
 
+import Utils.Utils
+import Utils.ToString
+import Utils.ArgumentParser
+import Utils.PureIO hiding (PureIO)
+import Utils.LatticeImage (terminalCS, whiteCS)
+
+
+import Graphs.Lattice 
+
+import TypeSystem
+import TypeSystem.Parser.ParsingUtils (ws)
 import TypeSystem.Parser.TargetLanguageParser
 import TypeSystem.Parser.TypeSystemParser (parseTypeSystem)
-import TypeSystem.Parser.ParsingUtils (ws)
-
-import ParseTreeInterpreter.FunctionInterpreter
-import ParseTreeInterpreter.RuleInterpreter
-import ParseTreeInterpreter.PropertyTester
-
-import Changer.ChangesParser
-import SyntaxHighlighting.AnsiPT
-import qualified SyntaxHighlighting.AsHTML as HTML
-
-import SyntaxHighlighting.Coloring
 
 import AbstractInterpreter.AbstractInterpreter
 import AbstractInterpreter.QuickCheck
 
+import Changer.ChangesParser
+
 import Dynamize.Dynamize
 
-import Control.Monad
+import ParseTreeInterpreter.FunctionInterpreter
+import ParseTreeInterpreter.PropertyTester
+import ParseTreeInterpreter.RuleInterpreter
+
+import qualified SyntaxHighlighting.AsHTMLPt as HTML
+import qualified SyntaxHighlighting.AsLatexPt as Latex
+import SyntaxHighlighting.AsAnsiPt
+import SyntaxHighlighting.Coloring
+import SyntaxHighlighting.ParseTreeImage
+
 import Control.Arrow ((&&&))
+import Control.Monad
 
-import Text.Parsec hiding (getState)
-import Text.PrettyPrint.ANSI.Leijen (Doc, plain)
-
-import Data.Maybe
-import Data.Either
-import Data.Map (Map, fromList, keys, toList)
-import qualified Data.Map as M
-import Data.List (intercalate, nub, (\\), isSuffixOf)
 import qualified Data.List as L
-import Data.Monoid ((<>))
-import Data.Hashable
+import qualified Data.Map as M
 import Data.Bifunctor (first)
-import Options.Applicative
-
+import Data.Either
+import Data.Hashable
+import Data.List (intercalate, nub, (\\), isSuffixOf)
+import Data.Map (Map, fromList, keys, toList)
+import Data.Maybe
+import Data.Monoid ((<>))
 
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
+import Options.Applicative
 
 import System.Random
+import Text.Parsec hiding (getState)
+import Text.PrettyPrint.ANSI.Leijen (Doc, plain)
 
 
 
@@ -235,10 +235,13 @@ mainExFilePure args
 		let parsed'	= zip inputs parsed
 		handleExampleFile (parser args) args parsed'
 
-		when (renderHTML args) $ do
+		let renderSpecial	= renderHTML args || renderLatex args
+		let renderer	= [(renderHTML args, HTML.renderPT), (renderLatex args, Latex.renderPT)]
+					& filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
+		when renderSpecial $ do
 			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
 					& liftEith
-			printPtHTML pts'
+			printPtRendered renderer pts'
 
 		return parsed'
 
@@ -266,11 +269,11 @@ handleExampleFile parsedWith exFile pts
 		] |+> (exFile &) & void
 
 
-printPtHTML	:: ParseTreeA LocationInfo -> PureIO ()
-printPtHTML pt
+printPtRendered	:: (FullColoring -> SyntaxStyle -> ParseTree -> String) -> ParseTreeA LocationInfo -> PureIO ()
+printPtRendered renderer pt
 	= do	ts	<- getTS
 		fc	<- getFC
-		let rendered	= HTML.renderPT fc (get tsStyle ts) $ deAnnot pt
+		let rendered	= renderer fc (get tsStyle ts) $ deAnnot pt
 		putStrLn $ " # Parsed and rendered: "++(pt & get ptAnnot & toParsable)
 		putStrLn rendered
 

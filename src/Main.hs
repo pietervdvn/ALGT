@@ -27,8 +27,8 @@ import ParseTreeInterpreter.RuleInterpreter
 
 {- Imports to test -}
 import SyntaxHighlighting.Coloring
-import SyntaxHighlighting.AnsiPT as Ansi
-import SyntaxHighlighting.AsHTML as HTML
+import SyntaxHighlighting.AsAnsiPt as Ansi
+import SyntaxHighlighting.AsHTMLPt as HTML
 
 
 

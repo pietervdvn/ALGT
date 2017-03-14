@@ -1,4 +1,4 @@
-module TypeSystem.Parser.ExpressionParser (MEParseTree, typeAs, parseExpression, parseExpression') where
+module TypeSystem.Parser.ExpressionParser (MEParseTree, typeAs, parseExpression, parseExpression', dynamicTranslate) where
 
 {-
 This module defines a parser for expressions.
@@ -216,7 +216,7 @@ matchTyping _ _ bnf _ pt
 
 
 
--- only used for builtin functions, as it's arguments do not have a typing. (If this were so, we wouldn't be ably to handle arbitrary syntaxes)
+-- only used for builtin functions, as it's arguments do not have a typing.
 dynamicTranslate	:: Map Name Type -> Syntax -> TypeName -> MEParseTree -> Either String Expression
 dynamicTranslate _ _ tp (MePtToken  s)	= MLiteral () (tp, -1) s & MParseTree & return
 dynamicTranslate f s tp (MePtSeq  pts)	= pts |+> dynamicTranslate f s tp |> MSeq (tp, -1) 

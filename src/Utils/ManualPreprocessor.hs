@@ -72,9 +72,13 @@ buildVariables
 			& advancedTable (\bif -> [verbatim $ get bifName bif, get bifDescr bif
 					, verbatim $ argText (get bifInArgs bif) (get bifResultType bif)
 					]))
+	, ("styles", AssetsHelper.knownStyles & M.keys |> (\str ->  str & reverse & drop 6 & reverse) & list)
 	] & M.fromList 
 
 
+
+list		:: [String] -> String
+list strs	= strs |> (" - "++) & unlines
 
 argText		:: Either (TypeName, Int) [TypeName] -> TypeName -> String
 argText (Left (inTp, nr)) resT
@@ -142,15 +146,16 @@ genArgs vars str
 	= str & words |+> genArg vars |> unzip ||>> M.unions
 
 
+runIsolated	= runIsolated' (++ " --plain --style WhiteFlat")
 
-runIsolated	:: (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO (Output, String -> String, String)
-runIsolated line target vars str
+runIsolated'	:: (String -> String) -> (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO (Output, String -> String, String)
+runIsolated' argEdit line target vars str
 	= do	let (args, (action, rest))
 				= break (==')') str 
 					|> tail
 					|> options
 		putStrLn $ show line ++ " Running with input args "++show args
-		(args', input)	<- genArgs vars (args ++ " --plain" ++ " --style WhiteFlat")
+		(args', input)	<- genArgs vars (argEdit args)
 		(_, Just parsedArgs)
 				<- parseArgs ([-1::Int], "ManualPreprocessor run") args'
 		let output	= mainPure parsedArgs
@@ -164,6 +169,11 @@ runIsolated line target vars str
 
 preprocess	:: (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO String
 preprocess _ _ _ []	= return ""
+preprocess line target vars ('$':'$':'!':'(':str)
+	= do	
+		(output', action, rest)		<- runIsolated' id line target vars str
+		let output		= get stdOut output' & unlines
+		return (output & action ++ rest)
 preprocess line target vars ('$':'$':'(':str)
 	= do	
 		(output', action, rest)		<- runIsolated line target vars str
