@@ -18,5 +18,5 @@ Consider
 THis should give an error, as "(" 5 ")" can be parsed as both arith and expr
 
 Allow Number (upper case) as type for functions and relations
-Empty output for manual:STLFBOol and examples
+
 Fix a = b : type: remove typing

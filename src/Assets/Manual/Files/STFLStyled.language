@@ -30,5 +30,13 @@ typingEnvironment	::= typing "," typingEnvironment | "{}"
  Syntax Style
 ==============
 
+type	-> "type"
+basetype	-> "type"
+
+var	-> "identifier"
+int	-> "constant"
 bool	-> "constant"
+expr	-> "statement"
+term.2	-> "noise"
+term.1	-> "keyword"
 

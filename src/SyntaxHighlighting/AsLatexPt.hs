@@ -22,7 +22,7 @@ _renderPart (MLiteral effect _ conts)
 _renderPart (MInt effect inf i)
 	= _renderPart (MLiteral effect inf $ show i)
 _renderPart (PtSeq effect _ pts)
-	= pts |> _renderPart & concat
+	= pts |> _renderPart & unwords & effect
 
 
 renderWithStyle	:: FullColoring -> Maybe Name -> String -> String
