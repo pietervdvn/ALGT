@@ -3,24 +3,29 @@ Test/STFL.language -c Test/DynamizeSTFL.language-changes -c Test/GradualizeSTFL.
 
 While checking file Test/STFL.language with changes: "Test/DynamizeSTFL.language-changes", "Test/GradualizeSTFL.language-changes":
   Warning:
-    While checking the totality of function "abstract":
-      Following calls will fall through:
-        abstract(("?" typeSet))
-        abstract(("?" "$"))
-        abstract(("?" (gtype typeSet)))
-        abstract(("Bool" (gtype typeSet)))
-        abstract(("Int" (gtype typeSet)))
     While checking the totality of function "defaultValue":
       Following calls will fall through:
         defaultValue("?")
+    While checking the totality of function "equate":
+      Following calls will fall through:
+        equate("Bool", "Bool")
+        equate("Bool", "Int")
+        equate("Bool", (gtypeL "->" gtype))
+        equate("Bool", ("(" gtype ")"))
+        equate("Int", "Bool")
+        equate("Int", "Int")
+        equate("Int", (gtypeL "->" gtype))
+        equate("Int", ("(" gtype ")"))
+        equate((gtypeL "->" gtype), "Bool")
+        equate((gtypeL "->" gtype), "Int")
+        equate((gtypeL "->" gtype), ("(" gtype ")"))
+        equate(("(" gtype ")"), "Bool")
+        equate(("(" gtype ")"), "Int")
+        equate(("(" gtype ")"), (gtypeL "->" gtype))
+        equate(("(" gtype ")"), ("(" gtype ")"))
     While checking the totality of function "eval":
       Following calls will fall through:
         eval("TYPE ERROR")
-    
-    While checking liveability of every clause in function "equate":
-      equate(t, "?")           = t will never match anything, as the possible arguments are already consumed
-      equate(t11 "->" t12, t21 "->" t22)
-                               = equate(t11, t21) "->" equate(t12, t22) will never match anything, as the possible arguments are already consumed
     
 Done quickchecking property Preservation with 8 examples                        
 Done quickchecking property Progress with 8 examples                            
@@ -49,11 +54,9 @@ gtype            ::= gtypeL "->" gtype
                  | gtypeL
 gtypeL           ::= "Int"
                  | "Bool"
-                 | ParO gtype ParC
+                 | "(" gtype ")"
                  | "?"
 number           ::= Number
-typeSet          ::= gtype typeSet
-                 | "$"
 typing           ::= var ":" gtype
 typingEnvironment::= typing "," typingEnvironment
                  | "{}"
@@ -82,45 +85,27 @@ var	 -> "identifier"
  Functions 
 ===========
 
-abstract                 : typeSet -> gtype
-abstract("$")            = !error("Undefined")
-abstract("Int" "$")      = "Int"
-abstract("Bool" "$")     = "Bool"
-abstract((T1 "->" T2) ts)
-                         = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
-
-
 cod                      : gtype -> gtype
+cod("(" T ")")           = cod(T)
 cod(T1 "->" T2)          = T2
 cod("Bool")              = !error("Not defined for Bool")
 cod("Int")               = !error("Not defined for Int")
 cod("?")                 = "?"
 
 
-codomains                : typeSet -> typeSet
-codomains((_ "->" T2) ts)
-                         = T2 codomains(ts)
-codomains("$")           = "$"
-codomains(_)             = !error("Not defined, as this is not a proper list of functions")
-
-
 defaultValue             : gtype -> eL
 defaultValue("Bool")     = "True"
 defaultValue("Int")      = 1
 defaultValue(ta "->" tr) = "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
+defaultValue("(" T ")")  = defaultValue(T)
 
 
 dom                      : gtype -> gtypeL
+dom("(" T ")")           = dom(T)
 dom(T1 "->" T2)          = T1
 dom("Bool")              = !error("Not defined for Bool")
 dom("Int")               = !error("Not defined for Int")
 dom("?")                 = "?"
-
-
-domains                  : typeSet -> typeSet
-domains((T1 "->" _) ts)  = T1 domains(ts)
-domains("$")             = "$"
-domains(_)               = !error("Not defined, as this is not a proper list of functions")
 
 
 equate                   : gtype -> gtype -> gtype

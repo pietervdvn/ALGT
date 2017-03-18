@@ -3,6 +3,12 @@ Style.language Terminal.style styleFile --html --plain
 
 While checking file Style.language:
   Warning:
+    While checking the totality of function "checkAllLoops":
+      Following calls will fall through:
+        checkAllLoops(styles, (style styles))
+    While checking the totality of function "findPropertyInDefaults":
+      Following calls will fall through:
+        findPropertyInDefaults((defaultsHeader properties nls), identifier)
     While checking the totality of function "getDefaultPropertyFor":
       Following calls will fall through:
         getDefaultPropertyFor(styleFile, identifier)
@@ -13,23 +19,14 @@ While checking file Style.language:
       Following calls will fall through:
         styleName(style)
     
-    While checking liveability of every clause in function "checkLoopsFrom":
-      checkLoopsFrom(styles, start, current)
-                               = checkLoopsFrom(styles, start, fallbackFor(findStyle(styles, current))) will never match anything, as the possible arguments are already consumed
-    While checking liveability of every clause in function "expandDefaults":
-      expandDefaults(_, defs)  = defs will never match anything, as the possible arguments are already consumed
     While checking liveability of every clause in function "expandFile":
       expandFile(title (_ (constants:constants) _) defaultSect styleSect)
                                = title "\n" expandDefaults(constants, defaultSect) expandStyleSect(constants, styleSect) will never match anything, as the possible arguments are already consumed
     While checking liveability of every clause in function "expandProperties":
-      expandProperties(c, p nls props)
-                               = p nls expandProperties(c, props) will never match anything, as the possible arguments are already consumed
       expandProperties(c, (p ":" key:property))
                                = p "=" findConstant(c, key) will never match anything, as the possible arguments are already consumed
       expandProperties(_, p "=" key)
                                = p "=" key will never match anything, as the possible arguments are already consumed
-    While checking liveability of every clause in function "expandStyleSect":
-      expandStyleSect(_, nls)  = nls will never match anything, as the possible arguments are already consumed
     While checking liveability of every clause in function "expandStyles":
       expandStyles(c, style)   = expandStyle(c, style) will never match anything, as the possible arguments are already consumed
     While checking liveability of every clause in function "fallbackFor":
@@ -67,9 +64,6 @@ While checking file Style.language:
     While checking liveability of every clause in function "getDefaultPropertyFor":
       getDefaultPropertyFor(title _ defaults _, propN)
                                = findPropertyInDefaults(defaults, propN) will never match anything, as the possible arguments are already consumed
-    While checking liveability of every clause in function "getPropertyFor":
-      getPropertyFor(title constants defaults styles, (styleN:identifier), propN)
-                               = withDefault(findPropertyInDefaults(defaults, propN), getPropertyForS(title constants defaults styles, findStyleIn(styles, styleN), propN)) will never match anything, as the possible arguments are already consumed
     While checking liveability of every clause in function "knownStyles":
       knownStyles(style)       = styleName(style) will never match anything, as the possible arguments are already consumed
     While checking liveability of every clause in function "knownStylesIn":
@@ -79,8 +73,6 @@ While checking file Style.language:
       styleName((_ h _ _ _) _) = h will never match anything, as the possible arguments are already consumed
       styleName((_ h "(" _ ")" _ _ _) _)
                                = h will never match anything, as the possible arguments are already consumed
-    While checking liveability of every clause in function "withDefault":
-      withDefault(_, found)    = found will never match anything, as the possible arguments are already consumed
     
     While checking that the functions do have the strictest possible types:
       "findPropertyInDefaults" can be typed as "questionMark", instead of a "mvalue"
