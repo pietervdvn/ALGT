@@ -38,15 +38,15 @@ runProp _ _ _ " "	= " "
 runProp fc style (key, effect) contents
 	= let	mval	= getProperty fc style key 
 		contValue
-			= maybe contents (\val -> effect val contents) mval
+			= maybe contents (`effect` contents) mval
 		in
 		contValue
 
 
 effects	:: [(Name, Either Int String -> String -> String)] 
 effects	
-      = [ ("foreground-color", (\value contents -> "\\color[HTML]{" ++ color value ++ "}"++contents))
-	, ("background-color", (\value contents -> "\\colorbox[HTML]{"++ color value ++ "}{"++contents++"}"))
+      = [ ("foreground-color", \value contents -> "\\color[HTML]{" ++ color value ++ "}"++contents)
+	, ("background-color", \value contents -> "\\colorbox[HTML]{"++ color value ++ "}{"++contents++"}")
 	]
 
 

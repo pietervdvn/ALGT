@@ -33,7 +33,7 @@ parseTargetLang s tp fp inp
 
 parseTargetLang' :: Syntax -> TypeName -> (Bool, Bool) -> FilePath -> String -> Either String (ParseTreeA LocationInfo)
 parseTargetLang' s tp (capture, requireEOF) fp inp
-	= do	parsed	<- runParserT (parseSyntax s capture tp <* (if requireEOF then (ws >> eof) else pass)) () fp inp
+	= do	parsed	<- runParserT (parseSyntax s capture tp <* (if requireEOF then ws >> eof else pass)) () fp inp
 		parsed & BF.first show
 
 parseSyntax	:: Syntax -> Bool -> Name -> Parser u ParseTreeLi
