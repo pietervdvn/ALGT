@@ -15,6 +15,8 @@ import Data.Map (Map, member, (!))
 
 import qualified Data.Map as M
 
+import Control.Monad
+
 
 subtract	:: Syntax -> [AbstractSet] -> AbstractSet -> [AbstractSet]
 subtract s	= subtractWith s M.empty
@@ -58,9 +60,11 @@ subtractArgs s args (minus:minuses)
 subtractArg	:: Syntax -> Arguments -> Arguments -> [Arguments]
 subtractArg s args minus
  | length args /= length minus	= error "Length of arguments in minus don't match; this is weird"
- | otherwise	= let	pointWise	= zip args minus |> (\(e, emin) -> subtract s [e] emin)
-			in	
-			allCombinations pointWise
+ | otherwise	= let	pointWise	= zip args minus |> (\(eArg, emin) -> subtract s [eArg] emin)	:: [[AbstractSet]]
+			in
+			if length pointWise /= length args then error "HUH?" else
+				replacePointwise args pointWise
+
 
 
 -------------------------------------------------------- Actual subtraction algorithm  ----------------------------------------------------
@@ -120,10 +124,23 @@ _subtract debug s k e@(AsSeq gen choice seq) emin@(AsSeq genMin choiceMin seqMin
 	= do	let diffPoints	= getPrototype s (gen, choice)	-- Don't use genMin as prototype here, it might have more literals
 					|> isRuleCall	:: [Bool]
 		-- Only where rulecalls are in the prototype, we can subtract. The rest should be the same anyway
-		let subbedSeq'	=  zip3 diffPoints seq seqMin
+		let subbedSeq	=  zip3 diffPoints seq seqMin
 					|> (\(isDiffPoint, e', eMin') -> if isDiffPoint then _subtract' debug s k e' eMin' else []) 
 					:: [[AbstractSet]]
-		seq'		<- replacePointwise seq subbedSeq'	:: [[AbstractSet]]
+		unless (length subbedSeq == length seq) $ error $ "Bug: length of subbedSeq /= length of seq\n"
+			 ++ unlines	[ "e: "++show e
+					, "emin: "++show emin
+					, "e-proto: "++show (getPrototype s (gen, choice))
+					, "emin-proto: "++show (getPrototype s (genMin, choiceMin))
+
+					, "seq: "++show seq
+					, "seqMin: "++show seqMin
+					, "subbedSeq: "++ show subbedSeq
+					, "diffpoints: "++show diffPoints
+					, ""
+					]
+
+		seq'		<- replacePointwise seq subbedSeq	:: [[AbstractSet]]
 		trace' debug ("Case 1, 2 matching seqs, diffpoints are "++show diffPoints) e emin $
 	  		return $ AsSeq gen choice seq'
  | otherwise	= trace' debug ("Case 1.1: seqs no match ("++show (getPrototype s (gen, choice)) ++" /= "++show (getPrototype s (genMin, choiceMin))++ ")")
@@ -161,7 +178,7 @@ prototypesMatch (a:as) (b:bs)
 getPrototype	:: Syntax -> (TypeName, Int) -> [BNF]
 getPrototype s (tn, choice)
 	= let 	bnfseq	= fromSeq' $ (get bnf s ! tn) & safeIndex ("getPrototype: no prototype defined for type "++tn) choice in
-		bnfseq |> (\bnf -> if isRuleCall bnf then BNFRuleCall "" else bnf)
+		bnfseq & filter (not . isDissapearing) |> (\bnf -> if isRuleCall bnf then BNFRuleCall "" else bnf)
 
 {-
 

@@ -192,9 +192,16 @@ instance ToString BNF where
 	debug ast	= toStr debug ast
 
 toStr			:: (BNF -> String) -> BNF -> String
-toStr _ (Literal str)	= show str
+toStr _ (Literal str)	= "\"" ++ esc str ++ "\""
 toStr f (BNFSeq asts)	= asts |> f & unwords
 toStr _ (BNFRuleCall n)	= n
+
+
+esc		:: String -> String
+esc []		= []
+esc ('"':str)	= "\"" ++ esc str
+esc ('\\':str)	= "\\\\" ++ esc str
+esc (c:str)	= c:esc str
 
 instance ToString WSMode where
 	toParsable IgnoreWS	= "::="

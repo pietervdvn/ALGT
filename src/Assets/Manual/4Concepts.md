@@ -5,9 +5,13 @@
 Automated description of an arbitrary language
 ------------------------------------------------
 
-### Invariants
+### Invariants and checks
 
 No common choices
+
+No left recursion -> lattice properties
+
+Left consumption (expr | expr "+" ...) -> error msg
 
 
 
@@ -34,7 +38,6 @@ Functions
 Natural deduction representation
 ---------------------------------
 
-Quite straightforward
 
 Algorithms 
 -------------------
