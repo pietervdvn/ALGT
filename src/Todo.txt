@@ -20,3 +20,7 @@ THis should give an error, as "(" 5 ")" can be parsed as both arith and expr
 Allow Number (upper case) as type for functions and relations
 
 Fix a = b : type: remove typing
+
+
+
+http://www.wiskunde.ugent.be/praktisch/proef/master

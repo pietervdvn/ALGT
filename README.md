@@ -8,20 +8,3 @@ As this is built with stack, building from source should be easy just as well! R
 
 
 
-# Usefull hex codes
-
-You never now which fancy symbols you'll want to type.
-
-Type CTRL+SHIFT+U, followed by a hexcode to obtain following chars:
-→	2192
-✓	2713
-⊢	22a2
-Γ	0393
-γ	03b3
-ɛ	025b
-λ       03bb
-∨       2228
-∧       2227
-⇒       21d2
-⋎       22ce
-⋏       22cf

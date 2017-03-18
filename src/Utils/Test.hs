@@ -77,7 +77,7 @@ testArgs      = [ exp "No action specified" ["Test/STFL.language"]
 		, exp "T1 is typed as both \"typeL\" and \"bool\", which don't have a common supertype"
 			["Test/FuncTypeErr.language", "--dlf"]
 {-25-}		, exp "<html>" ["Style.language", "Terminal.style", "styleFile", "--html"]
-		, exp "Could not parse expression of type expr" ["Test/STFLBool.language", "Test/examples.stfl", "expr", "-l"]
+		, exp "Could not parse expression of form expr" ["Test/STFLBool.language", "Test/examples.stfl", "expr", "-l"]
 		] |> over _1 (++["--plain"]) & nub
 
 

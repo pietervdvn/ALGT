@@ -10,7 +10,12 @@
 # Variable
 x	::= Identifier
 
-label	::= "x"	| "(" label "⋎" label ")" | "(" label "⋏" label ")"
+# public < restriced < CIA < TOP
+# public < restriced < NSA < TOP
+# NSA and CIA are not supposed to know each other secrets
+levels	::= "public" | "restriced" | "CIA" | "NSA" | "TOP"
+
+label	::= levels | "(" label "⋎" label ")" | "(" label "⋏" label ")"
 
 bool	::= "true" | "false"
 type	::= "Bool" label | "(" type "→" label type ")"
@@ -67,6 +72,9 @@ meet(t0, t1)
 
 #(→)	: e (in), e (out)	Pronounced as "evaluation"
 (⊢)	: typingEnvironment (in), t (in), type (out)	Pronounced as "context entails typing"
+
+(<:)	: type (in), type (in)	Pronounced as "is subtype of"
+(≼)	: label (in), label (in)	Pronounced as "is less secure"
 #(::)	: e (in), type (out)	Pronounced as "type in empty context"
 #(==)	: type (in), type (in)	Pronounced as "equals"
 #(✓)	: e (in)		Pronounced as "is canonical"
@@ -79,13 +87,81 @@ meet(t0, t1)
  Γ[x ":" S] ⊢ x, S
 
 
-----------------------	[Sb]
+--------------------------	[Sb]
  _ ⊢ (bool l:v), "Bool" l
 
 
- x ":" S1 "," Γ ⊢ t : S2
---------------------------------------------	[Sλ]
- Γ ⊢ ( "λ" x ":" S1 "." t) l , S1 "→" l S2
+ (x ":" S1) "," Γ ⊢ t, S2
+----------------------------------------------------	[Sλ]
+ Γ ⊢ ( "λ" x ":" S1 "." t) l , "(" S1 "→" l S2 ")"
+
+
+Γ ⊢ t1 , "Bool" l1	Γ ⊢ t2 , "Bool" l2
+--------------------------------------------- [SOp]
+Γ ⊢ t1 op t2, "Bool" ("(" l1 "⋎" l2 ")")
+
+
+Γ ⊢ t1 , "(" S11 "→" l S12 ")"		Γ ⊢ t2 , S2	S2 <: S11
+------------------------------------------------------------------- [SApp]
+Γ ⊢ t1 op t2, "Bool" ("(" l1 "⋎" l2 ")")
+
+
+
+Γ ⊢ t: "Bool" l	Γ ⊢ t1, S1	Γ ⊢ t2, S2
+---------------------------------------------- [SIff]
+Γ ⊢ "if" t "then" t1 "else" t2, join
+
+
+
+
+
+
+
+l0 ≼ l1
+------------------------ [Subtyping Base] 
+"Bool" l0 <: "Bool" l1
+
+
+S21 <: S11	S12 <: S22	l1 ≼ l2
+-------------------------------------------------- [Subtyping Curry]
+"(" S11 "→" l1 S12 ")" <: "(" S21 "→" l2 S22 ")" 
+
+
+
+
+
+
+
+
+
+
+------ [LRefl]
+l ≼ l
+
+
+------------------------ [LPub]
+"public" ≼ "restriced"
+
+
+
+-------------------- [LCIA]
+"restriced"  ≼ "CIA"
+
+
+
+-------------------- [LNSA]
+"restriced"  ≼ "NSA"
+
+
+-------------- [LCIATop]
+"CIA"  ≼ "TOP"
+
+-------------- [LNSATop]
+"NSA"  ≼ "TOP"
+
+
+
+
 
 
 
