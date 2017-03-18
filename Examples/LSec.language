@@ -17,15 +17,15 @@ levels	::= "public" | "restriced" | "CIA" | "NSA" | "TOP"
 
 label	::= levels | "(" label "⋎" label ")" | "(" label "⋏" label ")"
 
-bool	::= "true" | "false"
+bool	::= "True" | "False"
 type	::= "Bool" label | "(" type "→" label type ")"
 # raw term
-r	::= bool | "λ" x ":" type "." t
+r	::= bool | "(" "λ" x ":" type "." t ")"
 v	::= r label
 
-t	::= tL t | tL op t | tL "::" type | tL
+t	::= tL t | tL op t | tL "::" type | tL "⋎" label | tL 
 # T without left recursion
-tL	::= v | x | "if" t "then" t "else" t | "(" t ")"
+tL	::= v | x | "If" t "Then" t "Else" t | "(" t ")"
 
 # Operations
 op	::= "∨" | "∧" | "⇒"
@@ -38,9 +38,54 @@ typingEnvironment	::= typing "," typingEnvironment | "$"
  Functions
 ===========
 
-joinL	: label -> label -> label
-joinL(l0, l1)
-	= "(" l0 "⋎" l1 ")"
+
+
+and	: bool -> bool -> bool
+and("True", "True")	= "True"
+and("True", "False")	= "False"
+and("False", "True")	= "False"
+and("False", "False")	= "False"
+
+
+or	: bool -> bool -> bool
+or("True","True")	= "True"
+or("True","False")	= "True"
+or("False","True")	= "True"
+or("False","False")	= "False"
+
+
+imp	: bool -> bool -> bool
+imp("True","True")	= "True"
+imp("True","False")	= "False"
+imp("False","True")	= "True"
+imp("False","False")	= "True"
+
+
+joinL	: levels -> levels -> levels
+joinL("TOP", _)
+	= "TOP"
+joinL(_, "TOP")
+	= "TOP"
+joinL("NSA", "CIA")
+	= "TOP"
+joinL("CIA", "NSA")
+	= "TOP"
+joinL("NSA", _)
+	= "NSA"
+joinL(_, "NSA")
+	= "NSA"
+joinL("CIA", _)
+	= "CIA"
+joinL(_, "CIA")
+	= "CIA"
+joinL("restriced", _)
+	= "restriced"
+joinL(_, "restriced")
+	= "restriced"
+joinL("public", "public")
+	= "public"
+
+
 
 # " ∨
 join	: type -> type -> type
@@ -66,18 +111,23 @@ meet(t0, t1)
 	= !error:type("Undefined")
 
 
+stamp	: type -> label -> type
+stamp("Bool" l1, l2)	= "Bool" ("(" l1 "⋎" l2 ")")
+stamp("(" S1 "→" l1 S2 ")", l2)= "(" S1 "→" ("(" l1 "⋎" l2 ")") S2 ")"
+
 
  Relations
 ===========
 
-#(→)	: e (in), e (out)	Pronounced as "evaluation"
+(→)	: t (in), t (out)	Pronounced as "small step"
+(→*)	: t (in), t (out)	Pronounced as "big step"
 (⊢)	: typingEnvironment (in), t (in), type (out)	Pronounced as "context entails typing"
 
 (<:)	: type (in), type (in)	Pronounced as "is subtype of"
 (≼)	: label (in), label (in)	Pronounced as "is less secure"
 #(::)	: e (in), type (out)	Pronounced as "type in empty context"
 #(==)	: type (in), type (in)	Pronounced as "equals"
-#(✓)	: e (in)		Pronounced as "is canonical"
+(✓)	: t (in)		Pronounced as "is canonical"
 
  Rules
 =======
@@ -93,7 +143,7 @@ meet(t0, t1)
 
  (x ":" S1) "," Γ ⊢ t, S2
 ----------------------------------------------------	[Sλ]
- Γ ⊢ ( "λ" x ":" S1 "." t) l , "(" S1 "→" l S2 ")"
+ Γ ⊢ ( "(" "λ" x ":" S1 "." t ")" ) l , "(" S1 "→" l S2 ")"
 
 
 Γ ⊢ t1 , "Bool" l1	Γ ⊢ t2 , "Bool" l2
@@ -103,7 +153,7 @@ meet(t0, t1)
 
 Γ ⊢ t, "Bool" l		Γ ⊢ t1, S1	Γ ⊢ t2, S2
 ---------------------------------------------------- [SIf]
-Γ ⊢ "if" t "then" t1 "else" t2, join
+Γ ⊢ "If" t "Then" t1 "Else" t2, join
 
 
 
@@ -119,6 +169,10 @@ meet(t0, t1)
 Γ ⊢ t "::" S2 , S2
 
 
+
+Γ ⊢ t, S
+-------------------------------- [S⋎]
+Γ ⊢ t "⋎" label  , stamp(S, label)
 
 
 
@@ -169,7 +223,67 @@ l ≼ l
 
 
 
+------------------------------------------------------------- [EvalOpDisj]
+((b1:bool) l1) "∨" ((b2:bool) l2) → or(b1, b2) joinL(l1, l2)
 
+
+
+-------------------------------------------------------------- [EvalOpConj]
+((b1:bool) l1) "∧" ((b2:bool) l2) → and(b1, b2) joinL(l1, l2)
+
+
+
+
+-------------------------------------------------------------- [EvalOpImp]
+((b1:bool) l1) "⇒" ((b2:bool) l2) → imp(b1, b2) joinL(l1, l2)
+
+
+
+
+
+------------------------------------------------------ [EvalApp]
+ (("(" "λ" x ":" S "." t ")") l) v  → !subs:tL(x, v, t) "⋎" l
+
+
+
+------------------------------------------------------- [EvalIfTrue]
+ "If" (("True":bool) l) "Then" t1 "Else" t2 → t1 "⋎" l
+
+
+-------------------------------------------------------- [EvalIfFalse]
+ "If" (("False":bool) l) "Then" t1 "Else" t2 → t2 "⋎" l
+
+
+------------------------------- [SecrecyMerging]
+ (r l1) "⋎" l2 → r joinL(l1, l2)
+
+
+
+---------------- [EvalPar]
+ "(" t ")" → t
+
+
+
+   t1 → t2
+---------------- [EvalCtx]
+ f[t1] → f[t2]
+
+
+
+  
+ ---------------- [IsCanon]
+  (✓) (b:bool) l
+
+
+
+ (✓) v
+--------- [BaseBigStep]
+ v →* v
+
+
+ t0 → t1	t1 →* t2
+-------------------------- [RecBigStep]
+ t0 →* t2
 
 
 # Properties
