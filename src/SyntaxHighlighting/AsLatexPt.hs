@@ -18,7 +18,7 @@ renderPT fc style pt
 
 _renderPart	:: ParseTreeA (String -> String) -> String
 _renderPart (MLiteral effect _ conts)
-		= (conts & escape & effect)
+		= conts & escape & effect
 _renderPart (MInt effect inf i)
 	= _renderPart (MLiteral effect inf $ show i)
 _renderPart (PtSeq effect _ pts)
