@@ -66,6 +66,7 @@ main' args
 			when (isNothing parsedArgs) $
 				error  "No typesystem file given. See -h"
 			let (Just parsedArgs')	= parsedArgs
+			-- read input from StdIn
 			let needsInput	= parsedArgs' & exampleFiles |> fileName |> (== ".") & or	-- we give each exampleFile config the same input
 			extraFile 	<- if needsInput then readLines else return []
 			let extraInput	= M.singleton "." $ unlines extraFile

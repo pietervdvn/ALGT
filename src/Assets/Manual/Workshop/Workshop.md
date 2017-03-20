@@ -1,5 +1,10 @@
 
- Hello world
--------------
+Build your own language
+========================
 
-How are you doing?
+Building a extremely simple language
+------------------------------------
+
+$$(STFL.language)
+
+→

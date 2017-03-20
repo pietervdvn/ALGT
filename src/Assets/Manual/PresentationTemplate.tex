@@ -1,4 +1,5 @@
-\documentclass[ignorenonframetext,]{beamer}
+\documentclass{beamer}
+
 \setbeamertemplate{caption}[numbered]
 \setbeamertemplate{caption label separator}{: }
 \setbeamercolor{caption name}{fg=normal text.fg}
@@ -7,26 +8,49 @@
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \usepackage{fixltx2e} % provides \textsubscript
-\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
-  \usepackage[T1]{fontenc}
-  \usepackage[utf8]{inputenc}
-\else % if luatex or xelatex
-  \ifxetex
-    \usepackage{mathspec}
-  \else
-    \usepackage{fontspec}
-  \fi
-  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
-\fi
-\usetheme[footline=sections,faculty=we,language=dutch,framenumber,totalframenumber]{UniversiteitGent}
-% use upquote if available, for straight quotes in verbatim environments
-\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
-% use microtype if available
-\IfFileExists{microtype.sty}{%
-\usepackage{microtype}
-\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
-}{}
-\newif\ifbibliography
+
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\DeclareUnicodeCharacter{2192}{$\rightarrow$}
+\DeclareUnicodeCharacter{25B}{$\varepsilon$}
+\DeclareUnicodeCharacter{2713}{$\checkmark$}
+\DeclareUnicodeCharacter{0393}{$\Gamma$}
+\DeclareUnicodeCharacter{03B3}{$\gamma$}
+\DeclareUnicodeCharacter{03BB}{$\lambda$}
+\DeclareUnicodeCharacter{22A2}{$\vdash$}
+\DeclareUnicodeCharacter{2282}{$\subset$}
+\DeclareUnicodeCharacter{2228}{$\vee$}
+\DeclareUnicodeCharacter{2227}{$\wedge$}
+\DeclareUnicodeCharacter{21D2}{$\Rightarrow$}
+
+
+\usepackage{xcolor}
+\definecolor{gray}{rgb}{0.9,0.9,0.9}
+\definecolor{black}{rgb}{0,0,0}
+\definecolor{white}{rgb}{1,1,1}
+
+\setlength{\fboxsep}{0pt}
+
+\lstset{
+  numbers=left,
+  backgroundcolor=\color{gray},
+  basicstyle=\footnotesize\ttfamily,
+  frame=l,
+  literate={→}{{$\rightarrow$}}1 {ɛ}{{$\varepsilon$}}1 {✓}{{$\checkmark$}}1 {Γ}{{$\Gamma$}}1 {⊢}{{$\vdash$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {⊂}{{$\subset$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⇒}{{$\Rightarrow$}}1
+}
+
+\lstdefinestyle{terminal}{
+  basicstyle=\footnotesize\ttfamily\color{white},
+  backgroundcolor=\color{black},
+  frame=single
+}
+
+
+
+
+
 \usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -65,12 +89,12 @@
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{0}
 
-\title{Stageverslag: Testdriver}
-\author{Pieter Vander Vennet \and Micheal Heyvaert \and 2016-08-08 tot 2016-09-28}
-\date{}
+
+\usetheme[footline=sections,faculty=we,language=dutch,framenumber,totalframenumber]{UniversiteitGent}
+
 
 \begin{document}
 
-\input{§}
+\input{Main}
 
 \end{document}

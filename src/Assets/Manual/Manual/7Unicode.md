@@ -20,6 +20,3 @@ On Windows, press
 ∨	| Disjunction		| 2228
 ∧      	| Conjunction		| 2227
 ⇒       	| Double-Right-Arrow	| 21d2
-⋎      	| Curly Vee		| 22ce
-⋏       	| Curly 		| 22cf
-≼		PRECEDES OR EQUAL TO	| 227c

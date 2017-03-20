@@ -270,6 +270,14 @@ inclusivePar (MLiteral _ _ "]")	= False
 
 
 
+
+
+
+
+
+
+
+
 preprocessTo	:: FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
 preprocessTo inp destination svgDestination
 	= do	str		<- readFile inp
@@ -300,7 +308,9 @@ outputFile fp
 
 autoPreprocess	:: IO ()
 autoPreprocess
-	= do	preprocessDir "src/Assets/Manual" outputFile (outputFile' "src/Assets/Manual/")
+	= do	let path	= "src/Assets/Manual/"
+		runCommand "src/Assets/Manual/prebuild.sh"
+		preprocessDir path (\nm -> outputFile path ++ (reverse nm & takeWhile (/= '/') & reverse )) (outputFile' path)
 		runCommand "src/Assets/Manual/build.sh"
 		pass
 
@@ -322,7 +332,7 @@ autoRecreate' lastEdits
 		let millisecs	= 750
 		-- let animation	= ["|","/","-","\\"] 
 		let animations	= ["|","/","-","\\"] 
-		let animation	= animations ++ reverse animations
+		let animation	= animations -- ++ reverse animations
 
 		let animation'	= animation |> ("\r "++)
 		let frameLength	= 1000 `div` length animation'
