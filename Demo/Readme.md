@@ -20,18 +20,22 @@ As a reminder, the basic flags are:
 
 
 To print a simple parsetree of each line in the demo:
+
 	./ALGT Language-definition ExampleFile syntax -l
 	./ALGT DemoDyn.language demodyn.demo expr -l
 
 To generate parsetrees as .svg images:
+
 	./ALGT Language-definition ExampleFile syntax -l --ptsvg Filename
 	./ALGT DemoDyn.language demodyn.demo expr -l --ptsvg ParseTrees
 
 To run a relation:
+
 	./ALGT Language-definition ExampleFile syntax -l -r relationSymbol
 	./ALGT DemoDyn.language demodyn.demo expr -l -r →
 
 To run interactively:
+
 	./ALGT Language-definition -i relationSymbol
 	./ALGT DemoDyn.language -i →
 
@@ -42,15 +46,19 @@ To run interactively:
 Unicode characters
 ==================
 
-Typing unicode:
-
 On linux:
-Press Left-CTRL + Shift + U; release all; type the hexcode of the character (e.g. 2192 to get →)
+---------
+
+1. Press `Left-CTRL + Shift + U`
+2. Release all
+3. Type the hexcode of the character (e.g. `2192` to get →)
 
 On windows:
+-----------
+
 1. Hold down `Alt`
 2. Type `+` (that is the plus of the numeric keypad)
-3. Type the hexcode (e.g. 2192 to get →)
+3. Type the hexcode (e.g. `2192` to get →)
 4. Release `Alt`
 
-or alternatively, visit [https://help.ubuntu.com/community/Installation].
+or alternatively, visit [this excellent guide](https://help.ubuntu.com/community/Installation).
