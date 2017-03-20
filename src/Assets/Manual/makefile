@@ -8,7 +8,7 @@ workshop:
 
 manual:
 	# Assumption: autoPreprocess already dropped in all the .md's
-	cd .bin/ && ../scripts/compileDocument.sh "../Manual-files" "DocumentTemplate" "../Output/Manual" 
+	cd .bin/ && ../scripts/compileDocument.sh "../Manual-files" "DocumentTemplate" "../Output/ALGT_Manual" 
 
 focus:
 	cd .bin/ && ../scripts/compileDocument.sh "../focus-files" "FocusTemplate" "../Output/Focus"

@@ -20,5 +20,6 @@ Tools
 
 ALGT
 
-[github.com/pietervdvn/ALGT](http://www.github.com/pietervdvn/ALGT)
+[github.com/pietervdvn/ALGT](http://github.com/pietervdvn/ALGT)
 
+Grab a binary from binaries, current version is $$version
