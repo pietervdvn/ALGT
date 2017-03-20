@@ -190,3 +190,25 @@ True    bool.0
 |  |  |  1                                       Number.0
 |  |  )                                 eL.2
 |  True                                 bool.0
+# "((\\a : Int . (\\b : Int . a + b)) 41) 1" was parsed as:
++  +  (                                          eL.4
+|  |  +  +  (                                    eL.2
+|  |  |  |  \                                    eL.2
+|  |  |  |  a                                             Identifier.0
+|  |  |  |  :                                    eL.2
+|  |  |  |  Int       typeL.0
+|  |  |  |  .                                    eL.2
+|  |  |  |  +  (                                 eL.2
+|  |  |  |  |  \                                 eL.2
+|  |  |  |  |  b                                          Identifier.0
+|  |  |  |  |  :                                 eL.2
+|  |  |  |  |  Int    typeL.0
+|  |  |  |  |  .                                 eL.2
+|  |  |  |  |  +  a                                       Identifier.0
+|  |  |  |  |  |  +                              e.0
+|  |  |  |  |  |  b                                       Identifier.0
+|  |  |  |  |  )                                 eL.2
+|  |  |  |  )                                    eL.2
+|  |  |  41                                               Number.0
+|  |  )                                          eL.4
+|  1                                                      Number.0

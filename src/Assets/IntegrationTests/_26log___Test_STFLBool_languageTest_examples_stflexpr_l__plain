@@ -79,3 +79,7 @@ Could not parse expression of the form bool or Could not parse expression of the
 unexpected "("
 expecting "If", "True" or "False"
 Could not parse expression of the form bool or Could not parse expression of the form expr
+"Test/examples.stfl (line 24)" (line 1, column 1):
+unexpected "("
+expecting "If", "True" or "False"
+Could not parse expression of the form bool or Could not parse expression of the form expr

@@ -336,3 +336,15 @@ If ( If True Then False Else True ) Then 123456 Else 42 → If ( False ) Then 12
 
 
 
+# ((\a : Int . (\b : Int . a + b)) 41) 1 applied to →
+# Proof weight: 2, proof depth: 2
+
+
+----------------------------------------------------------------- [EvalLamApp]
+( \ a : Int . ( \ b : Int . a + b ) ) 41 → ( \ b : Int . 41 + b )
+-------------------------------------------------------------------- [EvalCtx]
+( ( \ a : Int . ( \ b : Int . a + b ) ) 41 ) 1 → ( ( \ b : Int . 41 + b ) ) 1
+
+
+
+

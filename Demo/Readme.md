@@ -62,3 +62,13 @@ On windows:
 4. Release `Alt`
 
 or alternatively, visit [this excellent guide](https://help.ubuntu.com/community/Installation).
+
+On Os X
+--------
+
+1. Go to `International system preferences` → `input menu`
+2. Check the box next to "Unicode hex"
+3. Switch to unicode input in the menu bar
+4. Hold `Alt`, enter the hexadecimal unicode value
+
+

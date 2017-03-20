@@ -22,3 +22,4 @@ If (If True Then False Else True) Then 123456 Else 42
 (5 + 6) + (7 + 8)
 5 + (6 + (7 + 8))
 (\x : Int . x + 1) True
+((\a : Int . (\b : Int . a + b)) 41) 1

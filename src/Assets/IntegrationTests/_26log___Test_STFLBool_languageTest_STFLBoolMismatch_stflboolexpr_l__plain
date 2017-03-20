@@ -1,0 +1,7 @@
+Testcase 26
+Test/STFLBool.language Test/STFLBoolMismatch.stflbool expr -l --plain
+
+"Test/STFLBoolMismatch.stflbool (line 0)" (line 1, column 14):
+unexpected "0"
+expecting "If", "True" or "False"
+Could not parse expression of the form bool or Could not parse expression of the form expr
