@@ -1,0 +1,63 @@
+ DemoDyn 
+*********
+
+# Short demo language, no typings
+
+ Syntax
+========
+
+ int	::= Number
+ var	::= Identifier
+ term	::= "(" "\\" var "." expr ")"
+	| "(" expr ")"
+	| int
+	| var
+ expr	::= term "+" expr | term expr | term
+
+
+ Syntax Style
+==============
+
+ Number -> "constant"
+ Identifier -> "identifier"
+
+
+ Relations
+===========
+
+(→) : expr (in), expr (out)	Pronounced as "Smallstep"
+(→*) : expr (in), expr (out)	Pronounced as "Bigstep"
+
+
+ Rules
+=======
+
+
+ i0:int	i1:int
+-------------------------- [EvalPlus]
+ i0 "+" i1 → !plus(i0, i1)
+
+
+
+--------------------------------------------------------- [EvalApp]
+ ("(" "\\" x "." expr ")") arg → !subs:expr(x, arg, expr)
+
+
+  expr0 → expr1
+ --------------------------- [EvalCtx]
+  expr[expr0] → expr[expr1]
+ 
+
+
+
+
+ i:int
+--------- [BigStep Base]
+ i →* i
+
+
+ e0 → e1	e1 →* e2
+-------------------------- [BigStep recursive]
+ e0 →* e2
+
+

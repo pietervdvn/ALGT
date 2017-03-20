@@ -82,6 +82,8 @@ Possible files:
 
 	literal1 literal2
 
+Whitespace is ignored by default! See the manual for other options
+
 Backus-Naur-Formulation
 ------------------------
 
@@ -109,6 +111,9 @@ Defining numbers:
 
 Backus-Naur-Formulation
 -----------------------
+
+Defining variables:
+
 
 	var		::= "a" | "b" | "c" | ... | "someVariableName" | ...
 
@@ -408,6 +413,7 @@ Now it's your turn to give these a try.
 
 - github.com/pietervdvn/ALGT
 - Download the __demo__-directory
+- Overview of commands and usefull stuff in __readme.md__
 
 
 
