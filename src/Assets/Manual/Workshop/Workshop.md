@@ -257,7 +257,161 @@ Parsing stuff
  Building the evaluator
 ========================
 
+Function or natural deduction?
+-------------------------------
+
+ALGT supports two ways to perform computations:
+
+Functions and natural deduction
+
+For the evaluator, we'll use natural deduction 
 
 
+Declaring the relation
+-----------------------
+
+In a new section in the _.language_
+
+$$DemoDyn.language![25..28]!file
+
+(→: U+2192)
+
+
+Declaring EvalPlus
+------------------
+
+	-------------------------- [EvalPlus]
+	 ... → ...
+
+The conclusion goes beneath the line
+
+The rulename goes on the right
+
+
+Declaring EvalPlus
+------------------
+
+	-------------------------- [EvalPlus]
+	 i0 "+" i1 → ...
+
+
+
+
+
+Declaring EvalPlus
+------------------
+
+	-------------------------- [EvalPlus]
+	 i0 "+" i1 → !plus(i0, i1)
+
+
+Builtin functions do have an exclamation mark
+
+
+
+Declaring EvalPlus
+------------------
+
+$$DemoDyn.language![36..38]!file
+
+
+
+
+Running →
+-----------
+
+$$DemoDyn.language![36..38]!file
+
+./ALGT DemoDyn.language demodyn.demo expr -l -r →
+
+$$($$DemoDyn.language![1..38] $$demodyn.demo!2 expr -l -r →)
+
+
+
+Function application
+--------------------
+
+
+	---------------------------------------------------------- [EvalApp]
+         function arg → ...
+
+
+Function application
+--------------------
+
+
+	---------------------------------------------------------- [EvalApp]
+         ("(" "\\" x "." expr ")") arg → ...
+
+Extra parentheses around function, to group the subterm!
+
+Function application
+--------------------
+
+
+$$DemoDyn.language![41..43]!file
+
+
+Builtin function __!subs__: replace this, with that, everywhere in
+
+
+For __!subs__ is an explicit type needed
+
+
+Function application
+--------------------
+
+$$($$DemoDyn.language![1..43] $$demodyn.demo!4 expr -l -r →)
+
+
+
+
+Contexts
+--------
+
+What with 1 + 2 + 3?
+
+$$DemoDyn.language![45..48]!file
+
+
+
+Contexts
+--------
+
+$$($$DemoDyn.language![1..48] $$demodyn.demo!3 expr -l -r →)
+
+
+Bigstep
+-------
+
+$$DemoDyn.language!29!file
+
+$$DemoDyn.language![54..61]!file
+
+
+Bigstep
+-------
+
+$$($$DemoDyn.language $$demodyn.demo!3 expr -l -r →* --short-proofs 8)
+
+
+
+
+Your turn!
+==========
+
+
+Your turn
+---------
+
+Now it's your turn to give these a try.
+
+- github.com/pietervdvn/ALGT
+- Download the __demo__-directory
+
+
+
+
+If there is still time, we'll also build a typechecker for the demo langauge...
 
 
