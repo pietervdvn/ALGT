@@ -127,8 +127,9 @@ proofConclusion ts vars concl
 patternMatchInputs	:: TypeSystem -> [Predicate] -> (Relation, [Expression]) -> [ParseTree] -> Either String VariableAssignments
 patternMatchInputs ts predicates (rel, relationArgs) args
 	= do	let inputTypes	= filterMode In rel (relType rel)
-		assert Left (length inputTypes == length args) $ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
-		let typesMatch arg expected	= assert Left (equivalent (get tsSyntax ts) (typeOf arg) expected) 
+		unless (length inputTypes == length args) $ Left 
+			$ "Expected "++show (length inputTypes)++" arguments, but got "++show (length args)++" arguments instead" 
+		let typesMatch arg expected	= unless (equivalent (get tsSyntax ts) (typeOf arg) expected) $ Left
 							("Expected type "++show expected++" for "++toCoParsable arg++" which has the type "++show (typeOf arg))
 		zip args inputTypes |> uncurry typesMatch & allRight
 		let patterns = filterMode In rel relationArgs
@@ -139,9 +140,15 @@ patternMatchInputs ts predicates (rel, relationArgs) args
 	
 -- pattern matches each parsetree into it's accompanying expression. Returns an assignment
 matchAndMerge	:: TypeSystem -> [Predicate] -> [(Expression, ParseTree)] -> Either String VariableAssignments
-matchAndMerge ts predicates patsArgs
-	= do	let evalContextMatches assngs	= proofPredicates ts assngs predicates & void
-		matches	<- patsArgs |+> uncurry (patternMatch (buildCtx' ts) evalContextMatches)
-		matches & mergeVarss
+matchAndMerge _ _ []	= Right empty
+matchAndMerge ts predicates ((expr, pt):rest)
+	= do	let evalContextMatches assigns	= do	proofPredicates ts assigns predicates
+							restMatch	<- matchAndMerge ts predicates rest
+							mergeVars assigns restMatch
+							pass
+							
+		match		<- patternMatch (buildCtx' ts) evalContextMatches expr pt
+		restMatch	<- matchAndMerge ts predicates rest
+		mergeVars match restMatch
 
 
