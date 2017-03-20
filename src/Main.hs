@@ -94,10 +94,10 @@ interactive ts fc symbol
 repl		:: TypeSystem -> FullColoring -> TypeName -> Relation -> String -> String
 repl _ _ _ _ ""	= ""
 repl ts fc tn rel input
-	= either id id $
-	  do	parsed	<- parseTargetLang (get tsSyntax ts) tn "Interactive" input
-		proof	<- proofThat ts rel [parsed]
-		return $ printProof ts fc rel proof
+	= input & lines |> (\line -> 
+		do	parsed	<- parseTargetLang (get tsSyntax ts) tn "Interactive" line
+			proof	<- proofThat ts rel [parsed]
+			return $ printProof ts fc rel proof) |> either id id & unlines
 			
 
 printProof	:: TypeSystem -> FullColoring -> Relation -> Proof -> String
