@@ -1,0 +1,12 @@
+ DemoDyn 
+*********
+
+# Short demo language, no typings
+
+ Syntax
+========
+
+ int	::= Number
+ expr	::= expr "+" expr 
+	| int
+

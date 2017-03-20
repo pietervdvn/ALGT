@@ -142,6 +142,7 @@
         <context ref="bnf-keywords"/>
         <context ref="line-comment"/>
         <context ref="function-section"/>
+        <context ref="relation-section" />
       </include>
     </context>
 

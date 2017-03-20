@@ -6,12 +6,25 @@
 
  int	::= Number
  var	::= Identifier
- term	::= int | "(" "\\" var ":" type "." expr ")"
+ term	::= "(" "\\" var ":" type "." expr ")" | "(" expr ")" | int | var
  expr	::= term "+" expr | term expr | term
 
 
  typeTerm	::= "Int" | "(" type ")"
  type		::= typeTerm "->" type | typeTerm
+
+
+ typing		::= var ":" type
+ typings	::= typing typings | "{}"
+
+
+ Syntax Style
+==============
+
+ Number -> "constant"
+ type -> "type"
+ typeTerm -> "type"
+ Identifier -> "identifier"
 
 
  Functions
@@ -20,6 +33,8 @@
 
 dom		: type -> type
 dom("(" T ")")	= T
+dom(("(" T1 ")") "->" T2)
+		= T1
 dom(T1 "->" T2)	= T1
 dom("Int")	= !error("Undefined")
 
@@ -36,6 +51,9 @@ cod("Int")	= !error("Undefined")
 
 (→) : expr (in), expr (out)	Pronounced as "Smallstep"
 (→*) : expr (in), expr (out)	Pronounced as "Bigstep"
+
+(⊢) : typings (in), expr (in), type (out)	Pronounced as "Is typed as"
+(::) : expr (in), type (out)
 
  Rules
 =======
@@ -65,9 +83,37 @@ cod("Int")	= !error("Undefined")
 
 
  e0 → e1	e1 →* e2
---------------------------
+-------------------------- [BigStep recursive]
  e0 →* e2
- 
 
+
+
+-------------------- [Tx]
+Γ[x ":" t] ⊢ x, t
+
+
+
+ i:int
+-------------------- [TConstant]
+ Γ ⊢ i, "Int"
+
+ Γ ⊢ i0, "Int"		Γ ⊢ i1, "Int"
+ -------------------------------------- [TPlus]
+ Γ ⊢ i0 "+" i1 , "Int"
+
+
+ (x ":" TArg) Γ ⊢ expr, TExpr
+------------------------------------------------------------------- [TLambda]
+ Γ ⊢ "(" "\\" x ":" TArg "." expr ")" , ( "(" TArg ")") "->" TExpr
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ = dom(Tfunc) : type
+-------------------------------------------------------------	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+"{}" ⊢ e, T
+------------- [Typing in empty]
+e :: T
 
 

@@ -29,4 +29,4 @@ images-extra:
 	make images
 
 clean:
-	rm -rf .bin/* Output/*.pdf
+	rm -rf .bin/*
