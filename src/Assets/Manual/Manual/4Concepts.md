@@ -21,10 +21,8 @@ Left consumption (expr | expr "+" ...) -> error msg
 ### Parser interpretation
 
 
-Abstract representation of an arbitrary language
+Abstract interpretation of an arbitrary language
 -------------------------------------------------
-
-Abstract interpretation stuff
 
 ### Representation
 

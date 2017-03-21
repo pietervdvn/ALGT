@@ -4,14 +4,14 @@ deps:
 
 workshop:
 	cp Workshop/Theme/* .bin/ && \
-	cd .bin/ && ../scripts/compileDocument.sh "../workshop-files" "PresentationTemplate" "../Output/Workshop"
+	cd .bin/ && ../compileDocument.sh "../workshop-files" "PresentationTemplate" "../Output/Workshop"
 
 manual:
 	# Assumption: autoPreprocess already dropped in all the .md's
-	cd .bin/ && ../scripts/compileDocument.sh "../Manual-files" "DocumentTemplate" "../Output/ALGT_Manual" 
+	cd .bin/ && ../compileDocument.sh "../Manual-files" "DocumentTemplate" "../Output/ALGT_Manual" 
 
 focus:
-	cd .bin/ && ../scripts/compileDocument.sh "../focus-files" "FocusTemplate" "../Output/Focus"
+	cd .bin/ && ../compileDocument.sh "../focus-files" "FocusTemplate" "../Output/Focus"
 
 templates:
 	make focus-template
@@ -21,7 +21,7 @@ focus-template:
 	cat DocumentTemplate.tex | sed "/%NOFOCUS/d" > .bin/FocusTemplate.tex
 
 images:
-	cd .bin; ../scripts/makeImages.sh
+	cd .bin; ../makeImages.sh
 
 images-extra:
 	cp Manual/*.svg .bin/

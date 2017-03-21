@@ -6,7 +6,9 @@
 
  int	::= Number
  var	::= Identifier
- term	::= "(" "\\" var ":" type "." expr ")" | "(" expr ")" | int | var
+ term	::= "(" "\\" var ":" type "." expr ")" 
+	| "(" expr ")" 
+	| int | var
  expr	::= term "+" expr | term expr | term
 
 
@@ -40,6 +42,8 @@ dom("Int")	= !error("Undefined")
 
 cod		: type -> type
 cod("(" T ")")	= T
+cod(T1 "->" ("(" T2 ")"))
+		= T2
 cod(T1 "->" T2)	= T2
 cod("Int")	= !error("Undefined")
 
@@ -65,7 +69,7 @@ cod("Int")	= !error("Undefined")
 
 
 
-  -------------------------------------------------------------------- [EvalApp]
+  ------------------------------------------------------------------ [EvalApp]
    ("(" "\\" x ":" TArg "." expr ")") arg → !subs:expr(x, arg, expr)
 
 
@@ -85,6 +89,8 @@ cod("Int")	= !error("Undefined")
  e0 → e1	e1 →* e2
 -------------------------- [BigStep recursive]
  e0 →* e2
+
+
 
 
 
