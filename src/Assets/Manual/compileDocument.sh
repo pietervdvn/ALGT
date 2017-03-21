@@ -15,7 +15,6 @@ else
 fi
 
 pdflatex -interaction nonstopmode -halt-on-error -file-line-error $2.tex
-pdflatex -interaction nonstopmode -halt-on-error -file-line-error $2.tex
 
 mv $2.pdf $3.pdf
 

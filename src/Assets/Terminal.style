@@ -13,6 +13,7 @@ blue	= #5555ff
 grey	= #999999
 darkgreen = #009900
 yellow	= #ffff00
+darkyellow	= #999900
 
 bold		= "bold"
 
@@ -66,7 +67,9 @@ foreground-color: blue
  keyword (statement)
 ---------------------
 
- foreground-color: darkgreen
+ foreground-color: darkyellow
+ font-style: bold
+
 
 
  header

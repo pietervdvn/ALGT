@@ -47,10 +47,27 @@ effects	:: [(Name, Either Int String -> String -> String)]
 effects	
       = [ ("foreground-color", \value contents -> "\\color[HTML]{" ++ color value ++ "}"++contents)
 	, ("background-color", \value contents -> "\\colorbox[HTML]{"++ color value ++ "}{"++contents++"}")
+	, ("font-style", fontstyle)
+	, ("font-family", fontfamily)
 	]
 
 
+fontfamily	:: Either Int String -> String -> String
+fontfamily (Right font) str
+	= "{\\fontfamily{"++font++"}\\selectfont "++str++"}"
+fontfamily _ str
+	= str
 
+
+
+fontstyle	:: Either Int String -> String -> String
+fontstyle (Right "bold") str
+	= "\\textbf{"++str++"}"
+fontstyle (Right "italic") str
+	= "\\emph{"++str++"}"
+
+fontstyle _ str
+	= str
 
 
 color	:: Either Int String -> String

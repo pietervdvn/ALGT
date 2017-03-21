@@ -73,6 +73,7 @@ buildVariables
 					, verbatim $ argText (get bifInArgs bif) (get bifResultType bif)
 					]))
 	, ("styles", AssetsHelper.knownStyles & M.keys |> (\str ->  str & reverse & drop 6 & reverse) & list)
+	, ("stylesSupport", AssetsHelper.minimalStyleTypes |> (" - "++) & unlines)
 	] & M.fromList 
 
 
