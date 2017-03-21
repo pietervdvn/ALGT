@@ -11,30 +11,30 @@ Done quickchecking property Preservation with 8 examples
 Done quickchecking property Progress with 8 examples                            
 Done quickchecking property Termination with 8 examples                         
 # "True" was parsed as:
-[94mTrue[0m    [93mbool.0[0m
+[93mTrue[0m    [93mbool.0[0m
 # "False" was parsed as:
-[94mFalse[0m    [93mbool.1[0m
+[93mFalse[0m    [93mbool.1[0m
 # "If True Then False Else True" was parsed as:
 +  [92mIf[0m       [93meL.3[0m
-|  [94mTrue[0m     [93mbool.0[0m
+|  [93mTrue[0m     [93mbool.0[0m
 |  [92mThen[0m     [93meL.3[0m
-|  [94mFalse[0m    [93mbool.1[0m
+|  [93mFalse[0m    [93mbool.1[0m
 |  [92mElse[0m     [93meL.3[0m
-|  [94mTrue[0m     [93mbool.0[0m
+|  [93mTrue[0m     [93mbool.0[0m
 # "If (If True Then False Else True) Then False Else True" was parsed as:
 +  [92mIf[0m             [93meL.3[0m
 |  +  [90m([0m           [93meL.4[0m
 |  |  +  [92mIf[0m       [93meL.3[0m
-|  |  |  [94mTrue[0m     [93mbool.0[0m
+|  |  |  [93mTrue[0m     [93mbool.0[0m
 |  |  |  [92mThen[0m     [93meL.3[0m
-|  |  |  [94mFalse[0m    [93mbool.1[0m
+|  |  |  [93mFalse[0m    [93mbool.1[0m
 |  |  |  [92mElse[0m     [93meL.3[0m
-|  |  |  [94mTrue[0m     [93mbool.0[0m
+|  |  |  [93mTrue[0m     [93mbool.0[0m
 |  |  [90m)[0m           [93meL.4[0m
 |  [92mThen[0m           [93meL.3[0m
-|  [94mFalse[0m          [93mbool.1[0m
+|  [93mFalse[0m          [93mbool.1[0m
 |  [92mElse[0m           [93meL.3[0m
-|  [94mTrue[0m           [93mbool.0[0m
+|  [93mTrue[0m           [93mbool.0[0m
 # "42" was parsed as:
 42    [93mNumber.0[0m
 # "1 + 2" was parsed as:
@@ -65,47 +65,47 @@ Done quickchecking property Termination with 8 examples
 |  |  [90m)[0m                                    [93meL.2[0m
 # "(True)" was parsed as:
 +  [90m([0m       [93meL.4[0m
-|  [94mTrue[0m    [93mbool.0[0m
+|  [93mTrue[0m    [93mbool.0[0m
 |  [90m)[0m       [93meL.4[0m
 # "False :: Bool" was parsed as:
-+  [94mFalse[0m                              [93mbool.1[0m
++  [93mFalse[0m                              [93mbool.1[0m
 |  [92m::[0m                                 [93me.1[0m
 |  [22m[24m[94mBool[0;22;24m[0;22m[0m    [93mtypeL.1[0m
 # "( True )" was parsed as:
 +  [90m([0m       [93meL.4[0m
-|  [94mTrue[0m    [93mbool.0[0m
+|  [93mTrue[0m    [93mbool.0[0m
 |  [90m)[0m       [93meL.4[0m
 # "(If True Then True Else True) :: Bool" was parsed as:
 +  +  [90m([0m                               [93meL.4[0m
 |  |  +  [92mIf[0m                           [93meL.3[0m
-|  |  |  [94mTrue[0m                         [93mbool.0[0m
+|  |  |  [93mTrue[0m                         [93mbool.0[0m
 |  |  |  [92mThen[0m                         [93meL.3[0m
-|  |  |  [94mTrue[0m                         [93mbool.0[0m
+|  |  |  [93mTrue[0m                         [93mbool.0[0m
 |  |  |  [92mElse[0m                         [93meL.3[0m
-|  |  |  [94mTrue[0m                         [93mbool.0[0m
+|  |  |  [93mTrue[0m                         [93mbool.0[0m
 |  |  [90m)[0m                               [93meL.4[0m
 |  [92m::[0m                                 [93me.1[0m
 |  [22m[24m[94mBool[0;22;24m[0;22m[0m    [93mtypeL.1[0m
 # "True" was parsed as:
-[94mTrue[0m    [93mbool.0[0m
+[93mTrue[0m    [93mbool.0[0m
 # "(False)" was parsed as:
 +  [90m([0m        [93meL.4[0m
-|  [94mFalse[0m    [93mbool.1[0m
+|  [93mFalse[0m    [93mbool.1[0m
 |  [90m)[0m        [93meL.4[0m
 # "True :: Bool" was parsed as:
-+  [94mTrue[0m                               [93mbool.0[0m
++  [93mTrue[0m                               [93mbool.0[0m
 |  [92m::[0m                                 [93me.1[0m
 |  [22m[24m[94mBool[0;22;24m[0;22m[0m    [93mtypeL.1[0m
 # "If True Then 42 Else 43" was parsed as:
 +  [92mIf[0m      [93meL.3[0m
-|  [94mTrue[0m    [93mbool.0[0m
+|  [93mTrue[0m    [93mbool.0[0m
 |  [92mThen[0m    [93meL.3[0m
 |  [92m42[0m      [93mNumber.0[0m
 |  [92mElse[0m    [93meL.3[0m
 |  [92m43[0m      [93mNumber.0[0m
 # "If False Then 23 Else 44" was parsed as:
 +  [92mIf[0m       [93meL.3[0m
-|  [94mFalse[0m    [93mbool.1[0m
+|  [93mFalse[0m    [93mbool.1[0m
 |  [92mThen[0m     [93meL.3[0m
 |  [92m23[0m       [93mNumber.0[0m
 |  [92mElse[0m     [93meL.3[0m
@@ -136,11 +136,11 @@ Done quickchecking property Termination with 8 examples
 +  [92mIf[0m             [93meL.3[0m
 |  +  [90m([0m           [93meL.4[0m
 |  |  +  [92mIf[0m       [93meL.3[0m
-|  |  |  [94mTrue[0m     [93mbool.0[0m
+|  |  |  [93mTrue[0m     [93mbool.0[0m
 |  |  |  [92mThen[0m     [93meL.3[0m
-|  |  |  [94mFalse[0m    [93mbool.1[0m
+|  |  |  [93mFalse[0m    [93mbool.1[0m
 |  |  |  [92mElse[0m     [93meL.3[0m
-|  |  |  [94mTrue[0m     [93mbool.0[0m
+|  |  |  [93mTrue[0m     [93mbool.0[0m
 |  |  [90m)[0m           [93meL.4[0m
 |  [92mThen[0m           [93meL.3[0m
 |  [92m123456[0m         [93mNumber.0[0m
@@ -189,7 +189,7 @@ Done quickchecking property Termination with 8 examples
 |  |  |  [92m+[0m                              [93me.0[0m
 |  |  |  [92m1[0m                              [93mNumber.0[0m
 |  |  [90m)[0m                                 [93meL.2[0m
-|  [94mTrue[0m                                 [93mbool.0[0m
+|  [93mTrue[0m                                 [93mbool.0[0m
 # "((\\a : Int . (\\b : Int . a + b)) 41) 1" was parsed as:
 +  +  [90m([0m                                          [93meL.4[0m
 |  |  +  +  [90m([0m                                    [93meL.2[0m
