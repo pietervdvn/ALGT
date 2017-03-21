@@ -1,5 +1,5 @@
 name:                ALGT
-version:             0.1.18
+version:             0.2
 synopsis:            Automated Language Generation Tool - Create your programming language
 description:         Please see README.md
 homepage:            https://github.com/pietervdvn/ALGT#readme
@@ -91,7 +91,9 @@ executable ALGT
         SyntaxHighlighting.AsHTMLPt
         SyntaxHighlighting.AsLatexPt
         SyntaxHighlighting.Coloring
-        SyntaxHighlighting.ParseTreeImage
+        SyntaxHighlighting.AsSVGPt
+        SyntaxHighlighting.Renderer
+        SyntaxHighlighting.Renderers
         TypeSystem
         TypeSystem.BNF
         TypeSystem.Expression

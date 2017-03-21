@@ -6,11 +6,30 @@ import Utils.Utils
 
 import TypeSystem
 import SyntaxHighlighting.Coloring
+import SyntaxHighlighting.Renderer
 
 import Data.Maybe
 import Data.List
 
 import Utils.XML hiding (indent)
+
+
+
+data HTMLRenderer	= HTMLRenderer FullColoring SyntaxStyle
+
+
+instance Renderer HTMLRenderer where
+	create	= HTMLRenderer
+	name _	= "HTML"
+	renderParseTree pt (HTMLRenderer fc style)
+		= renderPT fc style pt
+	renderParseTreeDebug pt (HTMLRenderer fc style)
+		= error "No renderPTDebug supported"
+	renderString styleName str _
+		= inTag "span" [SA "class" styleName] str
+	supported _	= cssProperties |> fst3
+	
+	 
 
 
 
@@ -114,6 +133,7 @@ cssProperties
 	, ("font-size", "font-size", (++"px") . intEl)
 	, ("font-family", "font-family", strEl)
 	, ("font-decoration", "text-decoration", strEl)
+	, ("font-style", "font-weight", strEl)
 	]
 
 strEl	= either show id

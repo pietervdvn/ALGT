@@ -6,13 +6,15 @@ statement
 identifier
 type
 constant
-keyword
-special-char
 number
 float
+string
+char
+special-char
+
+keyword
 builtin
-variable
-proprocessor
+preprocessor
 
 # comments and markup
 comment
@@ -23,10 +25,11 @@ header3
 header4
 header5
 header6
+
 emph
-bold
+strong
 url
-monospace
+code
 
 hline
 

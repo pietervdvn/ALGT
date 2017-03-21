@@ -176,6 +176,77 @@ When such a token is used in a pattern or expression, the contents of this token
 
 
 
+Syntax Style
+------------
+
+
+
+### Builtin styles
+
+Select a style with the `--style StyleName` flag.
+
+
+$$styleMatrix
+
+
+### Creating your own style
+
+Select your own style with `--style Name.style` (the extension `.style` triggers the external style).
+
+A stylefile looks as:
+
+
+	 Name
+	******
+
+	 Constants
+	===========
+
+	# Here come shorthands for often used values, e.g.:
+	black		= #000000
+	stringVal	= "someString"
+	intValue	= 14
+
+	 Defaults
+	==========
+
+	# Here come the defaults, thus the general properties for every default line
+	
+	# literal assignment uses '='
+	foreground-color	= #00ff00
+	# recall of a constant defined in the first section uses ':'
+	background-color	: black
+
+	 Styles
+	========
+
+	# The different styles defined. See the matrix for what you might define
+
+	 statement
+	-----------
+
+	font-style: italic
+
+	 keyword (statement)
+	---------------------
+	
+	# fallbackstyle between parentheses.
+	# Attributes not found in this style will be first searched in 'statement'
+
+	font-style: bold
+
+	 string (keyword)
+	------------------
+
+	# Styles can be empty, to denote this, type a slash:
+
+	/
+
+
+### Supported renderers and attributes
+
+$$styleSupported
+
 
  Functions
 -----------

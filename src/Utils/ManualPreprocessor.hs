@@ -31,6 +31,10 @@ import TypeSystem.Parser.TargetLanguageParser
 import qualified TypeSystem.BNF as BNFParser
 import qualified TypeSystem.Parser.ParsingUtils as ParsingUtils
 
+import qualified SyntaxHighlighting.AsLatexPt as Latex
+import qualified SyntaxHighlighting.Renderers as Renderers
+
+
 import ParseTreeInterpreter.FunctionInterpreter as FuncInp
 
 import Control.Arrow
@@ -74,8 +78,23 @@ buildVariables
 					]))
 	, ("styles", AssetsHelper.knownStyles & M.keys |> (\str ->  str & reverse & drop 6 & reverse) & list)
 	, ("stylesSupport", AssetsHelper.minimalStyleTypes |> (" - "++) & unlines)
+	, ("styleMatrix", styleMatrix)
+	, ("styleSupported", Renderers.allRenderers |> dropTrd3 & supportedTable)
+	, ("variables", buildVariables & M.keys |> (" - "++) & unlines & ("Variables in the manual preprocessor are: "++))
 	] & M.fromList 
 
+
+
+supportedTable	:: [(String, [String])] -> String
+supportedTable props
+	= let	renderNames	= props |> fst
+		header	= ("| Attribute":renderNames) & intercalate "\t|"
+		header'	= "|:--------------" ++ concat (replicate (length renderNames) "|:-----:")
+		possible	= props & unmerge |> swap & merge & M.fromList
+		row renderers	= [ if known `elem` renderers then "✓" else "" | known <- renderNames ] & intercalate " | "	:: String
+		possible'	= possible |> row & M.toList |> (\(k, v) -> verbatim k ++ "\t|" ++ v) :: [String]
+		in
+		([header, header'] ++ possible') & unlines
 
 
 list		:: [String] -> String
@@ -99,6 +118,32 @@ makeTable vals
 escapedTable	:: (String, String) -> String
 escapedTable (inp, expl)
 	= padR 16 ' ' (verbatim inp) ++ expl
+
+
+latexTable	:: [String] -> [[String]] -> String
+latexTable headers contents
+	= let	header	= "\\begin{longtable}[c]{@{}"++replicate (length headers) 'l' ++ "@{}}\n\\toprule\n"
+				++ intercalate " & " headers
+				++ "\\tabularnewline\n\\midrule\\endhead"	:: String
+		contents'	= contents |> intercalate " & " |> (++" \\\\\n") & concat	:: String
+		bottom	= "\\bottomrule\n\\end{longtable}"
+		in
+		[header, contents', bottom] & unlines
+
+
+styleMatrix	:: String
+styleMatrix 
+	= let	matrix	= AssetsHelper.minimalStyleTypes |> (\styleN -> styleN:renderStyleRow styleN)
+		known	= AssetsHelper.knownStyles & M.keys |> reverse |> drop 6 |> reverse
+				& ("Style":)
+		in
+		latexTable known matrix
+
+renderStyleRow	:: Name -> [String]
+renderStyleRow styleN
+	= do	fc	<- AssetsHelper.knownStyles & M.elems
+		return $ Latex.renderWithStyle fc styleN styleN
+		
 
 
 

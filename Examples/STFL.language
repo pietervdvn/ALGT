@@ -32,7 +32,7 @@ eL	::= value
 	| "(" e ")"
 
 
-
+es	::= e "\n" es | e "\n" | e
 
 
 typing			::= var ":" type
@@ -48,13 +48,14 @@ typeSet			::= type typeSet | "$"
 type	-> "type"
 typeL	-> "type"
 
-var	-> "identifier"
-number	-> "constant"
+Identifier	-> "identifier"
+Number	-> "constant"
 bool	-> "constant"
 e	-> "statement"
 eL	-> "statement"
 eL.4	-> "noise"
 eL.2	-> "noise"
+eL.3	-> "keyword"
 
 
  Functions

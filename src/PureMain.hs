@@ -29,11 +29,10 @@ import ParseTreeInterpreter.FunctionInterpreter
 import ParseTreeInterpreter.PropertyTester
 import ParseTreeInterpreter.RuleInterpreter
 
-import qualified SyntaxHighlighting.AsHTMLPt as HTML
-import qualified SyntaxHighlighting.AsLatexPt as Latex
-import SyntaxHighlighting.AsAnsiPt
+import qualified SyntaxHighlighting.Renderers as Render 
 import SyntaxHighlighting.Coloring
-import SyntaxHighlighting.ParseTreeImage
+import SyntaxHighlighting.Renderer
+import SyntaxHighlighting.AsSVGPt (toSVGColorScheme)
 
 import Control.Arrow ((&&&))
 import Control.Monad
@@ -227,6 +226,7 @@ mainExFilePure	:: ExampleFile -> PureIO [(String, ParseTree)]
 mainExFilePure args
 	= isolateFailure' (\msg -> putStrLn msg >> return []) $ 
 	  do	ts		<- getTS
+		fc		<- getFC
 		let path	= fileName args
 		contents	<- readFile path
 		let inputs	= (if lineByLine args then filter (/= "") . lines else (:[])) contents
@@ -235,7 +235,12 @@ mainExFilePure args
 		handleExampleFile (parser args) args parsed'
 
 		let renderSpecial	= renderHTML args || renderLatex args
-		let renderer	= [(renderHTML args, HTML.renderPT), (renderLatex args, Latex.renderPT)]
+
+
+		let style	= get tsStyle ts
+
+		let renderer	= [(renderHTML args, \pt -> Render.html fc style & renderParseTree pt)
+					, (renderLatex args, \pt -> Render.latex fc style & renderParseTree pt)]
 					& filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
 		when renderSpecial $ do
 			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
@@ -261,18 +266,26 @@ handleExampleFile parsedWith exFile pts
 		, ioIfJust' stepByStep	$ evalStar `onAll'` (pts |> snd)
 		, ioIfJust' testProp 	$ testPropertyOn' (verbose exFile) parsedWith pts
 		, ioIf' testAllProps 	$ testAllProperties (verbose exFile) parsedWith pts
-		, ioIfJust' ptSvg	$ renderParseTree `onAll'` (	pts |> snd & mapi)
+		, ioIfJust' ptSvg	$ savePTRendered `onAll'` (	pts |> snd & mapi)
 		, ioIf' (not . actionSpecified) 
 					(pts |+> printPTDebug & void)
 	
 		] |+> (exFile &) & void
 
+savePTRendered	:: Name -> (Int, ParseTree) -> PureIO ()
+savePTRendered nm (i, pt)
+	= do 	let nm'		= if ".svg" `L.isSuffixOf` nm then nm & reverse & drop 4 & reverse else nm
+		let fileName	= nm' ++"_"++ show i ++ ".svg"
+		fc		<- getConfig' $ get colorScheme 
+		ts		<- getTS
+		let conts	=  Render.svg fc (get tsStyle ts) & renderParseTree pt
+		writeFile fileName conts
 
-printPtRendered	:: (FullColoring -> SyntaxStyle -> ParseTree -> String) -> ParseTreeA LocationInfo -> PureIO ()
+
+
+printPtRendered	:: (ParseTree -> String) -> ParseTreeA LocationInfo -> PureIO ()
 printPtRendered renderer pt
-	= do	ts	<- getTS
-		fc	<- getFC
-		let rendered	= renderer fc (get tsStyle ts) $ deAnnot pt
+	= do	let rendered	= renderer (deAnnot pt)
 		putStrLn $ " # Parsed and rendered: "++(pt & get ptAnnot & toParsable)
 		putStrLn rendered
 
@@ -368,14 +381,7 @@ getProofOptions
 		return options
 
 
-renderParseTree	:: Name -> (Int, ParseTree) -> PureIO ()
-renderParseTree nm (i, pt)
-	= do 	let nm'		= if ".svg" `L.isSuffixOf` nm then nm & reverse & drop 4 & reverse else nm
-		let fileName	= nm' ++"_"++ show i ++ ".svg"
-		fc		<- getConfig' $ get colorScheme 
-		ts		<- getTS
-		let conts	=  parseTreeSVG ts 1 fc pt
-		writeFile fileName conts
+
 
 runFunc		:: Name -> (String, ParseTree) -> PureIO ()
 runFunc func (inp, pt)
@@ -403,16 +409,16 @@ printPT		:: ParseTree -> PureIO ()
 printPT pt
 	= do	ts	<- getTS
 		fc	<- getConfig' $ get colorScheme
-		let ptDoc	= renderPT fc (get tsStyle ts) pt
-		putDocLn' ptDoc
+		let ptDoc	= Render.ansi fc (get tsStyle ts) & renderParseTree pt
+		putStrLn ptDoc
 
 printPTDebug	:: (String, ParseTree) -> PureIO ()
 printPTDebug (inp, pt)
 	= do	ts	<- getTS
 		putStrLn $ "# "++show inp++" was parsed as:"
 		fc	<- getConfig' $ get colorScheme
-		let ptDoc	= renderPTDebug fc (get tsStyle ts) pt
-		putDocLn' ptDoc
+		let ptDoc	= Render.ansi fc (get tsStyle ts) & renderParseTreeDebug pt
+		putStrLn ptDoc
 
 
 putDocLn'	:: Doc -> PureIO ()

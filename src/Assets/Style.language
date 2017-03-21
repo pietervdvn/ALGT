@@ -5,6 +5,8 @@
 Syntax
 ======
 
+# Default: styleFile
+
 commentChars	::= LineChar commentChars | LineChar
 comment		::= $ "#" commentChars
 nls		::= "\n" comment nls | "\n" nls | "\n"
@@ -35,7 +37,7 @@ constant	::= identifier "=" value
 constants	::= constant nls constants | constant
 
 property	::= identifier ":" identifier | constant
-properties	::= property nls properties | property
+properties	::= property nls properties | property | "/"
 
 styleHeader	::= nls identifier "(" identifier ")" nls dashes nls # with a fallback given
 		| nls identifier nls dashes nls
@@ -53,13 +55,14 @@ knownStyles	::= identifier knownStyles | identifier
  Syntax Style
 ==============
 
-title	-> "h1"
+title	-> "header1"
 color	-> "dirty-hack"
 value	-> "constant"
 
-stylesHeader	-> "h2"
-constantsHeader	-> "h2"
-defaultsHeader	-> "h3"
+
+stylesHeader	-> "header2"
+constantsHeader	-> "header2"
+defaultsHeader	-> "header3"
 identifier	-> "dirtier-hack"
 
 styleHeader	-> "h3"
@@ -126,6 +129,8 @@ expandProperties(c, (p ":" key:property))
 		= p "=" findConstant(c, key)
 expandProperties(_, (p "=" key))
 		= p "=" key
+expandProperties(_, "/")
+		= "/"
 
 check		: styleFile -> styleFile
 check(sf)	= checkLoops(sf)

@@ -193,7 +193,7 @@ matchTyping f syntax (BNFRuleCall nm) _ pt
 				let options'	= zip [0..] bnfASTs |> uncurry oneOption		
 				let options	= options' & rights & nub
 				when (null options) $ Left $ "No clauses matched:\n"++(options' & lefts & unlines & indent)
-				when (length options > 1) $ Left $ "Multiple matches: "++toCoParsable' " | " options
+				when (length options > 1) $ Left $ "Multiple matches: \n"++indent (toCoParsable' "\n| " options)
 				return $ head options
 			 else do
 					let noTokenMsg	= Left $ "Trying to decipher a grouped rule "++show nm++", but '"++toParsable pt++"' is not a token"

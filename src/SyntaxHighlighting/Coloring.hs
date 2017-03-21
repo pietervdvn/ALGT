@@ -1,5 +1,5 @@
  {-# LANGUAGE TemplateHaskell #-}
-module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, definedStyles, toSVGColorScheme, intAsColor, colorDistance, highestComponent) where
+module SyntaxHighlighting.Coloring(FullColoring, parseColoringFile, getProperty, definedStyles, intAsColor, colorDistance, highestComponent) where
 
 {- Defines rendering properties for styles -}
 
@@ -117,23 +117,4 @@ intAsColor i
 		in
 		'#':(show r ++","++ show g ++","++ show b)
 		
-
-toSVGColorScheme	:: Name -> FullColoring -> ColorScheme
-toSVGColorScheme style fc	
-	= let	property p def	= getProperty fc style p & fromMaybe def
-		property' p def	= property p (Right def) & either (const def) id 
-		properti p def	= property p (Left def) 
-					& either id (const def)	:: Int
-				
-		fg		= property' "foreground-color" "#000000"
-		bg		= property' "background-color" "#ffffff"
-		lineColor	= property' "svg-line-color" fg
-		lineThickness	= properti "svg-line-thickness" 1
-		dotSize		= properti "svg-dotsize" 4
-		fontSize	= properti "svg-fontsize" 20
-		in
-		CS fg bg lineColor fontSize lineThickness dotSize
-
-
-
 

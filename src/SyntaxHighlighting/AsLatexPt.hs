@@ -7,13 +7,32 @@ import Data.Char
 import TypeSystem
 
 import SyntaxHighlighting.Coloring
+import SyntaxHighlighting.Renderer
+
+data LatexRenderer	= LatexRenderer FullColoring SyntaxStyle
+
+instance Renderer LatexRenderer where
+	create	= LatexRenderer
+	name _	= "LaTeX"
+	renderParseTree pt (LatexRenderer fc style)
+		= renderPT fc style pt
+	renderParseTreeDebug pt (LatexRenderer fc style)
+		= error "RenderPTDebug not supported"
+	renderString styleName str (LatexRenderer fc _)
+		= renderWithStyle fc styleName str
+	supported _	= effects |> fst
 
 
 renderPT	:: FullColoring -> SyntaxStyle ->  ParseTree -> String
 renderPT fc style pt	
 	= determineStyle' style pt
 		||>> renderWithStyle fc & cascadeAnnot (renderWithStyle fc "")
-		& _renderPart
+		& _renderPart & wrapper
+
+
+wrapper	::	String -> String
+wrapper	str
+	= "{\\setlength{\\fboxsep}{0pt}"++str++"}"
 
 
 _renderPart	:: ParseTreeA (String -> String) -> String
@@ -47,26 +66,62 @@ effects	:: [(Name, Either Int String -> String -> String)]
 effects	
       = [ ("foreground-color", \value contents -> "\\color[HTML]{" ++ color value ++ "}"++contents)
 	, ("background-color", \value contents -> "\\colorbox[HTML]{"++ color value ++ "}{"++contents++"}")
+	, ("font-decoration", fontdecoration)
 	, ("font-style", fontstyle)
-	, ("font-family", fontfamily)
+	, ("font-size", fontsize)
+	, ("special", special)
 	]
 
 
-fontfamily	:: Either Int String -> String -> String
-fontfamily (Right font) str
-	= "{\\fontfamily{"++font++"}\\selectfont "++str++"}"
-fontfamily _ str
+special		:: Either Int String -> String -> String
+special (Right "hline") _
+	= "\\rule"
+special _ str
 	= str
 
 
+fontsize	:: Either Int String -> String -> String
+fontsize (Left i) str
+		= let 	commands	= fontsizes & filter ((<=) i . fst)
+			command		= if null commands then "Huge" else head commands & snd in
+			"\\"++command++"{"++str++"}"
+fontsize _ str	= str
+
+
+fontsizes
+      = [ (6, "tiny")
+	, (8, "scriptsize")
+	, (10, "footnotesize")
+	, (11, "small")
+	, (12, "normalsize")
+	, (14, "large")
+	, (17, "Large")
+	, (21, "LARGE")
+	, (25, "huge")
+	]
+
 
 fontstyle	:: Either Int String -> String -> String
+fontstyle (Right ('"':v)) str
+	= fontstyle (Right $ init v) str
 fontstyle (Right "bold") str
 	= "\\textbf{"++str++"}"
 fontstyle (Right "italic") str
 	= "\\emph{"++str++"}"
-
+fontstyle (Right "monospace") str
+	= "\\texttt{"++str++"}"
+fontstyle (Right []) str
+	= str
+fontstyle (Right vals) str
+	= let	(prop, rest)	= break (==',') vals in
+		fontstyle (Right prop) $ fontstyle (Right $ dropWhile (`elem` " ,") rest) str
 fontstyle _ str
+	= str
+
+fontdecoration	:: Either Int String -> String -> String
+fontdecoration (Right "underline") str
+	= "\\underline{"++str++"}"
+fontdecoration _ str
 	= str
 
 

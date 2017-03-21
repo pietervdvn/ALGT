@@ -12,6 +12,7 @@ import TypeSystem.Parser.TargetLanguageParser
 import Text.PrettyPrint.ANSI.Leijen as ANSI
 
 import SyntaxHighlighting.Coloring
+import SyntaxHighlighting.Renderer
 import Data.List as L
 import Data.Maybe
 import Data.Char
@@ -21,6 +22,23 @@ import System.IO
 import Control.Arrow ((&&&))
 
 import Lens.Micro hiding ((&))
+
+
+
+data AnsiRenderer	= AnsiRenderer FullColoring SyntaxStyle
+
+instance Renderer AnsiRenderer where
+	create	= AnsiRenderer
+	name _	= "Ansi"
+	renderParseTree pt (AnsiRenderer fc style)
+		= renderPT fc style pt & show
+	renderParseTreeDebug pt (AnsiRenderer fc style)
+		= renderPTDebug fc style pt & show
+	renderString styleName str (AnsiRenderer fc _)
+		= renderWithStyle fc styleName str & show
+	supported _	= properties |> fst
+	
+	 
 
 
 renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc

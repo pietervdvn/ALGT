@@ -5,43 +5,53 @@ terminal
 Constants
 =========
 
-black	= #000000
-white	= #ffffff
-red	= #ff0000
-green	= #00ff00
-blue	= #5555ff
-grey	= #999999
-darkgreen = #009900
-yellow	= #ffff00
-darkyellow	= #999900
+black	 = #000000
+white	 = #ffffff
+red	 = #ff0000
+green	 = #00ff00
+blue	 = #5555ff
+darkblue	 = #000099
 
-bold		= "bold"
+grey	 = #999999
+darkgrey	 = #505050
+darkgreen	 = #009900
+yellow	 = #ffff00
+darkyellow	 = #bbbb00
+purple	 = #aa22aa
 
-underline	= "underline"
+bold 	 = "bold"
+italic 	 = "italic"
+underline	 = "underline"
+monospace	 = "monospace"
 
 
 Defaults
 ========
 
-foreground-color	: green	
-background-color	: black
-font-size		= 14
-font-family		= "Ubuntu Mono"
+foreground-color : green 
+background-color : black
+font-size 	 = 12
+font-family 	 = "Ubuntu Mono"
 
-svg-line-color		: green
-svg-line-thickness 	= 2
-svg-dotsize 		= 4
-svg-fontsize 		= 20
+svg-line-color  : green
+svg-line-thickness 	 = 2
+svg-dotsize  	 = 4
+svg-fontsize  	 = 20
 
 
 Styles
 ======
 
- error
--------
 
-foreground-color: black
-background-color: red
+ statement
+-----------
+ foreground-color: green
+
+
+ identifier (statement)
+------------------------
+
+foreground-color: red
 
  type
 ------
@@ -49,51 +59,63 @@ background-color: red
 foreground-color: blue
 font-style: bold
 
-
- statement
------------
- foreground-color: green
-
- identifier (statement)
-------------------------
-
-foreground-color: red
-
  constant (statement)
 ----------------------
 
-foreground-color: blue
+foreground-color: yellow
+
+
+ number (constant)
+-------------------
+
+/
+
+
+ float (constant)
+-------------------
+
+/
+
+
+ string (constant)
+-------------------
+
+/
+
+
+ char (constant)
+-----------------
+
+/
+
+
+ special-char (constant)
+-------------------------
+
+foreground-color: darkyellow
 
  keyword (statement)
 ---------------------
 
- foreground-color: darkyellow
+ foreground-color: darkgreen
  font-style: bold
 
 
 
- header
---------
-
-size		= 20
-font-style	= "underline"
-background-color: grey
-font-decoration = "underline"
-
- h1 (header)
+ builtin (keyword)
 -------------------
 
-font-size	= 20
+/
 
- h2 (header)
--------------------
 
-font-size	= 18
+ preprocessor
+--------------
 
- h3 (header)
--------------------
+font-style: bold
+foreground-color: purple
 
-font-size	= 16
+
+
 
 
 
@@ -107,4 +129,139 @@ foreground-color: grey
 
 font-style: normal
 foreground-color: grey
-svg-linecolor	: grey
+svg-linecolor : grey
+
+
+
+
+ header
+--------
+
+size 	 = 20
+font-style : bold
+
+ header1 (header)
+-------------------
+
+font-size	 = 22
+
+ header2 (header)
+-------------------
+
+font-size	 = 20
+
+ header3 (header)
+-------------------
+
+font-size	 = 18
+
+
+ header4 (header)
+-------------------
+
+font-size	 = 16
+
+
+ header5 (header)
+-------------------
+
+font-size	 = 14
+
+ header6 (header)
+-------------------
+
+font-size	 = 12
+
+
+
+
+
+
+ emph
+------
+
+font-style: italic
+
+
+ strong
+--------
+
+font-style: bold
+
+ url
+-----
+
+foreground-color: blue
+font-decoration: underline
+
+
+ code
+------
+
+font-style: monospace
+
+
+ hline
+-------
+
+special	 = "hline"
+
+
+ note
+------
+
+foreground-color: white
+background-color: blue
+
+
+ warning (note)
+----------------
+
+foreground-color: black
+background-color:yellow
+
+ error (note)
+--------------
+
+foreground-color: black
+background-color: red
+
+
+
+  todo (note)
+--------------
+
+foreground-color: black
+background-color: darkyellow
+
+
+
+ fixme (warning)
+-----------------
+
+/
+
+
+ cursor
+--------
+
+font-style: bold
+
+ linehighlight
+--------------- 
+ 
+ background-color: darkgrey
+
+ selection
+-----------
+
+ background-color: green
+ foreground-color: black
+
+ linenumbers
+-------------
+
+ font-style: bold
+ foreground-color: white
+ background-color: darkblue
+
