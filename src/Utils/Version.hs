@@ -1,5 +1,5 @@
 module Utils.Version where
 
 version	:: ([Int], String)
-version	= ([0,1,26,4], "Total Tutorial")
+version	= ([0,2], "Demo time!")
 

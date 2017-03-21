@@ -15,6 +15,7 @@ import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
 import qualified Data.Text as Text
 import Data.Text (Text)
+import Data.Maybe
 
 import qualified Data.Map as M
 
@@ -50,7 +51,7 @@ coor p		= (get x p, get y p)
 parseTreeSVG	:: TypeSystem -> Int -> FullColoring -> ParseTree -> String
 parseTreeSVG ts factor fc pt
 	= let	pt'		= determineStyle' (get tsStyle ts) pt
-		cs		= toSVGColorScheme Nothing fc
+		cs		= toSVGColorScheme "" fc
 		((points, w, h), state)	
 				= runState (pointPositions pt') $ startState cs
 		pointsDict	= points |> (get name &&& (get x &&& get y))
@@ -66,7 +67,7 @@ parseTreeSVG ts factor fc pt
 
 renderPoint	:: FullColoring -> Point -> S.Svg
 renderPoint fc point
-	= let cs	= fc & toSVGColorScheme (get style point) in
+	= let cs	= fc & toSVGColorScheme (get style point & fromMaybe "") in
 		annotatedDot cs (get showUnderDot point)
 			(get contents point, (get x point, get y point))
 

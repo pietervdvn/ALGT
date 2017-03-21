@@ -17,7 +17,7 @@ import Utils.XML hiding (indent)
 renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> String
 renderPT fc style pt
 	= let	ptannot		= determineStyle' style pt
-		ptannot'	= ptannot |> styleElem
+		ptannot'	= ptannot ||>> styleElem & cascadeAnnot ("", [])
 		head		= cssFor fc & comment & inLT "style"
 		body		= _renderPT ptannot' & inLT "body"
 		in
@@ -70,20 +70,20 @@ insertBR('"':str)
 insertBR(c:str)	= c:insertBR str
 
 
-styleElem	:: Maybe String -> (Name, [Attr])
-styleElem Nothing
+styleElem	:: String -> (Name, [Attr])
+styleElem ""
 		= ("span", [])
-styleElem (Just "dirty-hack")
+styleElem "dirty-hack"
 		= ("dirty-hack", [])
-styleElem (Just "dirtier-hack")
+styleElem "dirtier-hack"
 		= ("dirtier-hack", [])
-styleElem (Just name)
+styleElem name
 		= ("span", [SA "class" name])
 
 
 cssFor		:: FullColoring -> String
 cssFor fc
-	= let	body	= "body" ++ cssElemFor' fc Nothing
+	= let	body	= "body" ++ cssElemFor' fc ""
 		rest	= definedStyles fc |> cssElemFor fc & concat
 		in
 		body ++ rest
@@ -91,19 +91,19 @@ cssFor fc
 
 cssElemFor	:: FullColoring -> Name -> String
 cssElemFor fc n
-		= "\n." ++ n ++ cssElemFor' fc (Just n)
+		= "\n." ++ n ++ cssElemFor' fc n
 
-cssElemFor'	:: FullColoring -> Maybe Name -> String
+cssElemFor'	:: FullColoring -> Name -> String
 cssElemFor' fc styleName
 		= " {"++ cssPropsFor fc styleName ++ "}"
 
-cssPropsFor	:: FullColoring -> Maybe Name -> String
+cssPropsFor	:: FullColoring -> Name -> String
 cssPropsFor fc style
 	= cssProperties |> cssPropsFor' fc style
 			|> sndEffect & catMaybes
 			|> (\(cssKey, value) -> cssKey ++ ":" ++ value ++ ";") & concat
 
-cssPropsFor'	:: FullColoring -> Maybe Name -> (String, String, Either Int String -> String) -> (String, Maybe String)
+cssPropsFor'	:: FullColoring -> Name -> (String, String, Either Int String -> String) -> (String, Maybe String)
 cssPropsFor' fc style (styleKey, cssKey, editValue)
 	= (cssKey, getProperty fc style styleKey |> editValue)
 

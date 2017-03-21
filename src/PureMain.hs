@@ -187,7 +187,7 @@ saveSubtypingSVG:: Syntax -> Name -> PureIO ()
 saveSubtypingSVG s fp
 	= do	let fp'	= if ".svg" `L.isSuffixOf` fp then fp else fp ++ ".svg"
 		fc	<- getConfig' $ get colorScheme
-		s & latticeAsSVG (toSVGColorScheme Nothing fc) & writeFile fp'
+		s & latticeAsSVG (toSVGColorScheme "" fc) & writeFile fp'
 
 
 

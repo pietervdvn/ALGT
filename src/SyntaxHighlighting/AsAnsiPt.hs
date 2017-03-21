@@ -26,7 +26,7 @@ import Lens.Micro hiding ((&))
 renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPT fc style pt
 	= let	ptannot		= determineStyle' style pt
-		ptannot'	= ptannot |> fromMaybe "" |> renderWithStyle fc
+		ptannot'	= ptannot ||>> renderWithStyle fc & cascadeAnnot (renderWithStyle fc "")	:: ParseTreeA (String -> Doc)
 		in
 		renderDoc ptannot'
 
@@ -42,8 +42,7 @@ renderDoc (PtSeq _ _ pts)
 renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPTDebug fc style pt
 	= let	ptannot		= annot () pt & determineStyle style |> snd	:: ParseTreeA (Maybe Name)
-		ptannot'	= ptannot |> fromMaybe "" 
-					|> renderWithStyle fc
+		ptannot'	= ptannot ||>> renderWithStyle fc & cascadeAnnot text	:: ParseTreeA (String -> Doc)
 		(meta, docs)	= renderDocDebug ptannot' & unzip
 		meta'		= meta |> text |> yellow
 		l		= docs |> show |> length & maximum 
@@ -62,7 +61,7 @@ renderDocDebug pt
 		= [(styleMI pt, renderDoc pt)]
 
 
-renderWithStyle	:: FullColoring -> Name -> String -> Doc
+renderWithStyle	:: FullColoring -> Name -> String ->  Doc
 renderWithStyle fc styleN str
 	= let	effect	= properties |> applyProperty fc styleN & chain
 		in
@@ -70,7 +69,7 @@ renderWithStyle fc styleN str
 
 applyProperty	:: FullColoring -> Name -> (Name, Either Int String -> Doc -> Doc) -> Doc -> Doc
 applyProperty fc style (prop, effect)
-	= getProperty fc (Just style) prop |> effect & fromMaybe id
+	= getProperty fc style prop |> effect & fromMaybe id
 
 
 properties	:: [(Name, Either Int String -> Doc -> Doc)]

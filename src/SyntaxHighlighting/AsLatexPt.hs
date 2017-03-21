@@ -11,8 +11,8 @@ import SyntaxHighlighting.Coloring
 
 renderPT	:: FullColoring -> SyntaxStyle ->  ParseTree -> String
 renderPT fc style pt	
-	= determineStyle' style pt	
-		|> renderWithStyle fc
+	= determineStyle' style pt
+		||>> renderWithStyle fc & cascadeAnnot (renderWithStyle fc "")
 		& _renderPart
 
 
@@ -25,14 +25,14 @@ _renderPart (PtSeq effect _ pts)
 	= pts |> _renderPart & unwords & effect
 
 
-renderWithStyle	:: FullColoring -> Maybe Name -> String -> String
+renderWithStyle	:: FullColoring -> Name -> String -> String
 renderWithStyle fc style str
 	= let	effect	= effects |> runProp fc style & chain in
 		effect str
 
 
 
-runProp	:: FullColoring -> Maybe Name -> (Name, Either Int String -> String -> String) -> String -> String
+runProp	:: FullColoring -> Name -> (Name, Either Int String -> String -> String) -> String -> String
 runProp _ _ _ ""	= ""
 runProp _ _ _ " "	= " "
 runProp fc style (key, effect) contents

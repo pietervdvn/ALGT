@@ -7,6 +7,8 @@ import Utils.ToStringExtra
 
 import TypeSystem.Types
 
+import Data.Maybe
+
 import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
@@ -54,6 +56,16 @@ annot	:: a -> ParseTree -> ParseTreeA a
 annot a (MLiteral _ minf str)	= MLiteral a minf str
 annot a (MInt _ minf i)		= MInt a minf i
 annot a (PtSeq _ minf pts)	= pts |> annot a & PtSeq a minf 
+
+
+-- Takes the annotation value of the parent, if Nothing is defined
+cascadeAnnot	:: a -> ParseTreeA (Maybe a) -> ParseTreeA a
+cascadeAnnot def (PtSeq ma minf pts)
+		= let	a = fromMaybe def ma in
+			pts |> cascadeAnnot a & PtSeq a minf
+cascadeAnnot def literal
+		= literal |> fromMaybe def
+
 
 flatten	:: ParseTreeA a -> (a, MInfo, String)
 flatten (MLiteral a minf str)	= (a, minf, str)

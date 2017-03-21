@@ -33,14 +33,14 @@ data FullColoring = FullColoring
 makeLenses ''FullColoring
 
 
-getProperty	:: FullColoring -> Maybe Name -> Prop -> Maybe (Either Int String)
-getProperty (FullColoring pt ts) Nothing prop
+getProperty	:: FullColoring -> Name -> Prop -> Maybe (Either Int String)
+getProperty (FullColoring pt ts) "" prop
 	= either (const Nothing) return $ inMsg ("While searching prop "++prop++" in the default values") $ do
 		propPt	<- _asID ts prop
 		found	<- evalFunc ts "getDefaultPropertyFor" [pt, propPt]
 		_extractValue found
 		
-getProperty fc@(FullColoring pt ts) (Just style) prop
+getProperty fc@(FullColoring pt ts) style prop
  	= either (const Nothing) return $ inMsg ("While searching a value for "++show style++" and "++prop) $ do	
 		propPt	<- _asID ts prop
 		stylePt	<- _asID ts style
@@ -118,7 +118,7 @@ intAsColor i
 		'#':(show r ++","++ show g ++","++ show b)
 		
 
-toSVGColorScheme	:: Maybe Name -> FullColoring -> ColorScheme
+toSVGColorScheme	:: Name -> FullColoring -> ColorScheme
 toSVGColorScheme style fc	
 	= let	property p def	= getProperty fc style p & fromMaybe def
 		property' p def	= property p (Right def) & either (const def) id 
