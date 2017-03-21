@@ -1,0 +1,36 @@
+ {-# LANGUAGE RankNTypes #-}
+module SyntaxHighlighting.Renderers (allRenderers, latex, ansi, svg, html) where
+
+import Utils.Utils
+
+import SyntaxHighlighting.Renderer
+import SyntaxHighlighting.AsAnsiPt
+import SyntaxHighlighting.AsHTMLPt
+import SyntaxHighlighting.AsLatexPt
+import SyntaxHighlighting.AsSVGPt
+
+import SyntaxHighlighting.Coloring
+import SyntaxHighlighting.Renderer
+
+import TypeSystem
+
+allRenderers	:: [(String, [String], Name -> String -> String)]
+allRenderers	= [ansi' & getProps , html' & getProps, latex' & getProps, svg' & getProps]
+
+
+getProps	:: Renderer r => r -> (String, [String], Name -> String -> String)
+getProps r	= (name r, supported r, \nm str -> renderString nm str r)
+
+
+e	= error ""
+
+
+ansi'	= ansi e e
+html'	= html e e
+latex'	= latex e e
+svg'	= svg e e
+
+ansi	= create :: FullColoring -> SyntaxStyle -> AnsiRenderer
+html	= create :: FullColoring -> SyntaxStyle -> HTMLRenderer
+latex	= create :: FullColoring -> SyntaxStyle -> LatexRenderer
+svg	= create :: FullColoring -> SyntaxStyle -> SVGRenderer
