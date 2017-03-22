@@ -61,6 +61,8 @@ instance Renderer SVGRenderer where
 	name _	= "SVG"
 	renderParseTree pt (SVGRenderer fc style)
 		= parseTreeSVG style 1 fc pt
+	renderParseTree' pt (SVGRenderer fc style)
+		= parseTreeSVG style 1 fc (deAnnot pt)
 	renderParseTreeDebug pt (SVGRenderer fc style)
 		= error "No renderPTDebug supported"
 	renderString styleName str _

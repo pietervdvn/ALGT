@@ -16,6 +16,8 @@ instance Renderer LatexRenderer where
 	name _	= "LaTeX"
 	renderParseTree pt (LatexRenderer fc style)
 		= renderPT fc style pt
+	renderParseTree' pt (LatexRenderer fc style)
+		= renderPT fc style (deAnnot pt)
 	renderParseTreeDebug pt (LatexRenderer fc style)
 		= error "RenderPTDebug not supported"
 	renderString styleName str (LatexRenderer fc _)

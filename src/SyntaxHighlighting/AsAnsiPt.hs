@@ -30,6 +30,8 @@ data AnsiRenderer	= AnsiRenderer FullColoring SyntaxStyle
 instance Renderer AnsiRenderer where
 	create	= AnsiRenderer
 	name _	= "Ansi"
+	renderParseTree' pt (AnsiRenderer fc style)
+		= renderPT fc style (deAnnot pt) & show
 	renderParseTree pt (AnsiRenderer fc style)
 		= renderPT fc style pt & show
 	renderParseTreeDebug pt (AnsiRenderer fc style)

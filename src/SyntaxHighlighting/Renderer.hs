@@ -12,5 +12,7 @@ class Renderer renderer where
 	name		:: renderer -> String
 	supported	:: renderer -> [String]
 	renderString	:: Name -> String -> renderer -> String
-	renderParseTree	:: ParseTree -> renderer -> String
+	renderParseTree'	:: ParseTreeA LocationInfo -> renderer -> String
+	renderParseTree		:: ParseTree -> renderer -> String
 	renderParseTreeDebug	:: ParseTree -> renderer -> String
+

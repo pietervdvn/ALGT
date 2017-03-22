@@ -245,9 +245,10 @@ mainExFilePure args
 
 		let style	= get tsStyle ts
 
-		let renderer'	= [(renderHTML args, \pt -> Render.html fc style & renderParseTree pt)
-					, (renderHTMLNoCss args, \pt -> HTML.HTMLRenderer False fc style & renderParseTree pt)
-					, (renderLatex args, \pt -> Render.latex fc style & renderParseTree pt)]
+		let renderer'	= [(renderHTML args, \pt -> Render.html fc style & renderParseTree' pt)
+					, (renderHTMLNoCss args, \pt -> HTML.HTMLRenderer False fc style & renderParseTree' pt)
+					, (renderLatex args, \pt -> Render.latex fc style & renderParseTree' pt)
+					, (renderParts args, \pt -> Render.parts fc style & renderParseTree' pt)]
 		let renderer	= renderer' & filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
 		let renderSpecial	= renderer' |> fst & or
 		when renderSpecial $ do
@@ -291,9 +292,9 @@ savePTRendered nm (i, pt)
 
 
 
-printPtRendered	:: (ParseTree -> String) -> ParseTreeA LocationInfo -> PureIO ()
+printPtRendered	:: (ParseTreeA LocationInfo -> String) -> ParseTreeA LocationInfo -> PureIO ()
 printPtRendered renderer pt
-	= do	let rendered	= renderer (deAnnot pt)
+	= do	let rendered	= renderer pt
 		putStrLn $ " # Parsed and rendered: "++(pt & get ptAnnot & toParsable)
 		putStrLn rendered
 

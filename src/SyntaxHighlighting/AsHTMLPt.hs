@@ -21,6 +21,8 @@ data HTMLRenderer	= HTMLRenderer Bool FullColoring SyntaxStyle
 instance Renderer HTMLRenderer where
 	create	= HTMLRenderer True
 	name _	= "HTML"
+	renderParseTree' pt (HTMLRenderer includeCSS fc style)
+		= renderPT includeCSS fc style (deAnnot pt)
 	renderParseTree pt (HTMLRenderer includeCSS fc style)
 		= renderPT includeCSS fc style pt
 	renderParseTreeDebug pt (HTMLRenderer fc style _)
