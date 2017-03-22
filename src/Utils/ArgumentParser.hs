@@ -90,7 +90,7 @@ instance ActionSpecified Args where
 		  	|| [exampleFiles]				|> (args &) |> (not . null) & or
 			|| [subtypingSVG, iraSVG] 	|> (args &) |> isJust & or
 			|| [dynamizeArgs] 		|> (args &) |> isJust & or
-			|| [dumpTS, interpretAbstract, interpretRulesAbstract]	|> (args &) & or
+			|| [dumpTS, interpretAbstract, interpretRulesAbstract, styleCSS]	|> (args &) & or
 
 data ExampleFile	= ExFileArgs
 	{ fileName	:: FilePath
@@ -119,7 +119,7 @@ data DynamizeArgs	= DynamizeArgs
 
 instance ActionSpecified ExampleFile where
 	actionSpecified args
-		= [testAllProps, renderHTML, renderLatex] |> (args &) & or
+		= [testAllProps, renderHTML, renderLatex, renderHTMLNoCss] |> (args &) & or
 			|| ([ruleSymbol, function, stepByStep, testProp, ptSvg] |> (args &) |> isJust & or)
 
 	

@@ -1,2 +1,5 @@
-rm src/Assets/IntegrationTests/*.FAILED
-git commit src/Assets/IntegrationTests/* -m "Tests"
+
+cd src/Assets/IntegrationTests/
+rm *.FAILED
+git add *
+git commit . -m "Tests"

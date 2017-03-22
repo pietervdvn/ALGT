@@ -241,15 +241,15 @@ mainExFilePure args
 		let parsed'	= zip inputs parsed
 		handleExampleFile (parser args) args parsed'
 
-		let renderSpecial	= renderHTML args || renderLatex args
 
 
 		let style	= get tsStyle ts
 
-		let renderer	= [(renderHTML args, \pt -> Render.html fc style & renderParseTree pt)
+		let renderer'	= [(renderHTML args, \pt -> Render.html fc style & renderParseTree pt)
 					, (renderHTMLNoCss args, \pt -> HTML.HTMLRenderer False fc style & renderParseTree pt)
 					, (renderLatex args, \pt -> Render.latex fc style & renderParseTree pt)]
-					& filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
+		let renderer	= renderer' & filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
+		let renderSpecial	= renderer' |> fst & or
 		when renderSpecial $ do
 			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
 					& liftEith
