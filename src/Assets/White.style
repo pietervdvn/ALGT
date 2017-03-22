@@ -1,40 +1,57 @@
 
- terminal
-**********
+white
+********
 
 Constants
 =========
 
-black	= #000000
-white	= #ffffff
-red	= #ff0000
-green	= #00ff00
-blue	= #0000ff
-grey	= #999999
-darkgreen = #009900
-yellow	= #ffff00
+black	 = #000000
+white	 = #ffffff
+red	 = #ff0000
+green	 = #00ff00
+blue	 = #5555ff
+darkblue	 = #000099
 
-bold		= "bold"
-underline	= "underline"
-bu		= "underlinedbold"
-normal		= "normal"
+grey	 = #999999
+darkgrey	 = #505050
+darkgreen	 = #009900
+yellow	 = #ffff00
+darkyellow	 = #bbbb00
+purple	 = #aa22aa
+
+bold 	 = "bold"
+italic 	 = "italic"
+underline	 = "underline"
+monospace	 = "monospace"
 
 
 Defaults
 ========
 
-foreground-color	: black	
-background-color	: white
-font-style		: normal
-svg-line-color		: green
-svg-line-thickness 	= 1
-svg-dotsize 		= 4
-svg-fontsize 		= 20
+foreground-color : black 
+background-color : white
+font-size 	 = 12
+font-family 	 = "Ubuntu Mono"
+
+svg-line-color  : black
+svg-line-thickness 	 = 2
+svg-dotsize  	 = 4
+svg-fontsize  	 = 20
 
 
 Styles
 ======
 
+
+ statement
+-----------
+ foreground-color: black
+
+
+ identifier (statement)
+------------------------
+
+foreground-color: red
 
  type
 ------
@@ -42,59 +59,209 @@ Styles
 foreground-color: blue
 font-style: bold
 
-
- statement
------------
-
-font-style: normal
-
- identifier (statement)
-------------------------
-
-foreground-color: red
-
  constant (statement)
 ----------------------
 
 foreground-color: blue
 
+
+ number (constant)
+-------------------
+
+/
+
+
+ float (constant)
+-------------------
+
+/
+
+
+ string (constant)
+-------------------
+
+/
+
+
+ char (constant)
+-----------------
+
+/
+
+
+ special-char (constant)
+-------------------------
+
+foreground-color: darkblue
+
  keyword (statement)
 ---------------------
 
- foreground-color: darkgreen
+ foreground-color: purple
+ font-style: bold
 
 
- header
---------
 
-size		= "*2"
-font-style	: underline
-
- header0 (header)
+ builtin (keyword)
 -------------------
 
-size		= "*3"
-
- header1 (header)
--------------------
-
-size		= "*2"
+/
 
 
- header2 (header)
--------------------
+ preprocessor
+--------------
 
-size		= "*1.5"
+font-style: bold
+foreground-color: white
+background-color: purple
+
+
+
 
 
 
  comment 
 ---------
 
-foreground-color: grey
+foreground-color: green
 
  noise (comment)
 ------------------
 
 font-style: normal
-foreground-color: grey
+foreground-color: green
+
+
+
+
+ header
+--------
+
+size 	 = 20
+font-style : bold
+
+ header1 (header)
+-------------------
+
+font-size	 = 22
+
+ header2 (header)
+-------------------
+
+font-size	 = 20
+
+ header3 (header)
+-------------------
+
+font-size	 = 18
+
+
+ header4 (header)
+-------------------
+
+font-size	 = 16
+
+
+ header5 (header)
+-------------------
+
+font-size	 = 14
+
+ header6 (header)
+-------------------
+
+font-size	 = 12
+
+
+
+
+
+
+ emph
+------
+
+font-style: italic
+
+
+ strong
+--------
+
+font-style: bold
+
+ url
+-----
+
+foreground-color: darkblue
+font-decoration: underline
+
+
+ code
+------
+
+font-style: monospace
+
+
+ hline
+-------
+
+special	 = "hline"
+
+
+ note
+------
+
+foreground-color: white
+background-color: blue
+
+
+ warning (note)
+----------------
+
+foreground-color: black
+background-color:yellow
+
+ error (note)
+--------------
+
+foreground-color: black
+background-color: red
+
+
+
+  todo (note)
+--------------
+
+foreground-color: black
+background-color: darkyellow
+
+
+
+ fixme (warning)
+-----------------
+
+/
+
+
+ cursor
+--------
+
+font-style: bold
+
+ linehighlight
+--------------- 
+ 
+ background-color: grey
+
+ selection
+-----------
+
+ background-color: black
+ foreground-color: white
+
+ linenumbers
+-------------
+
+ font-style: bold
+ foreground-color: white
+ background-color: darkblue
+

@@ -1,40 +1,50 @@
 
- terminal
-**********
+white
+********
 
 Constants
 =========
 
-black	= #000000
-white	= #ffffff
-red	= #ff0000
-green	= #00ff00
-blue	= #0000ff
-grey	= #999999
-darkgreen = #009900
-yellow	= #ffff00
+black	 = #000000
+white	 = #ffffff
+red	 = #ff0000
+green	 = #00ff00
+blue	 = #5555ff
+darkblue	 = #000099
 
-bold		= "bold"
-underline	= "underline"
-bu		= "underlinedbold"
-normal		= "normal"
+grey	 = #999999
+darkgrey	 = #505050
+darkgreen	 = #009900
+yellow	 = #ffff00
+darkyellow	 = #bbbb00
+purple	 = #aa22aa
+
+bold 	 = "bold"
+italic 	 = "italic"
+underline	 = "underline"
+monospace	 = "monospace"
 
 
 Defaults
 ========
 
-foreground-color	: black	
-background-color	: white
-font-style		: normal
-svg-line-color		: black
-svg-line-thickness 	= 1
-svg-dotsize 		= 4
-svg-fontsize 		= 20
+foreground-color : black 
+background-color : white
+font-size 	 = 12
+font-family 	 = "Ubuntu Mono"
+
+svg-line-color  : black
+svg-line-thickness 	 = 2
+svg-dotsize  	 = 4
+svg-fontsize  	 = 20
+
 
 Styles
 ======
 
-statement
----------
 
-foreground-color	: black
+ statement
+-----------
+ foreground-color: black
+
+
