@@ -1,0 +1,85 @@
+ 
+ Title 
+******
+
+ Syntax
+========
+
+int	::= Number
+var	::= Identifier
+
+
+term		::= int | var
+expr		::= term "+" expr | term
+
+
+assign		::= var ":=" int
+state		::= assign ";" state | "$"
+
+
+assignment	::= var "=" expr
+statements	::= assignment "\n" statements | "\n"
+
+
+ Syntax Style
+==============
+
+Identifier	-> "identifier"
+
+
+ Relations
+===========
+
+(~>)	: state (in), expr (in), int (out)	Pronounced as "evaluate expression"
+
+
+(→)	: state (in), assignment (in), state (out)	Pronounced as "evaluation"
+(→*)	: statements (in), state (in), state (out)	Pronounced as "run all"
+
+(-->)	: statements (in), state (out)			Pronounced as "run"
+
+ Rules
+=======
+
+
+ ------------------------ [EvaluateBase]
+  (~>) state, (i:int), i
+
+
+
+ ---------------------------------------- [EvaluateVar]
+  (~>) state[x ":=" i], (x:var), i
+
+
+  (~>) state, e0, i0	(~>) state, e1, i1
+ -------------------------------------- [EvaluatePlus]
+  (~>) state, e0 "+" e1, !plus(i0, i1)
+
+
+
+
+
+
+
+
+ (~>) state, expr, i
+---------------------------------------------- [Assgn]
+ (→) state, var "=" expr, (var ":=" i) ";" state
+
+
+
+ (→) state, assgn, state0	(→*) statements, state0, result
+------------------------------------------------------------------ [RunAll]
+ (→*) assgn "\n" statements, state, result
+
+
+
+------------------------------------------------------------------ [RunAll Basecase]
+ (→*) "\n", state, state
+
+
+
+ (→*) statements, "$", result
+-------------------------------------------------------------- [Run]
+ statements --> result
+
