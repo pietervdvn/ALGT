@@ -33,6 +33,8 @@ import qualified SyntaxHighlighting.Renderers as Render
 import SyntaxHighlighting.Coloring
 import SyntaxHighlighting.Renderer
 import SyntaxHighlighting.AsSVGPt (toSVGColorScheme)
+import SyntaxHighlighting.AsHTMLPt (cssFor)
+import qualified SyntaxHighlighting.AsHTMLPt as HTML
 
 import Control.Arrow ((&&&))
 import Control.Monad
@@ -117,6 +119,7 @@ mainPureOn args ts
 	, \args -> 			  interpretRules args	     |+> runRuleAbstract' ts & void
 	, ioIfJust' subtypingSVG	$ saveSubtypingSVG (get tsSyntax ts)
 	, ioIfJust' iraSVG		$ saveSubtypingSVG (analyzeRelations ts & get raSyntax)
+	, ioIf' styleCSS		$ createCSS
 	, ioIf' (not . actionSpecified)	$ putStrLn " # Language file parsed. No action specified, see -h or --manual to specify other options"
 	, ioIfJust' dynamizeArgs	  dynamizeTS
 	] |+> (args &) & void
@@ -169,6 +172,10 @@ runRuleAbstract ts (s, rules)
 		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' help ++ full ++ text
 
 
+createCSS	:: PureIO ()
+createCSS	
+	= do	fc	<- getFC
+		putStrLn $ cssFor fc
 
 abstractRuleSyntax	:: Bool -> TypeSystem -> PureIO ()
 abstractRuleSyntax irasvg ts	
@@ -240,6 +247,7 @@ mainExFilePure args
 		let style	= get tsStyle ts
 
 		let renderer	= [(renderHTML args, \pt -> Render.html fc style & renderParseTree pt)
+					, (renderHTMLNoCss args, \pt -> HTML.HTMLRenderer False fc style & renderParseTree pt)
 					, (renderLatex args, \pt -> Render.latex fc style & renderParseTree pt)]
 					& filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
 		when renderSpecial $ do

@@ -15,15 +15,15 @@ import Utils.XML hiding (indent)
 
 
 
-data HTMLRenderer	= HTMLRenderer FullColoring SyntaxStyle
+data HTMLRenderer	= HTMLRenderer Bool FullColoring SyntaxStyle
 
 
 instance Renderer HTMLRenderer where
-	create	= HTMLRenderer
+	create	= HTMLRenderer True
 	name _	= "HTML"
-	renderParseTree pt (HTMLRenderer fc style)
-		= renderPT fc style pt
-	renderParseTreeDebug pt (HTMLRenderer fc style)
+	renderParseTree pt (HTMLRenderer includeCSS fc style)
+		= renderPT includeCSS fc style pt
+	renderParseTreeDebug pt (HTMLRenderer fc style _)
 		= error "No renderPTDebug supported"
 	renderString styleName str _
 		= inTag "span" [SA "class" styleName] str
@@ -33,11 +33,12 @@ instance Renderer HTMLRenderer where
 
 
 
-renderPT	:: FullColoring -> SyntaxStyle -> ParseTree -> String
-renderPT fc style pt
+renderPT	:: Bool -> FullColoring -> SyntaxStyle -> ParseTree -> String
+renderPT includeCSS fc style pt
 	= let	ptannot		= determineStyle' style pt
 		ptannot'	= ptannot ||>> styleElem & cascadeAnnot ("", [])
-		head		= cssFor fc & comment & inLT "style"
+		head		= if includeCSS then cssFor fc & comment & inLT "style"
+					else ""
 		body		= _renderPT ptannot' & inLT "body"
 		in
 		(head ++ body) & inLT "html"

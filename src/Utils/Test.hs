@@ -78,6 +78,9 @@ testArgs      = [ exp "No action specified" ["Test/STFL.language"]
 			["Test/FuncTypeErr.language", "--dlf"]
 {-25-}		, exp "<html>" ["Style.language", "Terminal.style", "styleFile", "--html"]
 		, exp "Could not parse expression of the form expr" ["Test/STFLBool.language", "Test/STFLBoolMismatch.stflbool", "expr", "-l"]
+		, noExp ["Test/STFL.language", "--nc", "--css"]
+		, exp "<html>" ["Style.language", "Terminal.style", "styleFile", "--html-no-css"]
+
 		] |> over _1 (++["--plain"]) & nub
 
 

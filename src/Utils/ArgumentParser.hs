@@ -71,6 +71,7 @@ data Args = Args 	{ tsFile		:: String
 			, iraSVG		:: Maybe String
 			, dynamizeArgs		:: Maybe DynamizeArgs
 			, styleName		:: Name
+			, styleCSS		:: Bool
 			, interactiveArg	:: Maybe Symbol
 			, noMakeupArg		:: Bool
 			, shortProofs		:: Maybe String
@@ -103,6 +104,7 @@ data ExampleFile	= ExFileArgs
 	, verbose	:: Bool
 	, ptSvg		:: Maybe Name
 	, renderHTML	:: Bool
+	, renderHTMLNoCss	:: Bool
 	, renderLatex	:: Bool
 	} deriving (Show)
 
@@ -251,6 +253,9 @@ targetFile
 			(long "html"
 			<> help "Render the file as styled HTML")
 		<*> switch
+			(long "html-no-css"
+			<> help "Render the file as html, without css")
+		<*> switch
 			(long "latex"
 			<> help "Render the file as styled LaTeX")
 
@@ -312,6 +317,10 @@ args	= Args <$> argument str
 			<> value "Terminal"
 			<> help "Color scheme for parsetrees and svg files"
 			<> completer (mkCompleter (\part -> knownStyles & M.keys & filter (part `isPrefixOf`) & return))
+			)
+		<*> switch (
+			long "css"
+			<> help "Create a css file out of the stylefile"
 			)
 		<*> optional (strOption
 			(metavar "RULE-TO-INTERPRET"
