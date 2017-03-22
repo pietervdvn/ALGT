@@ -22,7 +22,7 @@ We calculate the minimum distance to a start value (where each hop has a cost on
 import Utils.Utils
 
 import qualified Data.Map as M
-import Data.Map (Map, (!))
+import Data.Map (Map)
 import qualified Data.Set as S
 import Graphs.DirectedGraph
 import Data.Maybe
@@ -57,7 +57,7 @@ minDistance dg' initialCosts
 		dg	= dg' |> (\sn -> S.toList sn & concat & S.fromList)  & makeComplete
 		dgi	= dg & invert
 		calculatd	= initial
-		queue	= (M.keys initial |> (dgi !)) >>= S.toList
+		queue	= (M.keys initial |> (dgi !?)) >>= S.toList
 		initialState	= S initial calculatd dg' dgi queue
 		in execState (update' (+1)) initialState
 			& get calculated
@@ -84,7 +84,7 @@ update f node
 		when (isNothing initialV) $ do
 			known		<- gets (get calculated)
 			let currV	= known & M.lookup node 
-			buildsOn	<- gets (get dg) |> (M.! node)
+			buildsOn	<- gets (get dg) |> (!? node)
 			let newV'	= buildsOn & S.toList
 						||>> (`M.lookup` known) 
 						|> catMaybes & L.filter (not . L.null)
@@ -93,8 +93,11 @@ update f node
 			unless (newV == currV) $ do
 				-- smaller path found!
 				modify (over calculated $ M.insert node $ fromJust newV)
-				supports	<- gets (get dgi) |> (M.! node)
+				supports	<- gets (get dgi) |> (!? node)
 				modify (over queue (nub . (++S.toList supports)))
 
 
 
+(!?)	:: Ord k => Map k (Set a) -> k -> (Set a)
+(!?) dict k
+	= dict & M.findWithDefault S.empty k

@@ -200,7 +200,7 @@ runIsolated' argEdit line target vars str
 				= break (==')') str 
 					|> tail
 					|> options
-		putStrLn $ show line ++ " Running with input args "++show args
+		putStr $ show line ++ " Running with input args "++show args
 		(args', input)	<- genArgs vars (argEdit args)
 		(_, Just parsedArgs)
 				<- parseArgs ([-1::Int], "ManualPreprocessor run") args'
@@ -209,6 +209,7 @@ runIsolated' argEdit line target vars str
 					& runPureOutput defaultConfig (mkStdGen 0) input
 					& removeCarriageReturns
 					& removeUnchanged
+		putStrLn $ "Done! " ++ show (length $ show output)
 		rest'	<- preprocess line target vars rest
 		return (output, action, rest')
 

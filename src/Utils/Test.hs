@@ -20,6 +20,7 @@ import Data.List (nub)
 import Control.Monad
 
 import System.Random
+import System.Process
 
 import AssetsHelper
 
@@ -118,6 +119,7 @@ runTestWith args
 recreateAllTests	
 	= do	autoCreateAssets
 		testArgs'|+> createTestResult & void
+		runCommand "./commitTests"
 
 recreateTest i
 	= (i, testArgs !! i) & createTestResult	-- unSafe !! ; but not a problem
