@@ -13,7 +13,7 @@ import Data.List
 
 import Utils.XML hiding (indent)
 
-
+import Text.PrettyPrint.ANSI.Leijen
 
 data HTMLRenderer	= HTMLRenderer Bool FullColoring SyntaxStyle
 
@@ -22,13 +22,13 @@ instance Renderer HTMLRenderer where
 	create	= HTMLRenderer True
 	name _	= "HTML"
 	renderParseTree' pt (HTMLRenderer includeCSS fc style)
-		= renderPT includeCSS fc style (deAnnot pt)
+		= text $ renderPT includeCSS fc style (deAnnot pt)
 	renderParseTree pt (HTMLRenderer includeCSS fc style)
-		= renderPT includeCSS fc style pt
+		= text $ renderPT includeCSS fc style pt
 	renderParseTreeDebug pt (HTMLRenderer fc style _)
 		= error "No renderPTDebug supported"
 	renderString styleName str _
-		= inTag "span" [SA "class" styleName] str
+		= text $ inTag "span" [SA "class" styleName] str
 	supported _	= cssProperties |> fst3
 	
 	 

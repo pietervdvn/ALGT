@@ -9,19 +9,21 @@ import TypeSystem
 import SyntaxHighlighting.Coloring
 import SyntaxHighlighting.Renderer
 
+import Text.PrettyPrint.ANSI.Leijen
+
 data LatexRenderer	= LatexRenderer FullColoring SyntaxStyle
 
 instance Renderer LatexRenderer where
 	create	= LatexRenderer
 	name _	= "LaTeX"
 	renderParseTree pt (LatexRenderer fc style)
-		= renderPT fc style pt
+		= text $ renderPT fc style pt
 	renderParseTree' pt (LatexRenderer fc style)
-		= renderPT fc style (deAnnot pt)
+		= text $ renderPT fc style (deAnnot pt)
 	renderParseTreeDebug pt (LatexRenderer fc style)
 		= error "RenderPTDebug not supported"
 	renderString styleName str (LatexRenderer fc _)
-		= renderWithStyle fc styleName str
+		= text $ renderWithStyle fc styleName str
 	supported _	= effects |> fst
 
 

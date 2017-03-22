@@ -28,6 +28,8 @@ import Control.Monad.State hiding (get)
 
 import Control.Arrow ((&&&))
 
+import Text.PrettyPrint.ANSI.Leijen
+
 
 data SVGRenderer	= SVGRenderer FullColoring SyntaxStyle
 
@@ -60,9 +62,9 @@ instance Renderer SVGRenderer where
 	create	= SVGRenderer
 	name _	= "SVG"
 	renderParseTree pt (SVGRenderer fc style)
-		= parseTreeSVG style 1 fc pt
+		= text $ parseTreeSVG style 1 fc pt
 	renderParseTree' pt (SVGRenderer fc style)
-		= parseTreeSVG style 1 fc (deAnnot pt)
+		= text $ parseTreeSVG style 1 fc (deAnnot pt)
 	renderParseTreeDebug pt (SVGRenderer fc style)
 		= error "No renderPTDebug supported"
 	renderString styleName str _

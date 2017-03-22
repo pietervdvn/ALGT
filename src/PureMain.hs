@@ -254,8 +254,9 @@ mainExFilePure args
 		when renderSpecial $ do
 			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
 					& liftEith
-			printPtRendered renderer pts'
-
+			let rendered	= renderer pts'
+			putStrLn $ " # Parsed and rendered: "++(pts' & get ptAnnot & toParsable)
+			putDocLn' rendered
 		return parsed'
 
 parseWith	:: FilePath -> TypeSystem -> Name -> (Int, String) -> Either String ParseTree
@@ -287,16 +288,11 @@ savePTRendered nm (i, pt)
 		let fileName	= nm' ++"_"++ show i ++ ".svg"
 		fc		<- getConfig' $ get colorScheme 
 		ts		<- getTS
-		let conts	=  Render.svg fc (get tsStyle ts) & renderParseTree pt
+		let conts	=  Render.svg fc (get tsStyle ts) & renderParseTree pt & plain & show
 		writeFile fileName conts
 
 
 
-printPtRendered	:: (ParseTreeA LocationInfo -> String) -> ParseTreeA LocationInfo -> PureIO ()
-printPtRendered renderer pt
-	= do	let rendered	= renderer pt
-		putStrLn $ " # Parsed and rendered: "++(pt & get ptAnnot & toParsable)
-		putStrLn rendered
 
 
 unEscape	:: String -> String
@@ -419,7 +415,7 @@ printPT pt
 	= do	ts	<- getTS
 		fc	<- getConfig' $ get colorScheme
 		let ptDoc	= Render.ansi fc (get tsStyle ts) & renderParseTree pt
-		putStrLn ptDoc
+		putDocLn' ptDoc
 
 printPTDebug	:: (String, ParseTree) -> PureIO ()
 printPTDebug (inp, pt)
@@ -427,7 +423,7 @@ printPTDebug (inp, pt)
 		putStrLn $ "# "++show inp++" was parsed as:"
 		fc	<- getConfig' $ get colorScheme
 		let ptDoc	= Render.ansi fc (get tsStyle ts) & renderParseTreeDebug pt
-		putStrLn ptDoc
+		putDocLn' ptDoc
 
 
 putDocLn'	:: Doc -> PureIO ()

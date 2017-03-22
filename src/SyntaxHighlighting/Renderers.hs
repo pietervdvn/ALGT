@@ -13,13 +13,15 @@ import SyntaxHighlighting.AsParts
 import SyntaxHighlighting.Coloring
 import SyntaxHighlighting.Renderer
 
+import Text.PrettyPrint.ANSI.Leijen
+
 import TypeSystem
 
-allRenderers	:: [(String, [String], Name -> String -> String)]
+allRenderers	:: [(String, [String], Name -> String -> Doc)]
 allRenderers	= [ansi' & getProps , html' & getProps, latex' & getProps, svg' & getProps, parts' & getProps]
 
 
-getProps	:: Renderer r => r -> (String, [String], Name -> String -> String)
+getProps	:: Renderer r => r -> (String, [String], Name -> String -> Doc)
 getProps r	= (name r, supported r, \nm str -> renderString nm str r)
 
 

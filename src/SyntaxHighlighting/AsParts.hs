@@ -8,6 +8,7 @@ import TypeSystem
 import SyntaxHighlighting.Coloring
 import SyntaxHighlighting.Renderer
 
+import Text.PrettyPrint.ANSI.Leijen
 
 data PartsRenderer	= PartsRenderer SyntaxStyle
 
@@ -17,7 +18,7 @@ instance Renderer PartsRenderer where
 	supported _	= []
 	renderString _	= error "Not supported"
 	renderParseTree' pt (PartsRenderer style)
-			= renderPT style pt
+			= text $ renderPT style pt
 	renderParseTree	= error "Not supported"
 	renderParseTreeDebug	
 			= error "Not supported"

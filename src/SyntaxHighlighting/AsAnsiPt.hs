@@ -31,13 +31,13 @@ instance Renderer AnsiRenderer where
 	create	= AnsiRenderer
 	name _	= "Ansi"
 	renderParseTree' pt (AnsiRenderer fc style)
-		= renderPT fc style (deAnnot pt) & show
+		= renderPT fc style (deAnnot pt)
 	renderParseTree pt (AnsiRenderer fc style)
-		= renderPT fc style pt & show
+		= renderPT fc style pt
 	renderParseTreeDebug pt (AnsiRenderer fc style)
-		= renderPTDebug fc style pt & show
+		= renderPTDebug fc style pt
 	renderString styleName str (AnsiRenderer fc _)
-		= renderWithStyle fc styleName str & show
+		= renderWithStyle fc styleName str
 	supported _	= properties |> fst
 	
 	 
