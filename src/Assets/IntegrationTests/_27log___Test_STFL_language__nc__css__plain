@@ -37,4 +37,3 @@ body {background-color:#000000;color:#00ff00;font-size:12px;font-family:"Ubuntu 
 .linehighlight {background-color:#505050;color:#00ff00;font-size:12px;font-family:"Ubuntu Mono";}
 .selection {background-color:#00ff00;color:#000000;font-size:12px;font-family:"Ubuntu Mono";}
 .linenumbers {background-color:#000099;color:#ffffff;font-size:12px;font-family:"Ubuntu Mono";font-weight:"bold";}
- # Language file parsed. No action specified, see -h or --manual to specify other options
