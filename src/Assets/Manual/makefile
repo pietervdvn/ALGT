@@ -1,3 +1,10 @@
+all:
+	make manual
+	make manual
+	make workshop
+	make workshop
+
+
 deps:
 	make images-extra
 	make templates

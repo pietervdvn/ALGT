@@ -39,6 +39,12 @@ ALGT
 
 All the files you need are in the **demo**-directory, download it entirely
 
+ . . .
+
+\begin{alertblock}{Alpha}
+Beware of bugs and unclear error messages
+\end{alertblock}
+
 
 Declaring the syntax
 =====================
