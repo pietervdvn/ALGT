@@ -201,6 +201,7 @@ esc		:: String -> String
 esc []		= []
 esc ('"':str)	= "\"" ++ esc str
 esc ('\\':str)	= "\\\\" ++ esc str
+esc ('\n':str)	= "\\n" ++ esc str
 esc (c:str)	= c:esc str
 
 instance ToString WSMode where

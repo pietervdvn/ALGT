@@ -34,14 +34,14 @@
 
 
 dom		: type -> type
-dom("(" T ")")	= T
+dom("(" T ")")	= dom(T)
 dom(("(" T1 ")") "->" T2)
 		= T1
 dom(T1 "->" T2)	= T1
 dom("Int")	= !error("Undefined")
 
 cod		: type -> type
-cod("(" T ")")	= T
+cod("(" T ")")	= cod(T)
 cod(T1 "->" ("(" T2 ")"))
 		= T2
 cod(T1 "->" T2)	= T2

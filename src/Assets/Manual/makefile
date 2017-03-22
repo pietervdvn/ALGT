@@ -31,8 +31,8 @@ images:
 	cd .bin; ../makeImages.sh
 
 images-extra:
-	cp Manual/*.svg .bin/
-	cp Manual/*.png .bin/
+	cp */*.svg .bin/
+	cp */*.png .bin/
 	make images
 
 clean:

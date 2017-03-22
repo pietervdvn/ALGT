@@ -30,7 +30,7 @@ import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
 
-import Debug.Trace --todo
+import Debug.Trace --TODO
 
 -------------------------------------------- TYPENAMESPEC ---------------------------------------------
 
@@ -82,7 +82,7 @@ emptyRA syntax
 
 analyzeRelations	:: TypeSystem -> RelationAnalysis
 analyzeRelations ts 	= createRuleSyntax ts 
-				& calculateInverses ts
+				-- & calculateInverses ts
 
 -------------------------------------------- INVERSION CALCULATION ---------------------------------------------
 
@@ -288,6 +288,10 @@ invertRecAS nameSpecLookups as
 
 -------------------------------------------- PREPARE RA -------------------------------------------------------------
 
+
+-- trace'	= id
+trace'		= trace
+
 debugTrace	:: TypeSystem -> String -> RelationAnalysis -> String
 debugTrace ts msg ra
 	= let	ra'	= generateSyntax ts ra
@@ -298,7 +302,7 @@ debugTrace ts msg ra
 
 createRuleSyntax	:: TypeSystem -> RelationAnalysis
 createRuleSyntax ts
-	= let	tr msg ra	= {- -} ra  {- }  trace (debugTrace ts msg ra) ra --}
+	= let	tr msg ra	= trace' (debugTrace ts msg ra) ra
 		ra	= prepareSyntax ts	& tr "prepped" 			-- Prepare the syntax, add empty rules for all possible forms
 				& addSubchoices ts	& tr "subs added"	-- Add extra choices, e.g. add (eL)(→)in0 as choice to (e)(→)in0
 				& rebuildSubtypings' ts	& tr "rebuild"
@@ -332,7 +336,7 @@ addSubchoices ts ra
 		
 		ra'	= ra & over raIntroduced (M.mapWithKey (\tns vals -> tnsSubsOf' tns ++ vals))
 		in
-		ra'
+		trace' ("Subs of: " ) ra'
 
 
 -- removes empty and trivial introduced forms
@@ -495,7 +499,7 @@ createHoleFillFor ts
 {-
 For each relation, we add a syntax rule representing input and output.
 
-We 'cheat' a little by editting the embedded lattice, to force correct subtyping.
+We 'cheat' a little by editing the embedded lattice, to force correct subtyping.
 
 Note that relations with multiple arguments might contain wrong combinations.
 
@@ -540,11 +544,16 @@ addTypeFor origSyntax symb rel (prepSyntax, newtypes) (i, (tn, mode))
 
 addTNS	:: TypeNameSpec -> Syntax -> Syntax
 addTNS tns s
+ | isBuiltinName (get tnsSuper tns)
+	= s
+ | otherwise
 	= let	tn		= get tnsSuper tns
 		newRuleN	= ruleNameFor tns
 		wsMode		= get wsModes s M.! tn -- needed for printing and completeness
+		grouping	= get groupModes s M.! tn
 		s'		= s 	& over bnf (M.insert newRuleN [])
 					& over wsModes (M.insert newRuleN wsMode)
+					& over groupModes (M.insert newRuleN grouping)
 		in
 		s'
 

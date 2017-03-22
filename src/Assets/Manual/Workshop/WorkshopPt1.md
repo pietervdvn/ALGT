@@ -63,6 +63,8 @@ What is BNF?
 
 	name ::= "literal1" | "literal2" | "literal3"
 
+. . .
+
 Possible files:
 
 	literal1
@@ -84,6 +86,8 @@ What is BNF?
 
 	name ::= "literal1" "literal2"
 
+. . .
+
 Possible files:
 
 	literal1 literal2
@@ -96,6 +100,8 @@ Backus-Naur-Formulation
 	name		::= "literal1"
 	otherName	::= name
 
+ . . .
+
 Possible files:
 
 	literal1
@@ -107,6 +113,20 @@ Backus-Naur-Formulation
 	name		::= "literal0"
 	otherName	::= name name | "literal1" name | "literal2"
 
+
+. . .
+
+Possible files:
+
+	literal0 literal0
+
+OR
+
+	literal1 literal0
+
+OR
+
+	literal2
 
 Backus-Naur-Formulation
 -----------------------
@@ -161,6 +181,8 @@ Addition
 
 	41 + 1
 
+./ALGT Demo.language demo.demo **expr** -l
+
 $$($$DemoDynA.language![1..10] $$demo.demo!2 expr -l)
 
 
@@ -198,7 +220,7 @@ Addition
 
 Let's change expression to be recursive!
 
-$$DemoDynB.language![6..11]!file
+$$DemoDynB.language![10..11]!file
 
 
 Left recursion
@@ -226,13 +248,31 @@ Left recursion
 Adding Functions
 ----------------
 
-	( \ x : Int . x + 1)
+	( \ x . x + 1)
+
+. . .
+
+	expr	::= "(" "\\" var "." expr ")"
+		| ...
 
 
 Adding Variables
 ----------------
 
 $$DemoDyn.language!10!file
+
+
+Expression
+-----------
+
+
+	expr	::= "(" "\\" var "." expr ")" arg
+		| int
+		| var
+		| int "+" expr
+		| var "+" expr
+		| "(" \\ var "." expr ")" arg "+" expr
+		| ...
 
 Adding Terms
 ------------
@@ -285,10 +325,29 @@ In a new section in the _.language_
 
 $$DemoDyn.language![25..28]!file
 
-(→: U+2192)
+
+ . . .
+
+This relation tells us _e0 becomes e1_
+
+__1 + 1 → 2__
+
+__(\\x . x + 1) 41 → 41 + 1__
 
 
-Declaring EvalPlus
+
+Defining →
+------------
+
+
+Relations are defined in another section:
+
+
+	 Rules
+	=======
+
+
+Defining EvalPlus
 ------------------
 
 	-------------------------- [EvalPlus]
@@ -299,7 +358,7 @@ The conclusion goes beneath the line
 The rulename goes on the right
 
 
-Declaring EvalPlus
+Defining EvalPlus
 ------------------
 
 	-------------------------- [EvalPlus]
@@ -309,7 +368,7 @@ Declaring EvalPlus
 
 
 
-Declaring EvalPlus
+Defining EvalPlus
 ------------------
 
 	-------------------------- [EvalPlus]
@@ -320,7 +379,7 @@ Builtin functions do have an exclamation mark
 
 
 
-Declaring EvalPlus
+Defining EvalPlus
 ------------------
 
 $$DemoDyn.language![36..38]!file
@@ -380,9 +439,31 @@ $$($$DemoDyn.language![1..43] $$demodyn.demo!4 expr -l -r →)
 Contexts
 --------
 
-What with 1 + 2 + 3?
+What with 1 + 2 + 39?
 
 $$DemoDyn.language![45..48]!file
+
+Contexts
+--------
+
+![](Hole.png)
+
+
+Contexts
+--------
+
+![](Hole0.png)
+
+Contexts
+--------
+
+![](Hole1.png)
+
+
+Contexts
+--------
+
+![](Hole2.png)
 
 
 
@@ -424,6 +505,6 @@ Now it's your turn to give these a try.
 
 
 
-If there is still time, we'll also build a typechecker for the demo langauge...
+If there is still time, we'll also build a typechecker for the demo language...
 
 

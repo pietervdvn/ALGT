@@ -10,8 +10,9 @@ Introducing types
 
 We'll need syntactic forms for types
 
-$$Demo.language!13,14!file
+. . .
 
+$$Demo.language!15,16!file
 
 
 Introducing types
@@ -26,7 +27,9 @@ Introducing types
 
 Which also means we'll have to update __EvalApp__
 
-$$Demo.language![70..71]!file
+. . . 
+
+$$Demo.language![72..73]!file
 
 
 Functions
@@ -46,7 +49,7 @@ Function type		dom		cod
 Domain
 ------
 
-$$Demo.language!36,40!file
+$$Demo.language![32..36],40!file
 
 
 Domain
@@ -80,6 +83,10 @@ Domain
 
 $$Demo.language!37!file
 
+Domain
+------
+
+$$Demo.language![36..40]!file
 
 Domain
 ------
@@ -169,8 +176,13 @@ $$Demo.language![96..98]!file
 
 . . .
 
-Example will come later
 
+\begin{lstlisting}[style=terminal]
+
+------------------------ [ Tx ]
+x : Int {} ⊢ x , Int
+
+\end{lstlisting}
 
 Typing functions
 ----------------
@@ -274,6 +286,8 @@ Typing application
 
 $$Demo.language![116..118]!file
 
+
+. . . 
 
 $$($$Demo.language $$demo.demo!4 expr -l -r :: --nc --short-proofs 1)![5..13]
 
