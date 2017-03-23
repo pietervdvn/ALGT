@@ -1,0 +1,80 @@
+ BurgieScript
+**************
+
+ Syntax
+========
+
+num                 ::= Number
+variable            ::= Identifier
+
+bool                ::= "waarachtig" | "strijdig"
+
+block               ::= "\n" block | "\\" body "/" "\n" | "\\" body "/"
+body                ::= statement body | statement
+
+statement           ::= loop
+                    | conditional
+                    | command
+                    | assignment
+                    | comment
+                    | "\n"
+
+loop                ::= "Gedurende" expr "doe:" block
+conditional         ::= "Indien" expr "doe:" block "Anderzijds:" block
+                    | "Indien" expr "doe:" block
+
+assignment          ::= "Zet variabele" variable "op" expr "."
+
+char                ::= Upper | Lower | Digit | ","
+word                //= $ char word | char
+text                ::= word text | punc
+punc                ::= "." | "?" | "!"
+comment             ::= "Terzijde:"  text "\n"
+
+command             ::= commandpart "!"
+commandpart         ::= motor | sound | light | sleep
+
+
+motor               ::= "Halt" | "Chauffeer" direction
+sound               ::= "Zing" duration "een" note
+light               ::= "Kleur" color side
+sleep               ::= "Rust kort" | "Neem op je gemak een pauze"
+                    | "Sluit je ogen maar voor even"
+                    | "Droom zacht zoete prins"
+
+direction           ::= "rugwaarts" | "voorwaarts" | side
+side                ::= "te" sideb
+sideb               ::= "bakboordzijde" | "stuurboordzijde"
+
+duration            ::= "kortstondig" | "eventjes" | "langdurig"
+                    | "erg langdurig"
+note                ::= "do" | "re" | "mi" | "fa" | "sol" | "la" | "si"
+color               ::= "rood" | "groen" | "blauw" | "wit"
+
+expr                ::= comp compop expr | comp
+
+compop              ::= "overeenkomstig met" | "verschillend met"
+                    | "significanter dan" | "minder significant dan"
+
+comp                ::= term  termop comp | term
+
+termop              ::= "+" | "-"| "hetzij"
+term                ::= negated factop term | negated
+factop              ::= "x" | ":" | "tevens"
+
+negated             ::= "-" base | "allesbehalve" base | base
+
+base                ::= bool | num | "(" expr ")"
+                    | query | variable
+query               ::= "GeluidWeerkaatsingsApparaatWaarde"
+                    | "LijnVolgApparaatIsWit" side
+
+ Syntax Style
+==============
+
+comment     -> "comment"
+Identifier  -> "identifier"
+Number      -> "number"
+bool        -> "constant"
+
+
