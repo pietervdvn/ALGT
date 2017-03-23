@@ -3,6 +3,8 @@ all:
 	make manual
 	make workshop
 	make workshop
+	make thesis
+	make thesis
 
 
 deps:
@@ -16,6 +18,10 @@ workshop:
 manual:
 	# Assumption: autoPreprocess already dropped in all the .md's
 	cd .bin/ && ../compileDocument.sh "../Manual-files" "DocumentTemplate" "../Output/ALGT_Manual" 
+
+
+thesis:
+	cd .bin && ../compileDocument.sh "../Thesis-files" "DocumentTemplate" "../Output/Thesis"
 
 focus:
 	cd .bin/ && ../compileDocument.sh "../focus-files" "FocusTemplate" "../Output/Focus"

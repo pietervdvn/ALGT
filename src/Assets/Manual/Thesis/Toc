@@ -1,0 +1,24 @@
+Introductie
+
+	- Context
+	- Probleem: typesystemen zijn moeilijk, graduele typesystemen zijn nog moeilijker
+		-> We automatiseren dit zoveel mogelijk
+	- Requirements: wat willen we bereiken?
+		-> Hulp bij opstellen syntax, evaluator, typesysteem
+
+	Uitschrijven! PLT Redex, Maud, XText, ...
+	- Related work + background: we need more! Tabelletje: deze tool kan dit, enkel de mijne kan alles!
+		Ofwel meteen eraan beginnen, related work achteraan (moeilijker, sterkere introductie nodig)
+
+	On hold
+	- Basic concepts: 
+		- Gradualization? ~ 1 pagina
+		
+	- ALGT by example: a short introduction
+	
+	(paperstructuur volgen, nadruk op de tool)
+	- Ho0: Lattices  
+	- Ho1: Typesysteem + gradualizatie
+	- Ho2: evaluator + graduele evaluator
+	- Ho3: automatische evaluatie/quickcheck: vinden van fouten
+
