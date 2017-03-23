@@ -1,0 +1,28 @@
+Gedurende waarachtig doe:
+\
+ Zet variabele wissels op 10.
+ Gedurende wissels significanter dan 7 doe:
+ \
+  Kleur rood te bakboordzijde!
+  Kleur wit te stuurboordzijde!
+  Zing langdurig een do!
+
+  Kleur wit te bakboordzijde!
+  Kleur blauw te stuurboordzijde!
+  Zing langdurig een sol!
+
+  Zet variabele wissels op wissels - 1.
+ /
+ Gedurende wissels significanter dan 0 doe:
+ \
+  Kleur rood te bakboordzijde!
+  Kleur blauw te stuurboordzijde!
+  Zing kortstondig een do!
+
+  Kleur blauw te bakboordzijde!
+  Kleur rood te stuurboordzijde!
+  Zing kortstondig een sol!
+
+  Zet variabele wissels op wissels - 1.
+ /
+/

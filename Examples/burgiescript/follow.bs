@@ -1,0 +1,41 @@
+Gedurende waarachtig doe:
+\
+ Terzijde: Plaats waar de lijn is.
+ Zet variabele bakboord op allesbehalve LijnVolgApparaatIsWit te bakboordzijde.
+ Zet variabele stuurboord op allesbehalve LijnVolgApparaatIsWit te stuurboordzijde.
+ Zet variabele laatsteBakboord op waarachtig.
+ Indien bakboord tevens stuurboord doe:
+ \
+  Chauffeer voorwaarts!
+ /
+ Anderzijds:
+ \
+  Indien bakboord doe:
+  \
+   Chauffeer te bakboordzijde!
+   Zet variabele laatsteBakboord op waarachtig.
+  /
+  Anderzijds:
+  \
+   Terzijde: Rechts is wit, of niets is zwart.
+   Indien stuurboord doe:
+   \
+    Chauffeer te stuurboordzijde!
+    Zet variabele laatsteBakboord op strijdig.
+   /
+   Anderzijds:
+   \
+    Indien laatsteBakboord doe:
+    \
+     Chauffeer te bakboordzijde!
+    /
+    Anderzijds:
+    \
+     Chauffeer te stuurboordzijde!
+    /
+   /
+  /
+ /
+/
+
+

@@ -1,0 +1,53 @@
+Gedurende waarachtig doe:
+\
+ Zet variabele afstand op GeluidWeerkaatsingsApparaatWaarde.
+ Zet variabele bakboordlicht op waarachtig.
+
+ Indien afstand significanter dan 20 doe:
+ \
+  Kleur groen te stuurboordzijde!
+  Kleur groen te bakboordzijde!
+
+  Chauffeer voorwaarts!
+ /
+ Anderzijds:
+ \
+  Halt!
+
+  Indien afstand significanter dan 5 doe:
+  \
+   Kleur blauw te stuurboordzijde!
+   Kleur blauw te bakboordzijde!
+
+   Chauffeer te bakboordzijde!
+   Neem op je gemak een pauze!
+  /
+  Anderzijds:
+  \
+   Kleur rood te stuurboordzijde!
+   Kleur rood te bakboordzijde!
+
+   Neem op je gemak een pauze!
+   Chauffeer rugwaarts!
+
+   Terzijde: Ga achteruit tot we ver genoeg van het obstakel zijn.
+   Gedurende GeluidWeerkaatsingsApparaatWaarde minder significant dan 20 doe:
+   \
+    Terzijde: Alterneer wit en rood om te waarschuwen dat we achteruit gaan.
+    Indien bakboordlicht doe:
+    \
+     Kleur wit te stuurboordzijde!
+     Kleur rood te bakboordzijde!
+    /
+    Anderzijds:
+    \
+     Kleur rood te stuurboordzijde!
+     Kleur wit te bakboordzijde!
+    /
+    Zet variabele bakboordlicht op allesbehalve bakboordlicht.
+
+    Rust kort!
+   /
+  /
+ /
+/
