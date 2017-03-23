@@ -325,21 +325,25 @@ inclusivePar (MLiteral _ _ "]")	= False
 
 
 
-preprocessTo	:: FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
-preprocessTo inp destination svgDestination
+preprocessTo	:: Map FilePath UTCTime -> FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
+preprocessTo changes inp destination svgDestination
 	= do	str		<- readFile inp
 		vars		<- buildVariablesIO
-		putStrLn $ "Processing "++inp++"..."
-		str'		<- preprocess (inp, 1) svgDestination vars str
-		writeFile (destination inp) str'
-		putStrLn $ "\rProcessed "++inp++" and saved it as "++destination inp
+		lastChange	<- getModificationTime inp
+		if M.lookup inp changes |> (lastChange ==) & fromMaybe False then
+			putStrLn $ "Skipping processing of file "++inp++": no changes"
+		else do
+			putStrLn $ "Processing "++inp++"..."
+			str'		<- preprocess (inp, 1) svgDestination vars str
+			writeFile (destination inp) str'
+			putStrLn $ "\rProcessed "++inp++" and saved it as "++destination inp
 
 
-preprocessDir	:: FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
-preprocessDir fp destination svgDestination
+preprocessDir	:: Map FilePath UTCTime -> FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
+preprocessDir changes fp destination svgDestination
 	= do	contents	<- dirConts fp
 		let contents'	= contents & filter (".md" `isSuffixOf`)
-		contents' |+> (\fp -> preprocessTo fp destination svgDestination)
+		contents' |+> (\fp -> preprocessTo changes fp destination svgDestination)
 		pass		 
 
 outputFile'	:: FilePath -> FilePath -> FilePath
@@ -355,9 +359,13 @@ outputFile fp
 
 autoPreprocess	:: IO ()
 autoPreprocess
-	= do	let path	= "src/Assets/Manual/"
+	= autoPreprocess' M.empty
+
+autoPreprocess'	:: Map FilePath UTCTime -> IO ()
+autoPreprocess' changes
+	= do	let path	= "src/Assets/Manual/"	
 		runCommand "src/Assets/Manual/prebuild.sh"
-		preprocessDir path (\nm -> outputFile path ++ (reverse nm & takeWhile (/= '/') & reverse )) (outputFile' path)
+		preprocessDir changes path (\nm -> outputFile path ++ (reverse nm & takeWhile (/= '/') & reverse )) (outputFile' path)
 		runCommand "src/Assets/Manual/build.sh"
 		pass
 
@@ -388,7 +396,10 @@ autoRecreate' lastEdits
 			pass
 		else do
 			putStrLn $ "CHANGED: "++ show (M.toList $ diff lastEdits lastEdits')
-			autoPreprocess
+			autoPreprocess' lastEdits
 		autoRecreate' lastEdits'
 
-autoRecreate	= autoRecreate' M.empty
+autoRecreate	
+	= do	lastEdits	<- contentsChanged "src/Assets/Manual"
+		putStrLn "Waiting for changes... Run 'autoPreprocess' to process all files"
+		autoRecreate' lastEdits

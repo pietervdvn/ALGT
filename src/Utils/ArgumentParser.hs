@@ -217,7 +217,7 @@ targetFile
 			 (metavar "RELATION"
 			 <> long "relation"
 			 <> short 'r'
-			 <> help "Proof that this relation is applicable to the example file" ))
+			 <> help "Prove that this relation is applicable to the example file" ))
 		<*> optional (strOption 
 			(metavar "FUNCTION"
 			 <> long "function"

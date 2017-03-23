@@ -30,7 +30,7 @@ proofThat ts
 -- tries to deduce a proof for application to a given relation, might return multiple (top level) proofs
 proofThats'	:: TypeSystem -> Symbol -> [ParseTree] -> Either String [Proof]
 proofThats' ts symbol args
-	= inMsg ("While trying to proof that ("++symbol++") is applicable to \""++ toParsable' ", " args ++"\"") $
+	= inMsg ("While trying to prove that ("++symbol++") is applicable to \""++ toParsable' ", " args ++"\"") $
 	  do	relation	<- checkRelationExists ts symbol
 		let inArgs	= relation & relTypesWith In
 		unless (length inArgs == length args) $ Left $ "Expected "++show (length inArgs)++" arguments to relation "++symbol++", but only got "++show (length args)

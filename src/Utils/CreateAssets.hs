@@ -24,10 +24,11 @@ binaryFormats	= [".pdf", ".png"]
 
 
 dirConts	:: FilePath -> IO [FilePath]
-dirConts fp 
-	= do	files	<- getDirectoryContents fp 
+dirConts fp'
+	= do	let fp	= if last fp' == '/' then fp' else fp' ++ "/"
+		files	<- getDirectoryContents fp 
 		let files'	= files & filter (not . ("." `isPrefixOf`))
-					|> ((fp++"/") ++)
+					|> (fp ++)
 		mode		<- files' |+> doesDirectoryExist	:: IO [Bool]
 		let (directories', normalFiles')	
 				=  zip files' mode & partition snd 	:: ([(FilePath, Bool)], [(FilePath, Bool)])
