@@ -14,7 +14,8 @@ else
 
 fi
 
-pdflatex -interaction nonstopmode -halt-on-error -file-line-error $2.tex
+cp $2.tex $3.tex
+pdflatex -interaction nonstopmode -halt-on-error -file-line-error $3.tex
 
-mv $2.pdf $3.pdf
+mv $3.pdf  "../Output/$3.pdf"
 

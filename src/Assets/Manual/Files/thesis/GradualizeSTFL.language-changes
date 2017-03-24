@@ -1,0 +1,57 @@
+
+ Gradualized
+************* 
+
+
+ Syntax Changes
+================
+
+
+Rename type to gtype
+Rename typeTerm to gtypeTerm
+
+gtypeTerm 	::= ... | "?"
+
+
+
+ Function Changes
+==================
+
+dom		: gtype -> gtypeTerm
+...
+dom("?")	= "?"
+
+cod		: gtype -> gtype
+...
+cod("?")	= "?"
+
+
+
+equate		: gtype -> gtype -> gtype
+...
+equate("?", t)	= t
+equate(t, "?")	= t
+equate(t11 "->" t12, t21 "->" t22)
+		= equate(t11, t21) "->" equate(t12, t22)
+
+
+
+ Relation Changes
+==================
+
+Rename (==) to (~), pronounced as "is consistent"
+
+
+ New Rules
+===========
+
+ --------- [ConsLeft]
+  "?" ~ T
+
+
+ --------- [ConsRight]
+  T ~ "?"
+
+
+
+

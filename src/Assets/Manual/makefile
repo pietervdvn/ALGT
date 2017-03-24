@@ -13,18 +13,18 @@ deps:
 
 workshop:
 	cp Workshop/Theme/* .bin/ && \
-	cd .bin/ && ../compileDocument.sh "../workshop-files" "PresentationTemplate" "../Output/Workshop"
+	cd .bin/ && ../compileDocument.sh "../workshop-files" "PresentationTemplate" "Workshop"
 
 manual:
 	# Assumption: autoPreprocess already dropped in all the .md's
-	cd .bin/ && ../compileDocument.sh "../Manual-files" "DocumentTemplate" "../Output/ALGT_Manual" 
+	cd .bin/ && ../compileDocument.sh "../Manual-files" "DocumentTemplate" "ALGT_Manual" 
 
 
 thesis:
-	cd .bin && ../compileDocument.sh "../Thesis-files" "DocumentTemplate" "../Output/Thesis"
+	cd .bin && ../compileDocument.sh "../Thesis-files" "DocumentTemplate" "Thesis"
 
 focus:
-	cd .bin/ && ../compileDocument.sh "../focus-files" "FocusTemplate" "../Output/Focus"
+	cd .bin/ && ../compileDocument.sh "../focus-files" "FocusTemplate" "Focus"
 
 templates:
 	make focus-template

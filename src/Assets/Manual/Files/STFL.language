@@ -237,3 +237,4 @@ codomain(T1 "->" T2)		= T2
 -------- [Termination]
  e →* v 
 
+

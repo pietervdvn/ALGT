@@ -1,0 +1,76 @@
+\documentclass[a4paper]{book}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={ALGT-Manual},
+            pdfauthor={Pieter Vander Vennet},
+            breaklinks=true}
+
+
+
+\usepackage{fullpage}
+
+\usepackage{listings}
+
+% For pandoc
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amssymb,amsmath}
+
+\usepackage[utf8]{inputenc}
+
+% Warning: unicode should be uppercase!
+\DeclareUnicodeCharacter{2192}{$\rightarrow$}
+\DeclareUnicodeCharacter{25B}{$\varepsilon$}
+\DeclareUnicodeCharacter{2713}{$\checkmark$}
+\DeclareUnicodeCharacter{0393}{$\Gamma$}
+\DeclareUnicodeCharacter{03B3}{$\gamma$}
+\DeclareUnicodeCharacter{03BB}{$\lambda$}
+\DeclareUnicodeCharacter{22A2}{$\vdash$}
+\DeclareUnicodeCharacter{2282}{$\subset$}
+\DeclareUnicodeCharacter{2228}{$\vee$}
+\DeclareUnicodeCharacter{2227}{$\wedge$}
+\DeclareUnicodeCharacter{21D2}{$\Rightarrow$}
+
+
+
+\usepackage{xcolor}
+\definecolor{gray}{rgb}{0.9,0.9,0.9}
+\definecolor{black}{rgb}{0,0,0}
+\definecolor{white}{rgb}{1,1,1}
+
+
+
+\lstset{
+  numbers=left,
+  backgroundcolor=\color{gray},
+  basicstyle=\footnotesize\ttfamily,
+  frame=l,
+  literate={→}{{$\rightarrow$}}1 {ɛ}{{$\varepsilon$}}1 {✓}{{$\checkmark$}}1 {Γ}{{$\Gamma$}}1 {⊢}{{$\vdash$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {⊂}{{$\subset$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⇒}{{$\Rightarrow$}}1
+}
+
+\lstdefinestyle{terminal}{
+  basicstyle=\footnotesize\ttfamily\color{white},
+  backgroundcolor=\color{black},
+  frame=single
+}
+
+
+
+\begin{document}
+
+\title{ALGT - The manual} %NOFOCUS
+\author{Pieter Vander Vennet} %NOFOCUS
+\date{} %NOFOCUS
+\maketitle %NOFOCUS
+
+\tableofcontents %NOFOCUS
+
+\input{Main}
+
+
+\end{document}
+
+

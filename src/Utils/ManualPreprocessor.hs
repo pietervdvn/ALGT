@@ -34,6 +34,7 @@ import qualified TypeSystem.Parser.ParsingUtils as ParsingUtils
 import qualified SyntaxHighlighting.AsLatexPt as Latex
 import qualified SyntaxHighlighting.Renderers as Renderers
 
+import Text.PrettyPrint.ANSI.Leijen (text, ondullred, blue, putDoc)
 
 import ParseTreeInterpreter.FunctionInterpreter as FuncInp
 
@@ -216,6 +217,12 @@ runIsolated' argEdit line target vars str
 
 preprocess	:: (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO String
 preprocess _ _ _ []	= return ""
+preprocess line target vars ('%':'%':str)
+	= do	let (comment, rest)	= break (=='\n') str
+		print line
+		putDoc $ blue $ text comment
+		putStrLn ""
+		preprocess line target vars $ tail rest
 preprocess line target vars ('$':'$':'!':'(':str)
 	= do	
 		(output', action, rest)		<- runIsolated' id line target vars str
@@ -330,9 +337,7 @@ preprocessTo changes inp destination svgDestination
 	= do	str		<- readFile inp
 		vars		<- buildVariablesIO
 		lastChange	<- getModificationTime inp
-		if M.lookup inp changes |> (lastChange ==) & fromMaybe False then
-			putStrLn $ "Skipping processing of file "++inp++": no changes"
-		else do
+		unless (M.lookup inp changes |> (lastChange ==) & fromMaybe False) $ do
 			putStrLn $ "Processing "++inp++"..."
 			str'		<- preprocess (inp, 1) svgDestination vars str
 			writeFile (destination inp) str'

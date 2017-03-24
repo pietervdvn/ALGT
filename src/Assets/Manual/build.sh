@@ -1,5 +1,4 @@
 pwd
 cd src/Assets/Manual
-make deps
-make thesis
-clear
+make deps >/dev/null
+make thesis >/dev/null

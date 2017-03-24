@@ -135,12 +135,12 @@ matchTyping f s (BNFRuleCall ruleName) _ (MePtCall fNm True returnTypAct args)
 				do	let nonMatchingMsg	= "Expected "++show (length knownTypes)++" arguments to "++fNm'++", but got "++show (length args)
 					unless (length args == length knownTypes) $ Left nonMatchingMsg
 					inMsg ("While typing arguments to the builtin function "++fNm') $
-							zip args knownTypes |> (\(arg, tp) -> typeAs f s tp arg) & allRight
+							zip args knownTypes |> (\(arg, tp) -> typeAs f s tp arg) & allRight'
 			(Left (shouldBe, atLeast)) ->
 				do	unless (length args >= atLeast) $ Left $ 
 						"Expected at least "++show atLeast++" arguments of type "++shouldBe++" to the bulitin function "++fNm'
 					inMsg ("While typing arguments to the builtin function "++fNm') $
-						args |> typeAs f s shouldBe & allRight
+						args |> typeAs f s shouldBe & allRight'
 		return $ MCall outTpAct fNm True args'
 
 -- Normal function
@@ -165,7 +165,7 @@ matchTyping _ _ bnf _ pt@MePtCall{}
 matchTyping f s (BNFSeq bnfs) tp (MePtSeq pts)
  | length bnfs == length pts
 			= do	let joined	= zip bnfs pts |> (\(bnf, pt) -> matchTyping f s bnf tp pt) 
-				joined & allRight 
+				joined & allRight'
 				|> MSeq tp
  | otherwise		= Left $ "Seq could not match " ++ toParsable' " " bnfs ++ " ~ " ++ toParsable' " " pts 
 

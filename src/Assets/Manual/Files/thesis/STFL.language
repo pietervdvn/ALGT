@@ -1,0 +1,286 @@
+ STFL 
+******
+
+# A Simply Typed Function Language
+
+ Syntax
+========
+
+bool	::= "True" | "False"
+
+
+
+# Types
+typeTerm::= "Int" | "Bool" | "(" type ")"
+type	::= typeTerm "->" type | typeTerm
+
+
+
+var	::= Identifier
+number	::= Number
+value	::= bool | number
+
+e	::= eL "+" e 
+	| eL "::" type 
+	| eL e
+	| eL
+
+eL	::= value 
+	| var 
+	| "(" "\\" var ":" type "." e ")" 
+	| "If" e "Then" e "Else" e 
+	| "(" e ")"
+
+
+es	::= e "\n" es | e "\n" | e
+
+
+typing			::= var ":" type
+typingEnvironment	::= typing "," typingEnvironment | "{}"
+
+typeSet			::= type typeSet | "$"
+
+
+
+ Syntax Style
+==============
+
+type	-> "type"
+typeTerm	-> "type"
+
+Identifier	-> "identifier"
+Number	-> "constant"
+bool	-> "constant"
+e	-> "statement"
+eL	-> "statement"
+eL.4	-> "noise"
+eL.2	-> "noise"
+eL.3	-> "keyword"
+
+
+ Functions
+===========
+
+
+dom 		: type -> typeTerm
+dom("(" T1 ")")	= T1
+dom(T1 "->" T2) = T1
+
+
+
+cod 		: type -> type
+cod("(" T2 ")")	= T2
+cod(T1 "->" T2) = T2
+
+
+equate		: type -> type -> type
+equate(T, T)	= T
+
+
+
+abstract		: typeSet -> type
+abstract("$")		= !error:type("Undefined")
+abstract("Int" "$")	= "Int"
+abstract("Bool" "$")	= "Bool"
+abstract((T1 "->" T2) ts)
+			= abstract(domains( (T1 "->" T2) ts)) "->" abstract(codomains( (T1 "->" T2) ts))
+
+
+domains		: typeSet -> typeSet
+domains((T1 "->" _) ts)
+		= T1 domains(ts)
+domains("$")	= "$"
+domains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
+
+
+codomains		: typeSet -> typeSet
+codomains((_ "->" T2) ts)
+		= T2 codomains(ts)
+codomains("$")	= "$"
+codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
+
+
+
+
+
+ Relations
+===========
+
+# (:) is reserved, as predicate that a term is of a production rule
+# one can refer to rewrite rules/functions earlier on
+
+(→)	: e (in), e (out)	Pronounced as "evaluation"
+(→*)	: e (in), value (out)	Pronounced as "big step"
+(✓)	: e (in)		Pronounced as "is canonical"
+
+(⊢)	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
+
+(::)	: e (in), type (out)	Pronounced as "type in empty context"
+
+(==)	: type (in), type (in)	Pronounced as "equals"
+
+
+ Rules
+=======
+
+
+
+
+ e0 → e1
+-----------------			[EvalCtx]
+ e[e0] → e[e1]
+
+
+
+ n1:Number	n2:Number
+------------------------------------	[EvalPlus]
+ n1 "+" n2 → !plus(n1, n2)
+
+
+
+ b:bool
+--------------------			[EvalAscrBool]
+ b "::" "Bool" → b
+
+ i:number
+-------------------			[EvalAscrInt]
+ i "::" "Int" → i
+
+
+
+----------------			[EvalParens]
+ "(" e ")" → e
+
+
+---------------------------------------		[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+----------------------------------------	[EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ (✓) arg	arg "::" type → arg
+------------------------------------------------------------	[EvalLamApp]
+ ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg, e)
+
+
+
+
+
+ b:bool
+-------			[CanonBool]
+ (✓) b
+
+ n:number
+---------		[CanonNumber]
+ (✓) n
+
+
+
+ (✓) e
+--------			[BigStepCanon]
+ e →* e
+
+ e0 → e1	e1 →* e2
+-------------------------	[BigStepRec]
+ e0 →* e2
+
+ e0 → e1	(✓) e1
+------------------------	[BigStepBase]
+ e0 →* e1
+
+
+
+
+
+ "{}" ⊢ e, T  
+-----------	[TEmptyCtx]
+ e :: T
+
+
+
+
+ n:number
+---------------		[Tnumber] 
+ Γ ⊢ n, "Int"
+
+
+ b:bool
+----------------	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+
+ Γ ⊢ e, T
+-------------------	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ e, T'	T' == T
+----------------------- [TAscr]
+ Γ ⊢ e "::" T, T'
+
+
+
+--------------------	[Tx]
+ Γ[ x ":" T ] ⊢ x, T
+
+
+ Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
+------------------------------				[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
+--------------------------------------------------------	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
+
+
+
+ ((x ":" T1) "," Γ) ⊢ e, T2
+-------------------------------------------------------	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
+
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
+---------------------------------------------------	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+
+
+
+
+ T1 = T2 : type
+--------------- [EqBase]
+ T1 == T2
+
+
+ Ta1 == Ta2	Tb1 == Tb2
+---------------------------------- [EqArrow]
+ Ta1 "->" Tb1   ==   Ta2 "->" Tb2
+
+
+ Properties
+============
+
+ e0 :: T	 e0 → e1
+-------------------------- [Preservation]
+         e1 :: T
+
+
+         e0 :: T
+-------------------------- [Progress]
+ (✓) e0    |     e0 → e1 
+
+
+
+# STFL can't contain loops (or recursion), so will always terminate
+
+ 
+ e :: T
+-------- [Termination]
+e →* v 
+
