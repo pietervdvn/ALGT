@@ -11,7 +11,7 @@ Done quickchecking property Preservation with 8 examples
 Done quickchecking property Progress with 8 examples                            
 Done quickchecking property Termination with 8 examples                         
 # Could not apply relation → to the input "True", because:
-While trying to proof that (→) is applicable to "True":
+While trying to prove that (→) is applicable to "True":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with True:
     Evaluation contexts only searching within a parse tree and don't handle literals
@@ -37,7 +37,7 @@ While trying to proof that (→) is applicable to "True":
     :
       FT: Could not pattern match '"True"' over '("(" "\\" var ":" type "." e ")") arg'
 # Could not apply relation → to the input "False", because:
-While trying to proof that (→) is applicable to "False":
+While trying to prove that (→) is applicable to "False":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with False:
     Evaluation contexts only searching within a parse tree and don't handle literals
@@ -85,7 +85,7 @@ If ( If True Then False Else True ) Then False Else True → If ( False ) Then F
 
 
 # Could not apply relation → to the input "42", because:
-While trying to proof that (→) is applicable to "42":
+While trying to prove that (→) is applicable to "42":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with 42:
     Evaluation contexts only searching within a parse tree and don't handle literals
@@ -175,7 +175,7 @@ If True Then True Else True → True
 
 
 # Could not apply relation → to the input "True", because:
-While trying to proof that (→) is applicable to "True":
+While trying to prove that (→) is applicable to "True":
   Not a single rule matched:
   While trying to intepret the rule EvalCtx with True:
     Evaluation contexts only searching within a parse tree and don't handle literals

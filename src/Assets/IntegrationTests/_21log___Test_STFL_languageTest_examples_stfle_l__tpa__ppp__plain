@@ -16,7 +16,7 @@ Property successfull
   # Success: e0 :: T
   # Failed: e0 → e1
 # e0 → e1 failed because: 
-  While trying to proof that (→) is applicable to "True":
+  While trying to prove that (→) is applicable to "True":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with True:
       Evaluation contexts only searching within a parse tree and don't handle literals
@@ -46,7 +46,7 @@ Property successfull
   # Success: e0 :: T
   # Failed: e0 → e1
 # e0 → e1 failed because: 
-  While trying to proof that (→) is applicable to "False":
+  While trying to prove that (→) is applicable to "False":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with False:
       Evaluation contexts only searching within a parse tree and don't handle literals
@@ -148,7 +148,7 @@ Property successfull
   # Success: e0 :: T
   # Failed: e0 → e1
 # e0 → e1 failed because: 
-  While trying to proof that (→) is applicable to "42":
+  While trying to prove that (→) is applicable to "42":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with 42:
       Evaluation contexts only searching within a parse tree and don't handle literals
@@ -386,7 +386,7 @@ Property successfull
   # Success: e0 :: T
   # Failed: e0 → e1
 # e0 → e1 failed because: 
-  While trying to proof that (→) is applicable to "True":
+  While trying to prove that (→) is applicable to "True":
     Not a single rule matched:
     While trying to intepret the rule EvalCtx with True:
       Evaluation contexts only searching within a parse tree and don't handle literals
@@ -825,10 +825,10 @@ Property successfull
   # Failed: e0 :: T
   # Failed: e0 → e1
 # e0 :: T failed because: 
-  While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
+  While trying to prove that (::) is applicable to "( \ x : Int . x + 1 ) True":
     Not a single rule matched:
     While trying to intepret the rule TEmptyCtx with ( \ x : Int . x + 1 ) True:
-      While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
+      While trying to prove that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
           n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
@@ -847,7 +847,7 @@ Property successfull
         While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
-          While trying to proof that (==) is applicable to "Bool, Int":
+          While trying to prove that (==) is applicable to "Bool, Int":
             Not a single rule matched:
             While trying to intepret the rule EqBase with Bool, Int:
               Equality predicate not met: T1="Bool" /= "Int"=T2
@@ -1473,10 +1473,10 @@ Property successfull
 # Property Progress proven by failing predicate with assignment {e0 --> ( \ x : Int . x + 1 ) True}:
   # Failed: e0 :: T
 # e0 :: T failed because: 
-  While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
+  While trying to prove that (::) is applicable to "( \ x : Int . x + 1 ) True":
     Not a single rule matched:
     While trying to intepret the rule TEmptyCtx with ( \ x : Int . x + 1 ) True:
-      While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
+      While trying to prove that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
           n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
@@ -1495,7 +1495,7 @@ Property successfull
         While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
-          While trying to proof that (==) is applicable to "Bool, Int":
+          While trying to prove that (==) is applicable to "Bool, Int":
             Not a single rule matched:
             While trying to intepret the rule EqBase with Bool, Int:
               Equality predicate not met: T1="Bool" /= "Int"=T2
@@ -2185,10 +2185,10 @@ Property successfull
 # Property Termination proven by failing predicate with assignment {e --> ( \ x : Int . x + 1 ) True}:
   # Failed: e :: T
 # e :: T failed because: 
-  While trying to proof that (::) is applicable to "( \ x : Int . x + 1 ) True":
+  While trying to prove that (::) is applicable to "( \ x : Int . x + 1 ) True":
     Not a single rule matched:
     While trying to intepret the rule TEmptyCtx with ( \ x : Int . x + 1 ) True:
-      While trying to proof that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
+      While trying to prove that (⊢) is applicable to "{}, ( \ x : Int . x + 1 ) True":
         Not a single rule matched:
         While trying to intepret the rule Tnumber with {}, ( \ x : Int . x + 1 ) True:
           n = ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True" is not a "number" but a "e"
@@ -2207,7 +2207,7 @@ Property successfull
         While trying to intepret the rule TLambda with {}, ( \ x : Int . x + 1 ) True:
           Sequence lengths are not the same: "(" "\\" x ":" T1 "." e ")" /= ("(" "\\" "x" ":" "Int" "." ("x" "+" 1) ")") "True"
         While trying to intepret the rule Tapp with {}, ( \ x : Int . x + 1 ) True:
-          While trying to proof that (==) is applicable to "Bool, Int":
+          While trying to prove that (==) is applicable to "Bool, Int":
             Not a single rule matched:
             While trying to intepret the rule EqBase with Bool, Int:
               Equality predicate not met: T1="Bool" /= "Int"=T2
