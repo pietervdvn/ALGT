@@ -36,7 +36,8 @@ Introductie
 
 2. identify your key idea
 	a. goal is to convey an idea to reader
-	b. can you hear the “ping i. many papers contain good idea, but do not distil what they are 
+	b. can you hear the “ping" 
+		i. many papers contain good idea, but do not distil what they are 
 		ii. make certain tha the reader is in no doubt what the idea is. Be 100% explicit 
 			1. ‘the main idea of this paper is…’ 2. ‘in this section we present the main contributions of the paper.’µ
 
@@ -47,12 +48,13 @@ Introductie
 		iii. It’s an unsolved problem 
 		iv. Here is my idea 
 		v. My idea works (details, data) 
-		vi. Here’s how my idea compares to other people’s approache
+		vi. Here’s how my idea compares to other people’s approach
 		vii. Structure (conference paper) 
 			1. Title (1000 readers)
 			2. Abstract (4 sentences 100 readers)
 			3. Introduction (1 pages 100 readers) 
-				a. Describe the problem i. Don’t write: ‘we describe the wizwoz system. It is really cool.’ Do write: ‘we give a syntax and semantics of a language that supports concurrent processes (section 3). Its innovative features are…’ 
+				a. Describe the problem i. Don’t write: ‘we describe the wizwoz system. It is really cool.’
+				 Do write: ‘we give a syntax and semantics of a language that supports concurrent processes (section 3). Its innovative features are…’ 
 		ii. Don’t write: ‘we study its properties’. 
 			Do write: ‘we prove that the type system I sound, and that type checking is deciable (section 4).
 		iii. Don’t write: we have used wiz woz in practice’.

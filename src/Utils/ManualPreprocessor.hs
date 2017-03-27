@@ -81,7 +81,6 @@ buildVariables
 	, ("stylesSupport", AssetsHelper.minimalStyleTypes |> (" - "++) & unlines)
 	, ("styleMatrix", styleMatrix)
 	, ("styleSupported", Renderers.allRenderers |> dropTrd3 & supportedTable)
-	, ("variables", buildVariables & M.keys |> (" - "++) & unlines & ("Variables in the manual preprocessor are: "++))
 	] & M.fromList 
 
 
@@ -150,8 +149,10 @@ renderStyleRow styleN
 
 manualAssets	:: IO (Map String String)
 manualAssets
-	= do	let files	= allAssets |> fst & filter ("Manual/Files/" `isPrefixOf`)
-		contents	<- files |> (drop (length "Manual/Files/") &&&  readFile . ("src/Assets/"++)) |+> sndEffect
+	= do	-- let files0	= allAssets |> fst & filter ("Manual/Files/" `isPrefixOf`)
+		let files1	= allAssets |> fst & filter ("Manual/Thesis/" `isPrefixOf`)
+		let files	= files1
+		contents	<- files |> (drop (length "Manual/Thesis/") &&&  readFile . ("src/Assets/"++)) |+> sndEffect
 		contents & M.fromList & return
 
 
@@ -163,8 +164,9 @@ buildVariablesIO
 		let date	= show y ++ "-"++show m ++ "-" ++ show d
 		let dict'	= [("date", date)] & M.fromList
 		assets	<- manualAssets
-		return $ M.unions [dict', assets, buildVariables]
-
+		let vars	= M.unions [dict', assets, buildVariables]
+		let allVarNames	= vars & M.keys |> ("\n - "++) & unlines & ("Variables in the manual preprocessor are: "++)
+		return $ M.insert "variables" allVarNames vars
 
 
 verbatim	:: String -> String
@@ -180,7 +182,7 @@ verbatim str	= "`" ++ str ++ "`"
 genArg		:: Map String String -> String -> IO (String, Map String String)
 genArg vars ('$':'$':str)
 	= do	let (name, (action, _))
-				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
+				= break (\c -> not (isAlpha c || c `elem` "/.-")) str
 					|> options
 		value		<- checkExists name vars ("No variable $$"++name) & either fail return
 		return (name, M.singleton name $ action value)
@@ -251,7 +253,7 @@ preprocess line destination vars ('$':'$':'s':'v':'g':'(':str)
 
 preprocess line target vars ('$':'$':str)
 	= do	let (name, (action, rest))
-				= break (\c -> not (isAlpha c || c =='/' || c == '.')) str
+				= break (\c -> not (isAlpha c || c `elem` "/.-")) str
 					|> options
 		value		<- checkExists name vars ("No variable $$"++name) & either error return
 		rest'		<- preprocess line target vars rest
