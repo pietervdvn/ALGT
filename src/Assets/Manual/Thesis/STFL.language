@@ -138,14 +138,9 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 
 
 
- b:bool
---------------------			[EvalAscrBool]
- b "::" "Bool" → b
-
- i:number
--------------------			[EvalAscrInt]
- i "::" "Int" → i
-
+ e :: T0	T == T0
+------------------------		[EvalAscr]
+ e "::" T → e
 
 
 ----------------			[EvalParens]
@@ -227,8 +222,8 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  Γ[ x ":" T ] ⊢ x, T
 
 
- Γ ⊢ n1, "Int"	Γ ⊢ n2, "Int"
-------------------------------				[TPlus]
+ Γ ⊢ n1, Int1	Γ ⊢ n2, Int2	Int1 == "Int"	Int2 == "Int"
+-------------------------------------------------------------- [TPlus]
  Γ ⊢ n1 "+" n2, "Int"
 
 

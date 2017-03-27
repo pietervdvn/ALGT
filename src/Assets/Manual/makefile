@@ -21,7 +21,7 @@ manual:
 
 
 thesis:
-	cd .bin && ../compileDocument.sh "../Thesis-files" "DocumentTemplate" "Thesis"
+	cd .bin && ../compileDocument.sh "../Thesis-files" "ThesisTemplate" "Thesis"
 
 focus:
 	cd .bin/ && ../compileDocument.sh "../focus-files" "FocusTemplate" "Focus"
@@ -31,7 +31,11 @@ templates:
 	cp *Template.tex .bin/
 
 focus-template:
-	cat DocumentTemplate.tex | sed "/%NOFOCUS/d" > .bin/FocusTemplate.tex
+	cat DocumentTemplate.tex | sed "/NOFOCUS/d" > .bin/FocusTemplate.tex
+
+thesis-template:
+	cat DocumentTemplate.tex | sed "/NOTHESIS/d" > .bin/ThesisTemplate.tex
+
 
 images:
 	cd .bin; ../makeImages.sh

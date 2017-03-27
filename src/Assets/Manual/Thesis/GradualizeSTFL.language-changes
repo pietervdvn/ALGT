@@ -7,10 +7,12 @@
 ================
 
 
+typeTerm 	::= ... | "?"
+
+
 Rename type to gtype
 Rename typeTerm to gtypeTerm
 
-gtypeTerm 	::= ... | "?"
 
 
 
@@ -36,6 +38,13 @@ equate(t11 "->" t12, t21 "->" t22)
 
 
 
+
+ New Relations
+===============
+
+(→')	: e (in), e (out)	Pronounced as "checked small step"
+
+
  Relation Changes
 ==================
 
@@ -53,5 +62,6 @@ Rename (==) to (~), pronounced as "is consistent"
   T ~ "?"
 
 
-
-
+ e0 :: T		e0 → e1
+--------------------------------- [Check]
+ e0 →' e1
