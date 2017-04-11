@@ -1,0 +1,9 @@
+ 
+ Intrinsic
+***********
+
+New Syntax
+============
+
+varS		::= x "^" type
+termBool	::=

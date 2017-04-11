@@ -1,0 +1,186 @@
+
+ Gradual
+*********
+
+# Gradualization of LSec
+# We gradualize lonly on the labels
+
+ New Syntax
+============
+
+typeTuple	::= "<" type type ">"
+labelTuple	::= "<" label label ">"
+
+
+ Syntax Changes
+================
+
+ levels	::= ... | "?"
+
+ Function Changes
+==================
+
+joinL	: levels -> levels -> levels
+joinL("TOP", _)
+	= "TOP"
+joinL(_, "TOP")
+	= "TOP"
+joinL("?", _)
+	= "?"
+joinL(_, "?")
+	= "?"
+
+joinL("NSA", "CIA")
+	= "TOP"
+joinL("CIA", "NSA")
+	= "TOP"
+joinL("NSA", _)
+	= "NSA"
+joinL(_, "NSA")
+	= "NSA"
+joinL("CIA", _)
+	= "CIA"
+joinL(_, "CIA")
+	= "CIA"
+joinL("Restricted", _)
+	= "Restricted"
+joinL(_, "Restricted")
+	= "Restricted"
+joinL("Public", "Public")
+	= "Public"
+
+
+meetL	: label -> label -> label
+meetL("Public", _)
+	= "Public"
+meetL(_, "Public")
+	= "Public"
+meetL("?", _)
+	= "?"
+meetL(_, "?")
+	= "?"
+
+meetL("Restricted", _)
+	= "Restricted"
+meetL(_, "Restricted")
+	= "Restricted"
+meetL("NSA", "CIA")
+	= "Restricted"
+meetL("CIA", "NSA")
+	= "Restricted"
+meetL("CIA", _)
+	= "CIA"
+meetL(_, "CIA")
+	= "CIA"
+meetL("NSA", _)
+	= "NSA"
+meetL(_, "NSA")
+	= "NSA"
+meetL("TOP", "TOP")
+	= "TOP"
+
+
+ New Relations
+===============
+
+(I≼) : label (in), label (in), labelTuple (out)
+(I<:) : type (in), type (in), typeTuple (out)
+
+(I<:') : typeTuple (in), typeTuple (out)
+
+(noTop) : label (in)
+(noBottom) : label (in)
+
+
+ New Rules
+===========
+
+
+-------------- [NoTop NSA]
+(noTop) "NSA"
+
+-------------- [NoTop CIA]
+(noTop) "CIA"
+
+
+-------------- [NoTop Restr]
+(noTop) "Restricted"
+
+
+-------------- [NoTop Public]
+(noTop) "Public"
+
+
+
+-------------- [noBottom NSA]
+(noBottom) "NSA"
+
+-------------- [noBottom CIA]
+(noBottom) "CIA"
+
+
+-------------- [noBottom Restr]
+(noBottom) "Restricted"
+
+
+-------------- [noBottom Top]
+(noBottom) "TOP"
+
+
+
+
+
+----------- [GradLL]
+"?" ≼ l
+
+
+
+----------- [GradLR]
+l ≼ "?"
+
+
+
+
+# Interior stuff
+
+
+
+(noTop) l
+-------------- [Interior labels notop]
+(I≼) l, "?", "<" l "?" ">"
+
+
+
+(noBottom) l
+-------------------- [Interior labels nobottom]
+(I≼) "?", l, "<" "?" l ">"
+
+
+-------------------------------------- [Interior labels top]
+(I≼) "TOP", "?", "<" "TOP" "TOP" ">"
+
+-------------------------------------- [Interior labels bottom]
+(I≼) "?", "Public", "<" "Public" "Public" ">"
+
+
+--------------------------------------- [Interior same]
+(I≼) l, l, "<" l l ">"
+
+
+
+(I≼) l1, l2, "<" la1 la2 ">"
+--------------------------------------------------------------- [Interior Sub base]
+(I<:) "Bool" l1, "Bool" l2, "<" ("Bool" la1) ("Bool" la2) ">"
+
+
+ (I<:) S21, S11, "<" Sa21 Sa11 ">"	(I<:) S12, S22, "<" Sa12 Sa22 ">"	(I≼) l1, l2, "<" la1 la2 ">"
+-------------------------------------------------------------------------------------------------------------- [Interior sub arrow]
+ (I<:) "(" S11 "→" l1 S12 ")", "(" S21 "→" l2 S22 ")" , "<" ("(" Sa11 "→" la1 Sa12 ")") ("(" Sa21 "→" la2 Sa22 ")") ">"
+
+
+
+
+
+(I<:) T0, T1, T
+----------------------------- [Base Interior Type]
+(I<:') "<" T0 T1 ">" , T

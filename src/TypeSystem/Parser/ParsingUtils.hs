@@ -174,3 +174,8 @@ dqString'	:: Parser s String
 dqString'
 	= do	s	<- dqString
 		return $ "\""++s++"\""
+
+testParser	:: String -> Parser () a -> Either String a 
+testParser input parser
+	= do	parsed	<- runParserT parser () "testParser" input
+		parsed & either (Left . show) return

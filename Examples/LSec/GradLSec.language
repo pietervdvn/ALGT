@@ -1,0 +1,398 @@
+
+  Gradual LSec 
+ **************
+
+
+ Syntax 
+========
+
+bool             ::= "True"
+                 | "False"
+label            ::= levels
+                 | "(" label "⋎" label ")"
+                 | "(" label "⋏" label ")"
+labelTuple       ::= "<" label label ">"
+levels           ::= "Public"
+                 | "Restricted"
+                 | "CIA"
+                 | "NSA"
+                 | "TOP"
+                 | "?"
+op               ::= "∨"
+                 | "∧"
+                 | "⇒"
+r                ::= bool
+                 | "(" "λ" x ":" type "." t ")"
+t                ::= tL t
+                 | tL op t
+                 | tL "::" type
+                 | tL "⋎" label
+                 | tL
+tL               ::= v
+                 | x
+                 | "If" t "Then" t "Else" t
+                 | "(" t ")"
+type             ::= "Bool" label
+                 | "(" type "→" label type ")"
+typeTuple        ::= "<" type type ">"
+typing           ::= x ":" type
+typingEnvironment::= typing "," typingEnvironment
+                 | "$"
+v                ::= r label
+x                ::= Identifier
+
+
+
+ Syntax Style 
+==============
+
+
+
+ Functions 
+===========
+
+and                      : bool -> bool -> bool
+and("True", "True")      = "True"
+and("True", "False")     = "False"
+and("False", "True")     = "False"
+and("False", "False")    = "False"
+
+
+cod                      : type -> type
+cod("(" _ "\8594" label type ")")
+                         = type
+
+
+dom                      : type -> type
+dom("(" type "\8594" label _ ")")
+                         = type
+
+
+imp                      : bool -> bool -> bool
+imp("True", "True")      = "True"
+imp("True", "False")     = "False"
+imp("False", "True")     = "True"
+imp("False", "False")    = "True"
+
+
+join                     : type -> type -> type
+join("Bool" l0, "Bool" l1)
+                         = "Bool" joinL(l0, l1)
+join("(" t11 "\8594" l0 t12 ")", "(" t21 "\8594" l1 t22 ")")
+                         = "(" join(t11, t21) "\8594" joinL(l0, l1) join(t21, t22) ")"
+join(t0, t1)             = !error("Undefined")
+
+
+joinL                    : levels -> levels -> levels
+joinL("TOP", _)          = "TOP"
+joinL(_, "TOP")          = "TOP"
+joinL("?", _)            = "?"
+joinL(_, "?")            = "?"
+joinL("NSA", "CIA")      = "TOP"
+joinL("CIA", "NSA")      = "TOP"
+joinL("NSA", _)          = "NSA"
+joinL(_, "NSA")          = "NSA"
+joinL("CIA", _)          = "CIA"
+joinL(_, "CIA")          = "CIA"
+joinL("Restricted", _)   = "Restricted"
+joinL(_, "Restricted")   = "Restricted"
+joinL("Public", "Public")
+                         = "Public"
+
+
+meet                     : type -> type -> type
+meet("Bool" l0, "Bool" l1)
+                         = "Bool" meetL(l0, l1)
+meet("(" t11 "\8594" l0 t12 ")", "(" t21 "\8594" l1 t22 ")")
+                         = "(" meet(t11, t21) "\8594" meetL(l0, l1) meet(t21, t22) ")"
+meet(t0, t1)             = !error("Undefined")
+
+
+meetL                    : label -> label -> label
+meetL("Public", _)       = "Public"
+meetL(_, "Public")       = "Public"
+meetL("?", _)            = "?"
+meetL(_, "?")            = "?"
+meetL("Restricted", _)   = "Restricted"
+meetL(_, "Restricted")   = "Restricted"
+meetL("NSA", "CIA")      = "Restricted"
+meetL("CIA", "NSA")      = "Restricted"
+meetL("CIA", _)          = "CIA"
+meetL(_, "CIA")          = "CIA"
+meetL("NSA", _)          = "NSA"
+meetL(_, "NSA")          = "NSA"
+meetL("TOP", "TOP")      = "TOP"
+
+
+or                       : bool -> bool -> bool
+or("True", "True")       = "True"
+or("True", "False")      = "True"
+or("False", "True")      = "True"
+or("False", "False")     = "False"
+
+
+stamp                    : type -> label -> type
+stamp("Bool" l1, l2)     = "Bool" ("(" l1 "\8910" l2 ")")
+stamp("(" S1 "\8594" l1 S2 ")", l2)
+                         = "(" S1 "\8594" ("(" l1 "\8910" l2 ")") S2 ")"
+
+
+
+
+ Relations 
+===========
+
+(<:) 	: type (in), type (in)	Pronounced as "is subtype of"
+(I<:) 	: type (in), type (in), typeTuple (out)
+(I<:') 	: typeTuple (in), typeTuple (out)
+(I≼) 	: label (in), label (in), labelTuple (out)
+(→) 	: t (in), t (out)	Pronounced as "small step"
+(→*) 	: t (in), t (out)	Pronounced as "big step"
+(≼) 	: label (in), label (in)	Pronounced as "is less secure"
+(⊢) 	: typingEnvironment (in), t (in), type (out)	Pronounced as "context entails typing"
+(✓) 	: t (in)	Pronounced as "is canonical"
+
+
+
+ Rules 
+=======
+
+
+
+#  Rules about "is subtype of", with symbol (<:) 
+# -----------------------------------------------
+
+
+ l0 ≼ l1
+-------------------------  	[Subtyping Base]
+ "Bool" l0 <: "Bool" l1
+
+
+ S21 <: S11	S12 <: S22	l1 ≼ l2
+-----------------------------------------------------------  	[Subtyping Curry]
+ "(" S11 "\8594" l1 S12 ")" <: "(" S21 "\8594" l2 S22 ")"
+
+
+
+
+
+
+#  Rules about (I<:) 
+# -------------------
+
+
+ l1 I≼ l2, "<" la1 la2 ">"
+-------------------------------------------------------------  	[Interior Sub base]
+ "Bool" l1 I<: "Bool" l2, "<" ("Bool" la1) ("Bool" la2) ">"
+
+
+ S21 I<: S11, "<" Sa21 Sa11 ">"	S12 I<: S22, "<" Sa12 Sa22 ">"	l1 I≼ l2, "<" la1 la2 ">"
+-------------------------------------------------------------------------------------------------------------------------------------  	[Interior sub arrow]
+ "(" S11 "\8594" l1 S12 ")" I<: "(" S21 "\8594" l2 S22 ")", "<" ("(" Sa11 "\8594" la1 Sa12 ")") ("(" Sa21 "\8594" la2 Sa22 ")") ">"
+
+
+
+
+
+
+#  Rules about (I≼) 
+# ------------------
+
+
+ 
+---------------------------  	[Interior Labels L]
+ l1 I≼ "?", "<" l1 l1 ">"
+
+
+ 
+---------------------------  	[Interior Labels R]
+ "?" I≼ l1, "<" l1 l1 ">"
+
+
+
+
+
+
+#  Rules about "small step", with symbol (→) 
+# -------------------------------------------
+
+
+ v: v
+---------------------------------------------------------------------  	[EvalApp]
+ (("(" "\955" x ":" S "." t ")") l) v → !subs:tL(x, v, t) "\8910" l
+
+
+ t1 → t2
+----------------  	[EvalCtx]
+ f[t1] → f[t2]
+
+
+ t1: v	t2: v
+-------------------------------------------------------------  	[EvalIfFalse]
+ "If" (("False":bool) l) "Then" t1 "Else" t2 → t2 "\8910" l
+
+
+ t1: v	t2: v
+------------------------------------------------------------  	[EvalIfTrue]
+ "If" (("True":bool) l) "Then" t1 "Else" t2 → t1 "\8910" l
+
+
+ 
+--------------------------------------------------------------------  	[EvalOpConj]
+ ((b1:bool) l1) "\8743" ((b2:bool) l2) → and(b1, b2) joinL(l1, l2)
+
+
+ 
+-------------------------------------------------------------------  	[EvalOpDisj]
+ ((b1:bool) l1) "\8744" ((b2:bool) l2) → or(b1, b2) joinL(l1, l2)
+
+
+ 
+--------------------------------------------------------------------  	[EvalOpImp]
+ ((b1:bool) l1) "\8658" ((b2:bool) l2) → imp(b1, b2) joinL(l1, l2)
+
+
+ t: v
+----------------  	[EvalPar]
+ "(" t ")" → t
+
+
+ 
+--------------------------------------  	[SecrecyMerging]
+ (r l1) "\8910" l2 → r joinL(l1, l2)
+
+
+
+
+
+
+#  Rules about "big step", with symbol (→*) 
+# ------------------------------------------
+
+
+ (✓) v
+---------  	[BaseBigStep]
+ v →* v
+
+
+ t0 → t1	t1 →* t2
+--------------------------  	[RecBigStep]
+ t0 →* t2
+
+
+
+
+
+
+#  Rules about "is less secure", with symbol (≼) 
+# -----------------------------------------------
+
+
+ 
+----------  	[GradLL]
+ "?" ≼ l
+
+
+ 
+----------  	[GradLR]
+ l ≼ "?"
+
+
+ 
+-----------------------  	[LCIA]
+ "Restricted" ≼ "CIA"
+
+
+ 
+----------------  	[LCIATop]
+ "CIA" ≼ "TOP"
+
+
+ 
+-----------------------  	[LNSA]
+ "Restricted" ≼ "NSA"
+
+
+ 
+----------------  	[LNSATop]
+ "NSA" ≼ "TOP"
+
+
+ 
+--------------------------  	[LPub]
+ "Public" ≼ "Restricted"
+
+
+ 
+--------  	[LRefl]
+ l ≼ l
+
+
+
+
+
+
+#  Rules about "context entails typing", with symbol (⊢) 
+# -------------------------------------------------------
+
+
+ Γ ⊢ t, S1	S1 <: S21
+---------------------------  	[S::]
+ Γ ⊢ t "::" S2, S2
+
+
+ Γ ⊢ t1, "(" S11 "\8594" l S12 ")"	Γ ⊢ t2, S2	S2 <: S11
+-------------------------------------------------------------------  	[SApp]
+ Γ ⊢ t1 op t2, "Bool" ("(" l1 "\8910" l2 ")")
+
+
+ Γ ⊢ t, "Bool" l	Γ ⊢ t1, S1	Γ ⊢ t2, S2
+----------------------------------------------------  	[SIf]
+ Γ ⊢ "If" t "Then" t1 "Else" t2, join
+
+
+ Γ ⊢ t1, "Bool" l1	Γ ⊢ t2, "Bool" l2
+-----------------------------------------------  	[SOp]
+ Γ ⊢ t1 op t2, "Bool" ("(" l1 "\8910" l2 ")")
+
+
+ 
+---------------------------  	[Sb]
+ _ ⊢ (bool l:v), "Bool" l
+
+
+ 
+--------------------  	[Sx]
+ Γ[x ":" S] ⊢ x, S
+
+
+ (x ":" S1) "," Γ ⊢ t, S2
+-----------------------------------------------------------------  	[Sλ]
+ Γ ⊢ ("(" "\955" x ":" S1 "." t ")") l, "(" S1 "\8594" l S2 ")"
+
+
+ Γ ⊢ t, S
+---------------------------------------  	[S⋎]
+ Γ ⊢ t "\8910" label, stamp(S, label)
+
+
+
+
+
+
+#  Rules about "is canonical", with symbol (✓) 
+# ---------------------------------------------
+
+
+ 
+-----------------  	[IsCanon]
+ (✓) (b:bool) l
+
+
+
+
+
+
+ Properties 
+============
+

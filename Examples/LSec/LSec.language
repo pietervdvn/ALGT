@@ -10,10 +10,10 @@
 # Variable
 x	::= Identifier
 
-# public < restriced < CIA < TOP
-# public < restriced < NSA < TOP
+# Public < Restricted < CIA < TOP
+# Public < Restricted < NSA < TOP
 # NSA and CIA are not supposed to know each other secrets
-levels	::= "public" | "restriced" | "CIA" | "NSA" | "TOP"
+levels	::= "Public" | "Restricted" | "CIA" | "NSA" | "TOP"
 
 label	::= levels | "(" label "⋎" label ")" | "(" label "⋏" label ")"
 
@@ -78,12 +78,12 @@ joinL("CIA", _)
 	= "CIA"
 joinL(_, "CIA")
 	= "CIA"
-joinL("restriced", _)
-	= "restriced"
-joinL(_, "restriced")
-	= "restriced"
-joinL("public", "public")
-	= "public"
+joinL("Restricted", _)
+	= "Restricted"
+joinL(_, "Restricted")
+	= "Restricted"
+joinL("Public", "Public")
+	= "Public"
 
 
 
@@ -98,8 +98,29 @@ join(t0, t1)
 
 
 meetL	: label -> label -> label
-meetL(l0, l1)
-	= "(" l0 "⋏" l1 ")"
+meetL("Public", _)
+	= "Public"
+meetL(_, "Public")
+	= "Public"
+meetL("Restricted", _)
+	= "Restricted"
+meetL(_, "Restricted")
+	= "Restricted"
+meetL("NSA", "CIA")
+	= "Restricted"
+meetL("CIA", "NSA")
+	= "Restricted"
+meetL("CIA", _)
+	= "CIA"
+meetL(_, "CIA")
+	= "CIA"
+meetL("NSA", _)
+	= "NSA"
+meetL(_, "NSA")
+	= "NSA"
+meetL("TOP", "TOP")
+	= "TOP"
+
 
 # " ∨
 meet	: type -> type -> type
@@ -114,6 +135,17 @@ meet(t0, t1)
 stamp	: type -> label -> type
 stamp("Bool" l1, l2)	= "Bool" ("(" l1 "⋎" l2 ")")
 stamp("(" S1 "→" l1 S2 ")", l2)= "(" S1 "→" ("(" l1 "⋎" l2 ")") S2 ")"
+
+
+
+dom	: type -> type
+dom( "(" type "→" label _ ")")
+	= type
+
+
+cod	: type -> type
+cod( "(" _ "→" label type ")")
+	= type
 
 
  Relations
@@ -201,17 +233,17 @@ l ≼ l
 
 
 ------------------------ [LPub]
-"public" ≼ "restriced"
+"Public" ≼ "Restricted"
 
 
 
 -------------------- [LCIA]
-"restriced"  ≼ "CIA"
+"Restricted"  ≼ "CIA"
 
 
 
 -------------------- [LNSA]
-"restriced"  ≼ "NSA"
+"Restricted"  ≼ "NSA"
 
 
 -------------- [LCIATop]
@@ -240,16 +272,16 @@ l ≼ l
 
 
 
-
+ v:v
 ------------------------------------------------------ [EvalApp]
  (("(" "λ" x ":" S "." t ")") l) v  → !subs:tL(x, v, t) "⋎" l
 
 
-
+ t1:v		t2:v
 ------------------------------------------------------- [EvalIfTrue]
  "If" (("True":bool) l) "Then" t1 "Else" t2 → t1 "⋎" l
 
-
+ t1:v		t2:v
 -------------------------------------------------------- [EvalIfFalse]
  "If" (("False":bool) l) "Then" t1 "Else" t2 → t2 "⋎" l
 
@@ -258,7 +290,7 @@ l ≼ l
  (r l1) "⋎" l2 → r joinL(l1, l2)
 
 
-
+ t:v
 ---------------- [EvalPar]
  "(" t ")" → t
 

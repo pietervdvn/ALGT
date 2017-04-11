@@ -1,0 +1,331 @@
+
+  Gradualized STFL 
+ ******************
+
+
+ Syntax 
+========
+
+bool             ::= "True"
+                 | "False"
+e                ::= eL "+" e
+                 | eL "::" gtype
+                 | eL e
+                 | eL
+eL               ::= value
+                 | var
+                 | "(" "\\" var ":" gtype "." e ")"
+                 | "If" e "Then" e "Else" e
+                 | "(" e ")"
+es               ::= e "\n" es
+                 | e "\n"
+                 | e
+gtype            ::= gtypeTerm "->" gtype
+                 | gtypeTerm
+gtypeTerm        ::= "Int"
+                 | "Bool"
+                 | "(" gtype ")"
+                 | "?"
+number           ::= Number
+typeSet          ::= gtype typeSet
+                 | "$"
+typing           ::= var ":" gtype
+typingEnvironment::= typing "," typingEnvironment
+                 | "{}"
+value            ::= bool
+                 | number
+var              ::= Identifier
+
+
+
+ Syntax Style 
+==============
+
+Identifier	 -> "identifier"
+Number	 -> "constant"
+bool	 -> "constant"
+e	 -> "statement"
+eL	 -> "statement"
+eL.2	 -> "noise"
+eL.3	 -> "keyword"
+eL.4	 -> "noise"
+gtype	 -> "type"
+gtypeTerm	 -> "type"
+
+
+
+
+ Functions 
+===========
+
+abstract                 : typeSet -> gtype
+abstract("$")            = !error("Undefined")
+abstract("Int" "$")      = "Int"
+abstract("Bool" "$")     = "Bool"
+abstract((T1 "->" T2) ts)
+                         = abstract(domains((T1 "->" T2) ts)) "->" abstract(codomains((T1 "->" T2) ts))
+
+
+cod                      : gtype -> gtype
+cod("(" T2 ")")          = T2
+cod(T1 "->" T2)          = T2
+cod("?")                 = "?"
+
+
+codomains                : typeSet -> typeSet
+codomains((_ "->" T2) ts)
+                         = T2 codomains(ts)
+codomains("$")           = "$"
+codomains(_)             = !error("Not defined, as this is not a proper list of functions")
+
+
+dom                      : gtype -> gtypeTerm
+dom("(" T1 ")")          = T1
+dom(T1 "->" T2)          = T1
+dom("?")                 = "?"
+
+
+domains                  : typeSet -> typeSet
+domains((T1 "->" _) ts)  = T1 domains(ts)
+domains("$")             = "$"
+domains(_)               = !error("Not defined, as this is not a proper list of functions")
+
+
+equate                   : gtype -> gtype -> gtype
+equate(T, T)             = T
+equate("?", t)           = t
+equate(t, "?")           = t
+equate(t11 "->" t12, t21 "->" t22)
+                         = equate(t11, t21) "->" equate(t12, t22)
+
+
+
+
+ Relations 
+===========
+
+(::) 	: e (in), gtype (out)	Pronounced as "type in empty context"
+(~) 	: gtype (in), gtype (in)	Pronounced as "is consistent"
+(→) 	: e (in), e (out)	Pronounced as "evaluation"
+(→') 	: e (in), e (out)	Pronounced as "checked small step"
+(→*) 	: e (in), value (out)	Pronounced as "big step"
+(⊢) 	: typingEnvironment (in), e (in), gtype (out)	Pronounced as "context entails typing"
+(✓) 	: e (in)	Pronounced as "is canonical"
+
+
+
+ Rules 
+=======
+
+
+
+#  Rules about "type in empty context", with symbol (::) 
+# -------------------------------------------------------
+
+
+ "{}" ⊢ e, T
+--------------  	[TEmptyCtx]
+ e :: T
+
+
+
+
+
+
+#  Rules about "is consistent", with symbol (~) 
+# ----------------------------------------------
+
+
+ 
+----------  	[ConsLeft]
+ "?" ~ T
+
+
+ 
+----------  	[ConsRight]
+ T ~ "?"
+
+
+ Ta1 ~ Ta2	Tb1 ~ Tb2
+------------------------------  	[EqArrow]
+ Ta1 "->" Tb1 ~ Ta2 "->" Tb2
+
+
+ T1 = T2 : gtype
+------------------  	[EqBase]
+ T1 ~ T2
+
+
+
+
+
+
+#  Rules about "evaluation", with symbol (→) 
+# -------------------------------------------
+
+
+ e :: T0	T ~ T0
+------------------------  	[EvalAscr]
+ e "::" T → e
+
+
+ e0 → e1
+----------------  	[EvalCtx]
+ e[e0] → e[e1]
+
+
+ 
+----------------------------------------  	[EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ 
+---------------------------------------  	[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+ (✓) arg	arg "::" type → arg
+---------------------------------------------------------------  	[EvalLamApp]
+ ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg, e)
+
+
+ 
+----------------  	[EvalParens]
+ "(" e ")" → e
+
+
+ n1: Number	n2: Number
+----------------------------  	[EvalPlus]
+ n1 "+" n2 → !plus(n1, n2)
+
+
+
+
+
+
+#  Rules about "checked small step", with symbol (→') 
+# ----------------------------------------------------
+
+
+ e0 :: T	e0 → e1
+-------------------------  	[Check]
+ e0 →' e1
+
+
+
+
+
+
+#  Rules about "big step", with symbol (→*) 
+# ------------------------------------------
+
+
+ e0 → e1	(✓) e1
+------------------------  	[BigStepBase]
+ e0 →* e1
+
+
+ (✓) e
+---------  	[BigStepCanon]
+ e →* e
+
+
+ e0 → e1	e1 →* e2
+--------------------------  	[BigStepRec]
+ e0 →* e2
+
+
+
+
+
+
+#  Rules about "context entails typing", with symbol (⊢) 
+# -------------------------------------------------------
+
+
+ Γ ⊢ e, T'	T' ~ T
+------------------------  	[TAscr]
+ Γ ⊢ e "::" T, T'
+
+
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl ~ Tr
+---------------------------------------------------------  	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
+
+
+ (x ":" T1) "," Γ ⊢ e, T2
+----------------------------------------------  	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
+
+
+ Γ ⊢ e, T
+-------------------  	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ n1, Int1	Γ ⊢ n2, Int2	Int1 ~ "Int"	Int2 ~ "Int"
+--------------------------------------------------------------  	[TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ ~ dom(Tfunc)
+---------------------------------------------------  	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+ b: bool
+----------------  	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+ n: number
+---------------  	[Tnumber]
+ Γ ⊢ n, "Int"
+
+
+ 
+--------------------  	[Tx]
+ Γ[x ":" T] ⊢ x, T
+
+
+
+
+
+
+#  Rules about "is canonical", with symbol (✓) 
+# ---------------------------------------------
+
+
+ b: bool
+----------  	[CanonBool]
+ (✓) b
+
+
+ n: number
+------------  	[CanonNumber]
+ (✓) n
+
+
+
+
+
+
+ Properties 
+============
+
+
+ e0 :: T	e0 → e1
+-------------------------  	[Preservation]
+ e1 :: T
+
+
+ e0 :: T
+---------------------------  	[Progress]
+ (✓) e0 	| e0 → e1
+
+
+ e :: T
+---------  	[Termination]
+ e →* v
+
+

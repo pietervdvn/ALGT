@@ -149,10 +149,10 @@ renderStyleRow styleN
 
 manualAssets	:: IO (Map String String)
 manualAssets
-	= do	-- let files0	= allAssets |> fst & filter ("Manual/Files/" `isPrefixOf`)
+	= do	let files0	= allAssets |> fst & filter ("Manual/Files/" `isPrefixOf`)
 		let files1	= allAssets |> fst & filter ("Manual/Thesis/" `isPrefixOf`)
-		let files	= files1
-		contents	<- files |> (drop (length "Manual/Thesis/") &&&  readFile . ("src/Assets/"++)) |+> sndEffect
+		let files	= files0 ++ files1
+		contents	<- files |> ((\pth -> pth & reverse & takeWhile (/= '/') & reverse) &&&  readFile . ("src/Assets/"++)) |+> sndEffect
 		contents & M.fromList & return
 
 

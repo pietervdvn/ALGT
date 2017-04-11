@@ -63,23 +63,34 @@ renderPTDebug	:: FullColoring -> SyntaxStyle -> ParseTree -> Doc
 renderPTDebug fc style pt
 	= let	ptannot		= annot () pt & determineStyle style |> snd	:: ParseTreeA (Maybe Name)
 		ptannot'	= ptannot ||>> renderWithStyle fc & cascadeAnnot text	:: ParseTreeA (String -> Doc)
-		(meta, docs)	= renderDocDebug ptannot' & unzip
+		(meta, docs)	= renderDocDebug (maxDepth ptannot') ptannot' & unzip
 		meta'		= meta |> text |> yellow
-		l		= docs |> show |> length & maximum 
-		docs'		= docs |> padR' (l+3) (length . show) (text " ")	:: [Doc] 
+		l		= docs |> plain |> show |> length & maximum 
+		docs'		= docs |> padR' (l+3) (length . show . plain) (text " ")	:: [Doc] 
 		in
 		zip docs' meta' |> uncurry (<+>) & foldl1 (ANSI.<$>)
 
 styleMI		:: ParseTreeA a -> String
 styleMI pt'	= get ptaInf pt' & (\(tn, i) -> tn++ "." ++ show i)
 
-renderDocDebug	:: ParseTreeA (String -> Doc) -> [(String, Doc)]
-renderDocDebug (PtSeq _ _ pts)
-		= let	(meta, h:t)	= (pts >>= renderDocDebug) & unzip in
-			zip meta $ (text "+ " <+> h) : (t |> ( text "| " <+>))
-renderDocDebug pt
-		= [(styleMI pt, renderDoc pt)]
+renderDocDebug	:: Int -> ParseTreeA (String -> Doc) -> [(String, Doc)]
+renderDocDebug depth (PtSeq _ _ pts)
+		= let	(meta, t)	= pts |> renderDocDebug (depth - 1) |> unzip ||>> fancyLine |> uncurry zip & concat & unzip
+			in
+			zip meta t
+renderDocDebug depth pt
+		= [(styleMI pt, (replicate (depth) '─' & text & dullgreen)  <+> renderDoc pt)]
 
+
+fancyLine	:: [Doc] -> [Doc]
+fancyLine [str]	= [dullgreen (text "─") <> str]
+fancyLine strs
+	= let	fst	= head strs
+		middle	= strs & tail & init
+		lst	= last strs
+		txt str	= str & text & dullgreen
+		in
+		[txt "┌" <> fst] ++ (middle |> (txt "│" <>))  ++ [txt "└" <> lst]
 
 renderWithStyle	:: FullColoring -> Name -> String ->  Doc
 renderWithStyle fc styleN str

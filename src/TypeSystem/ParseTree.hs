@@ -72,6 +72,11 @@ flatten (MLiteral a minf str)	= (a, minf, str)
 flatten (MInt a minf i)	= (a, minf, show i)
 flatten (PtSeq a minf pts)	= (a, minf, (pts |> flatten) >>= trd3)
 
+maxDepth	:: ParseTreeA a -> Int
+maxDepth (PtSeq _ _ pts)
+		= 1 + maximum (pts |> maxDepth)
+maxDepth _	= 0
+
 
 removeEmptyTokens	:: ParseTreeA a -> ParseTreeA a
 removeEmptyTokens (PtSeq a i seq)

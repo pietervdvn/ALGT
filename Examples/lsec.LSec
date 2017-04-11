@@ -1,6 +1,0 @@
-True public ∨ False NSA
-If True public Then False CIA Else True NSA
-If True CIA Then False NSA Else True CIA
-If False CIA Then False NSA Else True CIA
-
-(λ x : Bool public . If x Then True NSA Else True CIA public) public True public

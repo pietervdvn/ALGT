@@ -422,8 +422,14 @@ printPTDebug (inp, pt)
 	= do	ts	<- getTS
 		putStrLn $ "# "++show inp++" was parsed as:"
 		fc	<- getConfig' $ get colorScheme
-		let ptDoc	= Render.ansi fc (get tsStyle ts) & renderParseTreeDebug pt
-		putDocLn' ptDoc
+		ascii	<- getConfig' $ get noMakeup
+		if ascii then do
+			let ptDoc	= pt & debug
+			putStrLn ptDoc
+
+		else do
+			let ptDoc	= Render.ansi fc (get tsStyle ts) & renderParseTreeDebug pt
+			putDocLn' ptDoc
 
 
 putDocLn'	:: Doc -> PureIO ()
