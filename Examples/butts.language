@@ -1,0 +1,53 @@
+ Butts
+*******
+
+Syntax
+======
+
+expr 		//= "8" tokens "D"
+token		::= "="
+tokens 	//= token tokens | token
+superToken	//= tokens "§" tokens
+superExpr	//= "8" superToken "D"
+
+exprs 	::= expr exprs | expr
+file		::= superExpr "\n" | superExpr
+
+
+Syntax Style
+============
+
+token		-> "type"
+expr		-> "identifier"
+
+superToken -> "preprocessor"
+
+Functions
+=========
+
+addTokens : tokens -> tokens -> tokens
+addTokens("=", rest) = "=" rest
+addTokens("=" rest1, rest2) = "=" addTokens(rest1, rest2)
+
+addExprs : expr -> expr -> expr
+addExprs("8" tokens1 "D", "8" tokens2 "D")
+	= "8" addTokens(tokens1, tokens2) "D"
+
+resolveExpr	: exprs -> expr
+resolveExpr((expr:expr))	= expr
+resolveExpr(expr rest)	= addExprs(expr, resolveExpr(rest))
+
+
+move	: superToken -> superToken
+move("=" "§" tokens)
+	= "=" "§" tokens
+move(tokens1 "§" tokens2)
+	= tail(tokens1) "§" ("=" tokens2)
+
+moveExpr	: superExpr -> superExpr
+moveExpr("8" st "D")
+	= "8" move(st) "D"
+
+tail	: tokens -> tokens
+tail("=" tokens)
+	= tokens

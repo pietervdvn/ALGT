@@ -53,7 +53,7 @@ renderPT fc style pt
 
 renderDoc	:: ParseTreeA (String -> Doc) -> Doc
 renderDoc (MLiteral f _ s)
-		= f s
+		= (s >>= (\c -> if c == '\n' then "\n" else [c])) & f
 renderDoc (MInt f _ i)
 		= f $ show i
 renderDoc (PtSeq _ _ pts)
@@ -79,7 +79,7 @@ renderDocDebug depth (PtSeq _ _ pts)
 			in
 			zip meta t
 renderDocDebug depth pt
-		= [(styleMI pt, (replicate (depth) '─' & text & dullgreen)  <+> renderDoc pt)]
+		= [(styleMI pt, (replicate depth '─' & text & dullgreen)  <+> renderDoc pt)]
 
 
 fancyLine	:: [Doc] -> [Doc]

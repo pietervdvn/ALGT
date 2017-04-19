@@ -1,5 +1,5 @@
 
-terminal
+cobalt
 ********
 
 Constants
@@ -9,15 +9,10 @@ black	 = #000000
 white	 = #ffffff
 red	 = #ff0000
 green	 = #00ff00
-blue	 = #5555ff
-darkblue	 = #000099
+darkblue	 = #001a31
 
-grey	 = #999999
-darkgrey	 = #505050
-darkgreen	 = #009900
-yellow	 = #ffff00
-darkyellow	 = #bbbb00
-purple	 = #aa22aa
+amber	= #aaaa00
+
 
 bold 	 = "bold"
 italic 	 = "italic"
@@ -28,12 +23,12 @@ monospace	 = "monospace"
 Defaults
 ========
 
-foreground-color : green 
-background-color : black
+foreground-color : white 
+background-color : darkblue
 font-size 	 = 12
 font-family 	 = "Ubuntu Mono"
 
-svg-line-color  : green
+svg-line-color  : white
 svg-line-thickness 	 = 2
 svg-dotsize  	 = 4
 svg-fontsize  	 = 20
@@ -45,7 +40,7 @@ Styles
 
  statement
 -----------
- foreground-color: green
+ foreground-color: white
 
 
  identifier (statement)

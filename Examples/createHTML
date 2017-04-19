@@ -1,0 +1,1 @@
+../ALGT ../src/Assets/Style.language Cobalt.style styleFile --html --nc --style Cobalt.style > Cobalt.html

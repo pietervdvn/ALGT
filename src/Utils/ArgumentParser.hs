@@ -6,6 +6,7 @@ This module defines parsing of the arguments and reading/writing of the config f
 
 import TypeSystem
 import AssetsHelper as AH
+import qualified Assets
 
 import Utils.Utils
 import Utils.PureIO hiding (writeFile, readFile, putStrLn)
@@ -14,6 +15,9 @@ import Data.Monoid ((<>))
 import Data.List (intercalate, isPrefixOf, isSuffixOf)
 import Data.Maybe
 import qualified Data.Map as M
+
+import SyntaxHighlighting.AsHTMLPt (cssFor)
+import SyntaxHighlighting.Coloring
 
 import Control.Monad
 
@@ -50,11 +54,13 @@ data MainArgs	= MainArgs
 			, runTests	:: Bool
 			, saveGTKSourceview	:: Bool
 			, styles	:: Bool
+			, styleCSS	:: Maybe Name
 			}
 
 instance ActionSpecified MainArgs where
 	actionSpecified args
 		= [realArgs] |> (args &) |> isJust & or
+			|| [styleCSS] |> (args &) |> isJust & or
 			|| [manualPDF, manualHTML, runTests] |> (args &) & or
 
 data Args = Args 	{ tsFile		:: String
@@ -71,7 +77,6 @@ data Args = Args 	{ tsFile		:: String
 			, iraSVG		:: Maybe String
 			, dynamizeArgs		:: Maybe DynamizeArgs
 			, styleName		:: Name
-			, styleCSS		:: Bool
 			, interactiveArg	:: Maybe Symbol
 			, noMakeupArg		:: Bool
 			, shortProofs		:: Maybe String
@@ -90,7 +95,7 @@ instance ActionSpecified Args where
 		  	|| [exampleFiles]				|> (args &) |> (not . null) & or
 			|| [subtypingSVG, iraSVG] 	|> (args &) |> isJust & or
 			|| [dynamizeArgs] 		|> (args &) |> isJust & or
-			|| [dumpTS, interpretAbstract, interpretRulesAbstract, styleCSS]	|> (args &) & or
+			|| [dumpTS, interpretAbstract, interpretRulesAbstract]	|> (args &) & or
 
 data ExampleFile	= ExFileArgs
 	{ fileName	:: FilePath
@@ -139,7 +144,7 @@ emptyConfig
 parseArgs	:: ([Int], String) -> [String] -> IO (Bool, Maybe Args)
 parseArgs version strs	
 	= do	let result	= execParserPure defaultPrefs (parserInfo version) strs
-		MainArgs doShowVersion saveManPDF saveManHTML args runTests saveGTKSourceview styles
+		MainArgs doShowVersion saveManPDF saveManHTML args runTests saveGTKSourceview styles styleCSS
 				<- handleParseResult result
 		return $ doShowVersion ()
 		when saveManPDF $ do
@@ -157,8 +162,19 @@ parseArgs version strs
 		when styles $ do
 			putStrLn $ AH.knownStyles & M.keys & unlines
 			exitSuccess
+		when (isJust styleCSS) $ do
+			style	<- createStyle $ fromJust styleCSS
+			putStrLn $ cssFor style
+			exitSuccess
+
 		return (runTests, args)
 
+
+createStyle styleName
+	= 	if ".style" `isSuffixOf` styleName then do
+			styleContents	<- readFile styleName
+			parseColoringFile styleName styleContents & either error return
+		else styleName & AH.fetchStyle & either error return
 
 
 dataPath	= getXdgDirectory XdgData "ALGT"
@@ -322,10 +338,6 @@ args	= Args <$> argument str
 			<> help "Color scheme for parsetrees and svg files"
 			<> completer (mkCompleter (\part -> knownStyles & M.keys & filter (part `isPrefixOf`) & return))
 			)
-		<*> switch (
-			long "css"
-			<> help "Create a css file out of the stylefile"
-			)
 		<*> optional (strOption
 			(metavar "RULE-TO-INTERPRET"
 			<> long "repl"
@@ -389,3 +401,8 @@ mainArgs versionMsg
 		<*> switch
 			(long "styles"
 			<> help "What styles are default?")
+		<*> optional (strOption
+			(metavar "STYLENAME"
+			<> long "css"
+			<> help "Create a css file out of the given stylefile (might be a builtin style)"
+			))

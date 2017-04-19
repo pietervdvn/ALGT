@@ -14,12 +14,13 @@ syntaxHeader ::= "Syntax" nl equals nls
 
 titleChar::= Upper| Lower| digit | " "
 titleLine ::= $ titleChar titleLine | titleChar
-title ::= nls titleLine nls stars | titleLine nls stars
+title ::= strictNls titleLine nls stars | titleLine nls stars
 
 commentLine ::= LineChar commentLine | LineChar
-comment ::= "#" commentLine
+comment ::= $ "#" commentLine
 
 nl ::= "\n"
+strictNls ::= nl strictNls | nl
 nls ::= nl comment nls | nl nls | nl
 
 rest ::= $ Any rest | Any 
@@ -31,7 +32,7 @@ digit ::= Digit
 
 wsMode ::= "::=" "$" | "::=" | "~~=" "$" | "~~="
 
-bnfTerm ::= styleName | identifier | bnfBuiltin | String²
+bnfTerm ::= styleName | identifier | bnfBuiltin | String
 bnfBuiltin ::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar" | "Identifier"
 bnfExpression ::= bnfTerm "|" bnfExpression | bnfTerm bnfExpression | bnfTerm
 
@@ -68,16 +69,7 @@ bnfExpression.0 -> "constant"
 bnfTerm -> "statement"
 bnfBuiltin -> "keyword"
 comment -> "comment"
+commentLine -> "comment"
 
 styleLine -> "noise"
 styleName -> "dirtier-hack"
-
-
-
-
-
-
-
-
-
-

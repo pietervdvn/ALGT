@@ -33,7 +33,6 @@ import qualified SyntaxHighlighting.Renderers as Render
 import SyntaxHighlighting.Coloring
 import SyntaxHighlighting.Renderer
 import SyntaxHighlighting.AsSVGPt (toSVGColorScheme)
-import SyntaxHighlighting.AsHTMLPt (cssFor)
 import qualified SyntaxHighlighting.AsHTMLPt as HTML
 
 import Control.Arrow ((&&&))
@@ -79,10 +78,11 @@ type PureIO a	= PureIO' RunConfig StdGen a
 mainPure	:: Args -> PureIO (FullColoring, TypeSystem)
 mainPure args
 	= do	checkInput args
-		style		<- if ".style" `isSuffixOf` styleName args then do
-						styleContents	<- readFile $ styleName args
-						liftEith $ parseColoringFile (styleName args) styleContents 
-					else styleName args & Assets.fetchStyle & liftEith
+		let styleN	= styleName args
+		style	<- if ".style" `isSuffixOf` styleN then do
+				styleContents	<- readFile styleN
+				parseColoringFile styleN styleContents & liftEith
+			else styleN & Assets.fetchStyle & liftEith
 		let ascii	= noMakeupArg args
 		withConfig' (set colorScheme style) $
 			withConfig' (set noMakeup ascii) $ 
@@ -119,7 +119,6 @@ mainPureOn args ts
 	, \args -> 			  interpretRules args	     |+> runRuleAbstract' ts & void
 	, ioIfJust' subtypingSVG	$ saveSubtypingSVG (get tsSyntax ts)
 	, ioIfJust' iraSVG		$ saveSubtypingSVG (analyzeRelations ts & get raSyntax)
-	, ioIf' styleCSS		$ createCSS
 	, ioIf' (not . actionSpecified)	$ putStrLn " # Language file parsed. No action specified, see -h or --manual to specify other options"
 	, ioIfJust' dynamizeArgs	  dynamizeTS
 	] |+> (args &) & void
@@ -172,10 +171,6 @@ runRuleAbstract ts (s, rules)
 		putStrLn $ inHeader "" ("Analysis for rules about "++inParens s) '=' help ++ full ++ text
 
 
-createCSS	:: PureIO ()
-createCSS	
-	= do	fc	<- getFC
-		putStrLn $ cssFor fc
 
 abstractRuleSyntax	:: Bool -> TypeSystem -> PureIO ()
 abstractRuleSyntax irasvg ts	

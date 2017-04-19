@@ -3,7 +3,6 @@ module SyntaxHighlighting.Renderers (allRenderers, latex, ansi, svg, html, parts
 
 import Utils.Utils
 
-import SyntaxHighlighting.Renderer
 import SyntaxHighlighting.AsAnsiPt
 import SyntaxHighlighting.AsHTMLPt
 import SyntaxHighlighting.AsLatexPt
