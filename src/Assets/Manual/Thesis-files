@@ -1,2 +1,5 @@
-SyntaxProperties.md
+1IntroductionRequirements.md
+2RelatedWork.md
 AbstractInterpretation.md
+4TypesystemAndGradualization.md
+5Evaluator.md

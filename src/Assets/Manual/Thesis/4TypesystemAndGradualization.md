@@ -75,6 +75,5 @@ After a single step, this expression becomes:
 
 Which clearly can not be typed nor evaluated.
 
-Abstract interpretation of functions
-------------------------------------
-o
+
+

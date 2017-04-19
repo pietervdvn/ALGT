@@ -28,6 +28,7 @@ focus:
 
 templates:
 	make focus-template
+	make thesis-template
 	cp *Template.tex .bin/
 
 focus-template:

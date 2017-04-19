@@ -3,19 +3,17 @@
 =================================================
 
 
-Computers are complicated machines. A modern CPU (anno 2017) contains around _2 billion_ transistors and switches states around _4 billion_ times a second. Controlling these machines is hard; controlling them with low-level commands has been an impossible task for decades. Luckily, higher level languages have been created.
+Computers are complicated machines. A modern CPU (anno 2017) contains around _2 billion_ transistors and switches states around _4 billion_ times a second. Controlling these machines is hard; controlling them with low-level commands has been an impossible task for decades. Luckily, higher level programming languages have been created.
 
 
-However, creating programming languages is a hard task too. Aside from the technical details of executing a language on a specific machine, languages should be formally correct and strive to minimize errors made by the human programmer, preferably without hindering creating usefull programs. This is a huge task; several approaches to solve this complex problem have been tried, all with their own trade-offs.
+However, creating such programming languages is a hard task too. Aside from the technical details of executing a language on a specific machine, languages should be formally correct and strive to minimize errors made by the human programmer, preferably without hindering creating usefull programs. This is a huge task; several approaches to solve this complex problem have been tried, all with their own trade-offs.
 
  Representing arbitrary semantics
 ----------------------------------
 
-
-%% NOTE: It was itching pretty hard to write "a common language is starting to emerge". 2meta2fast
 %% TODO Actual year Algol Report
 
-_Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down these programming languages and concepts. This process was started by John Backus Naur in 1960, by introducing _BNF_, where the __syntax__ of a language could be formally declared. Due to its simplicity and ease to use, it has become a standard tool for any language designer and has been used throughout of the field of computer science.
+_Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down these programming languages and concepts. This process was started by John Backus Naur in 1963, by introducing _BNF_, where the __syntax__ of a language could be formally declared. Due to its simplicity and ease to use, it has become a standard tool for any language designer and has been used throughout of the field of computer science.
 
 %% TODO When has natural deduction first been used to denote a programming language semantic?
 
