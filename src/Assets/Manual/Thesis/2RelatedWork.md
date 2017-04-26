@@ -241,7 +241,7 @@ Tracing how evaluation happens						✓		✓	✓
 Typechecked parsetree modification					✓			✓
 \hline
 **Typechecker**
-Defining a typechecker						✓		✓	✓
+ Defining a typechecker						✓		✓	✓
 Defining a formal typechecker						✓		✓	✓	
 Running a typechecker							✓		✓	✓
 Automated testing 					✓			✓

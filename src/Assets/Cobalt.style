@@ -1,5 +1,5 @@
 
-cobalt
+terminal
 ********
 
 Constants
@@ -9,10 +9,15 @@ black	 = #000000
 white	 = #ffffff
 red	 = #ff0000
 green	 = #00ff00
-darkblue	 = #001a31
+blue	 = #000099
+darkblue	 = #001B33
 
-amber	= #aaaa00
-
+grey	 = #999999
+darkgrey	 = #505050
+darkgreen	 = #009900
+yellow	 = #ffff00
+darkyellow	 = #bbbb00
+purple	 = #aa22aa
 
 bold 	 = "bold"
 italic 	 = "italic"
@@ -28,7 +33,7 @@ background-color : darkblue
 font-size 	 = 12
 font-family 	 = "Ubuntu Mono"
 
-svg-line-color  : white
+svg-line-color  : green
 svg-line-thickness 	 = 2
 svg-dotsize  	 = 4
 svg-fontsize  	 = 20
@@ -51,7 +56,7 @@ foreground-color: red
  type
 ------
 
-foreground-color: blue
+foreground-color: purple
 font-style: bold
 
  constant (statement)
@@ -253,9 +258,8 @@ font-style: bold
  background-color: green
  foreground-color: black
 
- linenumbers
+ linenumbers (noise)
 -------------
 
  font-style: bold
- foreground-color: white
- background-color: darkblue
+ background-color: blue

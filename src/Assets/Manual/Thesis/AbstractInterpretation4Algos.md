@@ -1,0 +1,254 @@
+ 
+
+
+Algorithms using abstract interpretation
+----------------------------------------
+
+Now that we have our basic building blocks and operations, quite some usefull algorithms can be built using those.
+
+
+
+### Calculating a possible pattern match
+
+We can compare a representation against a pattern match:
+
+	{type} ~ (T1 "->" T2)
+
+
+Ultimatly, we want to calculate what variables might be what parsetrees. We want to create a store σ, mapping each variable on a possible set:
+
+$$\sigma = \{ T1 \rightarrow \code{\{typeTerm\}}, T2 \rightarrow \code{\{type\}} \} $$
+
+Note that _no_ syntactic form might match the pattern, as a match might fail. When the input is the entire syntactic form, this is a sign the clause is dead. 
+
+There are four kinds of patterns:
+
+- A pattern assigning to a variable
+- A pattern assigned to a variable which is already encountered
+- A pattern comparing to a concrete value
+- A pattern deconstructing the parse tree
+
+
+#### Variable assignment
+
+When a set representation $S$ is compared against a variable assignment pattern `T`, we update the store σ with $T \rightarrow S$.
+
+If the variable `T` were already present in the store σ, we narrow down its respective set to the intersection of both the old and new match. This happens when the variable has already been encountered, e.g. in another argument or another part of the pattern.
+
+
+This is illustrated by matching `[{type}, {baseType}]` against `(T, T)`, which would yield $\sigma = \{T \rightarrow \code{\{baseType\}}\}`$.
+
+
+#### Concrete parsetree
+
+When a set representation is compared against a concrete parsetree, we check wether this concrete value is embedded in the syntactic form. If this is not the case, the abstract pattern match fails.
+
+#### Pattern sequence
+
+When a set representation $S$ is compared against a pattern sequence, we compare each sequence in the set with the pattern. It might be needed to unfold nonterminals, namely the nonterminal embedding the sequence. 
+
+Note that parsetree-sequence and pattern sequence need to have an equal length. If not sequence of the right length can be found in $S$, the match fails.
+
+
+As example, we match `{type} ~ (T1 "->" T2)`.
+
+- First, we unfold `type` as it embeds the pattern:   
+	`{typeTerm "->" type, typeTerm} ~ (T1 "->" T2)`
+- Then, we throw out `typeTerm`, it can't be matched as it does not embed the pattern:
+	`{typeTerm "->" type} ~ (T1 "->" T2)`
+- We match the sequences of the right length:
+	`{typeTerm} ~ T1 ; {type} ~ T2`
+- This yields the store:
+	$$\sigma = \{ T1 \rightarrow \code{\{typeTerm\}}, T2 \rightarrow \code{\{type\}} \} $$
+
+
+#### Multiple arguments
+
+There are two ways to approach functions with multiple arguments:
+
+- using currying or 
+- considering all arguments at once. 
+
+When using **currying**, the type signature would be read as `type -> (type -> type)`, thus `equals` is actually a function that, given a single input value, produces a new function. This is extremely usefull in languages supporting higher-order functions - which ALGT is not.
+
+We rather consider the domain as another syntactic sequence: `{type} × {type}`. The multiple patterns are fused together, in exactly the same way.
+
+This gives also rise to a logical way to subtract arguments from each other - excatly the same as we did with set representations. 
+
+
+
+
+### Calculating possible return values of an expression
+
+
+Given what syntactic form a variable might be, we can deduce a representation of what a function expression might return.
+As function expressions are sequences with either concrete values or variables, the translation to a representation is quickly made:
+
+- A concrete value, e.g. `"Bool"` is represented by itself: `{"Bool"}`
+- A variable is represented by the types it might assume. E.g. if `T1` can be `{"(" type ")", "Bool"}`, we use this set to represent it
+- A function call is represented by the syntactic form it returns; this is provided to the algorithm externally.
+- A sequence is represented by the cartesian product of its parts: `"Bool" "->" T1` is represented with `{"Bool" "->" "(" type ")", "Bool" "->" "Bool"}`
+
+#### Calculating which patterns matched
+
+We can apply this to patterns too. As patterns and expressions are exactly the same, we can fill out the variables in patterns to gain the original, matched parsetree.
+This is used to calculate what patterns are _not_ matched by a pattern.
+
+
+### Calculating the collecting function
+
+This allows us already to execute functions over set representations, instead of concrete parsetrees. This comes with a single caveat: for recursive calls, we just return the codomain, as set.
+
+
+Per example, consider function `dom`:
+
+	dom		: type -> type
+	dom("(" t ")")	= dom(t)
+	dom(T1 -> T2)	= T1
+
+
+We might for example calculate what set we would get when we input `{type}` into `dom`:
+
+The first clause yields:
+
+	{type} ~ ("(" t ")") → {type}
+
+With fallthrough `{typeTerm "->" type, baseType}`, which is used as input for the second clause. This yields:
+
+	{typeTerm "->" type, baseType} ~ (T1 "->" T2) → T1 = typeTerm
+	
+The fallthrough is now `baseType`, our final result is `refold{typeTerm, type}`, thus `type`.
+
+
+### Calculating the function domain
+
+#### Single argument functions
+
+
+One way to calculate the domain, is by translating the patterns in sets, just like we did with the syntax. This can be done easily, as all patterns are typed. To get the domain, we just sum these sets together:
+
+	{"(" type ")", type "->" type}
+
+
+
+Another approach is by taking the syntactic form of the signature, `{type}`, and subtract the patterns from it. This way, we derive which syntactic forms will _not_ match:
+
+	type - {"(" type ")", typeTerm "->" type }
+	= {typeTerm "->" type, typeTerm} - {"(" type ")", typeTerm "->" type }
+	= {typeTerm} - {"(" type ")"}
+	= {baseType, "(" type ")"} - {"(" type ")"}
+	= {baseType}
+
+Using this _fallthrough set_, we calculate the domain by subtracting it from the input type, yielding the same as earlier calculated:
+
+	type - baseType
+	= {typeTerm "->" type, typeTerm} - baseType
+	= {typeTerm "->" type, baseType, "(" type ")"} - baseType
+	= {typeTerm "->" type, "(" type ")"}
+
+#### Multiple argument functions
+
+Consider the function `equals`
+
+	equals	: basetype -> basetype -> basetype
+	equals("Bool", "Bool")		= "Bool"
+	equals("Int", "Int")		= "Int"
+	
+
+For simplicity, we use `baseType`, to restrict input values solely to `{"Bool", "Int"}`. Also note that `"Bool" × "Int")` is _not_ part of it's domain.
+
+The difference between two arguments is calculated just as the difference between two sequences (as it is the same). This is, we take _n_ copies of the arguments, where _n_ is the number of arguments, and subtract each argument once pointwise.
+
+For clause 1, this gives:
+
+	[baseType, baseType] - ["Bool", "Bool"]
+	= {[baseType - "Bool", baseType], [baseType, baseType - "Bool"}
+	= {["Int", baseType], [baseType, "Int"]}
+
+
+We repeat this process for each clause, thus for clause 2, this gives:
+
+	{["Int", baseType], [baseType, "Int"]} - ["Int", "Int"]
+	= { ["Int", baseType] - ["Int", "Int"]
+	  , [baseType, "Int"] - ["Int", "Int"] }
+	= { ["Int" - "Int", baseType]
+	  , ["Int", baseType - "Int"]
+	  , [baseType - "Int", "Int"]
+	  , [baseType, "Int" - "Int"] }
+	= { [ {} , baseType]
+	  , ["Int", "Bool"]
+	  , ["Bool", "Int"]
+	  , [baseType, {} ] }
+	= { ["Int", "Bool"]
+	  , ["Bool", "Int"]}
+
+
+This gives us the arguments for which this function is not defined. The domain of the function are all arguments _not_ captured by these sequences. The domain would thus be defined by subtracting the result from the input form.
+
+This is algorithm is practical for small inputs, but can become slow in the presence of large types; the sequence set might contain up O(#Args*#TypeSize) elements. However, we can effectively pickup dead clauses on the way: clauses which can't match any input that is still available.
+
+
+### Calculating the codomain
+
+We can also calculate what set a function might return. In the previous algorithm, we calculated what values a clause might receive at the beginning.
+
+We use this information to calculate the set that a clause -and thus a function- might potentially return. For this, we use the earlier introduced abstract pattern matching and expression calculation. Afterwards, we sum all the sets.
+
+For the first clause of the domain function, we would yield:
+
+	dom("(" t ")")	= dom(t)	<: {type}
+	Used patterns: {"(" type ")"};
+	Patterns falling through: {typeTerm "->" type, baseType}
+
+For the second clause, we yield:
+
+	dom(T1 "->" T2)	= T1	<: {baseType}
+	Used patterns: {baseType "->" type};
+	Patterns falling through: {baseType}
+
+Summing all returned values and resolving them to the smallest common supertype, gives:
+
+	{baseType, type} = {type}
+
+
+This already gives us some usefull checks for functions, namely a **pattern match totality checker** and a **clause livebility checker** (as we might detect a clause _not_ consuming patterns.
+
+
+
+But with a slight modification to this check, we can do better.
+
+We can calculate a dictionary of what syntactic forms a function does return. Instead of initializing this set with the returned syntactic form (thus `dom → {type}`), we initialize it with empty sets (`dom → {}`). When we would use this to resolve function calls, we yield the following:
+	
+
+	dom("(" t ")")	= dom(t)	<: {}
+	dom(T1 "->" T2)	= T1		<: {baseType}
+	
+Summing into `{baseType}`
+
+With this, we can update our dictionary to `dom --> {baseType}` and rerun.
+
+	dom("(" t ")")	= dom(t)	<: {baseType}
+	dom(T1 "->" T2)	= T1		<: {baseType}
+	
+Summing into `{baseType}`. This does not add new information; in other words, there is no need for a new iteration.
+
+This gives rise to another check, namely that the function signature is the **smallest possible syntactic form** and partial **infinite recursion check**.
+
+Infinite recursion can -in some cases- be detected. If we were to release previous algorithm on following function:
+
+	f	: a -> a
+	f(a)	= f(a)
+
+we would yield:
+
+	{f → {}}
+
+Per rice theorem, we know it won't be possible to apply this algorithm to every program. The smallest possible syntactic form check would hang on:
+
+	f	: type -> type
+	f(t)	= "Bool" "->" f(t)
+
+
+
+
+

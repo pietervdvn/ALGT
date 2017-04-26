@@ -1,0 +1,20 @@
+# Symbol	Keycode (hex)	Latex rendering
+# Greek
+ɛ	25B	$\varepsilon$
+α	3B1	$\alpha$
+γ	3B3	$\gamma$
+λ	3BB	$\lambda$
+σ	3C3	$\sigma$
+Γ	393	$\Gamma$
+# Sets symbols
+∨	2228	$\vee$
+∧	2227	$\wedge$
+⊂	2282	$\subset$
+∩	2229	$\cap$
+∪	222A	$\cup$
+×	00D7	$\times$
+# logic symbols
+⊢	22A2	$\vdash$
+⇒	21D2	$\Rightarrow$
+→	2192	$\rightarrow$
+✓	2713	$\checkmark$

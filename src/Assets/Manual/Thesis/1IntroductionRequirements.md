@@ -11,18 +11,12 @@ However, creating such programming languages is a hard task too. Aside from the 
  Representing arbitrary semantics
 ----------------------------------
 
-%% TODO Actual year Algol Report
-
 _Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down these programming languages and concepts. This process was started by John Backus Naur in 1963, by introducing _BNF_, where the __syntax__ of a language could be formally declared. Due to its simplicity and ease to use, it has become a standard tool for any language designer and has been used throughout of the field of computer science.
-
-%% TODO When has natural deduction first been used to denote a programming language semantic?
 
 Sadly, no such formal language is availabe to reason about the __semantics__ of a programming language. Researchers often use _natural deduction_ to denote semantics. We crystallize this by introducing a tool which allows the direct input of such rules, allowing manipulation directly on the parsetrees, giving rise to __parsetree oriented programming__, providing an intuitive interface to formally create programming languages, reason about them and execute them.
 
 By explicitly stating the semantics of a programming language as formal rules, these rules can be automatically transformed and programming languages can be automatically changed. 
 
-
-%% Simon Peyton Jones said something about him liking bullet points
 
 In this master dissertation, we present a tool which:
 

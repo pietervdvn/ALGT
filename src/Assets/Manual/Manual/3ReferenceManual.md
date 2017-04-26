@@ -63,7 +63,7 @@ A string that should be matched exactly, is enclosed in `"` (double quotes). Som
 
 Sequence	Result
 --------	------
-$$builtinEscapes
+$$$builtinEscapes
 
 
 ### Parsing order
@@ -94,7 +94,7 @@ Some syntactic forms are already provided for your convenience, namely:
 
 |Builtin	|Meaning				|Regex
 |:--------------|:--------------------------------------|:--------------
-$$builtinSyntax
+$$$builtinSyntax
 
 
 ### Subtyping relationship
@@ -111,13 +111,13 @@ In the following examle, `bool` and `int` are both subsets of `expr`. This can b
 
 ### Whitespace in sequences
 
-Whitespace (the characters $$whitespace), is parsed by default (and ignored completely). If you want to parse a whitespace sensitive language, use other symbols to declare the rule:
+Whitespace (the characters $$$whitespace), is parsed by default (and ignored completely). If you want to parse a whitespace sensitive language, use other symbols to declare the rule:
 
 :Whitespace modes
 
 Operator	Meaning	
 --------	-------
-$$wsModeInfo
+$$$wsModeInfo
 
 This gives rise to the following behaviour:
 
@@ -186,7 +186,7 @@ Syntax Style
 Select a style with the `--style StyleName` flag.
 
 
-$$styleMatrix
+$$$styleMatrix
 
 
 ### Creating your own style
@@ -245,7 +245,7 @@ A stylefile looks as:
 
 ### Supported renderers and attributes
 
-$$styleSupported
+$$$styleSupported
 
 
  Functions
@@ -278,14 +278,14 @@ This is purely functional, heavily inspired on Haskell.
 
 | Expr			| Name		|  As expression						
 |:----------------------|:--------------|:-------------------------------------
-$$expressionExamples
+$$$expressionExamples
 
 
 #### Possible patterns
 
 | Expr				| As pattern			
 |:------------------------------|:---------------------------------------------
-$$patternExamples
+$$$patternExamples
 
 
 
@@ -326,13 +326,13 @@ Can be disabled with `--no-check`, when they take to long.
 
 ### Higher order functions and currying?
 
-Are not possible for now (v $$version). Perhaps in a future version or when someone really needs it and begs for it.
+Are not possible for now (v $$$version). Perhaps in a future version or when someone really needs it and begs for it.
 
 ### Builtin functions
 
  name | Descr					| Arguments	
 ------+-----------------------------------------+------------------------
-$$builtinFunctions
+$$$builtinFunctions
 
 
  Relations and Rules

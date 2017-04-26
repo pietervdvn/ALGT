@@ -1,0 +1,37 @@
+
+\begin{tikzpicture}
+\node (zero) at (1.5, 3) {0};
+\node (one) at (1.5, 2.5) {1};
+\node (mone) at (1.5, 3.5) {-1};
+
+\node (two) at (1.5, 2) {2};
+\node (mtwo) at (1.5, 4) {-2};
+
+\node (dots) at (1.5, 1.6) {\vdots};
+\node (mdots) at (1.5, 4.6) {\vdots};
+
+\node (plus) at (6, 2) {\texttt{+}};
+\node (catzero) at (6, 3) {\texttt{0}};
+\node (minus) at (6, 4) {\texttt{-}};
+
+\draw[dotted] (mone) -- (minus);
+\draw[->, dotted] (mtwo) -- (minus);
+\draw[dotted] (mdots) -- (minus);
+\node (abs) at (3.75, 4.5) {$\alpha$};
+
+\draw (1.5,1.9) ellipse (0.2 and 0.9);
+\node (gamma) at (3.8, 1.0) {$\gamma$};
+\draw[<-, line width=0.9pt] (two) .. controls(gamma) .. (plus);
+
+
+
+
+
+
+
+\draw[line width=0.9pt] (1.5,3) ellipse (1.5 and 3);
+\draw[line width=0.9pt] (6,3) ellipse (1.5 and 3);
+
+
+\end{tikzpicture}
+

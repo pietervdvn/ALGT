@@ -1,4 +1,6 @@
 all:
+	make unicode
+	make templates
 	make manual
 	make manual
 	make workshop
@@ -44,7 +46,14 @@ images:
 images-extra:
 	cp */*.svg .bin/
 	cp */*.png .bin/
+	cp */*.tex .bin/
 	make images
 
 clean:
 	rm -rf .bin/*
+
+unicode:
+	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/\\DeclareUnicodeCharacter{\2}{\3}/' > .bin/DeclareUnicodeCharacter
+	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/{\1}{{\3}}1 /' | tr -d "\n" > .bin/UnicodeLiterals
+	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/\1\t| \2 \t | `\3`/' > Files/UnicodeColumns
+	

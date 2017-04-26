@@ -180,7 +180,7 @@ verbatim str	= "`" ++ str ++ "`"
 
 
 genArg		:: Map String String -> String -> IO (String, Map String String)
-genArg vars ('$':'$':str)
+genArg vars ('$':'$':'$':str)
 	= do	let (name, (action, _))
 				= break (\c -> not (isAlpha c || c `elem` "/.-")) str
 					|> options
@@ -219,24 +219,29 @@ runIsolated' argEdit line target vars str
 
 preprocess	:: (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO String
 preprocess _ _ _ []	= return ""
+preprocess line target vars ('$':'$':'$':'m':'a':'t':'h':str)
+	= do	let (math, rest)
+				= break (=='\n') str
+		rest'		<- preprocess line target vars rest
+		return ("$$$" ++ math ++ "$$$" ++ rest')
 preprocess line target vars ('%':'%':str)
 	= do	let (comment, rest)	= break (=='\n') str
 		print line
 		putDoc $ blue $ text comment
 		putStrLn ""
 		preprocess line target vars $ tail rest
-preprocess line target vars ('$':'$':'!':'(':str)
+preprocess line target vars ('$':'$':'$':'!':'(':str)
 	= do	
 		(output', action, rest)		<- runIsolated' id line target vars str
 		let output		= get stdOut output' & unlines
 		return (output & action ++ rest)
-preprocess line target vars ('$':'$':'(':str)
+preprocess line target vars ('$':'$':'$':'(':str)
 	= do	
 		(output', action, rest)		<- runIsolated line target vars str
 		let output		= get stdOut output' & unlines
 		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\n\\end{lstlisting}"
 		return (output & action & wrapFile ++ rest)
-preprocess line destination vars ('$':'$':'s':'v':'g':'(':str)
+preprocess line destination vars ('$':'$':'$':'s':'v':'g':'(':str)
 	= do	(output, action, rest)	<- runIsolated line destination vars str
 		let svgs	= output & changedFiles
 					& M.toList
@@ -251,7 +256,7 @@ preprocess line destination vars ('$':'$':'s':'v':'g':'(':str)
 		rest'	<- preprocess line destination vars rest
 		return (action named ++ rest')
 
-preprocess line target vars ('$':'$':str)
+preprocess line target vars ('$':'$':'$':str)
 	= do	let (name, (action, rest))
 				= break (\c -> not (isAlpha c || c `elem` "/.-")) str
 					|> options

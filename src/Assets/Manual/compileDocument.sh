@@ -1,9 +1,9 @@
 #! /bin/bash
 
 # Arguments: Inputfiles (mds) Template (no .tex) SaveAs
-PANDOC_EXTENSIONS="--tab-stop=8 -f markdown+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references --listings"
+PANDOC_EXTENSIONS="--tab-stop=8 -f markdown+raw_tex+link_attributes+grid_tables+pandoc_title_block+pipe_tables+implicit_header_references --listings"
 
-cat $1 | xargs cat > all.md
+cat $1 | sed "/^#/d" | xargs cat > all.md
 if [ $2 == "PresentationTemplate" ]
 then
 	echo "Running pandoc"

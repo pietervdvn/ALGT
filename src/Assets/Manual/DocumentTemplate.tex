@@ -6,6 +6,8 @@
             breaklinks=true}
 
 
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
 
 \usepackage{fullpage} %NOTHESIS
 
@@ -21,37 +23,43 @@
 
 \usepackage[utf8]{inputenc}
 
-% Warning: unicode should be uppercase!
-\DeclareUnicodeCharacter{2192}{$\rightarrow$}
-\DeclareUnicodeCharacter{25B}{$\varepsilon$}
-\DeclareUnicodeCharacter{2713}{$\checkmark$}
-\DeclareUnicodeCharacter{0393}{$\Gamma$}
-\DeclareUnicodeCharacter{03B3}{$\gamma$}
-\DeclareUnicodeCharacter{03BB}{$\lambda$}
-\DeclareUnicodeCharacter{22A2}{$\vdash$}
-\DeclareUnicodeCharacter{2282}{$\subset$}
-\DeclareUnicodeCharacter{2228}{$\vee$}
-\DeclareUnicodeCharacter{2227}{$\wedge$}
-\DeclareUnicodeCharacter{21D2}{$\Rightarrow$}
-\DeclareUnicodeCharacter{207D4}{-}
-\DeclareUnicodeCharacter{00D7}{$\times$}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 
-
+\newcommand{\code}[1] { \text{ \textbf{\texttt{#1}} }}
 \usepackage{xcolor}
 \definecolor{gray}{rgb}{0.9,0.9,0.9}
 \definecolor{black}{rgb}{0,0,0}
 \definecolor{white}{rgb}{1,1,1}
 
 
+% Warning: unicode should be uppercase!
+
+\DeclareUnicodeCharacter{25B}{$\varepsilon$}
+\DeclareUnicodeCharacter{3B1}{$\alpha$}
+\DeclareUnicodeCharacter{3B3}{$\gamma$}
+\DeclareUnicodeCharacter{3BB}{$\lambda$}
+\DeclareUnicodeCharacter{3C3}{$\sigma$}
+\DeclareUnicodeCharacter{393}{$\Gamma$}
+\DeclareUnicodeCharacter{2228}{$\vee$}
+\DeclareUnicodeCharacter{2227}{$\wedge$}
+\DeclareUnicodeCharacter{2282}{$\subset$}
+\DeclareUnicodeCharacter{2229}{$\cap$}
+\DeclareUnicodeCharacter{222A}{$\cup$}
+\DeclareUnicodeCharacter{00D7}{$\times$}
+\DeclareUnicodeCharacter{22A2}{$\vdash$}
+\DeclareUnicodeCharacter{21D2}{$\Rightarrow$}
+\DeclareUnicodeCharacter{2192}{$\rightarrow$}
+\DeclareUnicodeCharacter{2713}{$\checkmark$}
 
 \lstset{
   numbers=left,
   backgroundcolor=\color{gray},
   basicstyle=\footnotesize\ttfamily,
   frame=l,
-  literate={→}{{$\rightarrow$}}1 {ɛ}{{$\varepsilon$}}1 {✓}{{$\checkmark$}}1 {Γ}{{$\Gamma$}}1 {⊢}{{$\vdash$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {⊂}{{$\subset$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⇒}{{$\Rightarrow$}}1 {𠟔}{{-}}1 {×}{{$\times$}}1
+  literate={ɛ}{{$\varepsilon$}}1 {α}{{$\alpha$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {σ}{{$\sigma$}}1 {Γ}{{$\Gamma$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⊂}{{$\subset$}}1 {∩}{{$\cap$}}1 {∪}{{$\cup$}}1 {×}{{$\times$}}1 {⊢}{{$\vdash$}}1 {⇒}{{$\Rightarrow$}}1 {→}{{$\rightarrow$}}1 {✓}{{$\checkmark$}}1 
 }
-
+ 
 \lstdefinestyle{terminal}{
   basicstyle=\footnotesize\ttfamily\color{white},
   backgroundcolor=\color{black},
