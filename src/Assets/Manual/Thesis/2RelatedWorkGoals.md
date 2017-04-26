@@ -1,9 +1,60 @@
- Related Work
-==============
 
-As _Programming Language Design_ starts to take of as a major field within computer sciences, tools are starting to surface to formally define programming languages.
+ Related Work and Goals
+========================
 
-Here we give an overview of what tools exist to help a designer with its task to create a programming language.
+As _Programming Language Design_ starts to take of as a major field within computer sciences, tools are starting to surface to formally define programming languages. But what should the ideal tool do, if we were to create it? And what does already exist?
+
+
+
+Goals and nongoals
+------------------
+
+The ultimate goal should be to create a common language for language design, as this would improve the usage of formal design of languages. To gain widespread adoption, we should have as little barriers as possible, in installation, usage and documentation. It should be easy for a newcomer to use, without hindering the expressive power or available tools.
+
+### Tooling
+
+Practical aspects are important - even the greatest tools lose users over unecassry barriers.
+
+The first potential barrier is **installation** - which should be as smooth as possible. New users are easily scared by a difficult installation process, hindering adoption. 
+Preferably, the tool should be availabe in the package repos. If not, installation should be as easy as downloading and running a single binary. Dependencies should be avoided, as these are often hard to deploy on the dev machine - as they might be hard to get, to install, having version conflicts with other tools on the machine, not being supported on the operating system of choice...
+
+The second important feature is **documentation**. Documentation should be easy to find, and preferably be distrubeted alongside the binary.
+
+Thirdly, we'll also want to be **cross-platform**. While most of the PL community uses a Unix-machine, we'll also should support widely used, non-free operating systems.
+
+As last, extra features like **syntax highlighting**, **automated tests** or having editor support for the target language is a nice touch.
+
+
+### Metalanguage
+
+- Simple & Focused, as little overhead as possible
+- Focussed on core concepts
+- Expressive
+- Foolproof: as much static error detection as possible
+	- Typechecked transformations
+
+#### Embedded in another programming language?
+
+Should we design the tool as library or domain specific language embedded in anohter programming language? Or should we create a totally new programming language?
+Using an embedded language gives us a headstart, as we might use all of the builtin functionality and optimazations. The toll later on the road is high, however. Starting with a fresh language has quite some benifits:
+
+First, the user does not have to deal with the host language at all. The user is forced to make the choice between learning the new programming language - which is quite an investment- or ignoring the native bits, and never having full control over it. 
+
+Related, by creating a fresh language, we can focus this language totally on what is needed. This means that it is easy to cut out any boilerplate, making the language more fun to use.
+
+By not using a host language, we can also perform analysises on metafunctions. This is possible on small, well understood languages; something that is hard to do in a host language, where compilers span over 100'000 lines of code. 
+
+As last, we don't have to deal with installing a host compiler, skipping another dependency.
+
+
+### Correctness goals
+
+
+
+
+
+
+
 
 Yacc
 -----

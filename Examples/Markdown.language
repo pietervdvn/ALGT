@@ -1,51 +1,42 @@
  
- Markdown 
+ Markdown
 **********
 
  Syntax
 ========
 
+# Helpers
 
-mod		~~= "*" | "_"
-italic		~~= mod mod words mod mod
-bold		~~= mod words mod
-wordChar	::= Lower | Upper | Digit
-word		//= $ wordChar word | wordChar
-words		//= word ws word
+nl	::= "\n"
+nls	::= nl nls | nl
 
-lineElem	::= italic | bold | words
-lineConts	::= ws lineElem ws lineConts | lineElem ws lineConts | lineElem lineConts | lineElem
+line	::= $ LineChar line | nl
 
-weirdLineCont	::= $ LineChar weirdLineCont | LineChar
-weirdLine	::= weirdLineCont nl
-wsChar		::= " " | "\t"
-ws		::= wsChar ws | wsChar
 
-line		~~= ws lineConts emptyLine | lineConts emptyLine
-emptyLine	~~= $ ws nl | nl
-nl		//= "\n"
-
-equals		::= $ "=" equals | "="
-dashes		::= $ "-" dashes | "-"
-
-header1		::= line equals nl | "#" line
-header2		::= line dashes nl | "##" line
-header3		::= "###" line
+# paragraph
 
 paragraph	::= line paragraph | line
 
-markdownElem	::= header1 | header2 | header3 | paragraph | emptyLine | weirdLine
 
-markdown	::= markdownElem markdown | markdownElem
+# headers
+
+header1	::= $ "#" line
+header2 ::= $ "##" line
+
+header	::= header2 | header1
 
 
- Syntax Style
-==============
+# full file
 
-header1	-> "h1"
-header2 -> "h2"
-header3 -> "h3"
+element		::= header nl | paragraph
 
-italic	-> "keyword"
-bold	-> "type"
+
+file	::= element file | element
+
+
+Syntax Style
+============
+
+header1	-> "header1"
+header2 -> "header2"
 
