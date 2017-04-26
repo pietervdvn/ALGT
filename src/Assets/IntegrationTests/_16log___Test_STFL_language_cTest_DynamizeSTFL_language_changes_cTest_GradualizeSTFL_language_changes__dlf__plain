@@ -69,15 +69,15 @@ var              ::= Identifier
  Syntax Style 
 ==============
 
-bool	 -> "constant"
-e	 -> "statement"
-eL	 -> "statement"
-eL.2	 -> "noise"
-eL.4	 -> "noise"
-gtype	 -> "type"
-gtypeL	 -> "type"
-number	 -> "constant"
-var	 -> "identifier"
+bool	-> "constant"
+e	-> "statement"
+eL	-> "statement"
+eL.2	-> "noise"
+eL.4	-> "noise"
+gtype	-> "type"
+gtypeL	-> "type"
+number	-> "constant"
+var	-> "identifier"
 
 
 
