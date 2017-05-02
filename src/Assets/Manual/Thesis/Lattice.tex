@@ -1,0 +1,36 @@
+
+\begin{tikzpicture}
+
+
+\draw (2,-0.75) node[circle,fill,inner sep=1pt,label=below:$\bot$](bottom){};
+
+\draw (0,1) node[circle,fill,inner sep=1pt,label=left:$\code{-}$](minus){};
+\draw (2,1) node[circle,fill,inner sep=1pt,label=right:$\code{0}$](zero){};
+\draw (4,1) node[circle,fill,inner sep=1pt,label=right:$\code{+}$](plus){};
+
+\draw (0,3) node[circle,fill,inner sep=1pt,label=left:$\code{0-}$](minuszero){};
+\draw (2,3) node[circle,fill,inner sep=1pt,label=right:$\pm$](minusplus){};
+\draw (4,3) node[circle,fill,inner sep=1pt,label=right:$\code{0+}$](zeroplus){};
+
+
+\draw (2, 4.75) node[circle,fill,inner sep=1pt,label=above:$\top$](top){};
+
+
+\draw[dotted, line width=1pt] (bottom) -- (zero) ;
+\draw[dotted, line width=1pt] (bottom) -- (plus) ;
+\draw[dotted, line width=1pt] (bottom) -- (minus) ;
+
+\draw[dotted, line width=1pt] (minus) -- (minuszero) ;
+\draw[dotted, line width=1pt] (minus) -- (minusplus) ;
+\draw[dotted, line width=1pt] (zero) -- (zeroplus) ;
+\draw[dotted, line width=1pt] (zero) -- (minuszero) ;
+\draw[dotted, line width=1pt] (plus) -- (zeroplus) ;
+\draw[dotted, line width=1pt] (plus) -- (minusplus) ;
+
+\draw[dotted, line width=1pt] (minusplus) -- (top) ;
+\draw[dotted, line width=1pt] (minuszero) -- (top) ;
+\draw[dotted, line width=1pt] (zeroplus) -- (top) ;
+
+
+\end{tikzpicture}
+

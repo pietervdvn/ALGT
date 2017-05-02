@@ -44,6 +44,14 @@ move("=" "§" tokens)
 move(tokens1 "§" tokens2)
 	= tail(tokens1) "§" ("=" tokens2)
 
+
+moveR	: superToken -> superToken
+moveR(tokens "§" "=")
+	= tokens "§" "="
+moveR(tokens1 "§" tokens2)
+	= "=" tokens1 "§" tail(tokens2)
+
+
 moveExpr	: superExpr -> superExpr
 moveExpr("8" st "D")
 	= "8" move(st) "D"

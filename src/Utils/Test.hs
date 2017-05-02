@@ -79,10 +79,10 @@ testArgs      = [ exp "No action specified" ["Test/STFL.language"]
 			["Test/FuncTypeErr.language", "--dlf"]
 {-25-}		, exp "<html>" ["Style.language", "Terminal.style", "styleFile", "--html"]
 		, exp "Could not parse expression of the form expr" ["Test/STFLBool.language", "Test/STFLBoolMismatch.stflbool", "expr", "-l"]
-		, exp "body {" ["Test/STFL.language", "--nc", "--css"]
 		, exp "<html><body>" ["Style.language", "Terminal.style", "styleFile", "--nc", "--html-no-css"]
-
 		] |> over _1 (++["--plain"]) & nub
+		-- [ exp "body {" ["Test/STFL.language", "--nc", "--css", "Cobalt"]
+
 
 
 slow		= []

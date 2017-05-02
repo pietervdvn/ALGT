@@ -244,10 +244,12 @@ mainExFilePure args
 					, (renderHTMLNoCss args, \pt -> HTML.HTMLRenderer False fc style & renderParseTree' pt)
 					, (renderLatex args, \pt -> Render.latex fc style & renderParseTree' pt)
 					, (renderParts args, \pt -> Render.parts fc style & renderParseTree' pt)]
+		-- selects renderer, based on flag (= first element of each tuple in the list)
 		let renderer	= renderer' & filter fst & safeIndex "No renderer specified, this is a bug" 0 & snd
+		-- is some flag set?
 		let renderSpecial	= renderer' |> fst & or
 		when renderSpecial $ do
-			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
+			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (False, False) (fileName args) (head inputs)
 					& liftEith
 			let rendered	= renderer pts'
 			putStrLn $ " # Parsed and rendered: "++(pts' & get ptAnnot & toParsable)

@@ -2,173 +2,83 @@
 Syntax Driven Abstract Interpretation
 ======================================
 
-In this section, we transform a metafunction -a function on a parsetree- into a metafunction working on (possibly infinite) set of parsetrees.
-This is the main contribution of the dissertation, as it is a novel technique to automatically reason about programming languages. Furthermore, these analysises will be used to build gradualization.
-
+In this section, functions on parsetrees are converted into functions over sets of parsetrees. This is useful to algorithmically analyze these functions, which will help to gradualize them. This section dissects the technique to do so -abstract interpretation- and is organized as following: 
 
  - First, we'll work out **what abstract interpretation is**, with a simple example followed by its desired properties.
  - Then, we work out what **properties a syntax** should have. 
- - With these, we develop a **efficient representation** to capture infinite sets of parsetrees.
- - Afterwards, **operations on these setrepresentations are stated**.
- - As last, we build usefull **algorithms** and checks with this algebra.
+ - With these, we develop an **efficient representation** to capture infinite sets of parsetrees.
+ - Afterwards, **operations on these setrepresentations** are stated.
+ - As last, we build useful **algorithms** and checks with this algebra.
 
 What is abstract interpretation?
 --------------------------------
 
-_Abstract interpretation_ is a collection of techniques to derive properties about programs, based on sound approximation. However, per Rice's theorem, it is generally impossable to make exact statements about every possible program.
+Per Rice's theorem, it is generally impossible to make precise statements about all programs. However, making useful statements about some programs is feasable.
+ Cousot (1977) introduces a framework to do so, named **abstract interpretation**: "A program denotes computations in some universe of objects. Abstract interpretation of programs consists in using that denotation to describe computations in another universe of abstract objects, so that the results of the abstract computations give some information on the actual computation". 
 
-Furhtermore, it is often impractical to calculate the value we might return. Therefore, we merely calculate for a given program what property might hold. 
-Essential in our approach is that these properties can be combined in a monotone way. Often, the properties we work with, will have the form of a lattice.
+%% TODO: source bibliography
 
-Examples of abstract interpretation domains are:
+We illustrate this with the successor function, as defined below:
 
-- Working with the sign of functions
-- Working with an upper or lower bound on integer functions
-- Working with a set of possible returned values, called _collecting semantics_
-
-In contrast to _abstract interpretation_, is _concrete_ interpretation; this would be running the program. 
-
-The last important aspect of abstract interpretation is the translation of one property domain into another, often a costly -but more precise- domain into a cheaper and less precise domain. This functions is called _abstraction_ (_α_). The inverse function is _concretization_ (_γ_). Abstraction and concretization form a Galois-connection.
-
-First, we work out a simple example to get some feeling about the technique. Then we describe desired properties of abstraction α and concretization γ.
+	succ n	= n + 1
 
 
-### Successor example
+The successor function operates in the domain of _integer numbers_: `succ` applied on `1` yields `2`; `succ -1` yields `0`. 
+
+But `succ` might also be applied on _signs_, instead of integers: we use `+`, `-` or `0` to perform the computation, giving rise to a computation in the abstract domain of signs.
+
+### The rule of signs
+
+Per rule of signs $\code{+} + 1$ is equal to `+`, thus `succ +` yields `+`. Applying `succ` to a negative number gives less precise information, as $\code{-} + 1$ could yield both zero or a strictly negative number, giving `0-` in the abstract domain.
 
 
-#### Concrete interpretation
+\begin{figure}[h]
+\center
+\input{Lattice.tex}
+\caption{Composition of possibilities about signs}
+\label{fig:signs}
+\end{figure}
 
-Consider the extremely simple example function `succ`:
 
-	succ	: Number -> Number
-	succ x	= x + 1
+#### Concretization and abstraction
 
 
-#### Working with the sign of functions
-
-For this analysis, we are only interested in what sign our example might potentially return (thus `+`,`-`, `0`). We don't want to calculate each value of course.
-
-Converting a concrete value into a signset (abstracting to the property domain) is straightforward: 
+The meaning of _`succ -` giving `0-`_ is intuitionally clear: _the successor of a negative number is either negative or zero_. More formally, it can be stated that, _given a negative number, `succ` will give an element from $\{n | n \leq 0\}$_. The meaning of `0-` is formalized by the **concretization** function γ, which translates from the abstract domain to the concrete domain:
 
 $$
-    \alpha(n) = \left\{\begin{array}{lr}
-       \{\code{-}\} & \text{if } n < 0\\
-       \{\code{0}\} & \text{if } n = 0\\
-       \{\code{+}\} & \text{if } n > 0 
-     \end{array}\right\}
-$$
-
-
-Calculating the abstraction of a set boils down to calculating the abstract of each element and taking them all together. We will often use these definitions intermixed.
-
-$$
-	\alpha(N) = \bigcup\{ \alpha(n) | n \in N \}
-$$
-
-
-Calculating the set containing all values for a certain property value, is done with following _concretization function_:
-
-$$
-\begin{array}{l}
-    \gamma(\code{+}) = \{ n | n > 0 \} \\
-    \gamma(\code{0}) = \{ 0 \} \\
-    \gamma(\code{-}) = \{ n | n < 0 \} \\
+\begin{array}{rcl}
+    \gamma(\code{-} ) & = & \{ z | z \in \mathbb{Z} \wedge z < 0 \} \\
+    \gamma(\code{0-}) & = & \{ z | z \in \mathbb{Z} \wedge z \leq 0 \} \\
+    \gamma(\code{0} ) & = & \{ 0 \} \\
+    \gamma(\code{0+}) & = & \{ z | z \in \mathbb{Z} \wedge z \geq 0 \} \\
+    \gamma(\code{+} ) & = & \{ z | z \in \mathbb{Z} \wedge z > 0 \} \\
+    \gamma(\code{+-}) & = & \{z | z \in \mathbb{Z} \wedge z \neq 0\}\\
+    \gamma(\top) & = & \mathbb{Z} 
 \end{array}
 $$
 
-
-But how to combine two signs? For example, it might turn out that a function might return values of both `0` or `+`. To cope with this, we will work with _sets_, which compose very naturally.
-
-$$
-compose(N, M)	= N \cup M
-$$
-
-Again is taking the concretization of a set the union of concretizations of the elements:
+On the other hand, an element from the concrete domain is mapped onto the abstract domain with the **abstraction** function. This functions _abstracts_ a property of the concrete element:
 
 $$
-	\gamma(P) = \bigcup\{ \gamma(p) | p \in P \}
+    \alpha(n) = \left\{\begin{array}{lr}
+       \code{-} & \text{if } n < 0\\
+       \code{0} & \text{if } n = 0\\
+       \code{+} & \text{if } n > 0 
+     \end{array}\right\}
 $$
+
 
 
 \begin{figure}[h!]
 \center
 \input{AbstractionMinus.tex}
-\caption{Concretization and abstraction relation for translation between numbers and signs}
+\caption{Concretization and abstraction between integers and signs}
 \end{figure}
 
-Now, we'd want to know what sign we would yield for `succ +`, `succ 0` and `succ -`. For input property `P`, this is captured by 
-$$\alpha(\{\code{succ}(n) | n \in \gamma(\code{P})\})$$. In other word, we calculate the successor for each `n` in the category and then abstract the property.
 
-For example, if we want to now what sign `succ 0` yields, we calculate:
+### Working with ranges
 
-$$
-\begin{array}{rl}
- & \alpha(\{\code{succ}(n) | n \in \gamma(\code{0})\}) \\
-= & \alpha(\{\code{succ}(n) | n \in \{0\}\}) \\
-= & \alpha(\{\code{succ}(0)\}) \\
-= & \alpha(\{1\}) \\
-= & \{+\}
-\end{array}
-$$
-
-If we would want to know what sign we would yield for a positive number, calculating $$\alpha(\{\text{succ}(n) | n \in \gamma(+)\})$$ is intractable. Luckily can apply the properties of `+` to calculate the property abstractly. The property we'll uses here, is that the sum of two positive numbers, is positive.
-
-Instead of working with concrete values, we use our sign property as _symbol_, and run our program with that:
-
-$$
-\begin{array}{rl}
- & succ \code{+} \\
-= & \code{n} + \alpha(1) \\
-= & \code{+} + \alpha(1) \\
-= & \code{+} + \code{+} \\
-= & \code{+}
-\end{array}
-$$
-
-Analogously, we might repeat this with `-`. Sadly, we cannot conclude anything usefull out of this analysis; as the sum of zero and a positive number is positive, whereas the sum of a negative number and a positive number might be negative, zero or positive.
-
-Our abstract evaluation would look as following:
-
-$$
-\begin{array}{rl}
- & succ \code{-} \\
-= & \code{n} + \alpha(1) \\
-= & \code{-} + \alpha(1) \\
-= & \code{-} + \code{+} \\
-= & \{\code{-,0,+}\}
-\end{array}
-$$
-
-In summary, for the sign function, we can conclude that `succ` behaves as following:
-
-$$
-\begin{array}{rll}
-\code{succ}(\code{-}) & = & \{-,0,+\} \\
-\code{succ}(\code{0}) & = & \{+\} \\
-\code{succ}(\code{+}) & = & \{+\} \\
-\end{array}
-$$
-
-
-#### Working with ranges
-
-Another possibility is to keep track of the range a value might be. Our abstract property is now denoted as `[n, m]` (where $n \leq m$). To go from a concrete value to a range, we use the following abstraction function:
-
-$$\alpha(n) = \code{[n, n]} $$
-
-Going the other way with the concretization function, is quite predictable:
-
-$$\gamma(\code{[n, m]}) = \{ x | n \leq x \wedge x \leq m \}$$
-
-
-The last question is how to compose two ranges. A function might return values between either range `[n1, m1]` or `[n2, m2]`. 
-
-
-$$
-compose(\code{[n1, m1]}, \code{[n1, m2]}) = \code{[} min(\code{n1}, \code{n2}), max(\code{m1}, \code{m2}) \code{]}
-$$
-
-If we have an abstract representation (e.g. `[2,5]`) for what range `succ` would return, we can calculate this:
+Another possible abstract domain is the range `[n, m]` a value might be. Applying `succ` to a range can be calculated as following:
 
 $$
 \begin{array}{rl}
@@ -180,21 +90,19 @@ $$
 $$
 
 
-#### Working with collecting semantics
-
-At last, we can keep track of _all_ possible values through the calculation. For example, if the input might be `{1,2,41}`, we might run our program _on all of these values_. At first glance, this is ridiculous. Why not run the program three times? However, this can be usefull, as this set representation might allow for efficient internal representation or to deduce other properties.
-
-The abstraction, concretization and composition functions are trivial:
-
+Translation between the concrete domain into the abstract domain is now done with:
 $$
-\begin{array}{lcl}
-\alpha(n) & = & \{ n \} \\
-\gamma(\{n1, n2, \ldots\} & = & \{n1, n2, ... \} \\
-compose(N, M) & = & N \cup M
+\begin{array}{rcl}
+\alpha(n) & = & \code{[n, n]} \\
+\gamma(\code{[n, m]}) & = & \{ x | n \leq x \wedge x \leq m \}
 \end{array}
 $$
 
-Calculating the result for the example `{1,2,41}` gives:
+
+
+### Working with collecting semantics
+
+At last, the abstract domain might be the _set_ of possible values, such as `{1,2,41}`. Applying `succ` to this set will yield a new set: 
 
 $$
 \begin{array}{rl}
@@ -205,15 +113,27 @@ $$
 \end{array}
 $$
 
-Note that using the collecting semantics with a set, containing a single value, is exactly the concrete interpretation. This is guaranteed by the underlying deterministic semantics.
 
-### Desired properties
+Translation from and to the abstract domain are straightforward:
+$$
+\begin{array}{lcl}
+\alpha(n) & = & \{ n \} \\
+\gamma(\{n1, n2, \ldots\} & = & \{n1, n2, ... \} \\
+\end{array}
+$$
+ 
 
-The functions α and γ should obey to some properties to make this approach work, namely _monotonicity_ and _correctness_. It turns out that these properties form a **Galois connection** between the concrete values and the property domain of choice.
+Performing the computation in the abstract domain of sets can be more efficient than the equivalent concrete computations, as the structure of the concrete domain can be exploited to use a more efficient representation in memory (such as ranges).
+Using this abstract domain effectively lifts a function over integers into a function over sets of integers. Exactly this abstract domain is used to lift the functions over parsetrees into functions over sets of parsetrees. To perform these calculations, an efficient representations of possible parsetrees will be deduced later in this section.
+
+### Properties of α and γ
+
+For abstract interpretation to work, the functions α and γ should obey to some properties to make this approach work, namely _monotonicity_ and _correctness_.
+These properties imply a **Galois connection** between the concrete and abstract domains.
 
 #### Monotonicity of α and γ
 
-The first requirement is that both _abstraction_ and _concretization_ are monotone. This states that, if the set to concretize grows, the set of possible properties_might_ grow, but never shrink.
+The first requirement is that both _abstraction_ and _concretization_ are monotone. This states that, if the set to concretize grows, the set of possible properties _might_ grow, but never shrink.
 
 Analogously, if the set of properties grows, the set of concrete values represented by these properties might grow too.
 
@@ -225,14 +145,13 @@ X \subseteq Y \Rightarrow \alpha(X) \subseteq \alpha(Y) \\
 \end{array}
 $$
 
-
 When working with signs as properties, this property can be illustrated with:
 
-$$\{1,2\} \subseteq \{0,1,2\} \Rightarrow \{\code{+}\} \subseteq \{\code{0}, \code{+}\}$$
+$$\{1,2\} \subseteq \{0,1,2\} \Rightarrow \code{+} \subseteq \code{0+}$$
 
 #### Soundness
 
-When we transform a concrete value into a property, we expect that property actually represents this value. A property represents a concrete value iff its concretization contains this value. This gives another important property: 
+When a concrete value $n$ is translated into the abstract domain, we expect that $\alpha(n)$ represents this value. An abstract object $m$ represents a concrete value $n$ iff its concretization contains this value:
 
 $$ \begin{array}{c}
 n \in \gamma(\alpha(n)) \\
@@ -240,7 +159,7 @@ n \in \gamma(\alpha(n)) \\
 X \subseteq \alpha(Y) \Rightarrow Y \subseteq \gamma(X)
 \end{array}$$
 
-On the other hand, if we calculate which concrete values correspond with a certain property _p_, we expect some of these values to exhibit property _p_:
+Inversly, some of the concrete objects in $\gamma(m)$ should exhibit the abstract property $m$:
 
 $$
 \begin{array}{c}
@@ -253,13 +172,14 @@ $$
 
 This guarantees the _soundness_ of our approach. 
 
-Consider we would not have this guarantee about α and γ, our approach would fail. As example, we change the functions which map numbers onto their sign, but we map `0` onto the negative range, _without changing concretization_ :
+Without these properties tying α and γ together, abstract interpretation would be meaningless: the abstract computation would not be able to make statements about the concrete computations.
+For example, working with the abstract domain of signs where α maps `0` onto `+` yields following results:
 
 $$
     \alpha(n) = \left\{\begin{array}{lr}
-       \{\code{-}\} & \text{if } n < 0\\
-       \{\code{+}\} & \text{if } n = 0\\
-       \{\code{+}\} & \text{if } n > 0 
+       \code{-} & \text{if } n < 0\\
+       \code{+} & \text{if } n = 0\\
+       \code{+} & \text{if } n > 0 
      \end{array}\right\}
 $$
 

@@ -2,6 +2,7 @@
 module SyntaxHighlighting.AsParts where
 
 import Utils.Utils
+import Utils.ToString
 
 import TypeSystem
 
@@ -25,7 +26,8 @@ instance Renderer PartsRenderer where
 
 renderPT	:: SyntaxStyle -> ParseTreeA LocationInfo -> String
 renderPT style pt
-	= pt & determineStyle style & _renderPart & unlines
+	= pt & determineStyle style 
+		& _renderPart & unlines
 
 
 _renderPart	:: ParseTreeA (LocationInfo, Maybe Name) -> [String]

@@ -336,7 +336,7 @@ addSubchoices ts ra
 		
 		ra'	= ra & over raIntroduced (M.mapWithKey (\tns vals -> tnsSubsOf' tns ++ vals))
 		in
-		trace' ("Subs of: " ) ra'
+		trace' "Subs of: " ra'
 
 
 -- removes empty and trivial introduced forms

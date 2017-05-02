@@ -6,7 +6,7 @@ import Utils.Utils
 import Utils.ToString
 
 import qualified Assets
-import TypeSystem
+import TypeSystem hiding (styles)
 import TypeSystem.Parser.TargetLanguageParser
 
 import Text.PrettyPrint.ANSI.Leijen as ANSI

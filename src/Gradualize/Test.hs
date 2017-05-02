@@ -41,7 +41,7 @@ t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 
 
 		let testPT args0 args1
-				= (do	arg0	<- args0 & concrFunc
+				= do	arg0	<- args0 & concrFunc
 					arg1	<- args1 & concrFunc
 					let ass	
 						= possibleResults ts "equate" [arg0, arg1] & either error id	:: [AbstractSet]
@@ -50,7 +50,6 @@ t'	= do	(ts, dyn, ch)	<- fixSyntax stfl "?" "type" & either error return
 						= inParens (toParsable arg0 ++ ", " ++ toParsable arg1) ++ " = " ++
 							if L.null ass then "ɛ" else toParsable' "\n\t" ass
 					return showed 
-					)
 
 		testPT dyn dyn
 			|> (">>>"++) |+> putStrLn

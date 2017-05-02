@@ -214,8 +214,16 @@ dropTrd3 (a, b, _)	= (a, b)
 merge3l			:: (a, b, c) -> ((a, b), c)
 merge3l (a, b, c)	=  ((a, b), c)
 
+merge3r			:: (a, b, c) -> (a, (b, c))
+merge3r (a, b, c)	=  (a, (b, c))
+
+
 unmerge3r		:: (a, (b, c)) -> (a, b, c)
 unmerge3r (a, (b, c))	= (a, b, c) 
+
+unmerge3l		:: ((a, b), c) -> (a, b, c)
+unmerge3l ((a, b), c)	= (a, b, c) 
+
 
 mapBoth f (a, a')	= (f a, f a')
 onBoth			= mapBoth

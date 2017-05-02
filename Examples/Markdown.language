@@ -10,25 +10,31 @@
 nl	::= "\n"
 nls	::= nl nls | nl
 
-line	::= $ LineChar line | nl
+eqs	::= "=" eqs | "==="
+dashes	::= "-" dashes | "---"
+dots	::= "." dots | "..."
+spaces	::= " " spaces | " "
+
+nonEmptyLine	//= $ LineChar nonEmptyLine | LineChar
 
 
 # paragraph
 
-paragraph	::= line paragraph | line
+paragraph	::= nonEmptyLine paragraph | nonEmptyLine
 
 
 # headers
 
-header1	::= $ "#" line
-header2 ::= $ "##" line
+header1	//= $ "#"   nonEmptyLine nl | nonEmptyLine nl eqs nl
+header2 //= $ "##"  nonEmptyLine nl | nonEmptyLine nl dashes nl
+header3 //= $ "###" nonEmptyLine nl | nonEmptyLine nl dots nl
 
-header	::= header2 | header1
+header	::= header3 | header2 | header1
 
 
 # full file
 
-element		::= header nl | paragraph
+element		::= header nl | paragraph | nl
 
 
 file	::= element file | element
@@ -37,6 +43,6 @@ file	::= element file | element
 Syntax Style
 ============
 
-header1	-> "header1"
-header2 -> "header2"
-
+header1	-> "identifier"
+header2 -> "type"
+header3 -> "constant"

@@ -98,6 +98,6 @@ update f node
 
 
 
-(!?)	:: Ord k => Map k (Set a) -> k -> (Set a)
+(!?)	:: Ord k => Map k (Set a) -> k -> Set a
 (!?) dict k
 	= dict & M.findWithDefault S.empty k

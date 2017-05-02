@@ -59,8 +59,10 @@ builtinSyntax	=
 		("Matches a double quote delimted string, returns the value including the double quotes", "\"([^\"\\]|\\\"|\\\\)*\""))
 	, (("StringUnesc", dqString, ["\"abc\"","\"\\\" \\\\ \""]),
 		("Matches a double quote delimeted string, returns the value without the double quotes",  "\"([^\"\\]|\\\"|\\\\)*\""))
-	, (("LineChar", noneOf "\n" |> (:[]), ["a", "A", "x","y","z", "\r"]),
+	, (("LineChar", noneOf "\n" |> (:[]), ["a", "A", "x","y","z", "\r", " ", "\t"]),
 		("Matches a single character that is not a newline. This includes \\r.", "[^\\n]"))
+	, (("WordChar", noneOf "\n\t " |> (:[]), ["a", "A", "x","y","z"]),
+		("Matches a single character that is not whitespace)", "[^\\n\\t ]"))
 	, (("ParO", char '(' >> return "", []),
 		("Matches a '(', which will dissapear in the parsetree", "("))
 	, (("ParC", char ')' >> return "", []),

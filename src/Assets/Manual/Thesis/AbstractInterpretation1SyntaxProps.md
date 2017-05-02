@@ -1,14 +1,26 @@
 
+\clearpage
+
 Properties of the syntax
 -------------------------
 
-Before presenting the actual abstract interpretation on metafunctions, we first study necessary properties about the syntax. Some properties are inherent to each syntax, others should be enforced.
-For this last category, we present the necessary algorithms to detect satisfaction to these conditions.
+Abstract interpretation gives us a way to lift metafunctions over parsetrees to metafunctions over sets of parsetrees. To efficiently perform computations in this abstract domain, a representation for these sets should be constructed, exploiting the underlying structure of syntaxes. Here, we study the necessary properties which are exploited to construct a set representation in the next part.
+
+Some of these properties are inherent to each syntax, others should be enforced.
+For these, we present the necessary algorithms to detect these inconsistencies, both to help the programmer and to allow abstract interpretation.
 
 ### Syntactic forms as sets
 
-When we create a syntactic form, we actually declare a set of possible values for this syntactic form: `bool ::= "True" | "False"` is equivalent to declaring `bool ::= {"True", False"}'.
-We will exploit this notion to create an efficient, collecting representation to describe values.
+When a syntactic form is declared, this is equivalent to defining a set.
+
+The declaration of `bool ::= "True" | "False"` is equivalent to declaring $bool = \{\code{True}, \code{False} \}$. 
+
+\begin{figure}[h!]
+\center
+\input{SyntaxSets.tex}
+\end{figure}
+
+This equivalence between syntactic forms is the main driver for the approach.
 
 
 ### Subtyping
@@ -17,8 +29,8 @@ When a syntactic form _a_ uses another bare syntactic form _b_ in its definition
 In the following example, the set `expr` consists of `{"True", "False", "0", "1", "2", "3", ...}`, containing both `bool` and `int`.
 
 	bool	::= "True" | "False"
-	int	::= Number
-	expr	::= bool | number
+	int	::= Number       # Number is a builtin, parsing integers
+	expr	::= bool | int
 
 This effectively establishes a _supertype_ relationship between the different syntactic forms. We can say that _every `bool` is a `expr`_, or `bool <: expr`.
 

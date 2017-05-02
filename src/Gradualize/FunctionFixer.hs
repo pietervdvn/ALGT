@@ -56,7 +56,7 @@ Gradualizes a function
 
 gradualizeFunc	:: TypeSystem -> TypeName -> String -> Name -> Name -> Name -> Either String Clause
 gradualizeFunc ts dynSet dyn  absN funcN
-	= do	error "hi"
+	=	error "hi"
 
 
 

@@ -48,34 +48,29 @@ parseTypeSystem input file
 arrow	= string "->" <|> string "\x2192"
 		
 
-styleRule	:: Syntax -> Parser u (TypeName, Maybe Int, String)
-styleRule syntax
+stylePath	:: Syntax -> Parser u [(TypeName, Maybe Int)]
+stylePath syntax
 	= do	ws
 		t	<- choose $ bnfNames syntax
 		i	<- optionMaybe $ try (char '.' >> number)
+		tail	<- try (char '.' >> stylePath syntax) <|> return []
+		return ((t, i):tail)
+
+styleRule	:: Syntax -> Parser u ([(TypeName, Maybe Int)], String)
+styleRule syntax
+	= do	ws
+		path	<- stylePath syntax
 		inWs arrow
 		val	<- dqString
 		ws
-		return (t, i, val)
+		return (path, val)
 	
 
-styleRemap	:: Parser u (String, String)
-styleRemap	= do	ws
-			k	<- dqString
-			inWs arrow
-			v	<- dqString
-			ws
-			return (k, v)
 
 syntaxStyle	:: Syntax -> Parser u SyntaxStyle
 syntaxStyle syntax
-		= do	baseRules		<- many $ try (nls >> parseEither (try $ styleRule syntax) styleRemap)
-			let (base, extra)	= partition (isNothing . snd3) $ lefts baseRules
-			let base'		= base |> dropSnd3 & M.fromList
-			let extra'		= extra |> (\(n, Just i, v) -> ((n, i), v))
-							& M.fromList
-			let remaps		= rights baseRules & M.fromList
-			return $ SyntaxStyle base' extra' remaps
+		= do	styles		<- many $ try (nls >> styleRule syntax)
+			styles & M.fromList & SyntaxStyle & return
 
 
 
@@ -131,7 +126,7 @@ typeSystemFile fp
 		syntax	<- lift $ makeSyntax bnfs
 
 		syntaxStyle
-			<- option (SyntaxStyle M.empty M.empty M.empty) $ try $ do
+			<- option (SyntaxStyle M.empty) $ try $ do
 				nls
 				header "Syntax Style"
 				nls1

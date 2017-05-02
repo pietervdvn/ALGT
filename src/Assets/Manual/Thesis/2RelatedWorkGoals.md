@@ -27,15 +27,20 @@ As last, extra features like **syntax highlighting**, **automated tests** or hav
 
 ### Metalanguage
 
-- Simple & Focused, as little overhead as possible
-- Focussed on core concepts
-- Expressive
-- Foolproof: as much static error detection as possible
-	- Typechecked transformations
+The most important part is the metalangue itself - as that is the major interface.
+
+As language design is difficult to grasp, we want our language to be as **easy** as possible. There are some aspects which help to achieve this.
+
+An easy language should be
+- as **focused** as possible, with little boilerplate. The core concepts of language design should have a central place.
+- **expressive** enough to be usefull
+- as **simple** as possible, thus having as little elements and special constructs which should be learned and considered when doing automatic translations.
+- **checked** as much as possible for big and small errors and report these errors with a clear error message.
 
 #### Embedded in another programming language?
 
 Should we design the tool as library or domain specific language embedded in anohter programming language? Or should we create a totally new programming language?
+
 Using an embedded language gives us a headstart, as we might use all of the builtin functionality and optimazations. The toll later on the road is high, however. Starting with a fresh language has quite some benifits:
 
 First, the user does not have to deal with the host language at all. The user is forced to make the choice between learning the new programming language - which is quite an investment- or ignoring the native bits, and never having full control over it. 
@@ -44,16 +49,31 @@ Related, by creating a fresh language, we can focus this language totally on wha
 
 By not using a host language, we can also perform analysises on metafunctions. This is possible on small, well understood languages; something that is hard to do in a host language, where compilers span over 100'000 lines of code. 
 
-As last, we don't have to deal with installing a host compiler, skipping another dependency.
+As last, we don't have to deal with installing a host compiler, skipping another dependency. 
 
 
-### Correctness goals
+### Executing the target programming language
+
+Of course, we'll want to execute our target programming language in one way or another. What are important aspects? As this is a tool to develop and prototype programming language, we're firstly concerned with debugging the programming language, no matter how the runtime semantics were declared.
+
+- **Immediate feedback**: when starting the program, we want to see output as soon as possible
+- **Write once, run anywhere**: running target programs should behave the same on all systems
+- **traceable**: it should be possible to see how program execution went exactly, step by step, as to easily debug.
+
+While compilation to a target architecture and target program optimazations are nice, they are not priorities - as it only complicates the implementation.
 
 
+### Creating a typechecker
+
+Just like the operational semantics, we should be able to build and run a typechecker for the target language. Here, the same constraints apply. We should strive to make the declaration of the typesystem consistent with the operational semantics, preferably it should use the same kind of logic.
+
+We should also strive to **automatically test** the correctness of the typechecker, in an automated way, in conjunction with the operational semantics.
 
 
+Related Work
+------------
 
-
+What tools already exist? 
 
 
 Yacc
@@ -305,8 +325,6 @@ Automatic optimazation						✓
 Compilation							✓				
 Syntax highlighting			✓					✓
 Editor support of target language			✓
-
-
 
 
 
