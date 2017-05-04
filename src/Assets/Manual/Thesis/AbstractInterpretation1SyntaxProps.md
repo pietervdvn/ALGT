@@ -20,23 +20,36 @@ The declaration of `bool ::= "True" | "False"` is equivalent to declaring $bool 
 \input{SyntaxSets.tex}
 \end{figure}
 
-This equivalence between syntactic forms is the main driver for the approach.
+This equivalence between syntactic forms and sets is the main driver, both for the other properties and the efficient representation for sets we will use later on.
 
 
-### Subtyping
+### Embedded syntactic forms
 
-When a syntactic form _a_ uses another bare syntactic form _b_ in its definition, we say _a_ embeds _b_ it.
-In the following example, the set `expr` consists of `{"True", "False", "0", "1", "2", "3", ...}`, containing both `bool` and `int`.
+Quite often, one syntactic form is defined in term of another syntactic form. This might be in a sequence (e.g. `int "+" int`) or as a bare choice (e.g. `... | int | ...`). If the case of a bare choice, each element the choice is embedded into declared syntactic form.
+
+In the following example, both `bool` and `int` are embedded into `expr`, visualized by ALGT in \ref{fig:nestedForms}:
+
 
 	bool	::= "True" | "False"
 	int	::= Number       # Number is a builtin, parsing integers
 	expr	::= bool | int
 
-This effectively establishes a _supertype_ relationship between the different syntactic forms. We can say that _every `bool` is a `expr`_, or `bool <: expr`.
+
+
+This effectively establishes a _supertype_ relationship between the different syntactic forms. We can say that _every `bool` is a `expr`_, or `bool <: expr`. 
+
+
+
+\begin{figure}[h!]
+\center
+\input{Supertype.tex}
+\caption{Nested syntactic forms}
+\label{fig:nestedForms}
+\end{figure}
+
 
 This supertype relationship is a lattice - the absence of left recursion implies that no cycles can exist in this supertype relationship.
 This lattice can be visualized, as in figure \ref{subtyping}.
-
 
 
 \begin{figure}[h!]
@@ -50,75 +63,115 @@ This lattice can be visualized, as in figure \ref{subtyping}.
 
 ### Empty sets
 
-Empty strings are not allowed. Consider syntax:
+The use of empty strings might lead to ambiguities of the syntax. When an emtpy string can be parsed, it is unclear wether this should be included in the parsetree. Therefore, it is not allowed. 
+
+As example, consider following syntax:
 
 	a	::= "=" | ""
-	b	::= "x" a "y"
+	b	::= "x" a "y" | "x" "y"
 	c	::= a as
 
-Parsing `b` over string `x y` is ambiguous. Should the parsetree contain an element representing an empty `a` or not?
-Parsing `c` is even more troublesome: the parser might return an infinite list, containing only empty `a`-elements. 
+Parsing `b` over string `x y` is ambiguous: the parser might return a parstree with or without an empty token representing `a`. 
+Parsing `c` is even more troublesome, here hte parser might return an infinite list containing only empty `a`-elements. 
 
-Empty rules are just as troublesome and are not allowed as well:
+Empty syntactic forms can cause the same ambiguities, and are not allowed as well:
 
-	a	::= 		# empty
+	a	::= 		# empty, syntax error
 
-
-This also includes all kind of degenerate recursive calls:
+While a syntactic form with no choices is a syntax error within ALGT, it is possible to define an empty form through recursion:
 
 	a	::= a
 
 	a	::= b
 	b	::= a
 
-Note that an empty set, by necessity, can only be defined by using _left recursion_.
+
+Note that such an empty set is, by necessity, defined by using _left recursion_. 
 
 
 ### Left recursive grammers
 
-We allow recursive definitions, this is, we allow syntactic forms to be defined in terms of itself:
+A syntactic form is recursive if it is defined in terms of itself, allowing concise definitions of arbitrary depth.
+All practical programming languages do have grammers where syntactic forms are recursive. An example would be types:
 
 	type	::= baseType "->" type | ...
 
-Left recursion is when this recursion is used on a leftmost position of a sequence:
+
+Left recursion is when this recursion occurs on a leftmost position in a sequence:
 
 	a ::= ... | a "b" | ...
 	
 
-While algorithms, such as _LALR-parsers_ can handle this fine, we don't allow these.
+While advanced parser-algorithms, such as _LALR-parsers_ can handle this fine, it is not allowed in ALGT:
 
-First, this makes it easy to port a syntax created for ALGT to another parser toolchain - which possibly can't handle left recursion too.
-Second, this allows for a extremely easy parser implementation.
-Thirdly, this prevents having empty sets such as `a ::= a`.
+- First, this makes it easy to port a syntax created for ALGT to another parser toolchain - which possibly can't handle left recursion too.
+- Second, this allows for a extremely simple parser implementation.
+- Thirdly, this prevents having empty sets such as `a ::= a`.
 
-We can easily detect this left recursion algorithmically, with a fixpoint algorithm. Consider the following syntax:
+
+We can easily detect this left recursion algorithmically, with following algorithm:
+
+\begin{lstlisting}[style=algo]
+
+# For each sequence in each syntactic form, 
+# remove all but the first element
+for each syntactic_form in syntax:
+        for each choice in syntactic_form:
+                choice.remove(1..)
+ 
+# Remove all concrete tokens (including builtins)               
+for each syntactic_form in syntax:
+        for each choice in syntactic_form:
+                choice.removeTokens()
+
+
+empty_rules = syntax.getEmptyRules()
+while empty_rules.hasElements():
+        # remove each empty rule and occurences of it in other rules
+        for empty_rule in empty_rules:
+                syntax.remove(empty_rule)
+                for each syntactic_form in syntax:
+                        for each choice in syntactic_form:
+                                choice.remove(empty_rule)
+        empty_rules = syntax.getEmptyRules
+
+
+if syntax.isEmpty():
+        # all clear!
+else:
+        error("Left recursion detected: "+syntax)
+
+\end{lstlisting}
+
+
+To make this algorithm more tangible, consider following syntax:
 
 	a	::= "a" | "b" | "c" "d"
 	b	::= a
 	c	::= b | c "d"
 
-First, we remove the tail from each sequence, e.g. sequence `"c" "d"` becomes `"c"`:
+First, the tail from each sequence is removed, e.g. sequence `"c" "d"` becomes `"c"`:
 
 	a	::= "a" | "b" | "c"
 	b	::= a
 	c	::= b | d
 	d	::= c
 
-Now, we remove all tokens, thus everything that is not a call to another syntactic form:
+Now, all tokens, everything that is not a call to another syntactic form, is erased:
 
 	a	::= 		# empty
 	b	::= a
 	c	::= b | d
 	d	::= c
 
-At this point, we enter the main loop of the fixpoint. We remove all empty rules and their calls, until no rule can be removed:
+At this point, the main loop is entered: all empty rules and their calls are deleted:
 
 
 	b	::=		# empty
 	c	::= b | d
 	d	::= c
 
-Next iteration:
+In the next iteration, `b` is removed as well:
 
 	c	::= d
 	d	::= c
@@ -128,7 +181,8 @@ At this point, no rules can be removed anymore. Only rules containing left recur
 
 ### Uniqueness of sequences
 
-When a parsetree is given, we want to be able to pinpoint exactly which syntactic form parsed it.
+When a parsetree is given, we want to be able to pinpoint exactly which syntactic form parsed it, as this can be used to minimize the set representation later on.
+ In order to do so, we expect the syntax not to contain duplicate sequences. 
 
 	a ::= ... | "a" | ...
 	b ::= ... | "a" | ...
@@ -139,7 +193,7 @@ When a parsetree is given, we want to be able to pinpoint exactly which syntacti
 
 A parsetree containg `"a"` could be parsed with both `a` and `b`, which is undesired; the sequence `"a" "x"` could be parsed with both `c` and `d`.
 To detect this, we compare each sequences with each every other sequence for equality.
-When such duplicate sequences exist, we demand the programmer to refactor this sequence into a new rule:
+When such duplicate sequences exist, the language designer is demanded to refactor this sequence into a new rule:
 
 	aToken	::= "a"
 	a ::= ... | aToken | ...
@@ -163,13 +217,13 @@ This is not foolproof though. Some sequences might embed each other, as in follo
 	y ::= b c
 
 Here, the string `a c` might be parsed with both syntactic forms `x` and `y`. There is no straightforward way to refactor this,
-without making things overly complicated. Instead, we'll opt to work with runtime annotations on the parsetree which rule parsed it.
+without making things overly complicated. Instead, runtime annotations are used to keep track of which form originated a parsetree.
 
 The uniqueness-constraint is merely added to keep things simpler and force the language designer to write a language with as little duplication as possible.
 
 
 
-
+With all these properties in place, an efficient set representation can be designed.
 
 
 
