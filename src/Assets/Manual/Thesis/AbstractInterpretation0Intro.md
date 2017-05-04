@@ -76,27 +76,50 @@ $$
 \end{figure}
 
 
-### Working with ranges
-
-Another possible abstract domain is the range `[n, m]` a value might be. Applying `succ` to a range can be calculated as following:
-
-$$
-\begin{array}{rl}
- & \code{succ [2,5]} \\
- = & \code{[2,5]} + \alpha(1) \\
- = & \code{[2,5]} + \code{[1,1]} \\
- = & \code{[3,6]}
-\end{array}
-$$
+### Ranges as abstract domain
 
 
-Translation between the concrete domain into the abstract domain is now done with:
+Another possibility is to apply functions on an entire range at once (such as `[2,41]`), using abstract interpretation. In order to do so, the abstract domain used are ranges of the form `[n, m]`.
+
+This can be calculated by taking each element the range represents, applying the function on each element and abstracting the newly obtained set, thus $$\alpha(map(\emph{f}, \gamma(\code{[n, m]})))$$
+
+Where $map$ applies $f$ on each element of the set (like most functional programming languages), $\alpha$ is the abstraction function and $\gamma$ is the concretization function, with following definition:
+
 $$
 \begin{array}{rcl}
 \alpha(n) & = & \code{[n, n]} \\
-\gamma(\code{[n, m]}) & = & \{ x | n \leq x \wedge x \leq m \}
+\alpha(N) & = & \code{[}min(N), max(N)\code{]} \\
+\gamma(\code{[n, m]}) & = & \{ x | n \leq x \leq m \}
 \end{array}
 $$
+
+
+For example, the outputrange for `succ [2,41]` can be calculated in the following way:
+ 
+$$
+\begin{array}{cl}
+  & \alpha(map(\code{succ}, \gamma(\code{[2,41]}))) \\
+= & \alpha(map(\code{succ}, \{2,3,...,40,41\})) \\        
+= & \alpha(\{\code{succ} 2, \code{succ} 3, ... , \code{succ} 40, \code{succ} 41\}) \\
+= & \alpha(\{3,4, ..., 41,42\}) \\
+= & [3,42]
+\end{array}
+$$ 
+
+However, this is computationally expensive: aside from translating the set from and to the abstract domain, the function $f$ has to be calculated $m - n$ times. By exploiting the underlying structure of ranges, calculating $f$ has only to be done _two_ times, aside from never having to leave the abstract domain.
+
+The key insight is that addition of two ranges is equivalent to addition of the borders:
+
+$$[n, m] + [x, x] = [n+x, m+x]$$
+
+Thus, applying `succ` to a range can be calculated as following, giving the same result in an efficient way:
+
+$$\begin{array}{rl}
+   & \code{succ [2,5]} \\
+ = & \code{[2,5]} + \alpha(1) \\
+ = & \code{[2,5]} + \code{[1,1]} \\
+ = & \code{[3,6]} \\
+\end{array}$$
 
 
 
@@ -104,14 +127,12 @@ $$
 
 At last, the abstract domain might be the _set_ of possible values, such as `{1,2,41}`. Applying `succ` to this set will yield a new set: 
 
-$$
-\begin{array}{rl}
+$$\begin{array}{rl}
  & \code{succ \{1,2,41\}} \\
 = & \code{\{1,2,41\}} + \alpha(1) \\
 = & \code{\{1,2,41\}} + \code{\{1\}} \\
-= & \code{\{2,3,42\}}
-\end{array}
-$$
+= & \code{\{2,3,42\}} \\
+\end{array}$$
 
 
 Translation from and to the abstract domain are straightforward:
