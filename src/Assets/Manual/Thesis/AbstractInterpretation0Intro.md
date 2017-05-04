@@ -10,8 +10,8 @@ In this section, functions on parsetrees are converted into functions over sets 
  - Afterwards, **operations on these setrepresentations** are stated.
  - As last, we build useful **algorithms** and checks with this algebra.
 
-What is abstract interpretation?
---------------------------------
+Abstract interpretation
+------------------------
 
 Per Rice's theorem, it is generally impossible to make precise statements about all programs. However, making useful statements about some programs is feasable.
  Cousot (1977) introduces a framework to do so, named **abstract interpretation**: "A program denotes computations in some universe of objects. Abstract interpretation of programs consists in using that denotation to describe computations in another universe of abstract objects, so that the results of the abstract computations give some information on the actual computation". 
