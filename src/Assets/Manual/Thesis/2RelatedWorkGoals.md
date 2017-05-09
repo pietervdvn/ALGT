@@ -2,36 +2,38 @@
  Related Work and Goals
 ========================
 
-As _Programming Language Design_ starts to take of as a major field within computer sciences, tools are starting to surface to formally define programming languages. But what should the ideal tool do, if we were to create it? And what does already exist?
+As _Programming Language Design_ starts to take of as a major field within computer sciences, tools are surfacing to formally define programming languages. But what should the ideal tool do, if we were to create it? And what does already exist?
 
 
 
 Goals and nongoals
 ------------------
 
-The ultimate goal should be to create a common language for language design, as this would improve the usage of formal design of languages. To gain widespread adoption, we should have as little barriers as possible, in installation, usage and documentation. It should be easy for a newcomer to use, without hindering the expressive power or available tools.
+The ultimate goal should be to create a common language for language design, as this would increase formalization of language design. To gain widespread adoption, there should be as little barriers as possible, in installation, usage and documentation. It should be easy for a newcomer to use, without hindering the expressive power or available tools used by the expert.
 
 ### Tooling
 
-Practical aspects are important - even the greatest tools lose users over unecassry barriers.
+Practical aspects are important - even the greatest tools lose users over these unecassry barriers.
 
-The first potential barrier is **installation** - which should be as smooth as possible. New users are easily scared by a difficult installation process, hindering adoption. 
+The first potential barrier is **installation** - which should be as smooth as possible. New users are easily scared by a difficult installation process, fleeing to other tools hindering adoption. 
 Preferably, the tool should be availabe in the package repos. If not, installation should be as easy as downloading and running a single binary. Dependencies should be avoided, as these are often hard to deploy on the dev machine - as they might be hard to get, to install, having version conflicts with other tools on the machine, not being supported on the operating system of choice...
 
 The second important feature is **documentation**. Documentation should be easy to find, and preferably be distrubeted alongside the binary.
 
-Thirdly, we'll also want to be **cross-platform**. While most of the PL community uses a Unix-machine, we'll also should support widely used, non-free operating systems.
+Thirdly, we'll also want to be **cross-platform**.
+While most of the PL community uses a Unix-machine, other widely used, non-free operating systems should be supported as well.
 
 As last, extra features like **syntax highlighting**, **automated tests** or having editor support for the target language is a nice touch.
 
 
 ### Metalanguage
 
-The most important part is the metalangue itself - as that is the major interface.
+The most important part is the metalangue itself - as that is the major interface the language designer will use.
 
-As language design is difficult to grasp, we want our language to be as **easy** as possible. There are some aspects which help to achieve this.
+As language design itself is already difficult to grasp, we want our language to be **easy**. There are some aspects which help to achieve this.
 
-An easy language should be
+An easy language should be:
+
 - as **focused** as possible, with little boilerplate. The core concepts of language design should have a central place.
 - **expressive** enough to be usefull
 - as **simple** as possible, thus having as little elements and special constructs which should be learned and considered when doing automatic translations.
@@ -39,20 +41,29 @@ An easy language should be
 
 #### Embedded in another programming language?
 
-Should we design the tool as library or domain specific language embedded in anohter programming language? Or should we create a totally new programming language?
+Should the tool be designed as library or domain specific language embedded in anohter programming language? Or should a totally new programming language be created?
 
-Using an embedded language gives us a headstart, as we might use all of the builtin functionality and optimazations. The toll later on the road is high, however. Starting with a fresh language has quite some benifits:
+Using an embedded language gives us a headstart, as all of the builtin functionality and optimazations can be used. However, The toll later on the road is high. Starting with a fresh language has quite some benefits:
 
-First, the user does not have to deal with the host language at all. The user is forced to make the choice between learning the new programming language - which is quite an investment- or ignoring the native bits, and never having full control over it. 
+First, the user does not have to deal with the host language at all. The user is forced to make the choice between learning the new programming language - which is quite an investment- or ignoring the native bits, and never having a full grasp over the definition. 
 
-Related, by creating a fresh language, we can focus this language totally on what is needed. This means that it is easy to cut out any boilerplate, making the language more fun to use.
+Second, by creating a fresh language, this language can be streamlined on what is needed - it is easy to cut out any boilerplate, making the language more fun to use.
 
-By not using a host language, we can also perform analysises on metafunctions. This is possible on small, well understood languages; something that is hard to do in a host language, where compilers span over 100'000 lines of code. 
+By not using a host language, analysises on metafunctions become possible, as the metalanguage is small and well understood. This would be hard to do in a host language, where compilers span over 100'000 lines of code. 
 
 As last, we don't have to deal with installing a host compiler, skipping another dependency. 
 
+### Parsing the target language
 
-### Executing the target programming language
+The first step in defining our target language is declaring its syntax. The standard practice to do so has been _BNF_ since its introduction in the ALGOL-report in 1960. As BNF is the de facto standard, it is already well-known to language designers and thus both the theoritical and practical aspects are well understood.
+Furthermore, it is easy to port existing languages, as often a BNF is already available for this language. 
+
+A drawback is that many variants of BNF exist, each with their own superficial syntactic differences. This is only a minor drawback though: as the underlying structure is the same, a simple search-and-replace can easily convert one dialect into another. On the other hand, we want the BNF syntax to be as light and boilerplate-free as possible, eventually introducing a new dialect.
+
+No other lower-level details should be exposed to the language designer, such as tokenizing or the internal definition of the parsetree - the language designer should be working directly with the parsetree.
+
+
+### Executing the target language
 
 Of course, we'll want to execute our target programming language in one way or another. What are important aspects? As this is a tool to develop and prototype programming language, we're firstly concerned with debugging the programming language, no matter how the runtime semantics were declared.
 
@@ -63,7 +74,7 @@ Of course, we'll want to execute our target programming language in one way or a
 While compilation to a target architecture and target program optimazations are nice, they are not priorities - as it only complicates the implementation.
 
 
-### Creating a typechecker
+### Typechecking the target language
 
 Just like the operational semantics, we should be able to build and run a typechecker for the target language. Here, the same constraints apply. We should strive to make the declaration of the typesystem consistent with the operational semantics, preferably it should use the same kind of logic.
 
@@ -73,44 +84,21 @@ We should also strive to **automatically test** the correctness of the typecheck
 Related Work
 ------------
 
-What tools already exist? 
+With these requirements in mind, we investigate what tools already exist and how these tools evolved.
 
 
-Yacc
------
+### Yacc
 
-__Yacc__ (Yet Another Compiler Compiler), designed in 1970 was an early tool designed to automatically generate parsers from a given _BNF_-syntax. Depending on the parsed rule, a certain action could be specified - such as constructing a parse tree.
+__Yacc__ (Yet Another Compiler Compiler), designed in 1975 was the first tool designed to automatically generate parsers from a given _BNF_-syntax. Depending on the parsed rule, a certain action could be specified - such as constructing a parse tree. 
 
-It was a major step to formally define the syntax of a programming language. The rest of the design is however left to the designer.
+It was a major step to formally define the syntax of a programming language, but carries a clear legacy of its inception era: you are supposed to include raw `c`-statements, compile to `c` and then compile the generated `c`-code. Furthermore, lexing and parsing are two different steps, requiring two different declarations. Thus, quite some low-level work is needed.
 
-As this was the first widely available tool for this purpose, it has been tremendously popular, specifically within unix systems, albeit as reimplementation  _GNU bison_. Implementations in other programming languages are widely available.
+Furthermore, only the parser itself is generated, the parsetree itself should be designed by the language designer.
 
-An example syntax in Yacc is:
-
-	%{
-	#include <stdio.h>
-	#include "y.tab.h"
-	%}
-
-	%%
-
-	zone                    return ZONETOK;
-	file                    return FILETOK;
-	[a-zA-Z][a-zA-Z0-9]*    yylval=strdup(yytext); return WORD;
-	[a-zA-Z0-9\/.-]+        yylval=strdup(yytext); return FILENAME;
-	\"                      return QUOTE;
-	\{                      return OBRACE;
-	\}                      return EBRACE;
-	;                       return SEMICOLON;
-	\n                      /* ignore EOL */;
-	[ \t]+                  /* ignore whitespace */;
-	%%
-
-%% TODO: source: https://ds9a.nl/lex-yacc/cvs/lex-yacc-howto.html
+As this was the first widely available tool for this purpose, it has been tremendously popular, specifically within unix systems, albeit as reimplementation  _GNU bison_. Implementations in other programming languages are widely available. Yacc gets an honorable mention here for its historical importance, but is outdated.
 
 
-ANTLR
------
+### ANTLR
 
 __ANTLR__ (ANother Tool for Language Recognition) is a more modern _parser generator_. This tool has been widely used as well, as it is compatible with many programming languages, such as Java, C#, Javascript, Python, ...
 
@@ -171,8 +159,7 @@ An example grammer is:
 
 %% TODO Source: http://www.bearcave.com/software/antlr/antlr_examples.html
 
-XText
------
+### XText
 
 __XText__ is a modern tool to define grammers and associated tooling support. It is heavily tied-in into the Java Virtual Machine, as grammers are compiled to _Java Artifacts_.
 https://www.eclipse.org/Xtext/documentation/102_domainmodelwalkthrough.html
@@ -207,8 +194,7 @@ It might be noted that _XText_ uses _ANTLR_ for parsetree generation.
 
 %%SOURCE: https://www.eclipse.org/Xtext/documentation/102_domainmodelwalkthrough.html
 
-LLVM
-----
+### LLVM
 
 __LLVM__ focusses mainly on the technical aspect of running programs on specific, real world machines. It contains an excellent intermediate _intermediate representation_ of imperative programs, which can be optimized and compiled for all major computer architectures. LLVM is thus an excellent compiler backend.
 
@@ -296,38 +282,4 @@ It can be easily extended with additional features. Some of these are already ad
 
 Feature comparison
 ------------------
-
-
-Feature					 Yacc	 ANTLR	 XText	 LLVM	 PLT-Redex	 Maude	 ALGT
--------					------	-------	-------	------	-----------	-------	------
-**Syntax generation**
-Generating parsers			✓	✓	✓		✓			✓
-Left-recursion detection		✓							✓									
-Left-recursion handling			✓							
-\hline
-**Runtime semantics**
-Running target programs					✓		✓		✓	✓			
-Defining formal runtime semantics					✓		✓	✓
-Tracing how evaluation happens						✓		✓	✓
-Typechecked parsetree modification					✓			✓
-\hline
-**Typechecker**
- Defining a typechecker						✓		✓	✓
-Defining a formal typechecker						✓		✓	✓	
-Running a typechecker							✓		✓	✓
-Automated testing 					✓			✓
-\hline
-**Tooling**
-Easy to set up and deploy		✓		✓	✓			✓	✓
-Documentation				✓	✓	✓	✓			✓	✓
-Automated tests								✓			✓
-Automatic optimazation						✓				
-Compilation							✓				
-Syntax highlighting			✓					✓
-Editor support of target language			✓
-
-
-
-
-
 

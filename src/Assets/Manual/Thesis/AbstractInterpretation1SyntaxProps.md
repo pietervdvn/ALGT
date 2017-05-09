@@ -219,7 +219,7 @@ This is not foolproof though. Some sequences might embed each other, as in follo
 Here, the string `a c` might be parsed with both syntactic forms `x` and `y`. There is no straightforward way to refactor this,
 without making things overly complicated. Instead, runtime annotations are used to keep track of which form originated a parsetree.
 
-The uniqueness-constraint is merely added to keep things simpler and force the language designer to write a language with as little duplication as possible.
+The uniqueness-constraint is merely added to keep things simpler and force the language designer to write a language with as little duplication as possible. Furthermore, it helps the typechecker to work more efficient and with less errors.
 
 
 
