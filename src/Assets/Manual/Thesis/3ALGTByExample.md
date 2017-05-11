@@ -160,10 +160,16 @@ A part of this process is denoted here, where the leftmost element of the stack 
 
 ![Parsetree of a function type](Parsetree0_0.png)
 
+
+### Conclusion
+
+ALGT allows a concise yet accurate description of any language, through the use of BNF. This notation can then be interpreted in order to parse a target program file; resulting in the parsetree. 
+
+
 Metafunctions
 -------------
 
-Existing parsetrees can be modified or rewritten by using **metafunctions**[^termFunction[. A metafunction receives one or more parsetrees as input and generates a new parsetree based on that.
+Existing parsetrees can be modified or rewritten by using **metafunctions**[^termFunction]. A metafunction receives one or more parsetrees as input and generates a new parsetree based on that.
 
 [^termFunction]: In this section, we will also use the term _function_ to denote a _metafunction_. Under no condition, the term function refers to some entity of the target language.
 
@@ -443,6 +449,11 @@ The functions are checked for various easily made errors, such as that each clau
 
 These algorithms use of abstract interpretation and are detailed in a following chapter.
 
+
+
+### Conclusion
+
+Metafunctions give a concise, typesafe way to transform parsetrees. The many checks, such as wrong types, liveness and fallthrough perform the first sanity checks and catch many bugs beforehand.
 
 
 
