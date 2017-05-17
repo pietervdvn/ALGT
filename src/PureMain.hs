@@ -249,7 +249,7 @@ mainExFilePure args
 		-- is some flag set?
 		let renderSpecial	= renderer' |> fst & or
 		when renderSpecial $ do
-			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (False, False) (fileName args) (head inputs)
+			pts'	<- parseTargetLang' (get tsSyntax ts) (parser args) (True, False) (fileName args) (head inputs)
 					& liftEith
 			let rendered	= renderer pts'
 			putStrLn $ " # Parsed and rendered: "++(pts' & get ptAnnot & toParsable)

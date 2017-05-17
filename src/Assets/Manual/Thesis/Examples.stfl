@@ -1,0 +1,8 @@
+True
+False
+If True Then False Else True
+If If True Then False Else True Then True Else False
+42
+20 + 22
+1 + 2 + 3
+(\x : Int . x + 1) 41

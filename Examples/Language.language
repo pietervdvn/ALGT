@@ -6,39 +6,51 @@
 ========
 
 
-### Helpers
+### Helpers, such as lines or single characters
 
-stars ::= $ "*" stars | "*"
-equals ::= $ "=" equals | "="
-string ::= "\"" identifier "\""
+nl		::= "\n"
+
+stars	::= $ "*" stars | "*"
+equals	::= $ "=" equals | "="
+tabs	//= "\t" tabs | "\t"
+
+string	::= String
 
 
 
-syntaxHeader ::= "Syntax" nl equals nls
+commentLine	::= LineChar commentLine | LineChar
+comment		::= $ "#" commentLine
 
-titleChar::= Upper| Lower| digit | " "
-titleLine ::= $ titleChar titleLine | titleChar
-title ::= strictNls titleLine nls stars | titleLine nls stars
+nlc 		::= comment nl	 | nl
+strictNls 	::= nl strictNls | nl	# Without nls, used before the title
+nls		::= nlc nls 	 | nl
 
-commentLine ::= LineChar commentLine | LineChar
-comment ::= $ "#" commentLine
 
-nl ::= "\n"
-strictNls ::= nl strictNls | nl
-nls ::= nl comment nls | nl nls | nl
 
-rest ::= $ Any rest | Any 
+
+
+
+syntaxHeader	::= "Syntax" nl equals nls
+
+titleChar	::= Upper| Lower| digit | " "
+titleLine	::= $ titleChar titleLine | titleChar
+title		::= strictNls titleLine nls stars | titleLine nls stars
+
+
 
 ### All about syntax 
 
-identifier ::= Identifier
-digit ::= Digit
+identifier	::= Identifier
+broadIdentifier ::= WordChar broadIdentifier | WordChar
+digit		::= Digit
 
-wsMode ::= "::=" "$" | "::=" | "~~=" "$" | "~~="
+wsMode		::= "::=" "$" | "::=" | "~~=" "$" | "~~=" | "//=" "$" | "//="
 
-bnfTerm ::= string | identifier | bnfBuiltin | String
-bnfBuiltin ::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar" | "Identifier"
-bnfExpression ::= bnfTerm "|" bnfExpression | bnfTerm bnfExpression | bnfTerm
+
+bnfTerm		::= identifier | bnfBuiltin | String
+bnfBuiltin	::= "String" | "Any" | "Upper" | "Lower" | "Digit" | "LineChar" | "Identifier" | "WordChar"
+bnfBar		//= nl tabs "|" | "|"
+bnfExpression	::= bnfTerm bnfBar bnfExpression | bnfTerm bnfExpression | bnfTerm
 
 bnf ::= identifier wsMode bnfExpression
 bnfs ::= bnf nls bnfs | bnf nls
@@ -51,17 +63,42 @@ styleChoice ::= digit styleChoice | digit
 
 styleLine ::= identifier "." styleChoice "->" string | identifier "->" string
 styleLines ::= styleLine nls styleLines | styleLine
+
+
+### All about functions
+
+typeTerm ::= identifier | "(" type ")"
+type	::= typeTerm "->" type | typeTerm 
+
+signature::= identifier ":" type
+
+expressionCS ::= expression "," expressionCS | expression
+
+expressionTerm ::= broadIdentifier "(" expressionCS ")"
+	| broadIdentifier "[" expression "]"	
+	| broadIdentifier
+	| String
+	| "(" expression ")"
+
+expression	::= expressionTerm expression
+	| expressionTerm
+
+
+function ::= signature nlc 
+
+
  
 ### Main file
 
 language ::= title nls syntaxHeader bnfs styleHeader styleLines rest  
 
+rest		::= Any rest | Any 
 
 
  Syntax Style
 ==============
 
-rest -> "type"
+rest -> "error"
 title -> "h1"
 syntaxHeader -> "h2"
 styleHeader -> "h2"
@@ -76,3 +113,10 @@ commentLine -> "comment"
 
 styleLine -> "noise"
 string -> "dirtier-hack"
+
+
+Functions
+=========
+
+id	: language -> language
+id(l)	= l

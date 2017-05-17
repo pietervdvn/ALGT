@@ -73,7 +73,7 @@ isBinary origDir
 fileLine	:: Bool -> FilePath -> String -> IO String
 fileLine dev origDir file
 	= do	let name'	=  name origDir file
-		let pragma	= "" -- if dev then "\n{-# NOINLINE "++name'++" #-}\n" else ""
+		let pragma	= if dev then "\n{-# NOINLINE "++name'++" #-}\n" else ""
 		let devAssgn	= if isBinary file then "unsafePerformIO $ B.readFile "++show file
 					else "unsafePerformIO $ readFile "++show file
 		contents	<- if dev then return devAssgn else

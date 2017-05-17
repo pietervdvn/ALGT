@@ -16,3 +16,5 @@ THis should give an error, as "(" 5 ")" can be parsed as both arith and expr
 Allow Number (upper case) as type for functions and relations
 
 Fix a = b : type: remove typing
+
+Usage of whitespace in bnf expressions should give a warning if used within a non-whitespace sensitive rule

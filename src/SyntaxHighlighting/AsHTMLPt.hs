@@ -86,6 +86,8 @@ insertBR('\t':str)
 		= "&#9;"++insertBR str
 insertBR('\'':str)
 		= "&apos;"++insertBR str
+insertBR('\\':str)
+		= "&#92;"++insertBR str
 insertBR('"':str)
 		= "&quot;"++insertBR str
 

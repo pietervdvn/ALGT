@@ -155,9 +155,9 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  "If" "False" "Then" e1 "Else" e2 → e2
 
 
- (✓) arg	arg "::" type → arg
-------------------------------------------------------------	[EvalLamApp]
- ("(" "\\" var ":" type "." e ")") arg → !subs:e(var, arg, e)
+ arg:value	arg :: T
+----------------------------------------------- [EvalLamApp]
+ ("(" "\\" var ":" T "." e ")") arg → !subs:e(var, arg, e)
 
 
 

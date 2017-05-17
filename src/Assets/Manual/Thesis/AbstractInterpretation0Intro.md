@@ -14,22 +14,27 @@ Abstract interpretation
 ------------------------
 
 Per Rice's theorem, it is generally impossible to make precise statements about all programs. However, making useful statements about some programs is feasable.
- Cousot (1977) introduces a framework to do so, named **abstract interpretation**: "A program denotes computations in some universe of objects. Abstract interpretation of programs consists in using that denotation to describe computations in another universe of abstract objects, so that the results of the abstract computations give some information on the actual computation". 
+ Cousot (1977) introduces a framework to do so, named **abstract interpretation**: "A program denotes computations in some domain of objects. Abstract interpretation of programs consists in using that denotation to describe computations in another domain of abstract objects, so that the results of the abstract computations give some information on the actual computation". 
 
 %% TODO: source bibliography
 
-We illustrate this with the successor function, as defined below:
+The successor function, as defined below, is a prime example to illustrate this principle of using other domains: this function normally operates in the domain of _integer numbers_, as `succ` applied on `1` yields `2`; `succ -1` yields `0`. 
 
 	succ n	= n + 1
 
+But `succ` might also be applied on _signs_, instead of integers: we use `+`, `-` or `0` to perform the computation, where `+` represents all positive numbers, `-` represents all negative numbers and `0` represents zero. 
 
-The successor function operates in the domain of _integer numbers_: `succ` applied on `1` yields `2`; `succ -1` yields `0`. 
+Using these symbols as input gives rise to a computation in the abstract domain of signs.
 
-But `succ` might also be applied on _signs_, instead of integers: we use `+`, `-` or `0` to perform the computation, giving rise to a computation in the abstract domain of signs.
+
 
 ### The rule of signs
 
-Per rule of signs $\code{+} + 1$ is equal to `+`, thus `succ +` yields `+`. Applying `succ` to a negative number gives less precise information, as $\code{-} + 1$ could yield both zero or a strictly negative number, giving `0-` in the abstract domain.
+Per rule of signs $\code{+} + 1$ is equal to `+`, thus `succ +` yields `+`. Applying `succ` to a negative number gives less precise information, as $\code{-} + 1$ could yield both zero or a strictly negative number. In order to represent the union between the negative numbers and zero, the symbol `0-` is used.
+
+These compositions are no more then the composition between two sets, 
+
+
 
 
 \begin{figure}[h]
