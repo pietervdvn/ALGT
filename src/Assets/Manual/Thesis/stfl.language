@@ -163,17 +163,13 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 
 
 
- b:bool
--------			[CanonBool]
- (✓) b
-
- n:number
----------		[CanonNumber]
- (✓) n
+ v:value
+-------			[CononValue]
+ (✓) v
 
 
 
- (✓) e
+ e:value
 --------			[BigStepCanon]
  e →* e
 
@@ -181,7 +177,7 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 -------------------------	[BigStepRec]
  e0 →* e2
 
- e0 → e1	(✓) e1
+ e0 → e1	e1:value
 ------------------------	[BigStepBase]
  e0 →* e1
 
