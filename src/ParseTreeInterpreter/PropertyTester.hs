@@ -43,15 +43,14 @@ testPropOn ts prop vars
 				-> proofAConclusion ts conclChoices vars' |> uncurry (PropertyProof vars' proofs)
 
 
-proofAConclusion	:: TypeSystem -> MultiConclusionA Expression -> VariableAssignments -> Either String (Int, Proof)
-proofAConclusion ts mconcl vars
-	= do	let conclChoices	= get multiConcls mconcl
-		let possProofs		= conclChoices |> proofConclusion ts vars & mapi |> sndEffect
+proofAConclusion	:: TypeSystem -> [Predicate] -> VariableAssignments -> Either String (Int, Proof)
+proofAConclusion ts possConcl vars
+	= do	let possProofs		= possConcl |> proofPredicate ts vars [] ||>> fst & mapi |> sndEffect
 		let successFull		= rights possProofs
 
 		let errMsg (concl, Left msg)	= toParsable concl ++"      failed because:\n"++msg
 		when (null successFull) $ Left $ 
-			"Could not proof a single conclusion:\n" ++ (zip conclChoices possProofs |> errMsg & unlines)
+			"Could not proof a single conclusion:\n" ++ (zip possConcl possProofs |> errMsg & unlines)
 		let selectedProof	= head successFull
 		return selectedProof
 
@@ -87,7 +86,7 @@ checkAssignment ts prop assgn'
 
 neededVars	:: Property -> [(Name, TypeName)]
 neededVars prop
-	= let	predProof	= get propPreds prop ++ (get (propConcl . multiConcls) prop |> Needed) in
+	= let	predProof	= get propPreds prop ++ get propConcl prop in
 		fst $ _neededVars [] predProof
 
 _neededVars	:: [Name] -> [Predicate] -> ([(Name, TypeName)], [(Name, TypeName)])

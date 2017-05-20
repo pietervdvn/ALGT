@@ -48,8 +48,8 @@ _propProofToString sPred sProof (proofOptions, prop) (PropertyProof vars predPro
 					, ""
 				  	, indent (sProof proofOptions proof)] & unlines
 		preamble	= zip predsC predProofs |> showPred & unlines
-		provenConcl	= get (propConcl . multiConcls) prop !! provenWith
-		conclMsg	= ["# Satisfies a possible conclusion:\n# "++ sPred (Needed provenConcl)
+		provenConcl	= get propConcl prop !! provenWith
+		conclMsg	= ["# Satisfies a possible conclusion:\n# "++ sPred provenConcl
 					, ""
 					, sProof proofOptions proof] & unlines
 		in

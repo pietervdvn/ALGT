@@ -14,8 +14,8 @@ import Lens.Micro hiding ((&))
 import Lens.Micro.TH
 
 {-
-When a rule is applied to enough values (parse-trees) it generates a proof of this rule.
-Use 'parseTreeInterpreter.RuleInterpreter'
+When a rule is applied to enough values (parsetrees) it generates a proof of this rule.
+Use 'parseTreeInterpreter.RuleInterpreter' to do this
 -}
 data Proof	= Proof { _proofConcl	:: Conclusion'
 			, _prover	:: Rule
@@ -79,6 +79,7 @@ data ProofOptions	= PO {	nameParens		:: String -> String,
 defaultProofOptions	= PO (\s -> "["++s++"]") True True "    "
 
 
+-- Extra options to print proofs
 data ProofOptions'	= PO' {	opts'		:: ProofOptions,
 				st		:: TypeName -> String,
 				sp		:: ParseTree -> String,

@@ -239,9 +239,9 @@ expressionExamples
 		"Builtin function call", "Evaluates the builtin function, matches if the argument equals the result. Can only use variables which are declared left of this pattern", "Evaluate this builtin function, let it return a `type`")
 	, (MAscription "type" $ MVar "" "expr or pattern", "Ascription", "Check that the argument is an element of `type`", "Checks that an expression is of a type. Bit useless to use within expressions")
 	, (MEvalContext "tn" "e" $ MVar "" "expr or pattern", "Evaluation context",
-		"Matches the parsetree with `e`, searches a subpart in it matching `pattern`", "Replugs `expr` at the same place in `e`. Only works if `e` was created with an evaluation context")
+		"Matches the parsetree with `e`, searches a subtree in `e` which matches `pattern`", "Replugs `expr` at the same place in `e`. Only works if `e` was created with an evaluation context")
 	, (MSeq ("",0) [MVar "" "a", _lit "b", MSeq ("", 0) [MVar "" "nested"]],
-		"Sequence", "Splits the parse tree in the appropriate parts, pattern matches the subparts", "Builds the parse tree")
+		"Sequence", "Splits the parsetree in the appropriate parts, pattern matches the subparts", "Builds the parsetree")
 	]
 
 _lit str	= MLiteral () ("sr", 0) str & MParseTree

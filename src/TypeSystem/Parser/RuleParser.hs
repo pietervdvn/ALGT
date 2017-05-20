@@ -57,10 +57,13 @@ parseProperty env
 
 rule		:: Ctx -> Parser u Rule
 rule ctx
-	= do	(Property n p (MultiConclusionA concls))	<- property ctx
+	= do	(Property n p concls)	<- property ctx
 		let msg	= "In rule "++ n ++":\n   Only a single conclusion is allowed. You can't make a choice here!"
 		unless (length concls == 1) $ fail msg
-		return (Rule n p $ head concls)
+		concl	<- case head concls of
+				(Needed concl) -> return concl
+				_	-> fail $ "Only a conclusion containing a relation is allowed here"
+		return (Rule n p concl)
 
 property	:: Ctx -> Parser u Property
 property ctx
@@ -72,8 +75,8 @@ property ctx
 		ws
 		char '\n'
 		ws
-		con	<- multiConcl ctx
-		let rule	= Property nm preds con
+		concls	<- predicate ctx `sepBy` (ws >> char '|' >> ws)
+		let rule	= Property nm preds concls
 		check' (syntax ctx) rule & either error return
 		return rule
 
@@ -83,10 +86,6 @@ parseExpr ctx	= do	let notSymbols	= relSymbols ctx
 			EP.parseExpression' $ identifier' notSymbols
 
 
-
-multiConcl	:: Ctx -> Parser u (MultiConclusionA Expression)
-multiConcl ctx	= do	concls	<- conclusion ctx `sepBy` (ws >> char '|' >> ws)
-			return $ MultiConclusionA concls
 
 conclusion 	:: Ctx -> Parser u Conclusion
 conclusion ctx
