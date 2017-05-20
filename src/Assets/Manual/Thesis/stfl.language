@@ -109,9 +109,9 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 # (:) is reserved, as predicate that a term is of a production rule
 # one can refer to rewrite rules/functions earlier on
 
-(→)	: e (in), e (out)	Pronounced as "evaluation"
+(→)	: e (in), e (out)	Pronounced as "smallstep"
 (→*)	: e (in), value (out)	Pronounced as "big step"
-(✓)	: e (in)		Pronounced as "is canonical"
+
 
 (⊢)	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
 
@@ -163,9 +163,9 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 
 
 
- v:value
--------			[CononValue]
- (✓) v
+
+
+
 
 
 
@@ -223,9 +223,9 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  Γ ⊢ n1 "+" n2, "Int"
 
 
- Γ ⊢ c, "Bool"	Γ ⊢ e1, Tl	Γ ⊢ e2, Tr	Tl == Tr
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, T0	Γ ⊢ e2, T1	T0 == T1
 --------------------------------------------------------	[TIf]
- Γ ⊢ "If" c "Then" e1 "Else" e2, Tl
+ Γ ⊢ "If" c "Then" e1 "Else" e2, T0
 
 
 
@@ -264,7 +264,7 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 
          e0 :: T
 -------------------------- [Progress]
- (✓) e0    |     e0 → e1 
+ e0:value    |     e0 → e1 
 
 
 
