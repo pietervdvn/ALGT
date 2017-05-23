@@ -57,13 +57,12 @@ $$GradualizeSTFL.language-changes![56..62]!file
 
 What about the properties?
 
-So far, we defined three properties:
+So far, we defined two properties:
 
 - Preservation
 - Progress
-- Termination
 
-While progress and termination still hold for this gradual language, Preservation is broken.
+While progress still holds for this gradual language, preservation is broken.
 
 Even if an expression can be typed gradually, it does not guarantee it can still be typed after a single step. Consider following example:
 

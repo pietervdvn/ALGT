@@ -3,17 +3,8 @@
 Representing sets of values
 ---------------------------
 
-The goal of this section is to make collecting metafunctions. Where a metafunction takes a parsetree and transforms it to another parsetree, a collecting metafunction takes a _set_ of parsetrees and converts them into another _set_ of parsetrees. To make matters worse, these sets might be infinite.
-
-
-In this chapter, we construct a general **representation** for such a set of parsetrees, exploiting the properties of any syntax, as outlined in the previous chapter.
-
-
-### Representing sets
-
-
-The first step to abstract interpretation is to represent arbitrary syntactic sets. We will show how to do this, using following example syntax:
-
+In this chapter, a general **representation** for a (possibly infinite) set of parsetrees is constructed. This representation is used as abstract domain for metafunctions, lifting any metafunction from a metafunction on parsetrees to a metafunction of sets of parsetrees.
+This set representation is constructed using the properties outlined in the previous chapter, using a small syntax as example:
 
 	baseType	::= "Bool" | "Int"
 	typeTerm	::= baseType | "(" type ")"
@@ -22,7 +13,7 @@ The first step to abstract interpretation is to represent arbitrary syntactic se
 
 ### Sets with concrete values
 
-A set with only concrete values can be simply represented by giving its inhabitants; the set `baseType` can be represented the following way:
+A set with only concrete values is simply represented by giving its inhabitants; the set `baseType` is thus represented as following:
 
 	{ "Bool", "Int" }
 
@@ -36,6 +27,8 @@ We could also create a set with, for example, all function types with one argume
 	, "Bool" "->" "Int"
 	, "Int" "->" "Bool"
 	, "Int" "->" "Int" }
+
+
 
 ### Symbolic sets
 

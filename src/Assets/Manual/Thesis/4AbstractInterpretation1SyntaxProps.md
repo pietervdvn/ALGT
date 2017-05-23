@@ -25,7 +25,7 @@ This equivalence between syntactic forms and sets is the main driver, both for t
 
 ### Embedded syntactic forms
 
-Quite often, one syntactic form is defined in term of another syntactic form. This might be in a sequence (e.g. `int "+" int`) or as a bare choice (e.g. `... | int | ...`). If the case of a bare choice, each element the choice is embedded into declared syntactic form.
+Quite often, one syntactic form is defined in term of another syntactic form. This might be in a sequence (e.g. `int "+" int`) or as a bare choice (e.g. `... | int | ...`). If the latter case, each element the choice is also embedded into declared syntactic form.
 
 In the following example, both `bool` and `int` are embedded into `expr`, visualized by ALGT in \ref{fig:nestedForms}:
 
@@ -63,7 +63,7 @@ This lattice can be visualized, as in figure \ref{subtyping}.
 
 ### Empty sets
 
-The use of empty strings might lead to ambiguities of the syntax. When an emtpy string can be parsed, it is unclear wether this should be included in the parsetree. Therefore, it is not allowed. 
+The use of empty strings might lead to ambiguities of the syntax. When an emtpy string can be parsed, it is unclear whether this should be included in the parsetree. Therefore, it is not allowed. 
 
 As example, consider following syntax:
 
@@ -72,7 +72,7 @@ As example, consider following syntax:
 	c	::= a as
 
 Parsing `b` over string `x y` is ambiguous: the parser might return a parstree with or without an empty token representing `a`. 
-Parsing `c` is even more troublesome, here hte parser might return an infinite list containing only empty `a`-elements. 
+Parsing `c` is even more troublesome, here the parser might return an infinite list containing only empty `a`-elements. 
 
 Empty syntactic forms can cause the same ambiguities, and are not allowed as well:
 
@@ -109,10 +109,45 @@ While advanced parser-algorithms, such as _LALR-parsers_ can handle this fine, i
 - Thirdly, this prevents having empty sets such as `a ::= a`.
 
 
-We can easily detect this left recursion algorithmically, with following algorithm:
+We can easily detect this left recursion algorithmically. The algorithm itself can be found in figure \ref{fig:algoLeftRec}.
+To make this algorithm more tangible, consider following syntax:
 
+	a	::= "a" | "b" | "c" "d"
+	b	::= a
+	c	::= b | c "d"
+
+First, the tail from each sequence is removed, e.g. sequence `"c" "d"` becomes `"c"`. This is expressed in lines 3-5 and has following result:
+
+	a	::= "a" | "b" | "c"
+	b	::= a
+	c	::= b | d
+	d	::= c
+
+Now, all tokens, everything that is not a call to another syntactic form, is erased (lines 8-10):
+
+	a	::= 		# empty
+	b	::= a
+	c	::= b | d
+	d	::= c
+
+At this point, the main loop is entered: all empty rules and their calls are deleted (lines 16 till 21 for actual deletion):
+
+
+	b	::=		# empty
+	c	::= b | d
+	d	::= c
+
+In the next iteration, `b` is removed as well:
+
+	c	::= d
+	d	::= c
+
+At this point, no rules can be removed anymore. Only rules containing left recursion remain, for which an error message can be generated (lines 24 till 26).
+
+
+
+\begin{figure}[!h]
 \begin{lstlisting}[style=algo]
-
 # For each sequence in each syntactic form, 
 # remove all but the first element
 for each syntactic_form in syntax:
@@ -142,42 +177,12 @@ else:
         error("Left recursion detected: "+syntax)
 
 \end{lstlisting}
+\caption{The algorithm to detect left recursion in a syntax}
+\label{algoLeftRec}
+\end{figure}
 
 
-To make this algorithm more tangible, consider following syntax:
-
-	a	::= "a" | "b" | "c" "d"
-	b	::= a
-	c	::= b | c "d"
-
-First, the tail from each sequence is removed, e.g. sequence `"c" "d"` becomes `"c"`:
-
-	a	::= "a" | "b" | "c"
-	b	::= a
-	c	::= b | d
-	d	::= c
-
-Now, all tokens, everything that is not a call to another syntactic form, is erased:
-
-	a	::= 		# empty
-	b	::= a
-	c	::= b | d
-	d	::= c
-
-At this point, the main loop is entered: all empty rules and their calls are deleted:
-
-
-	b	::=		# empty
-	c	::= b | d
-	d	::= c
-
-In the next iteration, `b` is removed as well:
-
-	c	::= d
-	d	::= c
-
-At this point, no rules can be removed anymore. Only rules containing left recursion remain, for which an error message can be generated.
-
+\clearpage
 
 ### Uniqueness of sequences
 
@@ -220,11 +225,6 @@ Here, the string `a c` might be parsed with both syntactic forms `x` and `y`. Th
 without making things overly complicated. Instead, runtime annotations are used to keep track of which form originated a parsetree.
 
 The uniqueness-constraint is merely added to keep things simpler and force the language designer to write a language with as little duplication as possible. Furthermore, it helps the typechecker to work more efficient and with less errors.
-
-
-
-With all these properties in place, an efficient set representation can be designed.
-
 
 
 

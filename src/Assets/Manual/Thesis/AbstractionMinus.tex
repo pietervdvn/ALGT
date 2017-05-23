@@ -10,9 +10,11 @@
 \node (dots) at (1.5, 1.6) {\vdots};
 \node (mdots) at (1.5, 4.6) {\vdots};
 
-\node (plus) at (6, 2) {\texttt{+}};
+\node (plus) at (6, 1.5) {\texttt{+}};
 \node (catzero) at (6, 3) {\texttt{0}};
-\node (minus) at (6, 4) {\texttt{-}};
+\node (minus) at (6, 4.5) {\texttt{-}};
+\node (minuszero) at (6, 3.75) {\texttt{0-}};
+\node (pluszero) at (6, 2.25) {\texttt{0+}};
 
 \draw[dotted] (mone) -- (minus);
 \draw[->, dotted] (mtwo) -- (minus);
@@ -22,9 +24,6 @@
 \draw (1.5,1.9) ellipse (0.2 and 0.9);
 \node (gamma) at (3.8, 1.0) {$\gamma$};
 \draw[<-, line width=0.9pt] (two) .. controls(gamma) .. (plus);
-
-
-
 
 
 
