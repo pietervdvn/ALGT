@@ -55,7 +55,7 @@ As last, we don't have to deal with installing a host compiler, skipping another
 
 ### Parsing the target language
 
-The first step in defining our target language is declaring its syntax. The standard practice to do so has been _BNF_ since its introduction in the ALGOL-report in 1960. As BNF is the de facto standard, it is already well-known to language designers and thus both the theoritical and practical aspects are well understood.
+The first step in defining our target language is declaring its syntax, for which the standard practice has been _BNF_ since its introduction in the ALGOL-report. As BNF is the de facto standard, it is already well-known to language designers and thus both the theoritical and practical aspects are well understood.
 Furthermore, it is easy to port existing languages, as often a BNF is already available for this language. 
 
 A drawback is that many variants of BNF exist, each with their own superficial syntactic differences. This is only a minor drawback though: as the underlying structure is the same, a simple search-and-replace can easily convert one dialect into another. On the other hand, we want the BNF syntax to be as light and boilerplate-free as possible, eventually introducing a new dialect.

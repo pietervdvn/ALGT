@@ -64,7 +64,7 @@ If this check passes, the expression within the annotation is typed against the 
 Evalaution contexts implement searching behaviour: when a parsetree is matched over `e[x]`, a subtree matching `x` -which can be a compound pattern- is searched within the tree. If no such tree is found; the match fails. When this match is found, both `x` and `e` are available as variables. `someExpr` can be used e.g. to extract information from a typing store, `e[someOtherExpr]` can be used to plug the hole with another value, e.g. to implement some form of substitution (although a builtin function is available for this).
 
 The explicit typing makes it possible to easily tag `e`, as its type `T` will already be stated by the function signature.
-However, it is difficult for the typechecker to figure out what type `x` might be. In order to do so, `x` is typechecked as against _each_ type that might occur (directly or indirectly) as subtree in `T`. If exactly one type matches, this typing is choosen. If not, an explicit typing is demanded.
+However, it is difficult for the typechecker to figure out what type `x` might be. This is solved by typechecking `x` against _each_ type that might occur (directly or indirectly) as subtree in `T`. If exactly one type matches, this typing is choosen. If not, an explicit typing is demanded.
 
 This approach only works for complex expressions. Often, the programmer only wishes to capture the first occurence of a certain syntactic form, which can be written as `e[(b:bool)]`. In order to save the programmer this boilerplate, the typechecker attempts to discover a syntactic form name in the variable type. If this name is found (as prefix), it will be inherently typed. In other words `e[bool]` is equivalent to `e[(bool:bool)]`.
 
