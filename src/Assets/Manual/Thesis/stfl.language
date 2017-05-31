@@ -10,8 +10,8 @@ bool	::= "True" | "False"
 
 
 
-# Types
-typeTerm::= "Int" | "Bool" | "(" type ")"
+baseType::= "Int" | "Bool"
+typeTerm::= baseType | "(" type ")"
 type	::= typeTerm "->" type | typeTerm
 
 
@@ -62,16 +62,16 @@ eL.3	-> "keyword"
 ===========
 
 
-dom 		: type -> typeTerm
-dom("(" T1 ")")	= T1
-dom(T1 "->" T2) = T1
+dom 			  : type -> typeTerm
+dom("(" T1 ")")		  = T1
+dom(("(" T1 ")") "->" T2) = T1
+dom(T1 "->" T2) 	  = T1
 
 
-
-cod 		: type -> type
-cod("(" T2 ")")	= T2
-cod(T1 "->" T2) = T2
-
+cod 		          : type -> type
+cod("(" T2 ")")	          = T2
+cod(T1 "->" ("(" T2 ")")) = T2
+cod(T1 "->" T2)           = T2
 
 equate		: type -> type -> type
 equate(T, T)	= T

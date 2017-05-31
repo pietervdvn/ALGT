@@ -23,6 +23,7 @@ manual:
 
 
 thesis:
+	make deps
 	cd .bin && ../compileDocument.sh "../Thesis-files" "ThesisTemplate" "Thesis"
 
 focus:
@@ -32,6 +33,7 @@ templates:
 	make focus-template
 	make thesis-template
 	cp *Template.tex .bin/
+	cp Thesis/*.bib .bin/
 
 focus-template:
 	cat DocumentTemplate.tex | sed "/NOFOCUS/d" > .bin/FocusTemplate.tex

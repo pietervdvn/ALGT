@@ -3,7 +3,7 @@
 =================================================
 
 
-Computers are complicated machines. A modern CPU (anno 2017) contains around _2 billion_ transistors and flips states around _4 billion_ times a second. Controlling these machines is hard; controlling them with low-level assembly has been an impossible task for decades. Luckily, higher level programming languages have been created to ease this task.
+Computers are complicated machines. A modern CPU (anno 2017) contains over _2 billion_ transistors and flips states over _3 billion_ times a second \cite{Intel}. Controlling these machines is hard; controlling them with low-level assembly has been an impossible task for decades. Luckily, higher level programming languages have been created to ease this task.
 
 
 However, creating such programming languages is a hard task too. Aside from the technical details of executing a language on a specific machine, languages should be formally correct and strive to minimize errors made by the human programmer, preferably without hindering creating usefull programs. This is a huge task; several approaches to solve this complex problem have been tried, all with their own trade-offs - such as usage of typecheckers, amongst other choices. Another hindrance is the lack of common jargon and tools supporting programming language design. 
@@ -12,7 +12,7 @@ However, creating such programming languages is a hard task too. Aside from the 
  Representing arbitrary semantics
 ----------------------------------
 
-_Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down programming languages and concepts. This process was started by John Backus Naur in 1963, by introducing _BNF_, where the __syntax__ of a language can be formally declared. Due to its simplicity and ease to use, it has become a standard tool for any language designer and has been used throughout of the field of computer science.
+_Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down programming languages and concepts. This process was started by John Backus and Peter Naur in 1960, by introducing _BNF_ in the famous ALGOL60 report \cite{BackusNaur}, where the __syntax__ of the ALGOL60 language was formally specified. Due to its simplicity and ease to use, it has become a standard tool for any language designer and has been used throughout of the field of computer science.
 
 Sadly, no such formal language is availabe to reason about the __semantics__ of a programming language. Researchers often use _natural deduction_ to denote semantics, but in an informal way. We crystallize this by introducing a tool which allows the direct input of such rules -allowing manipulation directly on the parsetrees- giving rise to __parsetree oriented programming__ and providing an intuitive interface to formally create programming languages, reason about them and execute them.
 
@@ -92,10 +92,7 @@ This means that the developer has the best of both worlds and can migrate the co
 
 Very little gradual programming languages exist - for an obvious reason: creating a gradual type system is a hard.
 
-%% TODO bibliography
-
 Gradual typing is a new research domain. It is not widly known nor well understood. Based on the paper of Ronald Garcia, __Abstracting Gradual Typing__, we attempt to _automate gradual typing_ of arbitrary programming languages, based on the tool above.
-
 
 
 
