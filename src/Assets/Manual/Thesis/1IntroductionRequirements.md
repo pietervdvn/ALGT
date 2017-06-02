@@ -76,14 +76,14 @@ However, static or dynamic typing shouldn't be a binary choice. By using a _grad
 This means that the developer has the best of both worlds and can migrate the codebase either way as needed:
 
 	
-	// Here we type statically
+	// This is statically typed
 	List<Integer> list = new ArrayList<>()
 	if(someRareCondition){
 		// Error: Type mismatch: cannot convert from void to List
 		list = list.sort(intComparator);
 	}
 
-	// Here, we work dynamically
+	// This is dynamic
 	? x	= list.get(0)
 	
 	x	= "Some string"
