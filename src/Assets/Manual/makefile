@@ -24,6 +24,7 @@ manual:
 
 thesis:
 	make deps
+	cd Thesis && ./MakeComparison.sh && cd ..
 	cd .bin && ../compileDocument.sh "../Thesis-files" "ThesisTemplate" "Thesis"
 
 focus:

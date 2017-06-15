@@ -1,17 +1,18 @@
-1IntroductionRequirements.md
-2.0RelatedWorkGoals.md
-2.1CompInclude.md
-2.1FeatComparison.md
-3.0ALGTByExample.md
-3.1ALGTByExampleOpSem.md
-3.2Typechecker.md
-3.3Properties.md
-4.0AbstractInterpretationIntro.md
-4.1SyntaxProps.md
-4.2Repr.md
-4.3Operations.md
-4.4Algos.md
-4.5FunctionsConclusions.md
-4TypesystemAndGradualization.md
+# 1IntroductionRequirements.md
+# 2.0RelatedWorkGoals.md
+# 2.1RelatedWork.md
+# 2.2CompInclude.md
+# 3.0ALGTByExample.md
+# 3.1ALGTByExampleOpSem.md
+# 3.2Typechecker.md
+# 3.3Properties.md
+# 4.0AbstractInterpretationIntro.md
+# 4.1SyntaxProps.md
+# 4.2Repr.md
+# 4.3Operations.md
+# 4.4Algos.md
+# 4.5FunctionsConclusions.md
+5TypesystemAndGradualization.md
+5.1GradualizationTechnical.md
 # ALGTInternals.md
-8Appendixes.md	
+# 8Appendixes.md	

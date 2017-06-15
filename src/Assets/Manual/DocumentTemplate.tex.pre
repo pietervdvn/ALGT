@@ -6,10 +6,13 @@
             breaklinks=true}
 
 
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
 
 \usepackage{fullpage} %NOTHESIS
 
 \usepackage{listings}
+\usepackage{pdflscape} 
 
 % For pandoc
 \providecommand{\tightlist}{%
@@ -17,10 +20,19 @@
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{subfigure}
 \usepackage{amssymb,amsmath}
+\usepackage{geometry}
 
 \usepackage[utf8]{inputenc}
 
+\usepackage{cite}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+
+\newcommand{\code}[1] { \text{ \textbf{\texttt{#1}} }}
+\newcommand{\varstore}[1] {\code{\{ #1 \}} }
 
 \usepackage{xcolor}
 \definecolor{gray}{rgb}{0.9,0.9,0.9}
@@ -29,15 +41,36 @@
 
 
 % Warning: unicode should be uppercase!
-
-%INPUTDECLARED
+\DeclareUnicodeCharacter{25B}{$\varepsilon$}
+\DeclareUnicodeCharacter{3B1}{$\alpha$}
+\DeclareUnicodeCharacter{3B3}{$\gamma$}
+\DeclareUnicodeCharacter{3BB}{$\lambda$}
+\DeclareUnicodeCharacter{3C3}{$\sigma$}
+\DeclareUnicodeCharacter{393}{$\Gamma$}
+\DeclareUnicodeCharacter{3A3}{$\Sigma$}
+\DeclareUnicodeCharacter{2228}{$\vee$}
+\DeclareUnicodeCharacter{2227}{$\wedge$}
+\DeclareUnicodeCharacter{2282}{$\subset$}
+\DeclareUnicodeCharacter{2286}{$\subseteq$}
+\DeclareUnicodeCharacter{2229}{$\cap$}
+\DeclareUnicodeCharacter{222A}{$\cup$}
+\DeclareUnicodeCharacter{00D7}{$\times$}
+\DeclareUnicodeCharacter{22A2}{$\vdash$}
+\DeclareUnicodeCharacter{21D2}{$\Rightarrow$}
+\DeclareUnicodeCharacter{2192}{$\rightarrow$}
+\DeclareUnicodeCharacter{2713}{$\checkmark$}
 
 \lstset{
   numbers=left,
   backgroundcolor=\color{gray},
   basicstyle=\footnotesize\ttfamily,
   frame=l,
-  literate=%INPUTLITERATE
+  literate={ɛ}{{$\varepsilon$}}1 {α}{{$\alpha$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {σ}{{$\sigma$}}1 {Γ}{{$\Gamma$}}1 {Σ}{{$\Sigma$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⊂}{{$\subset$}}1 {⊆}{{$\subseteq$}}1 {∩}{{$\cap$}}1 {∪}{{$\cup$}}1 {×}{{$\times$}}1 {⊢}{{$\vdash$}}1 {⇒}{{$\Rightarrow$}}1 {→}{{$\rightarrow$}}1 {✓}{{$\checkmark$}}1 
+}
+
+
+\lstdefinestyle{brokenlines}{
+  breaklines=true
 }
  
 \lstdefinestyle{terminal}{
@@ -46,18 +79,48 @@
   frame=single
 }
 
+\lstdefinestyle{algo}{
+  backgroundcolor=\color{white},
+  frame=single
+}
+
+
+
 
 
 \begin{document}
 
-\title{ALGT - The manual} %NOFOCUS NOTHESIS
-\author{Pieter Vander Vennet} %NOFOCUS NOTHESIS
-\date{} %NOFOCUS NOTHESIS
-\maketitle %NOFOCUS NOTHESIS
+\newgeometry{top=2.2in,bottom=0.5in,right=0in,left=1in}
+\begin{titlepage}
+	\begin{center}
+	\vspace{2cm}
+	{\scshape\Large Master Dissertation\par}
+	{\scshape\large 2016 - 2017\par}
+
+	\vspace{1cm}
+	{\Huge\bfseries ALGT\par}
+	{\huge\bfseries A framework to describe \\ and gradualize \\ programming languages\par}
+
+	\vspace{2cm}
+	{\Large\itshape Pieter Vander Vennet\par}
+	\vspace{2cm}
+	{\Large
+	promoted by\par
+	Dr.~Christophe \textsc{Scholliers}
+	}
+	\end{center}
+	\vfill
+	\includegraphics[width=0.5\textwidth]{ugenteng.png}\par\vspace{1cm}
+
+\end{titlepage}
+\restoregeometry
 
 \tableofcontents %NOFOCUS
 
 \input{Main}
+
+\bibliography{0Biblio}{}
+\bibliographystyle{plain}
 
 
 \end{document}

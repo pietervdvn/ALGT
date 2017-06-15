@@ -22,6 +22,7 @@
 \usepackage{graphicx}
 \usepackage{subfigure}
 \usepackage{amssymb,amsmath}
+\usepackage{geometry}
 
 \usepackage[utf8]{inputenc}
 
@@ -40,13 +41,14 @@
 
 
 % Warning: unicode should be uppercase!
-
 \DeclareUnicodeCharacter{25B}{$\varepsilon$}
 \DeclareUnicodeCharacter{3B1}{$\alpha$}
+\DeclareUnicodeCharacter{3B2}{$\beta$}
 \DeclareUnicodeCharacter{3B3}{$\gamma$}
 \DeclareUnicodeCharacter{3BB}{$\lambda$}
 \DeclareUnicodeCharacter{3C3}{$\sigma$}
 \DeclareUnicodeCharacter{393}{$\Gamma$}
+\DeclareUnicodeCharacter{3A3}{$\Sigma$}
 \DeclareUnicodeCharacter{2228}{$\vee$}
 \DeclareUnicodeCharacter{2227}{$\wedge$}
 \DeclareUnicodeCharacter{2282}{$\subset$}
@@ -64,8 +66,9 @@
   backgroundcolor=\color{gray},
   basicstyle=\footnotesize\ttfamily,
   frame=l,
-  literate={ɛ}{{$\varepsilon$}}1 {α}{{$\alpha$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {σ}{{$\sigma$}}1 {Γ}{{$\Gamma$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⊂}{{$\subset$}}1 {⊆}{{$\subseteq$}}1 {∩}{{$\cap$}}1 {∪}{{$\cup$}}1 {×}{{$\times$}}1 {⊢}{{$\vdash$}}1 {⇒}{{$\Rightarrow$}}1 {→}{{$\rightarrow$}}1 {✓}{{$\checkmark$}}1 
+  literate={ɛ}{{$\varepsilon$}}1 {α}{{$\alpha$}}1 {β}{{$\beta$}}1 {γ}{{$\gamma$}}1 {λ}{{$\lambda$}}1 {σ}{{$\sigma$}}1 {Γ}{{$\Gamma$}}1 {Σ}{{$\Sigma$}}1 {∨}{{$\vee$}}1 {∧}{{$\wedge$}}1 {⊂}{{$\subset$}}1 {⊆}{{$\subseteq$}}1 {∩}{{$\cap$}}1 {∪}{{$\cup$}}1 {×}{{$\times$}}1 {⊢}{{$\vdash$}}1 {⇒}{{$\Rightarrow$}}1 {→}{{$\rightarrow$}}1 {✓}{{$\checkmark$}}1 
 }
+
 
 \lstdefinestyle{brokenlines}{
   breaklines=true
@@ -88,10 +91,30 @@
 
 \begin{document}
 
-\title{ALGT: A Framework for defining and gradualizing programming languages} %NOFOCUS
-\author{Pieter Vander Vennet} %NOFOCUS
-\date{} %NOFOCUS
-\maketitle %NOFOCUS
+\newgeometry{top=2.2in,bottom=0.5in,right=0in,left=1in}
+\begin{titlepage}
+	\begin{center}
+	\vspace{2cm}
+	{\scshape\Large Master Dissertation\par}
+	{\scshape\large 2016 - 2017\par}
+
+	\vspace{1cm}
+	{\Huge\bfseries ALGT\par}
+	{\huge\bfseries A framework to describe \\ and gradualize \\ programming languages\par}
+
+	\vspace{2cm}
+	{\Large\itshape Pieter Vander Vennet\par}
+	\vspace{2cm}
+	{\Large
+	promoted by\par
+	Dr.~Christophe \textsc{Scholliers}
+	}
+	\end{center}
+	\vfill
+	\includegraphics[width=0.5\textwidth]{ugenteng.png}\par\vspace{1cm}
+
+\end{titlepage}
+\restoregeometry
 
 \tableofcontents %NOFOCUS
 

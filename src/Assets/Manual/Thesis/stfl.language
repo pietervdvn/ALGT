@@ -223,8 +223,8 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  Γ ⊢ n1 "+" n2, "Int"
 
 
- Γ ⊢ c, "Bool"	Γ ⊢ e1, T0	Γ ⊢ e2, T1	T0 == T1
---------------------------------------------------------	[TIf]
+ Γ ⊢ c, "Bool"	Γ ⊢ e1, T0	Γ ⊢ e2, T1	TCond == "Bool"		T0 == T1
+--------------------------------------------------------------------------------	[TIf]
  Γ ⊢ "If" c "Then" e1 "Else" e2, T0
 
 
