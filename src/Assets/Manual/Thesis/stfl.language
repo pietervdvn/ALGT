@@ -20,14 +20,14 @@ var	::= Identifier
 number	::= Number
 value	::= bool | number
 
+canon	::= value | "(" "\\" var ":" type "." e ")" 
 e	::= eL "+" e 
 	| eL "::" type 
 	| eL e
 	| eL
 
-eL	::= value 
+eL	::= canon 
 	| var 
-	| "(" "\\" var ":" type "." e ")" 
 	| "If" e "Then" e "Else" e 
 	| "(" e ")"
 
@@ -63,13 +63,13 @@ eL.3	-> "keyword"
 
 
 dom 			  : type -> typeTerm
-dom("(" T1 ")")		  = T1
+dom("(" T1 ")")		  = dom(T1)
 dom(("(" T1 ")") "->" T2) = T1
 dom(T1 "->" T2) 	  = T1
 
 
 cod 		          : type -> type
-cod("(" T2 ")")	          = T2
+cod("(" T2 ")")	          = cod(T2)
 cod(T1 "->" ("(" T2 ")")) = T2
 cod(T1 "->" T2)           = T2
 
@@ -155,9 +155,9 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  "If" "False" "Then" e1 "Else" e2 → e2
 
 
- arg:value	arg :: T
+ arg:canon	arg :: TArg	TArg == TExp
 ----------------------------------------------- [EvalLamApp]
- ("(" "\\" var ":" T "." e ")") arg → !subs:e(var, arg, e)
+ ("(" "\\" var ":" TExp "." e ")") arg → !subs:e(var, arg, e)
 
 
 
@@ -223,8 +223,8 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
  Γ ⊢ n1 "+" n2, "Int"
 
 
- Γ ⊢ c, "Bool"	Γ ⊢ e1, T0	Γ ⊢ e2, T1	TCond == "Bool"		T0 == T1
---------------------------------------------------------------------------------	[TIf]
+ Γ ⊢ c, TCond	Γ ⊢ e1, T0	Γ ⊢ e2, T1	TCond == "Bool"		T0 == T1
+----------------------------------------------------------------------	[TIf]
  Γ ⊢ "If" c "Then" e1 "Else" e2, T0
 
 
@@ -244,14 +244,14 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 
 
 
- T1 = T2 : type
---------------- [EqBase]
+
+ equate(T1, T2)
+---------------- [Eq]
  T1 == T2
 
 
- Ta1 == Ta2	Tb1 == Tb2
----------------------------------- [EqArrow]
- Ta1 "->" Tb1   ==   Ta2 "->" Tb2
+
+
 
 
  Properties
