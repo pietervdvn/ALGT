@@ -71,6 +71,7 @@ data Args = Args 	{ tsFile		:: String
 			, numberOfQuickChecks	:: String
 			, interpretAbstract	:: Bool
 			, interpretFunctionAbs	:: [String]
+			, interpretFunctionArgs	:: Maybe String
 			, interpretRulesAbstract:: Bool
 			, interpretRules	:: [String]
 			, subtypingSVG		:: Maybe String
@@ -313,6 +314,10 @@ args	= Args <$> argument str
 			<> long "ifa"
 			<> long "interpret-function-abstract"
 			<> help "Interpret a single function abstractly"))
+		<*> optional (strOption
+			(long "interpret-abstract-arguments"
+			<> long "iaa"
+			<> help "With abstract interpretation of a function, use this argument to interpret with"))
 		<*> switch
 			(long "interpret-relations-abstractly"
 			<> long "ira"

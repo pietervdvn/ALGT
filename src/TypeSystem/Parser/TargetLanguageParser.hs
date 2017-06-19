@@ -28,6 +28,7 @@ wsModeActual (NoCapture wsmode)	= wsmode
 
 ------------------------ Syntax: Actually parsed stuff -------------------------
 
+parseTargetLang	:: Syntax -> TypeName -> FilePath -> String -> Either String ParseTree
 parseTargetLang s tp fp inp
 	= parseTargetLang' s tp (False, True) fp inp |> deAnnot
 

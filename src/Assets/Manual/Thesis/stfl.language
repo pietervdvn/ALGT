@@ -78,12 +78,12 @@ equate(T, T)	= T
 
 
 
-abstract		: typeSet -> type
-abstract("$")		= !error:type("Undefined")
-abstract("Int" "$")	= "Int"
-abstract("Bool" "$")	= "Bool"
-abstract((T1 "->" T2) ts)
-			= abstract(domains( (T1 "->" T2) ts)) "->" abstract(codomains( (T1 "->" T2) ts))
+
+
+
+
+
+
 
 
 domains		: typeSet -> typeSet
@@ -245,8 +245,8 @@ codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of func
 
 
 
- equate(T1, T2)
----------------- [Eq]
+ equate(T1, T2) = T1 : type
+---------------------------- [Eq]
  T1 == T2
 
 

@@ -1,3 +1,4 @@
+0Titlepage.md
 1IntroductionRequirements.md
 2.0RelatedWorkGoals.md
 2.1RelatedWork.md
@@ -14,5 +15,8 @@
 4.5FunctionsConclusions.md
 5.0TypesystemAndGradualization.md
 5.1GradualizationTechnical.md
+5.2GradualizingManually.md
+5.3GradualizingAutomated.md
+6Conclusion.md
 # ALGTInternals.md
 8Appendixes.md	

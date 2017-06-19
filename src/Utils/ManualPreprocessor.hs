@@ -5,6 +5,7 @@ module Utils.ManualPreprocessor where
 import System.Directory
 import System.Process
 import System.IO.Unsafe
+import Control.Exception (evaluate)
 
 import Utils.Utils
 import Utils.Version
@@ -152,7 +153,7 @@ manualAssets
 	= do	let files0	= allAssets |> fst & filter ("Manual/Files/" `isPrefixOf`)
 		let files1	= allAssets |> fst & filter ("Manual/Thesis/" `isPrefixOf`)
 		let files	= files0 ++ files1
-		contents	<- files |> ((\pth -> pth & reverse & takeWhile (/= '/') & reverse) &&&  readFile . ("src/Assets/"++)) |+> sndEffect
+		contents	<- files |> ((\pth -> pth & reverse & takeWhile (/= '/') & reverse) &&&  Assets.readFile' . ("src/Assets/"++)) |+> sndEffect
 		contents & M.fromList & return
 
 
@@ -197,10 +198,10 @@ genArgs vars str
 
 runIsolated	= runIsolated' (++ " --plain --style WhiteFlat")
 
-runIsolated'	:: (String -> String) -> (String, Int) -> (FilePath -> FilePath) -> Map String String -> String -> IO (Output, String -> String, String)
-runIsolated' argEdit line target vars str
+runIsolated'	:: (String -> String) -> (String, Int) -> (FilePath -> FilePath) -> Map String String -> Char -> String -> IO (Output, String -> String, String)
+runIsolated' argEdit line target vars closing str
 	= do	let (args, (action, rest))
-				= break (==')') str 
+				= break (==closing) str 
 					|> tail
 					|> options
 		putStr $ show line ++ " Running with input args "++show args
@@ -232,17 +233,23 @@ preprocess line target vars ('%':'%':str)
 		preprocess line target vars $ tail rest
 preprocess line target vars ('$':'$':'$':'!':'(':str)
 	= do	
-		(output', action, rest)		<- runIsolated' id line target vars str
+		(output', action, rest)		<- runIsolated' id line target vars ')' str
 		let output		= get stdOut output' & unlines
 		return (output & action ++ rest)
 preprocess line target vars ('$':'$':'$':'(':str)
 	= do	
-		(output', action, rest)		<- runIsolated line target vars str
+		(output', action, rest)		<- runIsolated line target vars ')' str
+		let output		= get stdOut output' & unlines
+		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\n\\end{lstlisting}"
+		return (output & action & wrapFile ++ rest)
+preprocess line target vars ('$':'$':'$':'[':str)
+	= do	
+		(output', action, rest)		<- runIsolated line target vars ']' str
 		let output		= get stdOut output' & unlines
 		let wrapFile str	= "\\begin{lstlisting}[style=terminal]\n"++str++"\n\n\\end{lstlisting}"
 		return (output & action & wrapFile ++ rest)
 preprocess line destination vars ('$':'$':'$':'s':'v':'g':'(':str)
-	= do	(output, action, rest)	<- runIsolated line destination vars str
+	= do	(output, action, rest)	<- runIsolated line destination vars ')' str
 		let svgs	= output & changedFiles
 					& M.toList
 		svgs |+> (\(n, v) -> 
@@ -341,7 +348,7 @@ inclusivePar (MLiteral _ _ "]")	= False
 
 preprocessTo	:: Map FilePath UTCTime -> FilePath -> (FilePath -> FilePath) -> (FilePath -> FilePath) -> IO ()
 preprocessTo changes inp destination svgDestination
-	= do	str		<- readFile inp
+	= do	str		<- readFile' inp
 		vars		<- buildVariablesIO
 		lastChange	<- getModificationTime inp
 		unless (M.lookup inp changes |> (lastChange ==) & fromMaybe False) $ do

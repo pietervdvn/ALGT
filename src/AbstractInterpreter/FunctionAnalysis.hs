@@ -120,19 +120,23 @@ analyzeClauseWith syntax functionReturns (i, MClause patterns expr) args
 ----------------------------- UTILS --------------------------------------------------
 
 
-instance ToString' (Name, Int, Function) FunctionAnalysis where
+instance ToString' (Syntax, Name, Int, Function) FunctionAnalysis where
 	toParsable' 	= _toStringFunctionAnalysis toParsable' toParsable'
 	toCoParsable' 	= _toStringFunctionAnalysis toCoParsable' toCoParsable'
 	debug' 		= _toStringFunctionAnalysis debug' debug'
 	show'	 	= const show
 
 
-_toStringFunctionAnalysis cats argsts (funcName, width, MFunction t clauses) (FunctionAnalysis analysises fallthroughs)	
+_toStringFunctionAnalysis cats argsts (syntax, funcName, width, MFunction t clauses) (FunctionAnalysis analysises fallthroughs)	
 		= inHeader "" ("Analysis of "++funcName++" : "++intercalate " -> " t) '=' $ indent $ unlines
 			[zip clauses analysises |> (\(c, ca) -> cats (funcName, width, c) ca) & unlines & indent
 			, inHeader "" "Falthrough" '-' $
 				if S.null fallthroughs then "No fallthrough is possible"
-					else fallthroughs & S.toList |> argsts ", " |> inParens & unlines]
+					else fallthroughs & S.toList |> argsts ", " |> inParens & unlines
+			, inHeader "" "Possible results" '-' $
+				let	reslts	= ((analysises |> get results) >>= M.elems) & refold syntax in
+					if null reslts then "(No results, all input crashes)" else reslts & toParsable' ","
+			]
 
 
 instance ToString' (Name, Int, Clause) ClauseAnalysis where

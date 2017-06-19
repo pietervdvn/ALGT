@@ -2,18 +2,14 @@
  Gradualized
 ************* 
 
-
  Syntax Changes
 ================
-
 
 typeTerm 	::= ... | "?"
 
 
 Rename type to gtype
 Rename typeTerm to gtypeTerm
-
-
 
 
  Function Changes
@@ -27,8 +23,6 @@ cod		: gtype -> gtype
 ...
 cod("?")	= "?"
 
-
-
 equate		: gtype -> gtype -> gtype
 ...
 equate("?", t)	= t
@@ -36,13 +30,7 @@ equate(t, "?")	= t
 equate(t11 "->" t12, t21 "->" t22)
 		= equate(t11, t21) "->" equate(t12, t22)
 
-
-
-
- New Relations
-===============
-
-(→')	: e (in), e (out)	Pronounced as "checked small step"
+Rename equate to isConsistent
 
 
  Relation Changes
@@ -50,18 +38,3 @@ equate(t11 "->" t12, t21 "->" t22)
 
 Rename (==) to (~), pronounced as "is consistent"
 
-
- New Rules
-===========
-
- --------- [ConsLeft]
-  "?" ~ T
-
-
- --------- [ConsRight]
-  T ~ "?"
-
-
- e0 :: T		e0 → e1
---------------------------------- [Check]
- e0 →' e1

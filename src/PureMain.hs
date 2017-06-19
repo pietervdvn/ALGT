@@ -10,7 +10,6 @@ import Utils.ArgumentParser
 import Utils.PureIO hiding (PureIO)
 import Utils.LatticeImage (terminalCS, whiteCS)
 
-
 import Graphs.Lattice 
 
 import TypeSystem
@@ -20,6 +19,7 @@ import TypeSystem.Parser.TypeSystemParser (parseTypeSystem)
 
 import AbstractInterpreter.AbstractInterpreter
 import AbstractInterpreter.QuickCheck
+import AbstractInterpreter.AbstractSetFromString
 
 import Changer.ChangesParser
 
@@ -44,6 +44,7 @@ import Data.Bifunctor (first)
 import Data.Either
 import Data.Hashable
 import Data.List (intercalate, nub, (\\), isSuffixOf)
+import Data.List.Split (splitOn)
 import Data.Map (Map, fromList, keys, toList)
 import Data.Maybe
 import Data.Monoid ((<>))
@@ -113,8 +114,8 @@ mainPureOn	:: Args -> TypeSystem -> PureIO ()
 mainPureOn args ts
       = [ ioIf' dumpTS			$ putStrLn $ toParsable' (24::Int) ts
 	, \args -> 			  exampleFiles args 	     |+> mainExFilePure   & void
-	, ioIf' interpretAbstract	  (get tsFunctions ts & keys |+> runFuncAbstract  ts & void)
-	, \args ->			  interpretFunctionAbs args  |+> runFuncAbstract  ts & void
+	, ioIf' interpretAbstract	  (get tsFunctions ts & keys |+> runFuncAbstract ts (interpretFunctionArgs args) & void)
+	, \args ->			  interpretFunctionAbs args  |+> runFuncAbstract ts (interpretFunctionArgs args) & void
 	, ioIf' interpretRulesAbstract	$ abstractRuleSyntax (isJust $ iraSVG args) ts
 	, \args -> 			  interpretRules args	     |+> runRuleAbstract' ts & void
 	, ioIfJust' subtypingSVG	$ saveSubtypingSVG (get tsSyntax ts)
@@ -177,12 +178,18 @@ abstractRuleSyntax irasvg ts
 	= do	putStrLn $ toParsable' ts $ analyzeRelations ts
 		unless irasvg $ putStrLn "# Run --irasvg PATH.svg to generate a nice svg about the subtyping relationsships"
 
-runFuncAbstract	:: TypeSystem -> Name -> PureIO ()
-runFuncAbstract ts name
+runFuncAbstract	:: TypeSystem -> Maybe String -> Name -> PureIO ()
+runFuncAbstract ts Nothing name
 	= do	func		<- liftEith $ checkExists name (get tsFunctions ts) $ "No such function: "++name
 		let analysis	= analyzeFunction' ts func
-		putStrLn $ toParsable' (name, 24::Int, func) analysis
-		
+		putStrLn $ toParsable' (get tsSyntax ts, name, 24::Int, func) analysis
+runFuncAbstract ts (Just args) name
+	= do	func		<- liftEith $ checkExists name (get tsFunctions ts) $ "No such function: "++name
+		let tps		= init $ typesOf func
+		arguments	<- liftEith $ parseIAArgs (get tsSyntax ts) tps args
+		let analysis	= analyzeFunction ts func arguments
+		putStrLn $ toParsable' (get tsSyntax ts, name, 24::Int, func) analysis
+
 
 saveSubtypingSVG:: Syntax -> Name -> PureIO ()
 saveSubtypingSVG s fp

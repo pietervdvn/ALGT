@@ -35,7 +35,7 @@ data AbstractSet
 	| ConcreteLiteral 	GeneratingType String
 	| ConcreteBuiltin	GeneratingType TypeName Name		-- Some possible builtin, e.g. Any, Identifier, ...
 	| ConcreteInt 		GeneratingType Name
-	| AsSeq 		GeneratingType Int [AbstractSet]		-- Sequence, generated with choice
+	| AsSeq 		GeneratingType Int [AbstractSet]	-- Sequence, generated from a single choice
 	deriving (Ord, Eq, Show)
 
 

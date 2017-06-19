@@ -16,8 +16,9 @@ import Data.List (intercalate, isPrefixOf)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.List (dropWhileEnd)
 
-import Data.Char (toUpper)
+import Data.Char (toUpper, isSpace)
 
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -144,6 +145,7 @@ firstRight vals	= let r	= rights vals in
 				Right (head r)
 		  where pack vals	= vals |> lines ||>> ("  "++) |> unlines & unlines
 
+trim = dropWhileEnd isSpace . dropWhile isSpace
 
 -- Checks wether all are right, and returns those. Gives messages for failed values
 allRight	:: Show b => [Either String b] -> Either String [b]
