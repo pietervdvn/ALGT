@@ -318,8 +318,8 @@ rename(x, newVar, type, body)
 
 
  e0 :: T
----------------------------  	[Progress]
- (✓) e0 	| e0 → e1
+-------------------  	[Progress]
+ (✓) e0 | e0 → e1
 
 
  e :: T

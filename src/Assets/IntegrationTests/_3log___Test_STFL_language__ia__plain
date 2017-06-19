@@ -91,6 +91,12 @@ Done quickchecking property Termination with 8 examples
   
   No fallthrough is possible
   
+  
+   Possible results 
+  ------------------
+  
+  type
+  
 
  Analysis of defaultValue : type -> eL 
 =======================================
@@ -171,6 +177,12 @@ Done quickchecking property Termination with 8 examples
   ------------
   
   No fallthrough is possible
+  
+  
+   Possible results 
+  ------------------
+  
+  eL
   
 
  Analysis of dom : type -> typeL 
@@ -253,6 +265,12 @@ Done quickchecking property Termination with 8 examples
   
   No fallthrough is possible
   
+  
+   Possible results 
+  ------------------
+  
+  typeL,typeL
+  
 
  Analysis of equate : type -> type -> type 
 ===========================================
@@ -281,6 +299,12 @@ Done quickchecking property Termination with 8 examples
   
   (type, type)
   
+  
+  
+   Possible results 
+  ------------------
+  
+  type
   
 
  Analysis of eval : e -> value 
@@ -549,6 +573,12 @@ Done quickchecking property Termination with 8 examples
   
   No fallthrough is possible
   
+  
+   Possible results 
+  ------------------
+  
+  value,value
+  
 
  Analysis of plus : number -> e -> Number 
 ==========================================
@@ -575,6 +605,12 @@ Done quickchecking property Termination with 8 examples
   ------------
   
   No fallthrough is possible
+  
+  
+   Possible results 
+  ------------------
+  
+  Number
   
 
  Analysis of rename : var -> var -> type -> e -> eL 
@@ -603,4 +639,10 @@ Done quickchecking property Termination with 8 examples
   ------------
   
   No fallthrough is possible
+  
+  
+   Possible results 
+  ------------------
+  
+  ("(" "\\" var ":" type "." e ")")
   
