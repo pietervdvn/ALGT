@@ -15,7 +15,7 @@ else
 fi
 
 cp $2.tex $3.tex
-pdflatex -interaction nonstopmode -halt-on-error -file-line-error $3.tex
+pdflatex -interaction nonstopmode -halt-on-error -file-line-error -shell-escape $3.tex
 bibtex $3
 
 mv $3.pdf  "../Output/$3.pdf"

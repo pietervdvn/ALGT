@@ -1,0 +1,260 @@
+ STFL 
+******
+
+# A Simply Typed Function Language
+
+ Syntax
+========
+
+bool	::= "True" | "False"
+
+
+
+baseType::= "Int" | "Bool"
+typeTerm::= baseType | "(" type ")"
+type	::= typeTerm "->" type | typeTerm
+
+
+
+var	::= Identifier
+number	::= Number
+value	::= bool | number
+
+canon	::= value | "(" "\\" var ":" type "." e ")" 
+e	::= eL "+" e 
+	| eL "::" type 
+	| eL e
+	| eL
+
+eL	::= canon 
+	| var 
+	| "If" e "Then" e "Else" e 
+	| "(" e ")"
+
+
+es	::= e "\n" es | e "\n" | e
+
+
+typing			::= var ":" type
+typingEnvironment	::= typing "," typingEnvironment | "{}"
+
+typeSet			::= type typeSet | "$"
+
+
+ Functions
+===========
+
+
+dom 			  : type -> typeTerm
+dom("(" T1 ")")		  = dom(T1)
+dom(("(" T1 ")") "->" T2) = T1
+dom(T1 "->" T2) 	  = T1
+
+
+cod 		          : type -> type
+cod("(" T2 ")")	          = cod(T2)
+cod(T1 "->" ("(" T2 ")")) = T2
+cod(T1 "->" T2)           = T2
+
+equate		: type -> type -> type
+equate(T, T)	= T
+
+
+
+
+
+
+
+
+
+
+
+domains		: typeSet -> typeSet
+domains((T1 "->" _) ts)
+		= T1 domains(ts)
+domains("$")	= "$"
+domains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
+
+
+codomains		: typeSet -> typeSet
+codomains((_ "->" T2) ts)
+		= T2 codomains(ts)
+codomains("$")	= "$"
+codomains(_)	= !error:typeSet("Not defined, as this is not a proper list of functions")
+
+
+
+
+
+ Relations
+===========
+
+# (:) is reserved, as predicate that a term is of a production rule
+# one can refer to rewrite rules/functions earlier on
+
+(→)	: e (in), e (out)	Pronounced as "smallstep"
+(→*)	: e (in), value (out)	Pronounced as "big step"
+
+
+(⊢)	: typingEnvironment (in), e (in), type (out)	Pronounced as "context entails typing"
+
+(::)	: e (in), type (out)	Pronounced as "type in empty context"
+
+(==)	: type (in), type (in)	Pronounced as "equals"
+
+
+ Rules
+=======
+
+
+
+
+ e0 → e1
+-----------------			[EvalCtx]
+ e[e0] → e[e1]
+
+
+
+ n1:Number	n2:Number
+------------------------------------	[EvalPlus]
+ n1 "+" n2 → "False"
+
+
+
+ e :: T0	T == T0
+------------------------		[EvalAscr]
+ e "::" T → e
+
+
+----------------			[EvalParens]
+ "(" e ")" → e
+
+
+---------------------------------------		[EvalIfTrue]
+ "If" "True" "Then" e1 "Else" e2 → e1
+
+
+----------------------------------------	[EvalIfFalse]
+ "If" "False" "Then" e1 "Else" e2 → e2
+
+
+ arg:canon	arg :: TArg	TArg == TExp
+----------------------------------------------- [EvalLamApp]
+ ("(" "\\" var ":" TExp "." e ")") arg → !subs:e(var, arg, e)
+
+
+
+
+
+
+
+
+
+
+
+ e:value
+--------			[BigStepCanon]
+ e →* e
+
+ e0 → e1	e1 →* e2
+-------------------------	[BigStepRec]
+ e0 →* e2
+
+ e0 → e1	e1:value
+------------------------	[BigStepBase]
+ e0 →* e1
+
+
+
+
+
+ "{}" ⊢ e, T  
+-----------	[TEmptyCtx]
+ e :: T
+
+
+
+
+ n:number
+---------------		[Tnumber] 
+ Γ ⊢ n, "Int"
+
+
+ b:bool
+----------------	[Tbool]
+ Γ ⊢ b, "Bool"
+
+
+
+ Γ ⊢ e, T
+-------------------	[TParens]
+ Γ ⊢ "(" e ")", T
+
+
+ Γ ⊢ e, T'	T' == T
+----------------------- [TAscr]
+ Γ ⊢ e "::" T, T'
+
+
+
+--------------------	[Tx]
+ Γ[ x ":" T ] ⊢ x, T
+
+
+ Γ ⊢ n1, Int1	Γ ⊢ n2, Int2	Int1 == "Int"	Int2 == "Int"
+-------------------------------------------------------------- [TPlus]
+ Γ ⊢ n1 "+" n2, "Int"
+
+
+ Γ ⊢ c, TCond	Γ ⊢ e1, T0	Γ ⊢ e2, T1	TCond == "Bool"		T0 == T1
+----------------------------------------------------------------------	[TIf]
+ Γ ⊢ "If" c "Then" e1 "Else" e2, T0
+
+
+
+ ((x ":" T1) "," Γ) ⊢ e, T2
+-------------------------------------------------------	[TLambda]
+ Γ ⊢ "(" "\\" x ":" T1 "." e ")", T1 "->" T2
+
+
+
+ Γ ⊢ e1, Tfunc	Γ ⊢ e2, Targ	Targ == dom(Tfunc)
+---------------------------------------------------	[Tapp]
+ Γ ⊢ e1 e2, cod(Tfunc)
+
+
+
+
+
+
+
+ equate(T1, T2) = T1 : type
+---------------------------- [Eq]
+ T1 == T2
+
+
+
+
+
+
+ Properties
+============
+
+ e0 :: T	 e0 → e1
+-------------------------- [Preservation]
+         e1 :: T
+
+
+         e0 :: T
+-------------------------- [Progress]
+ e0:value    |     e0 → e1 
+
+
+
+# STFL can't contain loops (or recursion), so will always terminate
+
+ 
+ e :: T
+-------- [Termination]
+e →* v 
+

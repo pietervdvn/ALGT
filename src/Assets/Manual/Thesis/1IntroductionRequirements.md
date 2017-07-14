@@ -15,24 +15,22 @@ Another hindrance for the programming language field is the lack of common jargo
 
 _Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down programming languages and concepts. This process was started by John Backus and Peter Naur in 1960, by introducing _BNF_ in the famous ALGOL60 report \cite{BackusNaur}, where the __syntax__ of the ALGOL60 language was formally specified. Due to its simplicity and ease to use, BNF has become a standard tool for any language designer and has been used throughout of the field of computer science.
 
-Sadly, no such formal language is availabe to reason about the __semantics__ of a programming language. Researchers often use _natural deduction_ to denote semantics, but in an informal way: the natural deduction rules are denoted in {\LaTeX} for publication, but not mechanically checked, often resulting in small and large errors.
+The following breakthrough on formalization of program languages was made in 1968. The ALGOL68-report \cite{ALGOL68} was the first to give a full formal definition of the semantics of the ALGOL-language, pioneering the mathematical framework that is known today as _operational semantics_.
 
-This natural deduction technique is crystallized by introducing a tool which allows the direct input of such rules. This provides an intuitive interface to formally create programming languages, reason about them and execute them. Even better, by explicitly stating the semantics of a programming language formally, these rules can be automatically transformed and programming languages can be automatically changed. 
+Another mathematical framework to describe semantics was introduced a year later by C.A.R. Hoare \cite{HoareAxiomatic}, in which he introduces an __axiomatic framework__ to describe programming languages.
 
+The last approach capturing semantics still widely used today was introduced in 1971 by Dana Scott and Christopher Strachey. They introduce the technique to translate the program to a mathematical object (such as a function, transforming the input to the output), giving rise to __denotational semantics__ \cite{ScottStrachey}.
 
-In this master dissertation, we present a tool which:
+Sadly, little tools are availabe that reason about the semantics of a programming language in a mechanized way. Researchers often use one of the above frameworks to denote semantics, but in an informal way: the semantics are denoted in \LaTeX for publication - often typeset as a natural deduction rule. This is error-prone, as no mechanical checks are performed on these rules. 
 
- - Allows an easy notation for both the syntax and semantics of arbitrary programming languages.
- - Which interprets these languages.
- - Provides ways to automatically reason about certain aspects and properties of the semantics.
-- Helps with creating and testing programming languages.
-- Helps analyzing the various choices that made.
+This is changing lately, as programming language researchers are starting to two categories of tools to automate this process. On one hand, theorem provers are used to automate the reasoning about the semantics: tools such as COQ and Isabelle are gaining popularity in the field, checking correctness proofs of the languages. 
+ On the other hand are lightweight tools, optimized for language design. These tools help with typesetting, translation to the theorem provers or other smaller tasks, in a simple and easy metalanguage.
 
 
  Static versus dynamic languages
 ---------------------------------
 
-A tradeoff that programming languages make, is the tradeoff between static and dynamic typing, thus whether a typechecker is used or not. 
+A tradeoff that all programming languages make is the choice between static and dynamic typing, thus whether a typechecker is used or not. 
 
 For example, consider the erronous expression `0.5 + True`. 
 
@@ -94,4 +92,13 @@ Very little gradual programming languages exist, because creating a gradual type
 Gradual typing is a new research domain, not widely known nor well understood. Based on the paper of Ronald Garcia, __Abstracting Gradual Typing__ \cite{GarciaAGT}, we attempt to _automate gradual typing_ of arbitrary programming languages, based on the tool above.
 
 
+Our contribution
+----------------
+
+In this master dissertaion, we try to solve both problems at once. First, we propose a tool which allows for a lightweight denotation of arbitrary programming languages, capturing both the syntax and semantics of any chosen language. The metalanguage is optimized for ease of use, without compromising the formal correctness.
+
+This information is in turn used to build both an parser and interpreter - offering the possibility to execute the programming language based on the specification.
+On top of that, properties can be stated and automatically tested within the tool.
+
+At last, we aim to assist in the gradualization of the given programming language. By offering a symbolic, analytical framework, large parts of gradualizing the language can be automated.
 

@@ -22,8 +22,6 @@ import Lens.Micro hiding ((&))
 import Control.Arrow ((&&&))
 
 {- Syntax is described in a Backus-Naur format, a simple naive parser is constructed from it. -}
-
-
 data BNF 	= Literal String	-- Literally parse 'String'
 		| BNFRuleCall Name	-- Parse the rule with the given name.
 		| BNFSeq [BNF]		-- Sequence of parts
