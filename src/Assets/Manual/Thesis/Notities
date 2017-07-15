@@ -1,21 +1,6 @@
 -> Bewijzen van soundness voor GTFL en STFL
 
--> Evaluatie van werk
-	Toolsupport help om talen te maken en gradualizeren
-	-> ja, het werkt
-	Ev Hoofdstuk 5 wordt "evaluatie van de gradualizatie"
-	Gradualizatieversie STFL testen: fouten vinden is makkelijk (in de evaluatie, tool vindt fouten)
-
-
--> Conclusie
-	Contributies mooi oplijsten:
-		1) We hebben een tool voor het formaliseren van talen, laat toe om fouten te vinden
-		-> Zowel parser generator, evaluator, typechecker, eigenschappen tester
-		-> Geevalueerd door te testen op STFL, werkt allemaal goed
-		-> Future work schrappen?
-	-> Inleiding en conclusie zijn heel soortgelijk, context herhalen, main contributies herhalen, voor dit probleem deden we dat 
-
-
+-> Tests herwerken
 
 -------------------
 
