@@ -1,37 +1,60 @@
 
- Conclusion and future work
-============================
+ALGT as tool for language design
+=================================
 
-ALGT
-----
+In this master dissertation we presented ALGT; a tool which tries to solve two problems:
 
-The ALGT-tool well suited for its goal of creating programming languages, offering an intuitive and clutter-free experience to create programming languages. Creating a new programming language, from downloading the tool to running a target program, can be done in a few hours with only basic knowledge of programming language development.
+- ALGT helps with the creation of arbitrary programming languages, from syntax to semantics.
+- ALGT aims to automate gradualization of the typesystem.
 
-The parser can be created based on the syntax, where multiple checks prevent small but easily made errors. The interpreter for the language can be constructed using well-known reduction rules, which are thoroughly checked as well by a rigourous typecheck. When helper functions are needed, they can be defined straightforwardly and with excellent support of the typechecker, with liveness and totality checks, preventing forgotten cases. At last can some automatic tests be added, by adding the properties the language should have.
+ Representing arbitrary programming languages
+----------------------------------------------
 
-In other words, ALGT is a tool which can be used for all aspects of language design.
+The first problem tackled is the problem of language design, especially the lack of a tool that mechanically checks and executes language specifications. 
+The presented tool has a powerfull metalanguage, which allows all aspects of a programming language to be described in a high-level way. All aspects of formal language design are covered by the tool:
 
-### Future work
+- The syntax is given as BNF
+- The language semantics can be given in a framework of choice
+- Properties can be stated and tested
 
-A tool such as ALGT is never finished, and countless features could be added. Some usefull features for the short term coule be:
+Based on this input, an interpreter for the language can be constructed fully automatically: 
 
-- A latex typesetting of a language, making publication of the language easy.
-- The tutorial/manual could use some more polishing, as not all features are described in it yet.
-- A way to import libraries and modules, making crosscompilations easier
-- A description of the ALGT-language in ALGT, which could be used to add some syntactic sugars to the language
+- a parser is constructed automatically (see section \ref{target-language-parsing});
+- the parsed program (together with the input) can be automatically interpreted, by proving that its reduction relation holds for the given program. This proof contains the execution of the program as side effect, including the output.
+
+With all these steps automated, language prototyping becomes easy. The two essential ingredients are declared easily, after which it is possible to test and execute them.
+
+We tried to strike the right balance between the formal and lightweight tools:
+
+- The language itself contains enough features to be practical, yet not too many, which might hinder formal proving of some properties. 
+- All the tools available are modeled after well-known mathematical objects, such as BNF to capture the syntax and natural deduction to capture semantics and typecheckers
+- The semantics can be mechanically tested, increasing the formality and practicality of the tool
+- The language specification is tested for many common bugs, by the typechecker, liveness- and completenesschecker, ...
 
 
-Gradualization
---------------
+In order to evaluate the metalanguage, STFL was created within the tool, resulting in a clean and readable specification - as can be seen in chapter \ref{algt-in-a-nutshell}. This specification is successfully used as interpreter, resulting in a working programming language.
 
-When gradualizing programming languages, the tool provides usefull services as well; renaming and changing syntax, functions and operations can be easily done with the refactoring support, making it easy to state only the differences between two languages; making it easy to keep the static and gradual dialects in sync. The construction of the gradualized functions is eased, as a gradual counterpart of each function is a available via abstract interpretation.
+A workshop was given to members of Zeus WPI, where uniniated members gave their try to create a programming language. Most were able to create the syntax of their language, but as none were familiar with natural deduction, implementation of the semantics was somewhat difficult.
 
-### Future workings
+In conclusion, ALGT is suited for formal language development, with plenty tools to assist the designer: running and testing the language, catching bugs, ...
 
-Gradualization is not fully automated yet, as the gradual counterparts of the functions should still be denoted manually. It might be usefull to make the abstract interpretation available within an ALGT-language. How this should be done practically is an open question, as this would mix concrete values and set representions, introducing syntax compromises within the ALGT-syntax.
 
-It is also unclear which typesystems can be fully gradualized and which are not. Especially languages featuring a compile time runtime for types, such as System F or dependently typed languages, are notoriously hard to gradualize.   
-\newline
+ Gradualization
+----------------
 
-In conclusion, gradualization will remain a research topic for the coming years, in which I made a humble attempt to automate it further.
+The other major goal of ALGT is to assist in the gradualization of a typesystem - where the typesystem of a language is modified so that some parts are typed and some are not.
+
+As seen in section \ref{simplifying-the-runtime}, the components needed are:
+
+- the language syntax;
+- a runtime supporting dynamic features;
+- a gradual typesystem.
+
+Especially gradualization of the typechecker is automated. As noted in section \ref{gradualizing-domain-and-codomain}, the metafunctions over types should suddenly work on _sets of types_. For this, the necessary framework -abstract interpretation- is constructed and implemented (chapter \ref{syntax-driven-abstract-interpretation}), which gives guidance on how to implement the gradual counterparts of metafunctions. As a bonus are some extra checks for general metafunctions possible with the framework, as described in section \ref{combining-clauses}.
+
+The needed function modifications can be passed into a file describing a refactoring of the language, automating the boring and error-prone changes. 
+
+To evaluate this approach, STFL was gradualized in section \ref{automating-gradualization}, yielding GTFL. This gradualization was successfull, although some care should be given to the exact implementation of the dynamic runtime.
+
+We might thus conclude that ALGT can also assist in the gradualization of programming languages, by having built-in support for abstract interpretation and refactoring. 
 

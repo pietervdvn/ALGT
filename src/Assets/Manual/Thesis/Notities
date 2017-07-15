@@ -1,8 +1,3 @@
--> Hoofdstuk over ALGT-internals (na HO5)
-	-> Metaparser + parsebomen
-	-> Voorstelling functies, evaluator, hoe werkt de interpreter, typechecker
-	-> Tests (bomen genereren, op een andere manier)
-
 -> Bewijzen van soundness voor GTFL en STFL
 
 -> Evaluatie van werk
@@ -18,10 +13,8 @@
 		-> Zowel parser generator, evaluator, typechecker, eigenschappen tester
 		-> Geevalueerd door te testen op STFL, werkt allemaal goed
 		-> Future work schrappen?
-	-> Inleiding en conclusie zijn heel soortgelijk, context herhalen, main contributies herhalen, voor dit probleem deded we dat 
+	-> Inleiding en conclusie zijn heel soortgelijk, context herhalen, main contributies herhalen, voor dit probleem deden we dat 
 
-
-Inleiding: twee categoriën tools (theorem provers, lightway dingen)
 
 
 -------------------

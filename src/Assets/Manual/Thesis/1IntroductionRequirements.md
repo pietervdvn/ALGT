@@ -10,8 +10,8 @@ However, creating such programming languages is a hard task too. Aside from the 
 Another hindrance for the programming language field is the lack of common jargon and tools supporting programming language design. 
 
 
- Representing arbitrary semantics
-----------------------------------
+ Representing arbitrary programming languages
+----------------------------------------------
 
 _Program Language Design_ is a vast and intriguing field. As this field starts to mature, a common jargon is starting to emerge among researchers to formally pin down programming languages and concepts. This process was started by John Backus and Peter Naur in 1960, by introducing _BNF_ in the famous ALGOL60 report \cite{BackusNaur}, where the __syntax__ of the ALGOL60 language was formally specified. Due to its simplicity and ease to use, BNF has become a standard tool for any language designer and has been used throughout of the field of computer science.
 
@@ -23,8 +23,10 @@ The last approach capturing semantics still widely used today was introduced in 
 
 Sadly, little tools are availabe that reason about the semantics of a programming language in a mechanized way. Researchers often use one of the above frameworks to denote semantics, but in an informal way: the semantics are denoted in \LaTeX for publication - often typeset as a natural deduction rule. This is error-prone, as no mechanical checks are performed on these rules. 
 
-This is changing lately, as programming language researchers are starting to two categories of tools to automate this process. On one hand, theorem provers are used to automate the reasoning about the semantics: tools such as COQ and Isabelle are gaining popularity in the field, checking correctness proofs of the languages. 
- On the other hand are lightweight tools, optimized for language design. These tools help with typesetting, translation to the theorem provers or other smaller tasks, in a simple and easy metalanguage.
+This is changing lately, as programming language researchers are starting to use to automate this process. There are two broad categories of those tools:
+
+- On one hand, theorem provers are used to automate the reasoning about the semantics: tools such as COQ and Isabelle are gaining popularity in the field, checking correctness proofs of the languages, but are quite complicated to use.
+- On the other hand are lightweight tools used, optimized for language design. These tools help with typesetting, translation to the theorem provers or other smaller tasks, in a simple and easy metalanguage.
 
 
  Static versus dynamic languages
@@ -82,6 +84,7 @@ This means that the developer has the best of both worlds and can migrate the co
 
 	// This is dynamic
 	? x	= list.get(0)
+
 	
 	x	= "Some string"
 	System.out.println(x + True)
