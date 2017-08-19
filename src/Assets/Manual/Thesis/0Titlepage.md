@@ -3,18 +3,20 @@
 	\begin{center}
 	\vspace{2cm}
 	{\scshape\Large Master Dissertation\par}
+	{\scshape\Large Mathematical Computer Sciences\par}
+
 	{\scshape\large 2016 - 2017\par}
 
 	\vspace{1cm}
 	{\Huge\bfseries ALGT\par}
-	{\huge\bfseries A framework to describe \\ and gradualize \\ programming languages\par}
+	{\huge\bfseries A Framework to Describe \\ and Gradualize \\ Programming Languages\par}
 
 	\vspace{2cm}
 	{\Large\itshape Pieter Vander Vennet\par}
 	\vspace{2cm}
 	{\Large
 	promoted by\par
-	Dr.~Christophe \textsc{Scholliers}
+	Prof. Dr.~Christophe \textsc{Scholliers}
 	}
 	\end{center}
 	\vfill

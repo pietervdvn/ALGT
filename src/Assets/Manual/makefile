@@ -58,5 +58,7 @@ clean:
 unicode:
 	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/\\DeclareUnicodeCharacter{\2}{\3}/' > .bin/DeclareUnicodeCharacter
 	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/{\1}{{\3}}1 /' | tr -d "\n" > .bin/UnicodeLiterals
-	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/\1\t| \2 \t | `\3`/' > Files/UnicodeColumns
+	cat Unicode | sed "/^#/d" | sed 's/\(.\)\t\(.*\)\t\(.*\)/\1\t| \2 \t | `\3`/' >> Files/UnicodeColumns
+	./createTemplate.sh
+
 	
