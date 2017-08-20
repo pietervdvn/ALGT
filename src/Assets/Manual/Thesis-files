@@ -1,12 +1,16 @@
-0Titlepage.md
+# 0.0Titlepage.md
+# 0.1Thankword.md
+0.3AbstractEng.md
+0.4AbstractNl.md
+# 0.2Contents.md
 # 1.0IntroductionRequirements.md
 # 1.1RepresentingLanguages.md
 # 1.2StaticDynamicGradual.md
 # 1.3MainContribution.md
 # 2.0RelatedWorkGoals.md
-2.1RelatedWork.md
-2.2CompInclude.md
-2.3RelatedWorkConcl.md
+# 2.1RelatedWork.md
+# 2.2CompInclude.md
+# 2.3RelatedWorkConcl.md
 # 3.0ALGTByExample.md
 # 3.1ALGTByExampleOpSem.md
 # 3.2Typechecker.md
