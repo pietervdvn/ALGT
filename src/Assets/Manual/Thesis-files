@@ -1,35 +1,34 @@
-# 0.0Titlepage.md
-# 0.1Thankword.md
+0.0Titlepage.md
+0.1Thankword.md
 0.3AbstractEng.md
 0.4AbstractNl.md
-# 0.2Contents.md
-# 1.0IntroductionRequirements.md
-# 1.1RepresentingLanguages.md
-# 1.2StaticDynamicGradual.md
-# 1.3MainContribution.md
-# 2.0RelatedWorkGoals.md
-# 2.1RelatedWork.md
-# 2.2CompInclude.md
-# 2.3RelatedWorkConcl.md
-# 3.0ALGTByExample.md
-# 3.1ALGTByExampleOpSem.md
-# 3.2Typechecker.md
-# 3.3Properties.md
-# 4.0AbstractInterpretationIntro.md
-# 4.1SyntaxProps.md
-# 4.2Repr.md
-# 4.3Operations.md
-# 4.4Algos.md
-# 4.5FunctionsConclusions.md
-# 5.0TypesystemAndGradualization.md
-# 5.1GradualizationTechnical.md
-# 5.2GradualizingManually.md
-# 5.3GradualizingAutomated.md
-# 6.0Internals.md
-# 6.1FunctionInternals.md
-# 6.2FunctionInterpretation.md
-# 6.3NaturalDeduction.md
-# 7Conclusion.md
-# 8Appendixes.md
-# 8.1AppendixesProof.md
-# 8Biblio.md
+0.2Contents.md
+1.0IntroductionRequirements.md
+1.1RepresentingLanguages.md
+1.2StaticDynamicGradual.md
+1.3MainContribution.md
+2.0RelatedWorkGoals.md
+2.1RelatedWork.md
+2.2CompInclude.md
+2.3RelatedWorkConcl.md
+3.0ALGTByExample.md
+3.1ALGTByExampleOpSem.md
+3.2Typechecker.md
+3.3Properties.md
+4.0AbstractInterpretationIntro.md
+4.1SyntaxProps.md
+4.2Repr.md
+4.3Operations.md
+4.4Algos.md
+4.5FunctionsConclusions.md
+5.0TypesystemAndGradualization.md
+5.1GradualizationTechnical.md
+5.2GradualizingManually.md
+5.3GradualizingAutomated.md
+6.0Internals.md
+6.1FunctionInternals.md
+6.2FunctionInterpretation.md
+6.3NaturalDeduction.md
+7Conclusion.md
+8Appendixes.md
+8Biblio.md

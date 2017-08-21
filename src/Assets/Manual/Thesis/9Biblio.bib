@@ -59,13 +59,14 @@
 }
 
 
-
-@article{GradualTypingSiek,
-	author = {Jeremy Siek and Walid Taha},
-	title = {Gradual Typing for functional languages},
-	year	= {2006},
-	institution	= "University of  Chicago",
-	}
+@INPROCEEDINGS{GradualTypingSiek,
+    author = {Jeremy G. Siek and Walid Taha},
+    title = {Gradual Typing for Functional Languages},
+    booktitle = {IN SCHEME AND FUNCTIONAL PROGRAMMING WORKSHOP},
+    year = {2006},
+    pages = {81--92},
+    publisher = {}
+}
 
 
 @MISC{Plotkin81astructural,
@@ -82,20 +83,37 @@
 	}
 
 
-@proceedings{Cousot77,
-	author		= "Patrick Cousot and Radhia Cousot",
-	title		= "Abstract Interpretation: A unified lattice model for static analysis of programs by construction or approcimation of fixpoints",
-	year		= "1977",
-	series		= "ACM Symposium on Principles of Programming Languages (POPL)"
+@inbook{Cousot77,
+	 title = "Abstract interpretation: A unified lattice model for static analysis of programs by construction or approximation of fixpoints",
+	author = "Patrick Cousot and Radhia Cousot",
+	year = "1977",
+	pages = "238--252",
+	booktitle = "Conference Record of the 4th Annual ACM SIGACT-SIGPLAN Symposium on Principles of Programming Languages (POPL), Los Angeles, CA",
+	publisher = "ACM",
 	}
+
+
 
 
 @inproceedings{GarciaAGT,
-	author		= "Ronald Garcia and Alison M. Clark and Éric Tanter",
-	title		= "Abstracting Gradual Typing",
-	year		= "2016",
-	series		= "POPL' 16"
-	}
+ author = {Garcia, Ronald and Clark, Alison M. and Tanter, \'{E}ric},
+ title = {Abstracting Gradual Typing},
+ booktitle = {Proceedings of the 43rd Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+ series = {POPL '16},
+ year = {2016},
+ isbn = {978-1-4503-3549-2},
+ location = {St. Petersburg, FL, USA},
+ pages = {429--442},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/2837614.2837670},
+ doi = {10.1145/2837614.2837670},
+ acmid = {2837670},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {abstract interpretation, gradual typing, subtyping},
+} 
+
+
 
 @incollection{GHCSize,
 	author		= "Simon Marlow and Simon Peyton-Jones",
@@ -180,12 +198,25 @@
     url       = {http://llvm.cs.uiuc.edu/pubs/2003-05-01-GCCSummit2003.html}
   }
 	
+
+
 @inproceedings{PLTRedex,
-	author	= "Casey Kleinand John Clements and Christos Dimoulas and Carl Eastlund and Matthias Felleisen and Matthew Flatt and Jay A. McCarthy and Jon Rafkind and Sam Tobin-Hochstadt and Robert Bruce Findler",
-	title	= "Run Your Research: On the effectiveness of Lightweight Mechanization",
-	year	= "2012",
-	organization	= "POPL"
-	}
+ author = {Klein, Casey and Clements, John and Dimoulas, Christos and Eastlund, Carl and Felleisen, Matthias and Flatt, Matthew and McCarthy, Jay A. and Rafkind, Jon and Tobin-Hochstadt, Sam and Findler, Robert Bruce},
+ title = {Run Your Research: On the Effectiveness of Lightweight Mechanization},
+ booktitle = {Proceedings of the 39th Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+ series = {POPL '12},
+ year = {2012},
+ isbn = {978-1-4503-1083-3},
+ location = {Philadelphia, PA, USA},
+ pages = {285--296},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2103656.2103691},
+ doi = {10.1145/2103656.2103691},
+ acmid = {2103691},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {lightweight semantics engineering},
+} 
 
 
 @InProceedings{Maude,
@@ -235,17 +266,20 @@
 	title	= "test10st.ott - Simply typed CBV Lambda",
 	url	= "www.cl.cam.ac.uk/~pes20/ott/",
 	howpublished = {\url{www.cl.cam.ac.uk/~pes20/ott/}},
+	author = {Francesco Zappa Nardelli and Peter Sewell and Scott Owens},
 	}
 
 @MISC{PLTTutorial,
 	title	= "Amb: A Redex Tutorial",
 	url	= "http://docs.racket-lang.org/redex/tutorial.html",
 	howpublished = {\url{docs.racket-lang.org/redex/tutorial.html}},
+	author = {Unknown author},
 	}
 
 @MISC{GradualizerExampleCimini,
 	title	= "The Gradualizer (interactive site)",
 	url	= "http://cimini.info/gradualizer",
+	author = {Cimini, Matteo},
 	howpublished = {\url{cimini.info/gradualizer}},
 	}
 
@@ -255,6 +289,7 @@
   volume = "482",
   year = "1983",
   month = "3",
+  journal = "Transactions of the Institute of Electronics and Communication Engineers of Japan",
   url = "http://hdl.handle.net/2433/103401"
 }
 
