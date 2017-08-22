@@ -34,6 +34,11 @@
 
 \newcommand{\code}[1] { \text{ \textbf{\texttt{#1}} }}
 \newcommand{\varstore}[1] {\code{\{ #1 \}} }
+\newcommand{\blankpage}[0]{
+    \null
+    \thispagestyle{empty}%
+    \addtocounter{page}{-1}%
+    \newpage}
 
 \usepackage{xcolor}
 \definecolor{gray}{rgb}{0.9,0.9,0.9}
@@ -87,10 +92,8 @@
 }
 
 
-
-
-
 \begin{document}
+
 
 \input{Main}
 

@@ -1,7 +1,7 @@
-0.0Titlepage.md
-0.1Thankword.md
-0.3AbstractEng.md
-0.4AbstractNl.md
+# 0.0Titlepage.md
+# 0.1Thankword.md
+# 0.3AbstractEng.md
+# 0.4AbstractNl.md
 0.2Contents.md
 1.0IntroductionRequirements.md
 1.1RepresentingLanguages.md
@@ -30,5 +30,5 @@
 6.2FunctionInterpretation.md
 6.3NaturalDeduction.md
 7Conclusion.md
-8Appendixes.md
-8Biblio.md
+# 8Appendixes.md
+# 8Biblio.md
