@@ -11,8 +11,8 @@ bool	::= "True" | "False"
 
 
 # Types
-typeL	::= "Int" | "Bool" | ParO type ParC
-type	::= typeL "->" type | typeL
+typeTerm	::= "Int" | "Bool" | "(" type ")"
+type	::= typeTerm "->" type | typeTerm
 
 
 
@@ -46,7 +46,7 @@ typeSet			::= type typeSet | "$"
 ==============
 
 type	-> "type"
-typeL	-> "type"
+typeTerm-> "type"
 
 Identifier	-> "identifier"
 Number	-> "constant"
@@ -93,7 +93,7 @@ defaultValue("Int")	= 1
 defaultValue(ta "->" tr)
 			= "(" "\\" "x" ":" ta "." defaultValue(tr) ")"
 
-dom 		: type -> typeL
+dom 		: type -> typeTerm
 dom(T1 "->" T2) = T1
 dom("Bool")	= !error:type("Not defined for Bool")
 dom("Int")	= !error:type("Not defined for Int")

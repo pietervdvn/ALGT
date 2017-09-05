@@ -9,6 +9,13 @@ all:
 	make thesis
 
 
+
+verdediging:
+	cp verdediging/Theme/* .bin/ && \
+	cp verdediging/Images/* .bin/ && \
+	cd .bin/ && ../compileDocument.sh "../verdediging-files" "PresentationTemplate" "Verdediging"
+
+
 deps:
 	make images-extra
 	make templates

@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+
+\begin{document}
+
+
+\begin{figure}
+\center
+
+\[(EvalParens)\frac{}{\text{( } e \text{ )} \rightarrow e}\]
+
+\[(EvalIfTrue) \frac{}{\text{If } \text{True } \text{Then } e1 \text{ Else } e2 \rightarrow e1}\]
+
+\[(EvalIfFalse)\frac{}{\text{If } \text{False } \text{Then } e1 \text{ Else } e2 \rightarrow e2}\]
+
+
+\[(EvalPlus)\frac{n \in \mathbb{Z} \hspace{1cm} m \in \mathbb{Z}}{n \text{ + } m \rightarrow plus(n, m)}\]
+
+
+\[(EvalApp)\frac{arg:value \hspace{1cm} arg :: TArg \hspace{1cm} TArg == TExp}{\text{( } \backslash var \text{ : } TExp \text{ . } e \text{ ) } arg \rightarrow e\vert^{var}_{arg} }\]
+
+
+\end{figure}
+
+
+\end{document}

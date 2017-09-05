@@ -1,0 +1,71 @@
+
+
+Programmeertaal ontwerp is moeilijk!
+
+	- Afgelopen tientallen jaren: explosie aan programmeertalen
+	- Er werden ook tools ontwikkeld om programmeertaal ontwerp makkelijker te maken
+	- Programmeertalen om programmeertalen te beschrijven
+
+----
+
+Voorbeelden:
+
+	Zie slides
+
+
+============
+
+Een nieuw soort typesystemen is populair aan het worden: gradueel typeren
+
+Wat is het? Best uitgelegd met een voorbeeld in TypeScript
+
+
+Welke garanties bestaan er nog?
+	Typefouten (en crashes) énkel in de dynamische delen
+
+----
+
+Why so little Gradual typesystems?
+Er bestaan weinig tools die helpen... tot nu!
+
+Enter ALGT
+
+==============
+
+Wat kan ALGT allemaal?
+
+Coole metalanguage!
+	Licht
+	Formeel
+	Kan alle aspecten van talen specifieren: syntax, evaluator, typesysteem
+	Gebruikt die spec om een target program uit te voeren
+	En die spec wordt ook nog eens getest op allerlei 'domme' fouten van de programmeur
+
+------
+
+én ALGT helpt om die specificatie dan te gradualizeren
+
+=====================
+
+Om dit voor te demonstreren, gaan we een simpele voorbeeldtaal maken: STFL
+
+
+Hoe ziet STFL eruit?
+
+....
+
+
+Hoe pakken we de spec aan?
+
+-> Syntax, Evaluatie, typesysteem
+
+
+Klassiek, academici in LATEX
+
+Syntax uitleggen
+Evaluator uitleggen
+	Dit is een relatie bestaande uit herschrijfregels
+		"Iets van deze vorm wordt omgezet naar dit"
+TS uitleggen
+	Ook een relatie, dit maal met een extra argument gamma
+		"Een expressie van deze vorm wordt omgezet in dit type, gegeven omgeving"
